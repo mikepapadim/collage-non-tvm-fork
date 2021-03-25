@@ -469,3 +469,85 @@ def softmax(x, axis=-1):
         ),
         name="y",
     )
+
+#inputs[0], pool_size, strides, padding, "max", ceil_mode, data_layout, True)
+
+def max_pool2d(x, pool_size, strides, padding, pool_type, ceil_mode, data_layout, count_include_pad):
+    """Compute softmax using CuDNN
+
+    Parameters
+    ----------
+    x : tvm.te.Tensor
+        The input tensor
+
+    axis : int
+        The axis to compute the softmax
+
+    Returns
+    -------
+    ret : tvm.te.Tensor
+        The result tensor
+    """
+    """
+         double double_alpha = args[2];
+       double double_beta = args[3];
+       int mode = args[4];
+       int nanOpt = args[5];
+       int windowHeight = args[6];
+       int windowWidth = args[7];
+       int verticalPadding = args[8];
+       int horizontalPadding = args[9];
+       int verticalStride = args[10];
+       int horizontalStride = args[11];
+
+    """
+    print("Python cudnn.py pool2d!!", file=sys.stderr)
+    return te.extern(
+        x.shape,
+        [x],
+        lambda ins, outs: tvm.tir.call_packed(
+            "tvm.contrib.cudnn.pooling.forward", ins[0], outs[0],
+            1.0, 0.0, 0, 0, pool_size[0], pool_size[1], padding[0], padding[1],
+            strides[0], strides[1]
+        ),
+        name="y",
+    )
+
+
+def relu(x):
+    print("Python cudnn.py relu!!", file=sys.stderr)
+    return te.extern(
+        x.shape,
+        [x],
+        lambda ins, outs: tvm.tir.call_packed(
+            "tvm.contrib.cudnn.activation.forward", ins[0], outs[0],
+            1, 0, 1, 0, 20
+        ),
+        name="y",
+    )
+
+def bias_add(data, bias, axis):
+    print("Python cudnn.py bias_add!!", file=sys.stderr)
+    return te.extern(
+        data.shape,
+        [bias, data],
+        lambda ins, outs: tvm.tir.call_packed(
+            "tvm.contrib.cudnn.add", ins[0], outs[0],
+            1, 1
+        ),
+        name="y",
+    )
+
+
+
+def conv_bias_activation_forward(data, ):
+    return te.extern(
+        oshape,
+        [x, w],
+
+        lambda ins, outs: tvm.tir.call_packed(
+                "tvm.contrib.cudnn.conv2d+bias+activation.forward",
+        ),
+        name="y",
+    )
+

@@ -58,3 +58,5 @@ from .argwhere import *
 from .scan import *
 from .sparse_reshape import *
 from .unique import *
+from .activation import *
+from .bias_add import *
