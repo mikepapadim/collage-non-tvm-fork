@@ -33,6 +33,7 @@
 #include "../../support/arena.h"
 #include "pass_utils.h"
 #include "pattern_utils.h"
+#include <assert.h>
 
 namespace tvm {
   namespace relay {
@@ -87,6 +88,7 @@ namespace tvm {
 
     // PATCH(@Soo): New data type for group id and backend op name
     const std::string kInvalidPairStr = "9999999-NO_OP";
+    constexpr int kInvalidGroupId = -1;
 
     struct GroupIdOpNamePair {
       /*! \brief The group id for operators that will be fused */
@@ -99,11 +101,12 @@ namespace tvm {
       GroupIdOpNamePair(const std::string pair_str) {
         std::string delimiter = "-";
         int delim_pos = pair_str.find(delimiter);
-        std::string group_id_str = pair_str.substr(0, delim_pos); // token is "scott"
+        std::string group_id_str = pair_str.substr(0, delim_pos);
 
         // Initialization
+//        std::cerr << "group id str: " << group_id_str << std::endl;
         group_id = std::stoi(group_id_str);
-        backend_op_name = pair_str.substr(delim_pos+1); // token is "scott"
+        backend_op_name = pair_str.substr(delim_pos+1);
 //        debug_print();
       }
 
@@ -126,7 +129,7 @@ namespace tvm {
     class IndexedForwardGraph {
     public:
       // PATCH(@Soo): We should create a map with keys of exprnode instead of expr
-
+      std::unordered_map<const tvm::Object*, Expr> expr_node_to_expr;
       std::unordered_map<const tvm::Object*, GroupIdOpNamePair> exprnode_to_backend_op;
       const MapNode* expr_to_backend_op;
 
@@ -191,7 +194,7 @@ namespace tvm {
       IndexedForwardGraph Prepare(const Expr& body, const ObjectRef& backend_op_match) {
         if (backend_op_match.get() != nullptr) {
           graph_.expr_to_backend_op = static_cast<const MapNode*>(backend_op_match.get());
-          cur_to_prev_pair_str_[kInvalidPairStr] = kInvalidPairStr;
+          PrepareNewMap();
         } else{
           graph_.expr_to_backend_op = nullptr;
         }
@@ -201,36 +204,46 @@ namespace tvm {
       }
 
     private:
-      void VisitExpr(const Expr& expr) {
-        if (graph_.expr_to_backend_op != nullptr) {
-          auto it = graph_.expr_to_backend_op->find(expr);
-          if (it != graph_.expr_to_backend_op->end()) {
-//            std::cerr << "Expression matched" << std::endl;
-//            std::cerr << expr << std::endl;
-//            std::cerr << it->second << std::endl;
-            std::string prev_group_id_op_name_str = cur_group_id_op_name_str_;
-            cur_group_id_op_name_str_ = Downcast<String>(it->second).operator std::string();
-            cur_to_prev_pair_str_[cur_group_id_op_name_str_] = prev_group_id_op_name_str;
-//            std::cerr << "cur, prev = " << cur_group_id_op_name_str_ << " , " << prev_group_id_op_name_str << std::endl;
+      // PATCH(@Soo): Prepare a new map with expr NODE and backend op name
+      void PrepareNewMap() {
+        //          expr_node_to_expr
+        auto it = graph_.expr_to_backend_op->begin();
+        while (it != graph_.expr_to_backend_op->end()) {
+          Expr expr = Downcast<Expr>(it->first);
+          std::string group_id_op_name_str = Downcast<String>(it->second).operator std::string();
 
-//            cur_backend_op_name = std::string(tmp_str.c_str());
-
-          } else {
-            int ss = 0;
-//            std::cerr << "No matched expression" << std::endl;
-          }
+          // Expr Node
+          const tvm::Object* key =  static_cast<const tvm::Object*>(expr.get());
+          graph_.exprnode_to_backend_op[key] = GroupIdOpNamePair(group_id_op_name_str);
+//          graph_.exprnode_to_backend_op[key].debug_print();
+          it++;
         }
-        ExprVisitor::VisitExpr(expr);
-        std::cerr << "Expr: " << expr << std::endl;
-        std::cerr << "Change from " << cur_group_id_op_name_str_ << " to "
-        << cur_to_prev_pair_str_[cur_group_id_op_name_str_] << std::endl << std::endl;
-        cur_group_id_op_name_str_ = cur_to_prev_pair_str_[cur_group_id_op_name_str_];
 
       }
 
+//      void VisitExpr(const Expr& expr) {
+//        if (graph_.expr_to_backend_op != nullptr) {
+//          auto it = graph_.expr_to_backend_op->find(expr);
+//          if (it != graph_.expr_to_backend_op->end()) {
+////            std::cerr << "Expression matched" << std::endl;
+////            std::cerr << expr << std::endl;
+////            std::cerr << it->second << std::endl;
+////            cur_group_id_op_name_str_ = Downcast<String>(it->second).operator std::string();
+//
+////            cur_backend_op_name = std::string(tmp_str.c_str());
+//            int sss=0;
+//          } else {
+//            int ss = 0;
+////            std::cerr << "No matched expression" << std::endl;
+//          }
+//        }
+//        ExprVisitor::VisitExpr(expr);
+//
+////        std::cerr << "Expr: " << expr << std::endl;
+//      }
+
       // PATCH(@Soo): backend operator match information
-      std::string cur_group_id_op_name_str_ = kInvalidPairStr;
-//      std::unordered_map<std::string, std::string> cur_to_prev_pair_str_;
+//      std::string cur_group_id_op_name_str_ = kInvalidPairStr;
 
       /*! \brief allocator of all the internal node object */
       support::Arena* arena_;
@@ -269,11 +282,11 @@ namespace tvm {
         graph_.post_dfs_order.push_back(node);
 
         //PATCH(@Soo): Create a new map for exprnode to backend op group and name
-        if (graph_.expr_to_backend_op != nullptr) {
-          graph_.exprnode_to_backend_op[key] = GroupIdOpNamePair(cur_group_id_op_name_str_);
-          graph_.exprnode_to_backend_op[key].debug_print();
-//          std::cerr << node << std::endl;
-        }
+//        if (graph_.expr_to_backend_op != nullptr) {
+////          graph_.exprnode_to_backend_op[key] = GroupIdOpNamePair(cur_group_id_op_name_str_);
+//          graph_.exprnode_to_backend_op[key].debug_print();
+////          std::cerr << node << std::endl;
+//        }
       }
 
       // Post order tree
@@ -289,7 +302,7 @@ namespace tvm {
       }
 
       void VisitExpr_(const ConstantNode* op) final {
-        std::cerr << "Constant visit: " << op << std::endl;
+//        std::cerr << "Constant visit: " << op << std::endl;
         this->AddNode(op);
         Node* node = graph_.node_map.at(op);
         DataType dtype = DataType(op->data->dtype);
@@ -347,7 +360,7 @@ namespace tvm {
           this->Update(call->args[i], node, edge_pattern);
         }
         ExprVisitor::VisitExpr_(call);
-        std::cerr << "Call visit: " << call << std::endl;
+//        std::cerr << "Call visit: " << call << std::endl;
         this->AddNode(call);
       }
 
@@ -394,7 +407,7 @@ namespace tvm {
       }
 
       void VisitExpr_(const VarNode* op) final {
-        std::cerr << "Var visit: " << op << std::endl;
+//        std::cerr << "Var visit: " << op << std::endl;
         this->AddNode(op);
       }
 
@@ -599,6 +612,10 @@ namespace tvm {
        * \brief Group as a union find data structure.
        */
       struct Group {
+        // PATCH(@Soo): backend operator name tag
+        /*! \brief The corresponding backend operator name. */
+        std::string backend_op_name = kInvalidPairStr;
+
         /*! \brief The parent in the union find data structure. */
         Group* parent{nullptr};
         /*! \brief The pattern of the group */
@@ -787,111 +804,36 @@ namespace tvm {
       // Fused based on backend operator matches from DP
       void RunFuseDP(const IndexedForwardGraph& graph, const DominatorTree& post_dom_tree) {
 
-//        auto* match = static_cast<const MapNode*>(backend_op_match.get());
-//        std::cerr << match << std::endl;
+        // WARNING(@Soo): We assume that fused ops are always continuous in the post dfs order.
+        // So far, we don't have any corner cases violating it.
+        int prev_group_id = kInvalidGroupId;
         std::cerr << "# of groups : " << groups_.size() << std::endl;
+
         for (size_t nid = 0; nid < groups_.size(); ++nid) {
           // the group of current node has been specified already.
           auto* graph_node = graph.post_dfs_order[nid];
-//          Group* group_node = groups_[nid];
-//          ICHECK(group_node != nullptr);
+          const tvm::Object* cur_key = graph_node->ref;
+          assert (graph.exprnode_to_backend_op.find(cur_key) != graph.exprnode_to_backend_op.end());
+          GroupIdOpNamePair pair_info = graph.exprnode_to_backend_op.at(cur_key);
+          int cur_group_id = pair_info.group_id;
 
-//          const tvm::Object* key = node.get();
-//          const Expr node_expr = static_cast<const Expr>(graph_node->ref);
-//          auto it = match.find(node_expr);
-//          if (it == match.end()) {
-//            std::cerr << "Match not found" << std::endl;
-//          } else {
-//            std::cerr << "Match found" << std::endl;
-//            std::cerr << node_expr << std::endl;
-//          }
+          // WARNING(@Soo): We assume that fused ops are always not opaque.
+          // no actions for opaque nodes
+          Group* group_node = groups_[nid];
+          ICHECK(group_node != nullptr);
+          if (group_node->pattern == kOpaque) continue;
 
+          group_node->backend_op_name = pair_info.backend_op_name;
 
-
-//      CommitFuse(graph_node, dom_node->parent->gnode);
-//      // no actions for opaque nodes
-//      if (group_node->pattern == kOpaque) continue;
-//      // no actions needed if the current node have no dominator
-//      if (dom_node->parent == nullptr) continue;
-//      ICHECK(!graph_node->extern_ref);
-//      size_t dom_parent_gindex = dom_node->parent->gnode->index;
-
-//      // refuse the fusion if too many ops are going to be fused together
-//      if (CountFusedNodesWithNewChild(graph_node, dom_node->parent->gnode) > max_fuse_depth_)
-//        continue;
-
-//      if (phase == 2) {
-//        // Fuse injective ops into intermediate tuples, if any
-//        if (group_node->pattern > kInjective) continue;
-//        Group* dom_parent_group = groups_[dom_parent_gindex];
-//        Group* dom_root_group = dom_parent_group->FindRoot();
-//        // If dom node group has a tuple as its root, we do not fuse tuple fields into it
-//        if (dom_root_group->pattern == kTuple) continue;
-//        if (dom_parent_group->pattern == kTuple && dom_root_group->pattern <= kInjective) {
-//          // Now we know the tuple has been fused into subsequent injective ops
-//          auto fcond = [](OpPatternKind kind, bool is_sink) { return kind <= kInjective; };
-//          // dom_root_group can also be tuple, as in inception layers
-//          // CheckPath is needed to avoid fusing two intermediate tuples
-//          if (CheckPath(graph_node, dom_node->parent->gnode, fcond)) {
-//            CommitFuse(graph_node, dom_node->parent->gnode);
-//          }
-//        }
-//        continue;
-//      }
-//
-//      // Skip if current node is already fused to the parent.
-//      if (groups_[dom_parent_gindex] != nullptr &&
-//          group_node->FindRoot() == groups_[dom_parent_gindex]->FindRoot()) {
-//        continue;
-//      }
-//      // Do not fuse into tuple for now
-//      if (groups_[dom_parent_gindex]->pattern == kTuple) continue;
-//      // Try to fuse current node to its post-dominator.
-//      if (group_node->pattern == kOutEWiseFusable) {
-//        if (phase != 0) continue;
-//        // Path for OutEWiseFusable: conv2d
-//        // Check if the dominator relation is elemwise.
-//        if (dom_node->parent != nullptr && dom_node->pattern == kElemWise) {
-//          ICHECK(dom_node->parent->gnode != nullptr);
-//          // The fuse can be executed if all the intermediate ops are still broadcast.
-//          auto fcond = [](OpPatternKind kind, bool is_sink) { return kind <= kBroadcast; };
-//          if (CheckPath(graph_node, dom_node->parent->gnode, fcond)) {
-//            CommitFuse(graph_node, dom_node->parent->gnode);
-//          }
-//        }
-//      } else if (group_node->pattern <= kBroadcast) {
-//        // Pre-condition: can only be fused to parent which is injective or reduction.
-//        if (dom_node->parent != nullptr &&
-//            (dom_node->pattern <= kInjective || dom_node->pattern == kCommReduce)) {
-//          // Check if all the intermediate ops are still broadcast.
-//          // The final terminal node can already be fused to a OutEWiseFusable group.
-//          auto fcond = [](OpPatternKind kind, bool is_sink) {
-//            if (!is_sink) {
-//              // Elemwise, broadcast, and injective ops on the parallel branches
-//              // are allowed be fused to the elemwise/broadcast anchor.
-//              return kind <= kInjective;
-//            } else {
-//              return (kind <= kBroadcast || kind == kCommReduce || kind == kInjective ||
-//                      kind == kOutEWiseFusable);
-//            }
-//          };
-//          if (CheckPath(graph_node, dom_node->parent->gnode, fcond)) {
-//            CommitFuse(graph_node, dom_node->parent->gnode);
-//          }
-//        }
-//      } else if (group_node->pattern == kInjective || group_node->pattern == kTuple) {
-//        // defer injective fusion to second phase.
-//        // so conv2d always finishes fusing.
-//        if (phase != 1) continue;
-//        // Check if all path are injective.
-//        auto fcond = [](OpPatternKind kind, bool is_sink) { return kind <= kInjective; };
-//        if (CheckPath(graph_node, dom_node->parent->gnode, fcond)) {
-//          CommitFuse(graph_node, dom_node->parent->gnode);
-//        }
-//      } else {
-//        // do nothing.
-//        ICHECK(group_node->pattern == kCommReduce);
-//      }
+          if (nid > 0) {
+            // Get group id for cur and prev node
+            auto* prev_graph_node = graph.post_dfs_order[nid-1];
+            if (cur_group_id == prev_group_id) {
+//              std::cerr << "nid, cur, pre: " << nid << " / " << cur_group_id << " , " << prev_group_id << std::endl;
+              CommitFuse(prev_graph_node, graph_node);
+            }
+          }
+          prev_group_id = cur_group_id;
         }
       }
 
@@ -1165,6 +1107,9 @@ namespace tvm {
         const GroupInfo& ginfo = ginfo_[group];
         auto func = Function(ginfo.params, body, ret_type, {});
         func = WithAttr(std::move(func), attr::kPrimitive, tvm::Integer(visitor.has_call));
+
+        // PATCH(@Soo): Add backend op attribute.
+        func = WithAttr(std::move(func), attr::kBackendOp, String(group->backend_op_name));
         return Call(func, ginfo.arguments, Attrs());
       }
 
@@ -1199,33 +1144,35 @@ namespace tvm {
       }
     };
 
+    // For op measurements, execute original fusion pass
+    // For end-to-end measure, execute DP fusion pass
     Expr FuseOps(const Expr& expr, int fuse_opt_level, size_t max_fuse_depth, const IRModule& module) {
-//  std::cerr << "\t[Fused Pass] Main: " << expr << "\n\n";
-
       // PATCH(@Soo): Uncomment this part for executing original fusion pass (instead of DP)
+////      std::cerr << "\t[Fused Pass] Expr before pass: " << expr << "\n\n";
 //      Expr orig_expr = FuseMutator().Transform(expr, fuse_opt_level, max_fuse_depth);
+////      std::cerr << "\t[Fused Pass] Expr after pass: " << orig_expr << "\n\n";
+//
 //      return orig_expr;
 
-      static auto fdp_call = tvm::runtime::Registry::Get("relay.transform.optimizer.optimize_comp_graph");
-      Map<Expr, String> backend_op_match = (*fdp_call)(expr);
-//      FunctionNode* func_node = static_cast<ExprNode*>(expr.get());
-//      std::cerr << backend_op_match[FunctionNode->body] << std::endl;
-      Expr dp_expr = FuseMutator().Transform(expr, fuse_opt_level, max_fuse_depth, backend_op_match);
-      return dp_expr;
+      // WARNING(@Soo): Assume that all exprs are function!
+      Expr fused_expr;
+      const FunctionNode* fn_node = static_cast<const FunctionNode*>(expr.get());
 
-//  Map<Expr, String> matching = {{expr, "wow"}};
-//  Map<Expr, String> matching = Map<Expr, String>();
-//  matching[expr] = String(std::string("WOW"));
+      if (fn_node->GetAttr<IntImm>(attr::kCustomFusionPass).defined()) {
+        // PATCH(@Soo): Custom (DP) fusion pass for end-to-end measurements
+        // Note that if fuse_opt_level == 0, no fusion applied no matter whether it's original or DP.
 
-//  std::cerr << static_cast<const CallNode*>(orig_expr.get())->fused_group_id << "\n\n";
-//  std::cerr << "Original expression" << "\n\n";
+        static auto fdp_call = tvm::runtime::Registry::Get("relay.transform.optimizer.optimize_comp_graph");
+        std::cerr << "\tDP optimization (Python side) begins!" << "\n\n";
+        Map<Expr, String> backend_op_match = (*fdp_call)(expr);
+        std::cerr << "\tDP optimization (Python side) is done!" << "\n\n";
+        fused_expr = FuseMutator().Transform(expr, fuse_opt_level, max_fuse_depth, backend_op_match);
+      } else {
+        // PATCH(@Soo): Original fusion pass for op measurements
+        fused_expr = FuseMutator().Transform(expr, fuse_opt_level, max_fuse_depth);
+      }
 
-//  Expr dp_expr = FuseMutator().Transform(annotated_expr, fuse_opt_level, max_fuse_depth);
-
-//  std::cerr << "Matching results" << "\n\n";
-//  std::cerr << matching << "\n\n";
-//  std::cerr << matching[expr] << "\n\n";
-//  return FuseMutator().Transform(expr, fuse_opt_level, max_fuse_depth);
+      return fused_expr;
     }
 
     namespace transform {

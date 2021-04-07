@@ -1,0 +1,1 @@
+from ._optimizer import optimize_comp_graph

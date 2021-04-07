@@ -123,6 +123,12 @@ class Function : public BaseFunc {
  * \brief namespace of the attributes that can be attached to a relay::Function.
  */
 namespace attr {
+// PATCH(@Soo): New attribute for backend operator name
+/*! \brief Indicate the corresponding backend op. */
+constexpr const char* kBackendOp = "BackendOp";
+/*! \brief Indicate whether we use original or custom fusion pass. */
+constexpr const char* kCustomFusionPass = "CustomFusionPass";
+
 /*! \brief Mark the function as a primitive function. */
 constexpr const char* kPrimitive = "Primitive";
 /*!
