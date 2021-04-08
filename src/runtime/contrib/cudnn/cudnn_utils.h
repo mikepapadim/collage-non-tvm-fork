@@ -27,7 +27,7 @@
 #include <cudnn.h>
 #include <tvm/runtime/device_api.h>
 #include <tvm/runtime/logging.h>
-
+#include <assert.h>
 #include "../../cuda/cuda_common.h"
 
 namespace tvm {
@@ -44,6 +44,7 @@ struct CuDNNDataType {
   static cudnnDataType_t DLTypeToCuDNNType(const DLDataType& dtype);
   template <int v>
   static const void* GetConst(cudnnDataType_t type);
+  static const void* GetConst(cudnnDataType_t type, double val);
 };  // struct CuDNNDataType
 
 inline void GetStride(int nbdim, const int* dims, int* strides) {
@@ -61,6 +62,40 @@ inline void GetCudnnStride(int nbdim, const int* dims, int* strides) {
     mul *= dims[i];
   }
 }
+
+struct FusedOpsEntry {
+  cudnnFusedOpsPlan_t fuse_plan;
+  cudnnFusedOpsVariantParamPack_t varPack;
+  cudnnFusedOpsConstParamPack_t constPack;
+  FusedOpsEntry();
+  ~FusedOpsEntry();
+};  // FusedOpsEntry
+
+
+
+struct FusedConvEntry {
+  cudnnConvolutionDescriptor_t conv_desc;
+  cudnnConvolutionMode_t mode;
+  cudnnFilterDescriptor_t filter_desc;
+  cudnnDataType_t data_type;
+  cudnnTensorFormat_t tensor_format;
+  cudnnTensorDescriptor_t input_desc;
+  cudnnTensorDescriptor_t bias_desc;
+  cudnnTensorDescriptor_t z_desc;
+  cudnnTensorDescriptor_t output_desc;
+  cudnnActivationDescriptor_t activation_desc;
+  cudnnConvolutionFwdAlgo_t fwd_algo;
+  // cudnnMathType_t math_type;
+  TVMContext ctx;
+  runtime::DeviceAPI* cuda_api;
+  void* workspace{nullptr};
+  size_t workspace_size{0};
+  FusedConvEntry();
+  ~FusedConvEntry();
+  void UpdateWorkspace(const size_t wsize);
+  void CleanWorkspace();
+};  // FusedConvThreadEntry
+
 
 struct ConvEntry {
   cudnnConvolutionDescriptor_t conv_desc;
@@ -90,12 +125,76 @@ struct SoftmaxEntry {
   ~SoftmaxEntry();
 };  // SoftmaxEntry
 
+struct BiasEntry {
+  cudnnDataType_t data_type;
+  cudnnTensorDescriptor_t shape_desc;
+  BiasEntry();
+  ~BiasEntry();
+}; // BiasEntry
+
+struct BatchNormEntry {
+  cudnnDataType_t data_type;
+  cudnnBatchNormMode_t mode;
+  cudnnTensorDescriptor_t shape_desc;
+  cudnnTensorDescriptor_t scale_bias_mean_var_desc;
+  BatchNormEntry();
+  ~BatchNormEntry();
+}; // BatchNormEntry
+
+struct PoolingEntry {
+  cudnnDataType_t data_type;
+  cudnnPoolingDescriptor_t pooling_desc;
+  cudnnTensorDescriptor_t input_desc;
+  cudnnTensorDescriptor_t output_desc;
+  PoolingEntry();
+  ~PoolingEntry();
+}; // PoolingEntry
+
+struct ScaleEntry {
+  cudnnDataType_t data_type;
+  cudnnTensorDescriptor_t shape_desc;
+  ScaleEntry();
+  ~ScaleEntry();
+}; // ScaleEntry
+
+struct ReduceEntry {
+  cudnnDataType_t data_type;
+  cudnnReduceTensorDescriptor_t reduce_desc;
+  cudnnTensorDescriptor_t a_desc;
+  cudnnTensorDescriptor_t c_desc;
+  TVMContext ctx;
+  runtime::DeviceAPI* cuda_api;
+  void* workspace{nullptr};
+  size_t workspace_size{0};
+  ReduceEntry();
+  ~ReduceEntry();
+  void UpdateWorkspace(const size_t wsize);
+  void CleanWorkspace();
+}; // ReduceEntry
+
+struct ActivationEntry {
+  cudnnActivationDescriptor_t activation_desc;
+  cudnnDataType_t data_type;
+  cudnnTensorDescriptor_t shape_desc;
+  ActivationEntry();
+  ~ActivationEntry();
+}; // ActivationEntry
+
+
 struct CuDNNThreadEntry {
   CuDNNThreadEntry();
   ~CuDNNThreadEntry();
   cudnnHandle_t handle{nullptr};
+  FusedConvEntry fused_conv_entry;
   ConvEntry conv_entry;
   SoftmaxEntry softmax_entry;
+  BiasEntry bias_entry;
+  BatchNormEntry batchnorm_entry;
+  PoolingEntry pooling_entry;
+  ScaleEntry scale_entry;
+  ReduceEntry reduce_entry;
+  FusedOpsEntry fused_ops_entry;
+  ActivationEntry activation_entry;
   runtime::DeviceAPI* cuda_api{nullptr};
   static CuDNNThreadEntry* ThreadLocal();
 };  // CuDNNThreadEntry
