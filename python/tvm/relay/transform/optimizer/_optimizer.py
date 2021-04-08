@@ -51,8 +51,8 @@ def optimize_comp_graph(relay_expr):
     # targets = [Target.TENSORRT, Target.CUDNN, Target.CUBLAS, Target.TVM_GPU_NO_TUNING, Target.TVM_CPU]
     # targets = [Target.TVM_GPU_NO_TUNING, Target.TVM_GPU]
     # targets = [Target.TVM_GPU_AUTOSCH]
-    targets = [Target.TENSORRT]
-    # targets = [Target.CUDNN]
+    # targets = [Target.TENSORRT]
+    targets = [Target.CUDNN]
     batch_size = 1
     backendop_lib = setup_backend_op_lib(relay_expr, targets, batch_size)
 
