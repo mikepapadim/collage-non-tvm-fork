@@ -1148,12 +1148,13 @@ namespace tvm {
     // For end-to-end measure, execute DP fusion pass
     Expr FuseOps(const Expr& expr, int fuse_opt_level, size_t max_fuse_depth, const IRModule& module) {
       // PATCH(@Soo): Uncomment this part for executing original fusion pass (instead of DP)
-////      std::cerr << "\t[Fused Pass] Expr before pass: " << expr << "\n\n";
+//      std::cerr << "\t[Fused Pass] Expr before pass: " << expr << "\n\n";
 //      Expr orig_expr = FuseMutator().Transform(expr, fuse_opt_level, max_fuse_depth);
 ////      std::cerr << "\t[Fused Pass] Expr after pass: " << orig_expr << "\n\n";
 //
 //      return orig_expr;
 
+//      std::cerr << "\t[Fused Pass] Begins" << "\n\n";
       // WARNING(@Soo): Assume that all exprs are function!
       Expr fused_expr;
       const FunctionNode* fn_node = static_cast<const FunctionNode*>(expr.get());

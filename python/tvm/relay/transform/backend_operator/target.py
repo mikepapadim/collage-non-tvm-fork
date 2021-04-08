@@ -4,7 +4,7 @@ import tvm.relay.testing as testing
 import tvm
 import numpy as np
 from tvm.contrib import graph_runtime as runtime
-from tvm import autotvm
+from tvm import autotvm, auto_scheduler
 
 import os
 from pathlib import Path
@@ -18,7 +18,10 @@ NUM_MEASUREMENTS_PER_REPEAT = 100
 
 
 cur_dir_path = Path(__file__).parent.absolute()
-TUNING_DB = f"{cur_dir_path}/../autotune-rtx2070/dp_tuning.log"
+AUTOTVM_LOG = f"{cur_dir_path}/../autotune/autotvm_ops.log"
+# Temporary autoscheduler log file
+# FIXME(@Soo): Accumulate autoscheduler logs to the same file
+AUTOSCH_LOG = f"{cur_dir_path}/../autotune/resnet50.json"
 
 def measure(ftimer, *args):
     # Warm-up Phase: Run without measurement 
@@ -36,7 +39,6 @@ def measure(ftimer, *args):
         if std_perf <= MAX_STANDARD_DEVIATION:
             mean_perf = np.mean(perfs)
             break
-
     return mean_perf, std_perf
 
 
@@ -44,15 +46,16 @@ def measure(ftimer, *args):
 class Target(Enum):
     # NVIDIA GPU
     CUDNN = (1, "cuda -libs=cudnn", "cudnn")
-    TVM_GPU = (2, "cuda", "tvmgpu")
-    TENSORRT = (3, "tensorrt", "tensorrt")
-    CUBLAS = (4, "cuda -libs=cublas", "cublas")
-    TVM_GPU_NO_TUNING = (5, "cuda", "tvmgpu-no-tuning")
+    TENSORRT = (2, "tensorrt", "tensorrt")
+    CUBLAS = (3, "cuda -libs=cublas", "cublas")
+    TVM_GPU_NO_TUNING = (4, "cuda", "tvmgpu-no-tuning")
+    TVM_GPU_AUTOTVM = (5, "cuda", "tvmgpu-autotvm")
+    TVM_GPU_AUTOSCH = (6, "cuda", "tvmgpu-autosch")
     
     # Intel CPU
-    TVM_CPU= (6, "llvm", "tvmcpu")
-#     ONEDNN = (7, "onednn", "onednn") # not implemented
-#     TENSORFLOWXLA = (8, "tensorflowxla") # not implemented
+    TVM_CPU= (7, "llvm", "tvmcpu")
+#     ONEDNN = (8, "onednn", "onednn") # not implemented
+#     TENSORFLOWXLA = (9, "tensorflowxla") # not implemented
 
     def __str__(self):
         return self.value[1]
@@ -69,7 +72,8 @@ class TargetCostFunc:
     def measure_cost(self):
         assert False
 
-class TVMSubGraphCostFunc(TargetCostFunc):
+
+class TVMSubGraphCostFunc_AutoSch(TargetCostFunc):
     def __init__(self):
         super().__init__()
 
@@ -82,10 +86,43 @@ class TVMSubGraphCostFunc(TargetCostFunc):
         expr_func = relay.Function(inputs, expr)
         net, params = testing.create_workload(expr_func)
 
-        assert(os.path.exists(TUNING_DB))
+        assert (os.path.exists(AUTOSCH_LOG))
+
+        # AutoScheduler codes
+        target_str = target.__str__()
+        ctx = tvm.context(target_str, 0)
+        with auto_scheduler.ApplyHistoryBest(AUTOSCH_LOG):
+            with tvm.transform.PassContext(opt_level=3, config={"relay.backend.use_auto_scheduler": True}):
+                lib = relay.build(net, target_str, params=params)
+
+        module = runtime.GraphModule(lib["default"](ctx))
+
+        # Setup execution
+        data_shape = get_data_shape(expr)
+        data = np.random.uniform(-1, 1, size=data_shape).astype("float32")
+        module.set_input("data", data)
+        ftimer = module.module.time_evaluator("run", ctx, number=NUM_MEASUREMENTS_PER_REPEAT, repeat=NUM_REPEATS)
+
+        return measure(ftimer)
+
+class TVMSubGraphCostFunc_AutoTVM(TargetCostFunc):
+    def __init__(self):
+        super().__init__()
+
+    # measure the cost of running an expression on a target, in milliseconds.
+    # We assume that the target has a backend operator satisfying the configuration of the expr
+    @staticmethod
+    def measure_cost(name, expr, target):
+        # Create workload
+        inputs = relay.analysis.free_vars(expr)
+        expr_func = relay.Function(inputs, expr)
+        net, params = testing.create_workload(expr_func)
+
+        assert(os.path.exists(AUTOTVM_LOG))
+
+        # AutoTVM codes
         # Compile kernels with history best records
-        with autotvm.apply_history_best(TUNING_DB):
-            # Build the subgraph
+        with autotvm.apply_history_best(AUTOTVM_LOG):
             target_str = target.__str__()
             ctx = tvm.context(target_str, 0)
             lib = relay.build_module.build(net, target_str, params=params)
@@ -175,6 +212,10 @@ class CuDNNCostFunc(TargetCostFunc):
             op, args, attrs, type_args, span = expr.op, expr.args, expr.attrs, expr.type_args, expr.span
 
             # extract conv attributes
+            print(attrs.strides)
+            print(attrs.padding)
+            print(attrs.channels)
+            print(attrs.dilation)
             strides, padding, out_channels, dilation = \
                 list(attrs.strides), list(attrs.padding), int(attrs.channels), list(attrs.dilation)
 
@@ -532,14 +573,15 @@ class TensorRTCostFunc(TargetCostFunc):
 
 target_to_cost_func = {
     #GPU
-    Target.TVM_GPU: TVMSubGraphCostFunc(),
+    Target.TVM_GPU_AUTOTVM: TVMSubGraphCostFunc_AutoTVM(),
+    Target.TVM_GPU_AUTOSCH: TVMSubGraphCostFunc_AutoSch(),
     Target.TVM_GPU_NO_TUNING: TVMSubGraphCostFunc_NoTuning(),
     Target.CUDNN: CuDNNCostFunc(),
     Target.TENSORRT: TensorRTCostFunc(),
-    Target.CUBLAS: TVMSubGraphCostFunc(),
+    Target.CUBLAS: TVMSubGraphCostFunc_NoTuning(),
 
     # CPU
-    Target.TVM_CPU: TVMSubGraphCostFunc(),
+    Target.TVM_CPU: TVMSubGraphCostFunc_NoTuning(),
 }
 
 def get_target_cost_func(target):

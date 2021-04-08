@@ -4,75 +4,24 @@ import tvm.driver
 # from tvm import relay
 
 # from ..backend_operator.record import backendop_lib
-from ..backend_operator.backend_op import BackendOpLib
 from ..backend_operator.op_config import MeasuredConfigs
 from ..backend_operator.target import Target
 from ..backend_operator.op_type import OpType
+from ..backend_operator.backend_op_lib import BackendOpLib
 
 from .comp_graph import ComputationGraph
 from .comp_graph_optimizer import CompGraphOptimizer
 
 from .optimizer_utils import print_matching_final
 
-def add_all_backend_ops_to_lib(b_op_lib, target):
-    t_name = target.name()
+def setup_backend_op_lib(network_expr, targets, batch_size):
+    backendop_lib = BackendOpLib.get()
+    backendop_lib.measure_backend_ops(network_expr, targets, batch_size)
+    backendop_lib.save_to_log()
 
-    for op_type in OpType:
-        # Skip diamond pattern for now
-        if op_type==OpType.DIAMOND:
-            continue
-
-        op_name, op_depth = op_type.name(), op_type.depth()
-        b_op_lib.add_backendop(f"{t_name}_{op_name}", target, op_type, op_depth)
-
-def create_backendop_lib():
-    measured_configs = MeasuredConfigs()
-    measured_configs.load_from_log()
-
-    backendop_lib = BackendOpLib(measured_configs)
-
-    # CUDNN
-    # TODO: discuss with Soo.
-    backendop_lib.add_backendop("cudnn_conv2d", Target.CUDNN, OpType.CONV2D, 1)
-    # backendop_lib.add_backendop("cudnn_softmax", Target.CUDNN, OpType.SOFTMAX, 1)
-    # backendop_lib.add_backendop("cudnn_biasadd", Target.CUDNN, OpType.BIAS_ADD, 1)
-    backendop_lib.add_backendop("cudnn_relu", Target.CUDNN, OpType.RELU, 1)
-    # backendop_lib.add_backendop("cudnn_bn", Target.CUDNN, OpType.BN, 1)
-
-    # measure_cost doesn't work, we need to fix this later.
-    # backendop_lib.add_backendop("cudnn_maxpool2d", Target.CUDNN, OpType.MAX_POOL2D, 1)
-
-    # conv_bias_add_relu --> ResNet doesn't have this pattern, so it wouldn't be measured
-    # backendop_lib.add_backendop("cudnn_conv2d+biasadd+relu", Target.CUDNN, OpType.CONV2D_BIAS_ADD_RELU, 3)
-    backendop_lib.add_backendop("cudnn_add", Target.CUDNN, OpType.ADD, 1)
-
-
-    # Non-existing patterns
-    #backendop_lib.add_backendop("cudnn_dense", Target.CUDNN, OpType.DENSE, 1) #TODO: matmul?
-    #backendop_lib.add_backendop("cudnn_batchflatten", Target.CUDNN, OpType.BATCH_FLATTEN, 1)
-    #backendop_lib.add_backendop("cudnn_globalavgpool2d", Target.CUDNN, OpType.GLOBAL_AVG_POOL2D, 1)
-    #backendop_lib.add_backendop("cudnn_conv2d+bn", Target.CUDNN, OpType.CONV2D_BN, 2)
-    #backendop_lib.add_backendop("cudnn_bn+relu", Target.CUDNN, OpType.BN_RELU, 2)
-    #backendop_lib.add_backendop("cudnn_conv2d+bn+relu", Target.CUDNN, OpType.CONV2D_BN_RELU, 3)
-    #backendop_lib.add_backendop("cudnn_diamond", Target.CUDNN, OpType.DIAMOND, 6)
-
-
-    # TENSORRT
-    add_all_backend_ops_to_lib(backendop_lib, Target.TENSORRT)
-
-    # CUBLAS
-    # TODO: Add patterns. matmul, batch matmul
-    backendop_lib.add_backendop("cublas_dense", Target.CUBLAS, OpType.DENSE, 1)
-
-    # TVM_GPU
-    # add_all_backend_ops_to_lib(backendop_lib, Target.TVM_GPU)
-    # add_all_backend_ops_to_lib_except_fused(backendop_lib, Target.TVM_GPU)
-
-    # TVM_GPU_NO_TUNING
-    add_all_backend_ops_to_lib(backendop_lib, Target.TVM_GPU_NO_TUNING)
-    
     return backendop_lib
-    
+
+
 @tvm._ffi.register_func("relay.transform.optimizer.optimize_comp_graph")
 def optimize_comp_graph(relay_expr):
     """Optimizing pass for computation graph representation (Relay IR).
@@ -98,13 +47,18 @@ def optimize_comp_graph(relay_expr):
 
     # Warning: ResNet-8 doesn't have tuned operators / CuDNN doesn't work for ResNet-8
     # target_backend = None # Consider all targets
-    target_backend = [Target.TVM_GPU_NO_TUNING]
-    # target_backend = [Target.TVM_GPU_NO_TUNING, Target.TENSORRT]
-    backendop_lib = create_backendop_lib()
+
+    # targets = [Target.TENSORRT, Target.CUDNN, Target.CUBLAS, Target.TVM_GPU_NO_TUNING, Target.TVM_CPU]
+    # targets = [Target.TVM_GPU_NO_TUNING, Target.TVM_GPU]
+    # targets = [Target.TVM_GPU_AUTOSCH]
+    targets = [Target.TENSORRT]
+    # targets = [Target.CUDNN]
+    batch_size = 1
+    backendop_lib = setup_backend_op_lib(relay_expr, targets, batch_size)
 
     # Optimizing graph
     print("Computation graph created")
-    optimizer = CompGraphOptimizer(backendop_lib, target_backend)
+    optimizer = CompGraphOptimizer(backendop_lib, targets)
     print("Optimizer created")
     optimizer.optimize(comp_graph)
     print("It's optimized")

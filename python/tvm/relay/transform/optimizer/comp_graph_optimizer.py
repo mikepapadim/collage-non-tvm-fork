@@ -147,12 +147,14 @@ class CompGraphOptimizer:
         self._bop_attr_key = "backend-op"
         
         # For printing matched backend ops in ResNet graph
-        names = ['conv', 'softmax', 'bias_add', 'relu','max_pool', 'bn', 'relu-bias_add-conv', 'add', 
-         'dense','flatten','global_avg_pool', 'bn-conv', 'relu-bn', 'relu-bn-conv']
         patterns = self._backendop_lib.get_all_patterns()
         self._pattern_to_name = {}
-        for i in range(len(names)):
-            self._pattern_to_name[patterns[i]] = names[i]
+        for pat in patterns:
+            backend_ops = self._backendop_lib.pattern_to_backendops[pat]
+
+            assert len(backend_ops) > 0
+            name = backend_ops[0]._op_type.name()
+            self._pattern_to_name[pat] = name
             
         self.loc2match = None
         self._memo = None

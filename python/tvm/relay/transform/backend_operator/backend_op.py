@@ -21,8 +21,8 @@ from .target import Target, get_target_cost_func
 from .op_type import OpType, optype_to_pattern, relayop_to_varnames
 
 # It gives the path of backend_op.py no matter where you import this file
-cur_dir_path = Path(__file__).parent.absolute()
-RES_LOG = f"{cur_dir_path}/logs/runtime_results.log"
+# cur_dir_path = Path(__file__).parent.absolute()
+# RES_LOG = f"{cur_dir_path}/logs/runtime_results.log"
 
 # redirect stdout to this log so it is not intertwined with by TVM backend log output
 # sys.stdout = open(RES_LOG, 'w')
@@ -82,29 +82,6 @@ class BackendOp(object):
     # We use mean as a cost instead of sampling for now
     mean_cost, std_cost = cost_info
     return mean_cost
-
-# library class representing all backend operators
-class BackendOpLib(object):
-  def __init__(self, measured_configs_lib):
-    # list of all backend operators
-    self._measured_configs = measured_configs_lib
-    self.all_backendops = []
-    # dictionary that maps each pattern to list of backend ops represented by the pattern
-    self.pattern_to_backendops = defaultdict(list)
-
-  # add a backend operator to the library
-  def add_backendop(self, name, target, op_type, max_depth, constraint_func = no_constraints_func):
-    backendop = BackendOp(name, target, op_type, max_depth, self._measured_configs, constraint_func)
-    self.all_backendops.append(backendop)
-    self.pattern_to_backendops[backendop.get_pattern()].append(backendop)
-
-  # return list of backend operators matching a pattern
-  def get_backendops(self, pattern):
-    return self.pattern_to_backendops[pattern]
-
-  # return list of all patterns for backend operators
-  def get_all_patterns(self):
-    return list(self.pattern_to_backendops.keys())
 
 # extract the subgraph of the expr that matches the pattern (only the top layers of the recursive relay expr).
 # Since there might be multiple branches, we traverse each branch by "max_depth" steps, and rewrite the child nodes
@@ -170,7 +147,8 @@ def extract_subgraph(expr, max_depth):
 # given a pattern and a relay expr matching that pattern, return the cheapest backend operator
 # satisfying the constraints and its cost. Return None if no backend operators satisfy constraints.
 def get_optimal_backendop(b_op_lib, expr, pattern, target = None):
-
+  assert type(target) == list
+  
   backendops = b_op_lib.get_backendops(pattern)
 
   cheapest_op, min_cost = None, float('inf')

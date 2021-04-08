@@ -1,6 +1,7 @@
 from pathlib import Path
 from .utils import extract_attrs, get_data_shape
 import pickle
+from os import path
 
 cur_dir_path = Path(__file__).parent.absolute()
 COST_LOG = f"{cur_dir_path}/logs/operator_cost.log"
@@ -52,10 +53,13 @@ class MeasuredConfigs(object):
     with open(COST_LOG, 'wb+') as log:
       pickle.dump(self.measured_configs, log)
 
+  # If log doesn't exist, it uses default empty dictionary.
   def load_from_log(self):
     try:
-      with open(COST_LOG, 'rb') as log:
-        self.measured_configs = pickle.load(log)
+      if path.exists(COST_LOG):
+        with open(COST_LOG, 'rb') as log:
+          print("Cost configurations loaded")
+          self.measured_configs = pickle.load(log)
     except:
 #       pass
       raise Exception(f'{COST_LOG} is not valid')
