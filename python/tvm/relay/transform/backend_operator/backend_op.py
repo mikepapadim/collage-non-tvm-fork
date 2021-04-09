@@ -168,6 +168,7 @@ def get_optimal_backendop(b_op_lib, expr, pattern, target = None):
       cheapest_op = op
 
   if min_cost == float('inf'):
+    raise Exception("No corresponding backend operators")
     return None
   return cheapest_op, min_cost
 

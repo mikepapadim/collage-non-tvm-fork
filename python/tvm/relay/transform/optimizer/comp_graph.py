@@ -59,7 +59,7 @@ class ComputationGraph:
     def _get_n_nodes(self, relay_expr):
         self._memo[hash(relay_expr)] = True
         n_nodes = 1
-        
+        print(relay_expr)
         if is_constant_node(relay_expr) or (is_var_node(relay_expr) and relay_expr.name_hint != 'data'):
             n_nodes = 0
         elif is_var_node(relay_expr) and relay_expr.name_hint == 'data':

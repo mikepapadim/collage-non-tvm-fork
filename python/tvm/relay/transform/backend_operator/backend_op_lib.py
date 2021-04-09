@@ -106,7 +106,7 @@ class BackendOpLib(object):
     # CUDNN
     self._add_backendop("cudnn_conv2d", Target.CUDNN, OpType.CONV2D, 1)
     self._add_backendop("cudnn_relu", Target.CUDNN, OpType.RELU, 1)
-    self._add_backendop("cudnn_add", Target.CUDNN, OpType.ADD, 1)
+    # self._add_backendop("cudnn_add", Target.CUDNN, OpType.ADD, 1)
 
     # self._add_backendop("cudnn_softmax", Target.CUDNN, OpType.SOFTMAX, 1)
     # self._add_backendop("cudnn_biasadd", Target.CUDNN, OpType.BIAS_ADD, 1)
@@ -119,7 +119,9 @@ class BackendOpLib(object):
     # self._add_backendop("cudnn_conv2d+biasadd+relu", Target.CUDNN, OpType.CONV2D_BIAS_ADD_RELU, 3)
 
     # TENSORRT
-    add_all_backend_ops_to_lib(self, Target.TENSORRT)
+    self._add_backendop("tensorrt_conv2d", Target.TENSORRT, OpType.CONV2D, 1)
+    self._add_backendop("tensorrt_relu", Target.TENSORRT, OpType.RELU, 1)
+    # add_all_backend_ops_to_lib(self, Target.TENSORRT)
 
     # CUBLAS
     # TODO: Add patterns. matmul, batch matmul

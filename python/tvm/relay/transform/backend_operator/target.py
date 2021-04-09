@@ -3,13 +3,15 @@ from tvm import relay
 import tvm.relay.testing as testing
 import tvm
 import numpy as np
-from tvm.contrib import graph_runtime as runtime
+# from tvm.contrib import graph_runtime as runtime
 from tvm import autotvm, auto_scheduler
 
 import os
 from pathlib import Path
 
 from .utils import is_call_node, is_tuplegetitem_node, is_var_node, no_constraints_func, get_data_shape
+
+from tvm.contrib import graph_executor
 
 # only collect results whose standard deviation is below this
 MAX_STANDARD_DEVIATION = 5E-04
@@ -150,18 +152,34 @@ class TVMSubGraphCostFunc_NoTuning(TargetCostFunc):
         net, params = testing.create_workload(expr_func)
 
         # Build the subgraph
-        target_str = target.__str__()
-        ctx = tvm.context(target_str, 0)
-        lib = relay.build_module.build(net, target_str, params=params)
-        module = runtime.GraphModule(lib["default"](ctx))
+        # FIXME(@Soo): We should redesign Target class to deal with new TVM build interface
+        target_backend = tvm.target.cuda()
+        target_dev = tvm.gpu()
+        opt_level = 3
+        with tvm.transform.PassContext(opt_level=opt_level):
+            lib = relay.build(net, target_backend, params=params)
 
         # Setup execution
         data_shape = get_data_shape(expr)
         data = np.random.uniform(-1, 1, size=data_shape).astype("float32")
+        module = graph_executor.GraphModule(lib["default"](target_dev))
         module.set_input("data", data)
-        ftimer = module.module.time_evaluator("run", ctx, number=NUM_MEASUREMENTS_PER_REPEAT, repeat=NUM_REPEATS)
-        
+        ftimer = module.module.time_evaluator("run", target_dev, number=NUM_MEASUREMENTS_PER_REPEAT, repeat=NUM_REPEATS)
+
         return measure(ftimer)
+
+        # target_str = target.__str__()
+        # ctx = tvm.context(target_str, 0)
+        # lib = relay.build_module.build(net, target_str, params=params)
+        # module = runtime.GraphModule(lib["default"](ctx))
+        #
+        # # Setup execution
+        # data_shape = get_data_shape(expr)
+        # data = np.random.uniform(-1, 1, size=data_shape).astype("float32")
+        # module.set_input("data", data)
+        # ftimer = module.module.time_evaluator("run", ctx, number=NUM_MEASUREMENTS_PER_REPEAT, repeat=NUM_REPEATS)
+        #
+        # return measure(ftimer)
 
 class CuDNNCostFunc(TargetCostFunc):
 
@@ -212,10 +230,6 @@ class CuDNNCostFunc(TargetCostFunc):
             op, args, attrs, type_args, span = expr.op, expr.args, expr.attrs, expr.type_args, expr.span
 
             # extract conv attributes
-            print(attrs.strides)
-            print(attrs.padding)
-            print(attrs.channels)
-            print(attrs.dilation)
             strides, padding, out_channels, dilation = \
                 list(attrs.strides), list(attrs.padding), int(attrs.channels), list(attrs.dilation)
 
@@ -546,28 +560,50 @@ class TensorRTCostFunc(TargetCostFunc):
 
     @staticmethod
     def measure_cost(name, expr, target):
+
         # Create workload
         inputs = relay.analysis.free_vars(expr)
         expr_func = relay.Function(inputs, expr)
         net, params = testing.create_workload(expr_func)
 
         from tvm.relay.op.contrib.tensorrt import partition_for_tensorrt
-        net, config = partition_for_tensorrt(net, params)
+        mod, config = partition_for_tensorrt(net, params)
 
         target = "cuda"
         with tvm.transform.PassContext(opt_level=3, config={'relay.ext.tensorrt.options': config}):
-            lib = relay.build(net, target=target, params=params)
+            lib = relay.build(mod, target=target, params=params)
 
         lib.export_library('compiled.so')
-        ctx = tvm.gpu(0)
-        loaded_lib = tvm.runtime.load_module('compiled.so')
-        module = tvm.contrib.graph_runtime.GraphModule(loaded_lib['default'](ctx))
 
-        data_shape = get_data_shape(expr)
-        data = np.random.uniform(-1, 1, size=data_shape).astype("float32")
-        module.set_input("data", data)
-        ftimer = module.module.time_evaluator("run", ctx, number=NUM_MEASUREMENTS_PER_REPEAT, repeat=NUM_REPEATS)
-        return measure(ftimer)
+        dev = tvm.gpu(0)
+        loaded_lib = tvm.runtime.load_module('compiled.so')
+        module = tvm.contrib.graph_executor.GraphModule(loaded_lib['default'](dev))
+
+        input_shape = get_data_shape(expr)
+        input_data = np.random.uniform(0, 1, input_shape).astype("float32")
+        module.set_input("data", input_data)
+        ftimer = module.module.time_evaluator("run", dev, number=NUM_MEASUREMENTS_PER_REPEAT, repeat=NUM_REPEATS)
+        measure_info = measure(ftimer)
+        print(f"TensorRT results : {measure_info}")
+        return measure_info
+
+        # from tvm.relay.op.contrib.tensorrt import partition_for_tensorrt
+        # net, config = partition_for_tensorrt(net, params)
+        #
+        # target = "cuda"
+        # with tvm.transform.PassContext(opt_level=3, config={'relay.ext.tensorrt.options': config}):
+        #     lib = relay.build(net, target=target, params=params)
+        #
+        # lib.export_library('compiled.so')
+        # ctx = tvm.gpu(0)
+        # loaded_lib = tvm.runtime.load_module('compiled.so')
+        # module = tvm.contrib.graph_runtime.GraphModule(loaded_lib['default'](ctx))
+        #
+        # data_shape = get_data_shape(expr)
+        # data = np.random.uniform(-1, 1, size=data_shape).astype("float32")
+        # module.set_input("data", data)
+        # ftimer = module.module.time_evaluator("run", ctx, number=NUM_MEASUREMENTS_PER_REPEAT, repeat=NUM_REPEATS)
+        # return measure(ftimer)
 
 
 

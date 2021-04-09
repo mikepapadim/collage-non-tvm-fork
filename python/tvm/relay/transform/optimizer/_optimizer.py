@@ -16,8 +16,7 @@ from .optimizer_utils import print_matching_final
 
 def setup_backend_op_lib(network_expr, targets, batch_size):
     backendop_lib = BackendOpLib.get()
-    backendop_lib.measure_backend_ops(network_expr, targets, batch_size)
-    backendop_lib.save_to_log()
+    # backendop_lib.measure_backend_ops(network_expr, targets, batch_size)
 
     return backendop_lib
 
@@ -52,7 +51,9 @@ def optimize_comp_graph(relay_expr):
     # targets = [Target.TVM_GPU_NO_TUNING, Target.TVM_GPU]
     # targets = [Target.TVM_GPU_AUTOSCH]
     # targets = [Target.TENSORRT]
-    targets = [Target.CUDNN]
+    # targets = [Target.CUDNN, Target.TVM_GPU_NO_TUNING]
+    # targets = [Target.TENSORRT, Target.TVM_GPU_NO_TUNING]
+    targets = [Target.TVM_GPU_NO_TUNING]
     batch_size = 1
     backendop_lib = setup_backend_op_lib(relay_expr, targets, batch_size)
 
@@ -74,6 +75,8 @@ def optimize_comp_graph(relay_expr):
     print("-"*40)
     # print("Optimized match")
     # print(optimized_match)
+
+    backendop_lib.save_to_log()
 
     return optimized_match
 
