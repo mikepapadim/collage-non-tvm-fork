@@ -127,7 +127,7 @@ import logging
 import tvm
 import tvm.micro as micro
 from tvm.contrib.download import download_testdata
-from tvm.contrib import graph_runtime, utils
+from tvm.contrib import graph_executor, utils
 from tvm import relay
 
 model_url = "https://people.linaro.org/~tom.gall/sine_model.tflite"
@@ -177,7 +177,7 @@ mod, params = relay.frontend.from_tflite(
 # Now we create a build config for relay. turning off two options
 # and then calling relay.build which will result in a C source
 # file. When running on a simulated target, choose "host" below:
-TARGET = tvm.target.target.micro("host")
+# TARGET = tvm.target.target.micro("host")
 
 # %%
 # Compiling for physical hardware
@@ -190,8 +190,9 @@ TARGET = tvm.target.target.micro("host")
 #
 #  .. code-block:: python
 #
-#     TARGET = tvm.target.target.micro("stm32f746xx")
-#     BOARD = "nucleo_f746zg" # or "stm32f746g_disco"
+TARGET = tvm.target.target.micro("host")
+# BOARD = "nucleo_f746zg" # or "stm32f746g_disco"
+BOARD = "qemu_x86"
 
 ######################################################################
 # Now, compile the model for the target:
@@ -223,7 +224,7 @@ opts = tvm.micro.default_options(
 #     from tvm.micro.contrib import zephyr
 #
 #     repo_root = subprocess.check_output(["git", "rev-parse", "--show-toplevel"], encoding='utf-8').strip()
-#     project_dir = f"{repo_root}/tests/micro/qemu/zephyr-runtime"
+#     project_dir = os.path.join(repo_root, "apps", "microtvm", "zephyr", "demo_runtime")
 #     compiler = zephyr.ZephyrCompiler(
 #         project_dir=project_dir,
 #         board=BOARD if "stm32f746" in str(TARGET) else "qemu_x86",
@@ -256,8 +257,8 @@ micro_binary = tvm.micro.build_static_runtime(
 
 flasher = compiler.flasher()
 with tvm.micro.Session(binary=micro_binary, flasher=flasher) as session:
-    graph_mod = tvm.micro.create_local_graph_runtime(
-        graph, session.get_system_lib(), session.context
+    graph_mod = tvm.micro.create_local_graph_executor(
+        graph, session.get_system_lib(), session.device
     )
 
     # Set the model parameters using the lowered parameters produced by `relay.build`.
