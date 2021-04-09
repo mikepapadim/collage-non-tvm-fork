@@ -46,7 +46,7 @@
 # - ON: enable CUDA with cmake's auto search
 # - OFF: disable CUDA
 # - /path/to/cuda: use specific path to cuda toolkit
-set(USE_CUDA OFF)
+set(USE_CUDA ON)
 
 # Whether enable ROCM runtime
 #
@@ -116,7 +116,7 @@ set(USE_MICRO_STANDALONE_RUNTIME OFF)
 # - OFF: disable llvm, note this will disable CPU codegen
 #        which is needed for most cases
 # - /path/to/llvm-config: enable specific LLVM when multiple llvm-dev is available.
-set(USE_LLVM OFF)
+set(USE_LLVM ON)
 
 #---------------------------------------------
 # Contrib libraries
@@ -178,7 +178,7 @@ set(USE_EDGETPU OFF)
 # - ON: enable cuDNN with cmake's auto search in CUDA directory
 # - OFF: disable cuDNN
 # - /path/to/cudnn: use specific path to cuDNN path
-set(USE_CUDNN OFF)
+set(USE_CUDNN ON)
 
 # Whether use cuBLAS
 set(USE_CUBLAS OFF)
@@ -229,8 +229,8 @@ set(USE_ETHOSN_HW OFF)
 #                        offloaded to TensorRT. OFF/ON
 # USE_TENSORRT_RUNTIME - Support for running TensorRT compiled modules, requires presense of
 #                        TensorRT library. OFF/ON/"path/to/TensorRT"
-set(USE_TENSORRT_CODEGEN OFF)
-set(USE_TENSORRT_RUNTIME OFF)
+set(USE_TENSORRT_CODEGEN ON)
+set(USE_TENSORRT_RUNTIME ON)
 
 # Whether use VITIS-AI codegen
 set(USE_VITIS_AI OFF)
