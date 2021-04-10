@@ -29,6 +29,7 @@ from .. import analysis
 from .. import expr as _expr
 from .. import function as _function
 from .. import op as _op
+from .. import qnn as _qnn
 from .. import vision as _vision
 from .. import loops as _loops
 from .. import ty as _ty
@@ -397,7 +398,7 @@ def autopad(data, strides, kernel_shape, dilations, ndim, pad_type="constant", d
     # pad N and C with zeros
     pad = _op.concatenate([_op.const(np.zeros([2, 2], dtype="int64"), dtype="int64"), pad], axis=0)
 
-    return _op.nn.pad(data, pad, _op.const(0.0), pad_type)
+    return _op.nn.pad(data, fold_constant(pad), _op.const(0.0), pad_type)
 
 
 class Conv(OnnxOpConverter):
@@ -809,7 +810,6 @@ class Pad(OnnxOpConverter):
 
         pad_width_expr = fold_constant(_op.transpose(_op.reshape(pads, (2, -1))))
         pad_mode = attr.get("mode", b"constant").decode("utf-8")
-
         if not pad_mode in ["constant", "edge", "reflect"]:
             raise tvm.error.OpAttributeInvalid(
                 "Value " + pad_mode + ' in attribute "mode" is invalid for operator Pad.'
@@ -1254,6 +1254,23 @@ class Slice(OnnxOpConverter):
         )
 
 
+def normalize_gather_indices(data, indices, axis):
+    """Make sure gather indicies aren't negative"""
+    ind_dtype = infer_type(indices).checked_type.dtype
+    # Normalize the indices to a positive range
+    s = _op.take(_op.shape_of(data, dtype=ind_dtype), _op.const(axis))
+    cond = fold_constant(indices < _op.const(0, ind_dtype))
+    if isinstance(cond, _expr.Constant):
+        val = cond.data.asnumpy()
+        if val.size == 1:
+            cond = val.item()
+            if cond:
+                indices = indices + s
+            return indices
+    indices = _op.where(cond, indices + s, indices)
+    return indices
+
+
 class Gather(OnnxOpConverter):
     """Operator converter for Gather."""
 
@@ -1262,10 +1279,7 @@ class Gather(OnnxOpConverter):
         axis = attr.get("axis", 0)
         data = inputs[0]
         indices = inputs[1]
-        ind_dtype = infer_type(indices).checked_type.dtype
-        # Normalize the indices to a positive range
-        s = _op.take(_op.shape_of(data, dtype=ind_dtype), _op.const(axis))
-        indices = _op.where(indices < _op.const(0, ind_dtype), indices + s, indices)
+        indices = normalize_gather_indices(data, indices, axis)
         return _op.take(data, indices, axis)
 
 
@@ -1277,10 +1291,7 @@ class GatherElements(OnnxOpConverter):
         data = inputs[0]
         indices = inputs[1]
         axis = attr.get("axis", 0)
-        ind_dtype = infer_type(indices).checked_type.dtype
-        # Normalize the indices to a positive range
-        s = _op.take(_op.shape_of(data, dtype=ind_dtype), _op.const(axis))
-        indices = _op.where(indices < _op.const(0, ind_dtype), indices + s, indices)
+        indices = normalize_gather_indices(data, indices, axis)
         return _op.gather(data, axis, indices)
 
 
@@ -1618,7 +1629,14 @@ class Constant(OnnxOpConverter):
     def _impl_v9(cls, inputs, attr, params):
         if "value" not in attr:
             raise tvm.errors.OpAttributeRequired("no value in Constant")
-        np_value = get_numpy(attr.pop("value"))
+        value = attr.pop("value")
+        # Constants may rarely have string types. These are likely exported
+        # from other frameworks and not actually used in TVM. We'll just use
+        # a zero valued constant for compatibility.
+        if isinstance(value, bytes):
+            np_value = np.asarray([0]).astype("int64")
+        else:
+            np_value = get_numpy(value)
         dtype = np_value.dtype.name
         value = _expr.const(np_value, dtype)
         return value
@@ -2702,6 +2720,141 @@ class NonMaxSuppression(OnnxOpConverter):
         return _op.strided_slice(loop_out, [1, 0], shape_of(loop_out), [1, 1])
 
 
+class ATen(OnnxOpConverter):
+    """Operator converter for Pytorch ATen ops."""
+
+    @classmethod
+    def _op_dispatch(cls, operator, inputs, attr, params):
+        op_map = {
+            "size": cls._size,
+            "arange": cls._arange,
+            "reshape": cls._reshape,
+            "embedding_bag": cls._embedding_bag,
+        }
+        assert operator in op_map, "Operator %s is not supported." % operator
+        return op_map[operator](inputs, attr, params)
+
+    @classmethod
+    def _size(cls, inputs, attr, params):
+        return _op.take(
+            _op.shape_of(inputs[0], dtype="int64"),
+            _expr.const(-1, dtype="int64"),
+            axis=0,
+            mode="wrap",
+        )
+
+    @classmethod
+    def _arange(cls, inputs, attr, params):
+        return _op.arange(inputs[0], inputs[1], inputs[2], dtype="int64")
+
+    @classmethod
+    def _reshape(cls, inputs, attr, params):
+        return _op.reshape(inputs[0], inputs[1])
+
+    @classmethod
+    def _embedding_bag(cls, inputs, attr, params):
+        mode_map = {0: _op.sum, 1: _op.mean, 2: _op.max}
+
+        mode = attr.get("mode", 1)
+        reduction_fn = mode_map[mode]
+        weights, indices, offsets = inputs[0], inputs[1], inputs[2]
+        offsets_shape = _op.shape_of(offsets, dtype="int64")
+        indices_shape = _op.stack(
+            [
+                _op.take(offsets_shape, _expr.const(0, dtype="int64")),
+                _expr.const(-1, dtype="int64"),
+            ],
+            axis=0,
+        )
+        indices = _op.reshape(indices, indices_shape)
+        embedding = _op.take(weights, indices.astype("int64"), axis=0)
+        rembedding = reduction_fn(embedding, axis=1)
+        # EmbeddingBag has 4 outputs for some reason despite only one ever being used.
+        # Fill the rest with 0s.
+        unused_output = _expr.const(0, dtype="float32")
+        return _expr.TupleWrapper(
+            _expr.Tuple((rembedding, unused_output, unused_output, unused_output)), 4
+        )
+
+    @classmethod
+    def _impl_v1(cls, inputs, attr, params):
+        operator = attr.get("operator", None).decode("utf-8")
+        assert operator, "ATen Operator not found"
+        return cls._op_dispatch(operator, inputs, attr, params)
+
+
+class QuantizeLinear(OnnxOpConverter):
+    """Operator converter for QuantizeLinear."""
+
+    @classmethod
+    def _impl_v10(cls, inputs, attr, params):
+        data, scale, zp = inputs
+        out_dtype = infer_type(zp).checked_type.dtype
+        return _qnn.op.quantize(data, scale, _op.cast(zp, "int32"), 0, out_dtype)
+
+    @classmethod
+    def _impl_v13(cls, inputs, attr, params):
+        data, scale, zp = inputs
+        out_dtype = infer_type(zp).checked_type.dtype
+        axis = attr.get("axis", 1)
+        return _qnn.op.quantize(data, scale, _op.cast(zp, "int32"), axis, out_dtype)
+
+
+class DequantizeLinear(OnnxOpConverter):
+    """Operator converter for QuantizeLinear."""
+
+    @classmethod
+    def _impl_v10(cls, inputs, attr, params):
+        data, scale, zp = inputs
+        return _qnn.op.dequantize(data, scale, _op.cast(zp, "int32"), 0)
+
+    @classmethod
+    def _impl_v13(cls, inputs, attr, params):
+        data, scale, zp = inputs
+        axis = attr.get("axis", 1)
+        return _qnn.op.dequantize(data, scale, _op.cast(zp, "int32"), axis)
+
+
+class DynamicQuantizeLinear(OnnxOpConverter):
+    """Operator converter for QuantizeLinear."""
+
+    @classmethod
+    def _impl_v11(cls, inputs, attr, params):
+        """This op is deprecated an only supports uint8"""
+        data = inputs[0]
+        data_dtype = infer_type(data).checked_type.dtype
+        zero = _op.const(0, dtype=data_dtype)
+        maximum = _op.maximum(zero, _op.max(data))
+        minimum = _op.minimum(zero, _op.min(data))
+        scale = (maximum - minimum) / _op.const(255, dtype=data_dtype)
+        zp = zero - _op.min(data) / scale
+        zp = _op.cast(_op.round(_op.clip(zp, 0, 255)), "uint8")
+        return _expr.TupleWrapper(
+            _expr.Tuple(
+                [_qnn.op.quantize(data, scale, _op.cast(zp, "int32"), 0, "uint8"), scale, zp]
+            ),
+            size=3,
+        )
+
+
+class BitShift(OnnxOpConverter):
+    """Operator converter for NonZero"""
+
+    @classmethod
+    def _impl_v11(cls, inputs, attr, params):
+        if len(inputs) != 2:
+            raise ValueError("Bitshift expects 2 inputs")
+
+        direction = attr.get("direction", "LEFT").decode("ascii")
+        if direction == "LEFT":
+            out = _op.left_shift(*inputs)
+        elif direction == "RIGHT":
+            out = _op.right_shift(*inputs)
+        else:
+            raise ValueError("Unsupported Shift Direction: " + direction)
+        return out
+
+
 # compatible operators that do NOT require any conversion.
 _identity_list = []
 
@@ -2716,6 +2869,7 @@ def _get_convert_map(opset):
         # defs/experimental
         "Identity": Renamer("copy"),
         "Affine": Affine.get_converter(opset),
+        "BitShift": BitShift.get_converter(opset),
         "ThresholdedRelu": ThresholdedRelu.get_converter(opset),
         "ScaledTanh": ScaledTanh.get_converter(opset),
         "ParametricSoftplus": ParametricSoftPlus.get_converter(opset),
@@ -2865,6 +3019,12 @@ def _get_convert_map(opset):
         # defs/control_flow
         "Loop": Loop.get_converter(opset),
         "If": If.get_converter(opset),
+        # Torch ATen Dispatcher.
+        "ATen": ATen.get_converter(opset),
+        # Quantization
+        "QuantizeLinear": QuantizeLinear.get_converter(opset),
+        "DequantizeLinear": DequantizeLinear.get_converter(opset),
+        "DynamicQuantizeLinear": DynamicQuantizeLinear.get_converter(opset),
     }
 
 
@@ -2899,6 +3059,7 @@ class GraphProto:
         self._num_input = 0
         self._num_param = 0
         self._shape = shape if shape else {}
+        self._input_names = []
         self._dtype = dtype
         self.opset = None
         self._freeze_params = freeze_params
@@ -2980,8 +3141,9 @@ class GraphProto:
                 continue
             else:
                 self._num_input += 1
+                self._input_names.append(i_name)
                 if i_name in self._shape:
-                    i_shape = self._shape.pop(i_name)
+                    i_shape = self._shape[i_name]
                 else:
                     if "?" in str(i_shape):
                         warning_msg = (
@@ -2996,11 +3158,13 @@ class GraphProto:
                     dtype = d_type
                 self._nodes[i_name] = new_var(i_name, shape=i_shape, dtype=dtype)
             self._inputs[i_name] = self._nodes[i_name]
-        assert (
-            len(self._shape) == 0
-        ), "User specified the shape for inputs that weren't found in the graph: " + str(
-            self._shape
-        )
+        # Only check user inputs in the outer-most graph scope.
+        if self._old_manager is None:
+            assert all(
+                [name in self._input_names for name in self._shape.keys()]
+            ), "User specified the shape for inputs that weren't found in the graph: " + str(
+                self._shape
+            )
         # get list of unsupported ops
         convert_map = _get_convert_map(opset)
         unsupported_ops = set()
@@ -3205,7 +3369,7 @@ def from_onnx(model, shape=None, dtype="float32", opset=None, freeze_params=Fals
             # try use onnx's own model checker before converting any model
             try:
                 onnx.checker.check_model(model)
-            except onnx.onnx_cpp2py_export.checker.ValidationError as e:  # pylint: disable=c-extension-no-member
+            except Exception as e:  # pylint: disable=c-extension-no-member, broad-except
                 # the checker is a bit violent about errors, so simply print warnings here
                 warnings.warn(str(e))
     except ImportError:

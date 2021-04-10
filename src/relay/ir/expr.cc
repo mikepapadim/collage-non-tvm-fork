@@ -49,7 +49,8 @@ TVM_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
       const PackedFunc* fprint = Registry::Get("relay._constant_repr");
       ICHECK(fprint) << "unable to find printing function for constants";
       std::string data = (*fprint)(GetRef<Constant>(node));
-      p->stream << "Constant(" << data << ")";
+      //PATCH(@Soo): Remove verbose data when printing Constant
+      p->stream << "Constant(" << ")";//data << ")";
     });
 
 TensorType ConstantNode::tensor_type() const {
