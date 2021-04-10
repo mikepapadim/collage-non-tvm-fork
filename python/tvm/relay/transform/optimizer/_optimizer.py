@@ -37,7 +37,7 @@ def optimize_comp_graph(relay_expr):
     """
 
     # It is a function if you get it from last pass of Relay build
-    print("Relay expression")
+    # print("Relay expression")
     # print(relay_expr)
     if type(relay_expr) == tvm.relay.function.Function:
         relay_expr = relay_expr.body
@@ -53,7 +53,7 @@ def optimize_comp_graph(relay_expr):
     # targets = [Target.TENSORRT]
     # targets = [Target.CUDNN, Target.TVM_GPU_NO_TUNING]
     # targets = [Target.TENSORRT, Target.TVM_GPU_NO_TUNING]
-    targets = [Target.TVM_GPU_NO_TUNING]
+    targets = [Target.TVM_GPU_NO_TUNING, Target.TENSORRT, Target.CUDNN]
     batch_size = 1
     backendop_lib = setup_backend_op_lib(relay_expr, targets, batch_size)
 

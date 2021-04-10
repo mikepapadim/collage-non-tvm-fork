@@ -34,7 +34,7 @@
 #define GET_DOUBLE(X) *((double*)X)
 #define GET_FLOAT(X) *((float*)(X))
 
-//œ
+//
 //namespace tvm {
 //namespace contrib {
 //
@@ -78,7 +78,7 @@
 //}
 //
 //
-//common_convbias_descriptors
+////common_convbias_descriptors
 //create_conv_bias_add_act_descriptors(
 //                                     int dim,
 //                                     int64_t* x_dim_padded,
