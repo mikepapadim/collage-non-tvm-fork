@@ -39,7 +39,7 @@ TVM_REGISTER_GLOBAL("tvm.contrib.cudnn.reduce")
       double double_beta = args[3];
       const void* alpha;
       const void* beta;
-      int mode = args[4];   
+      int mode = args[4];
       int nanOpt = args[5];
       int indiceOpt = args[6];
       int indiceType = args[7];
@@ -64,43 +64,43 @@ TVM_REGISTER_GLOBAL("tvm.contrib.cudnn.reduce")
 
       // input tensor desc
       CUDNN_CALL(cudnnSetTensor4dDescriptor(
-        entry_ptr->reduce_entry.a_desc, CUDNN_TENSOR_NCHW, 
+        entry_ptr->reduce_entry.a_desc, CUDNN_TENSOR_NCHW,
         entry_ptr->reduce_entry.data_type,
         static_cast<int>(x->shape[0]), static_cast<int>(x->shape[1]),
         static_cast<int>(x->shape[2]), static_cast<int>(x->shape[3])));
 
       // output tensor desc
       CUDNN_CALL(cudnnSetTensor4dDescriptor(
-        entry_ptr->reduce_entry.c_desc, CUDNN_TENSOR_NCHW, 
+        entry_ptr->reduce_entry.c_desc, CUDNN_TENSOR_NCHW,
         entry_ptr->reduce_entry.data_type,
         static_cast<int>(y->shape[0]), static_cast<int>(y->shape[1]),
         static_cast<int>(y->shape[2]), static_cast<int>(y->shape[3])));
 
       size_t indices_size = 0;
-      CUDNN_CALL(cudnnGetReductionIndicesSize(entry_ptr->handle, entry_ptr->reduce_entry.reduce_desc, 
+      CUDNN_CALL(cudnnGetReductionIndicesSize(entry_ptr->handle, entry_ptr->reduce_entry.reduce_desc,
             entry_ptr->reduce_entry.a_desc, entry_ptr->reduce_entry.c_desc, &indices_size));
 
       // Set workspace
       size_t workspace_size = 0;
       CUDNN_CALL(cudnnGetReductionWorkspaceSize(
-            entry_ptr->handle, entry_ptr->reduce_entry.reduce_desc, 
+            entry_ptr->handle, entry_ptr->reduce_entry.reduce_desc,
             entry_ptr->reduce_entry.a_desc,
-            entry_ptr->reduce_entry.c_desc, 
+            entry_ptr->reduce_entry.c_desc,
             &workspace_size));
       entry_ptr->reduce_entry.UpdateWorkspace(workspace_size);
 
- 
-      CUDNN_CALL(cudnnReduceTensor(entry_ptr->handle, 
+
+      CUDNN_CALL(cudnnReduceTensor(entry_ptr->handle,
             entry_ptr->reduce_entry.reduce_desc,
             indices, // NOTE: This may be an issue
             indices_size,
-            entry_ptr->reduce_entry.workspace, 
+            entry_ptr->reduce_entry.workspace,
             workspace_size,
             alpha,
             entry_ptr->reduce_entry.a_desc,
             x->data,
             beta,
-            entry_ptr->reduce_entry.c_desc, 
+            entry_ptr->reduce_entry.c_desc,
             y->data));
     });
 

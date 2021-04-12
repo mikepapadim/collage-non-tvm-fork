@@ -34,7 +34,6 @@
 #define GET_DOUBLE(X) *((double*)X)
 #define GET_FLOAT(X) *((float*)(X))
 
-
 namespace tvm {
 namespace contrib {
 
@@ -80,7 +79,7 @@ void generateStrides(const int64_t* dimA, int64_t* strideA, int nbDims, cudnnTen
 
 common_convbias_descriptors
 create_conv_bias_add_act_descriptors(
-                                     int dim, 
+                                     int dim,
                                      int64_t* x_dim_padded,
                                      const int64_t* padA,
                                      const int64_t* convstrideA,
@@ -171,7 +170,7 @@ create_conv_bias_add_act_descriptors(
                                       .build());
 
 }
- 
+
 bool
 allowAll(cudnnBackendDescriptor_t engine_config) {
     return false;
@@ -184,7 +183,7 @@ auto heurgen_method = [](cudnn_frontend::OperationGraph &opGraph) -> cudnn_front
                           .setOperationGraph(opGraph)
                           .setHeurMode(CUDNN_HEUR_MODE_INSTANT)
                           .build();
-    std::cout << "Heuristic has " << heuristics.getEngineConfigCount() << " configurations " << std::endl;
+    //std::cout << "Heuristic has " << heuristics.getEngineConfigCount() << " configurations " << std::endl;
 
     auto &engine_configs = heuristics.getEngineConfig(heuristics.getEngineConfigCount());
     cudnn_frontend::EngineConfigList filtered_configs;
@@ -195,12 +194,12 @@ auto heurgen_method = [](cudnn_frontend::OperationGraph &opGraph) -> cudnn_front
 
 
 
-void ConvolutionBiasActivationForward(int mode, int format, int algo, int convDim, int groups, 
-    const int64_t pad[],const int64_t stride[], const int64_t dilation[], 
-    DLTensor* x, DLTensor* w, DLTensor* z, DLTensor* bias, DLTensor* y, 
+void ConvolutionBiasActivationForward(int mode, int format, int algo, int convDim, int groups,
+    const int64_t pad[],const int64_t stride[], const int64_t dilation[],
+    DLTensor* x, DLTensor* w, DLTensor* z, DLTensor* bias, DLTensor* y,
     const std::string& conv_dtype, const void* alphas[], int actvMode, int reluNanOpt, double actvCoeff) {
 
- 
+
   CuDNNThreadEntry* entry_ptr = CuDNNThreadEntry::ThreadLocal();
   // Set Mode
   entry_ptr->fused_conv_entry.mode = static_cast<cudnnConvolutionMode_t>(mode);
@@ -208,8 +207,8 @@ void ConvolutionBiasActivationForward(int mode, int format, int algo, int convDi
   entry_ptr->fused_conv_entry.tensor_format = static_cast<cudnnTensorFormat_t>(format);
   // Set Algo
   entry_ptr->fused_conv_entry.fwd_algo = static_cast<cudnnConvolutionFwdAlgo_t>(algo);
-  // Set Ctx
-  entry_ptr->fused_conv_entry.ctx = x->ctx;
+  // Set device
+  entry_ptr->fused_conv_entry.device = x->device;
   // Set Data Type
   entry_ptr->fused_conv_entry.data_type = CuDNNDataType::DLTypeToCuDNNType(String2DLDataType(conv_dtype));
   //cudnnDataType_t data_type = CuDNNDataType::DLTypeToCuDNNType(x->dtype);
@@ -252,13 +251,14 @@ void ConvolutionBiasActivationForward(int mode, int format, int algo, int convDi
 
   }
 
-  common_convbias_descriptors tensors = create_conv_bias_add_act_descriptors( 
+  common_convbias_descriptors tensors = create_conv_bias_add_act_descriptors(
       convDim, x_dim_padded,
-      pad, stride, dilation, 
+      pad, stride, dilation,
       w_dim_padded, y_dim_padded,
-      entry_ptr->fused_conv_entry.data_type, 
+      entry_ptr->fused_conv_entry.data_type,
       entry_ptr->fused_conv_entry.tensor_format
       );
+  
   /*
   std::cout << "X:\t" << std::get<X_TENSOR>(tensors).describe() << std::endl;
   std::cout << "Y:\t " << std::get<Y_TENSOR>(tensors).describe() << std::endl;
@@ -269,6 +269,7 @@ void ConvolutionBiasActivationForward(int mode, int format, int algo, int convDi
   std::cout << "After bias:\t" << std::get<AFTERBIAS_TENSOR>(tensors).describe() << std::endl;
   std::cout << "After conv:\t" << std::get<AFTERCONV_TENSOR>(tensors).describe() << std::endl;
   */
+
   // Define the add operation
   auto addDesc = cudnn_frontend::PointWiseDescBuilder()
                      .setMode(CUDNN_POINTWISE_ADD)
@@ -290,7 +291,7 @@ void ConvolutionBiasActivationForward(int mode, int format, int algo, int convDi
                      .build();
   //std::cout << actDesc.describe() << std::endl;
 
- 
+
   // Define the convolution problem
   auto convDesc = cudnn_frontend::ConvDescBuilder()
                       .setDataType(entry_ptr->fused_conv_entry.data_type)
@@ -315,7 +316,7 @@ void ConvolutionBiasActivationForward(int mode, int format, int algo, int convDi
                       .setBeta(GET_FLOAT(alphas[1]))
                       .build();
   //std::cout << conv_op.describe() << std::endl;
-  
+
   // Create a Add Node with scaling parameters.
   auto add_op1 = cudnn_frontend::OperationBuilder(CUDNN_BACKEND_OPERATION_POINTWISE_DESCRIPTOR)
                       .setxDesc(conv_op.getOutputTensor())
@@ -343,7 +344,8 @@ void ConvolutionBiasActivationForward(int mode, int format, int algo, int convDi
                       .setpwDesc(actDesc)
                       .build();
   //std::cout << act_op.describe() << std::endl;
-  
+
+
 
   // Create an Operation Graph. In this case it is convolution add bias activation
   std::array<cudnn_frontend::Operation const*, 4> ops = {&conv_op, &add_op1, &add_op2, &act_op};
@@ -353,9 +355,14 @@ void ConvolutionBiasActivationForward(int mode, int format, int algo, int convDi
                       .setOperationGraph(ops.size(), ops.data())
                       .build();
 
-
-  auto max_workspace_size = 10 * 1024 * 1024;  // 10 MiB
-  entry_ptr->fused_conv_entry.UpdateWorkspace(max_workspace_size);
+  size_t workspace_size = 0;
+  CUDNN_CALL(cudnnGetConvolutionForwardWorkspaceSize(
+      entry_ptr->handle, entry_ptr->conv_entry.input_desc, entry_ptr->conv_entry.filter_desc,
+      entry_ptr->conv_entry.conv_desc, entry_ptr->conv_entry.output_desc,
+      entry_ptr->conv_entry.fwd_algo, &workspace_size));
+ 
+  //auto max_workspace_size = 10 * 1024 * 1024;  // 10 MiB
+  entry_ptr->fused_conv_entry.UpdateWorkspace(workspace_size);
 
   void* data_ptrs[] = {x->data, y->data, w->data, z->data, bias->data};
   int64_t uids[]    = {'x', 'y', 'w', 'z', 'b'};
@@ -367,7 +374,7 @@ void ConvolutionBiasActivationForward(int mode, int format, int algo, int convDi
   //std::cout << "variantPack " << variantPack.describe() << std::endl;
 
   auto sample_predicate_function = [=](cudnn_frontend::ExecutionPlan const& plan) -> bool {
-            return plan.getWorkspaceSize() > max_workspace_size;
+            return plan.getWorkspaceSize() > workspace_size;
   };
 
   std::array<cudnn_frontend::GeneratorSource const, 1> sources = {heurgen_method};
@@ -399,7 +406,7 @@ void ConvolutionForward(int mode, int format, int algo, int dims, int groups, co
   entry_ptr->conv_entry.tensor_format = static_cast<cudnnTensorFormat_t>(format);
   // Set Algo
   entry_ptr->conv_entry.fwd_algo = static_cast<cudnnConvolutionFwdAlgo_t>(algo);
-  // Set Device
+  // Set device
   entry_ptr->conv_entry.device = x->device;
   // Set Data Type
   entry_ptr->conv_entry.data_type = CuDNNDataType::DLTypeToCuDNNType(String2DLDataType(conv_dtype));
@@ -612,7 +619,9 @@ void FindAlgo(int format, int dims, int groups, const int pad[], const int strid
 }
 TVM_REGISTER_GLOBAL("tvm.contrib.cudnn.conv2d+bias+activation.forward")
     .set_body([](TVMArgs args, TVMRetValue* ret) {
-      
+
+      std::cerr << "In fused func\n";
+
       int mode = args[0];
       int format = args[1];
       int algo = args[2];
@@ -623,7 +632,7 @@ TVM_REGISTER_GLOBAL("tvm.contrib.cudnn.conv2d+bias+activation.forward")
         stride_v[i] = args[5 + i];
         dilation_v[i] = args[7 + i];
       }
- 
+
       std::string conv_dtype = args[9];
 
       DLTensor* x = args[10];
@@ -643,10 +652,10 @@ TVM_REGISTER_GLOBAL("tvm.contrib.cudnn.conv2d+bias+activation.forward")
       int actvMode = args[20];
       int reluNanOpt = args[21];
       double actvCoeff = args[22];
-      
-      ConvolutionBiasActivationForward(mode, format, algo, 2, groups, pad_v, stride_v, dilation_v, 
+
+      ConvolutionBiasActivationForward(mode, format, algo, 2, groups, pad_v, stride_v, dilation_v,
           x, w, z, bias, y, conv_dtype, alphas, actvMode, reluNanOpt, actvCoeff);
-        
+
 
     });
 

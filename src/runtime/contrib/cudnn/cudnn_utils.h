@@ -86,7 +86,9 @@ struct FusedConvEntry {
   cudnnActivationDescriptor_t activation_desc;
   cudnnConvolutionFwdAlgo_t fwd_algo;
   // cudnnMathType_t math_type;
-  TVMContext ctx;
+  //TVMContext ctx;
+  Device device;
+  //DLContext ctx;
   runtime::DeviceAPI* cuda_api;
   void* workspace{nullptr};
   size_t workspace_size{0};
@@ -162,7 +164,8 @@ struct ReduceEntry {
   cudnnReduceTensorDescriptor_t reduce_desc;
   cudnnTensorDescriptor_t a_desc;
   cudnnTensorDescriptor_t c_desc;
-  TVMContext ctx;
+  //TVMContext ctx;
+  Device device;
   runtime::DeviceAPI* cuda_api;
   void* workspace{nullptr};
   size_t workspace_size{0};

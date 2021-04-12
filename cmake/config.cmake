@@ -271,7 +271,7 @@ set(USE_HEXAGON_DEVICE OFF)
 set(USE_HEXAGON_SDK /path/to/sdk)
 
 # Whether to use ONNX codegen
-set(USE_TARGET_ONNX ON)
+set(USE_TARGET_ONNX OFF)
 
 # Whether enable BNNS runtime
 set(USE_BNNS OFF)

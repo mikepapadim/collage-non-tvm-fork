@@ -121,7 +121,7 @@ CuDNNThreadEntry::CuDNNThreadEntry() {
   CUDNN_CALL(cudnnCreate(&handle));
   CUDNN_CALL(cudnnSetStream(handle, stream));
   conv_entry.cuda_api = cuda_api;
-  fused_conv_entry.cuda_api = cuda_api;
+//  fused_conv_entry.cuda_api = cuda_api;
 }
 
 CuDNNThreadEntry::~CuDNNThreadEntry() { CUDNN_CALL(cudnnDestroy(handle)); }
@@ -169,7 +169,7 @@ FusedConvEntry::~FusedConvEntry() {
 }
 
 FusedOpsEntry::FusedOpsEntry(){
-  //CUDNN_CALL(cudnnCreateFusedOpsPlan(&fuse_plan));
+
 }
 
 FusedOpsEntry::~FusedOpsEntry(){
@@ -262,12 +262,12 @@ void FusedConvEntry::UpdateWorkspace(const size_t wsize) {
       CleanWorkspace();
     }
     workspace_size = wsize;
-    workspace = cuda_api->AllocWorkspace(ctx, workspace_size);
+    workspace = cuda_api->AllocWorkspace(device, workspace_size);
   }
 }
 
 void FusedConvEntry::CleanWorkspace() {
-  if (workspace) cuda_api->FreeWorkspace(ctx, workspace);
+  if (workspace) cuda_api->FreeWorkspace(device, workspace);
   workspace_size = 0;
 }
 
@@ -278,12 +278,12 @@ void ReduceEntry::UpdateWorkspace(const size_t wsize) {
       CleanWorkspace();
     }
     workspace_size = wsize;
-    workspace = cuda_api->AllocWorkspace(ctx, workspace_size);
+    workspace = cuda_api->AllocWorkspace(device, workspace_size);
   }
 }
 
 void ReduceEntry::CleanWorkspace() {
-  if (workspace) cuda_api->FreeWorkspace(ctx, workspace);
+  if (workspace) cuda_api->FreeWorkspace(device, workspace);
   workspace_size = 0;
 }
 
