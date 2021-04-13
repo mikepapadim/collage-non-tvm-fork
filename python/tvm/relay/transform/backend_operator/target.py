@@ -218,8 +218,11 @@ class CuDNNCostFunc(TargetCostFunc):
         expr_func = relay.Function(inputs, expr)
         net, params = testing.create_workload(expr_func)
 
+        # Build the subgraph
+        # FIXME(@Soo): We should redesign Target class to deal with new TVM build interface
         target_str = target.__str__()
-        ctx = tvm.context(target_str, 0)
+        ctx = tvm.gpu()
+        # ctx = tvm.context(target_str, 0)
 
         data_shape = get_data_shape(expr)
         in_channels = data_shape[1]
@@ -584,7 +587,6 @@ class TensorRTCostFunc(TargetCostFunc):
         module.set_input("data", input_data)
         ftimer = module.module.time_evaluator("run", dev, number=NUM_MEASUREMENTS_PER_REPEAT, repeat=NUM_REPEATS)
         measure_info = measure(ftimer)
-        print(f"TensorRT results : {measure_info}")
         return measure_info
 
         # from tvm.relay.op.contrib.tensorrt import partition_for_tensorrt

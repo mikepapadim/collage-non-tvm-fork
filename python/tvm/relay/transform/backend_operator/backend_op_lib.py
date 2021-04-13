@@ -104,7 +104,7 @@ class BackendOpLib(object):
   # Note that we only support ResNet50 for now
   def _add_all_backendops(self):
     # CUDNN
-    self._add_backendop("cudnn_conv2d", Target.CUDNN, OpType.CONV2D, 1)
+    # self._add_backendop("cudnn_conv2d", Target.CUDNN, OpType.CONV2D, 1)
     self._add_backendop("cudnn_relu", Target.CUDNN, OpType.RELU, 1)
     # self._add_backendop("cudnn_add", Target.CUDNN, OpType.ADD, 1)
 
