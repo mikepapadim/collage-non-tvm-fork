@@ -174,7 +174,7 @@ class CompGraphOptimizer:
         while not frontiers.empty():
             f = frontiers.get()
             f_expr = f.get_relay_expr()
-            print(f._topological_order)
+            print("Topologicla order : ", f._topological_order)
             for pat in self._backendop_lib.get_all_patterns():
                 # print(pat)
                 if pat.get_pattern().match(f_expr):
