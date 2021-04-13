@@ -181,7 +181,7 @@ set(USE_EDGETPU OFF)
 set(USE_CUDNN ON)
 
 # Whether use cuBLAS
-set(USE_CUBLAS OFF)
+set(USE_CUBLAS ON)
 
 # Whether use MIOpen
 set(USE_MIOPEN OFF)
