@@ -23,7 +23,7 @@ cur_dir_path = Path(__file__).parent.absolute()
 AUTOTVM_LOG = f"{cur_dir_path}/../autotune/autotvm_ops.log"
 # Temporary autoscheduler log file
 # FIXME(@Soo): Accumulate autoscheduler logs to the same file
-AUTOSCH_LOG = f"{cur_dir_path}/../autotune/resnet50.json"
+AUTOSCH_LOG = f"{cur_dir_path}/../autotune/autosch_ops.json"
 
 def measure(ftimer, *args):
     # Warm-up Phase: Run without measurement 

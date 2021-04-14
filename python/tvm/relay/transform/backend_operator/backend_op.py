@@ -15,7 +15,7 @@ from pathlib import Path
 
 from .pattern import Pattern
 from .utils import get_diamond
-from .utils import is_call_node, is_tuplegetitem_node, is_var_node, no_constraints_func
+from .utils import is_call_node, is_tuplegetitem_node, is_var_node, no_constraints_func, is_constant_node
 from .op_config import Config, MeasuredConfigs
 from .target import Target, get_target_cost_func
 from .op_type import OpType, optype_to_pattern, relayop_to_varnames
@@ -120,7 +120,13 @@ def extract_subgraph(expr, max_depth):
           for i in range(len(expr.args)):
             type_arg = expr.type_args[i]
             var_name = var_names[i]
-            new_args.append(relay.var(var_name, type_arg))
+
+            # Bias should be constant
+            if var_name == 'bias':
+              input_data = expr.args[i].data
+              new_args.append(relay.Constant(input_data))
+            else:
+              new_args.append(relay.var(var_name, type_arg))
       else:
         for child in expr.args:
           new_args.append(helper(child, depth - 1))
@@ -140,7 +146,11 @@ def extract_subgraph(expr, max_depth):
     elif is_var_node(expr):
       return expr
 
-    raise Exception("Expr type not implemented")
+    elif is_constant_node(expr):
+      return expr
+
+    else:
+      raise Exception("Expr type not implemented")
 
   return helper(expr, max_depth)
 

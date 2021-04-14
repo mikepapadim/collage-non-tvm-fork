@@ -1,4 +1,5 @@
 import tvm
+from ..backend_operator.utils import is_call_node, is_tuplegetitem_node, is_var_node, is_constant_node, is_function_node
 
 def get_next_expr_after_match(relay_expr, prev_relay_expr, depth): 
     target_node = []
@@ -7,7 +8,9 @@ def get_next_expr_after_match(relay_expr, prev_relay_expr, depth):
         if relay_expr.name_hint == 'data':
             return [(relay_expr, prev_relay_expr)]
         return [(None, prev_relay_expr)]
-
+    elif is_constant_node(relay_expr):
+        return [(None, prev_relay_expr)]
+    
     if depth == 0:
         return [(relay_expr, prev_relay_expr)]
 

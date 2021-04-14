@@ -807,33 +807,37 @@ namespace tvm {
         // WARNING(@Soo): We assume that fused ops are always continuous in the post dfs order.
         // So far, we don't have any corner cases violating it.
         int prev_group_id = kInvalidGroupId;
+        int prev_nid = kInvalidGroupId;
         std::cerr << "# of groups : " << groups_.size() << std::endl;
 
         for (size_t nid = 0; nid < groups_.size(); ++nid) {
           // the group of current node has been specified already.
           auto* graph_node = graph.post_dfs_order[nid];
+          Group* group_node = groups_[nid];
+          ICHECK(group_node != nullptr);
+
+//          std::cerr << "Group node (" << nid << ") pattern: " << group_node->pattern << std::endl;
+
+          // Note that Var or Constant will be filtered out by this.
+          if (group_node->pattern == kOpaque) continue;
+
+          // WARNING(@Soo): We assume that fused ops are always not opaque.
+          // no actions for opaque nodes
           const tvm::Object* cur_key = graph_node->ref;
           assert (graph.exprnode_to_backend_op.find(cur_key) != graph.exprnode_to_backend_op.end());
           GroupIdOpNamePair pair_info = graph.exprnode_to_backend_op.at(cur_key);
           int cur_group_id = pair_info.group_id;
 
-          // WARNING(@Soo): We assume that fused ops are always not opaque.
-          // no actions for opaque nodes
-          Group* group_node = groups_[nid];
-          ICHECK(group_node != nullptr);
-          if (group_node->pattern == kOpaque) continue;
-
           group_node->backend_op_name = pair_info.backend_op_name;
 
-          if (nid > 0) {
-            // Get group id for cur and prev node
-            auto* prev_graph_node = graph.post_dfs_order[nid-1];
-            if (cur_group_id == prev_group_id) {
-//              std::cerr << "nid, cur, pre: " << nid << " / " << cur_group_id << " , " << prev_group_id << std::endl;
-              CommitFuse(prev_graph_node, graph_node);
-            }
+          // Get group id for cur and prev node
+          auto* prev_graph_node = graph.post_dfs_order[prev_nid];
+          if (cur_group_id == prev_group_id) {
+//            std::cerr << "cur, pre nid: " << nid << " / " << prev_nid << std::endl;
+            CommitFuse(prev_graph_node, graph_node);
           }
           prev_group_id = cur_group_id;
+          prev_nid = nid;
         }
       }
 
@@ -968,7 +972,7 @@ namespace tvm {
           gmap_[graph.post_dfs_order[nid]->ref] = groups[nid];
         }
         // The following line can be used for debug.
-        // this->DebugDumpGroup(body);
+//        this->DebugDumpGroup(body);
         return this->Mutate(body);
       }
 
