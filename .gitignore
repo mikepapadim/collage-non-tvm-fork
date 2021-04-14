@@ -31,6 +31,10 @@ var/
 *.manifest
 *.spec
 
+# CLion build files
+cmake-build-debug-fleet
+.clion.source.upload.marker
+
 # Installer logs
 pip-log.txt
 pip-delete-this-directory.txt
