@@ -104,6 +104,9 @@ class ScheduleGetter : public backend::MemoizedExprTranslator<Array<te::Tensor>>
     use_auto_scheduler_ = backend::IsAutoSchedulerEnabled();
   }
 
+
+  tvm::runtime::Optional<tvm::runtime::String> dp_info;
+
   CachedFunc Create(const Function& prim_func) {
     auto cache_node = make_object<CachedFuncNode>();
     cache_node->target = target_;
@@ -128,7 +131,36 @@ class ScheduleGetter : public backend::MemoizedExprTranslator<Array<te::Tensor>>
       memo_[param] = inputs;
     }
     readable_name_stream_ << "fused";
-    cache_node->outputs = this->VisitExpr(prim_func->body);
+
+    dp_info = prim_func->GetAttr<String>(attr::kBackendOp);
+    std::string dp_target = "";
+    if(dp_info!=nullptr) dp_target = std::string(dp_info.value());
+
+    //NOTE: update target --> Target("llvm")
+    //if(dp_target.size()>0 && dp_target.find("NO_OP")==-1){
+    if(dp_target.size()>0){
+      // Note: Sung  
+      this->VisitExpr(prim_func->body);
+      //cache_node->outputs = this->VisitExpr(prim_func->body);
+      
+      const CallNode* call_node = static_cast<const CallNode*>(prim_func->body.get());
+      auto inputs = getInputs(call_node);
+      std::cerr << ">> Sung's intercept\n";
+      static auto ftarget_specific_lower_call = tvm::runtime::Registry::Get("relay.backend.target_specific_lowering");
+      LoweredOutput lowered_out = (*ftarget_specific_lower_call)(prim_func, inputs);
+      //if(lowered_out == nullptr){
+      //  // We only call original lowering process for TVM operators
+      //}
+      std::cerr << ">> Came back to main\n";
+
+      cache_node->outputs = lowered_out->outputs;
+      
+    }else{
+      std::cerr << ">> Regular Path\n";
+      cache_node->outputs = this->VisitExpr(prim_func->body);
+    }
+
+
     auto candidate_name = readable_name_stream_.str();
     constexpr static size_t kMaxFuncNameLength = 80;
     if (candidate_name.size() > kMaxFuncNameLength) {
@@ -211,11 +243,26 @@ class ScheduleGetter : public backend::MemoizedExprTranslator<Array<te::Tensor>>
     return {value};
   }
 
+  Array<te::Tensor> getInputs(const CallNode* call_node){
+    Array<te::Tensor> inputs;
+    int count_tuple = 0;
+    for (Expr arg : call_node->args) {
+      if (arg->checked_type().as<TupleTypeNode>()) {
+        ++count_tuple;
+      }
+      for (te::Tensor tensor : VisitExpr(arg)) {
+        inputs.push_back(tensor);
+      }
+    }
+    return inputs;
+  }
+
   Array<te::Tensor> VisitExpr_(const CallNode* call_node) final {
     static auto fpattern = Op::GetAttrMap<TOpPattern>("TOpPattern");
     static auto flower_call = tvm::runtime::Registry::Get("relay.backend.lower_call");
+    //static auto ftarget_specific_lower_call = tvm::runtime::Registry::Get("relay.backend.target_specific_lowering");
     ICHECK(flower_call) << "relay.backend.lower_call is not registered.";
-
+    
     Array<te::Tensor> inputs;
     int count_tuple = 0;
     for (Expr arg : call_node->args) {
@@ -240,7 +287,25 @@ class ScheduleGetter : public backend::MemoizedExprTranslator<Array<te::Tensor>>
       const auto* copy_input = inputs[0].operator->();
       outputs.push_back(te::Tensor(copy_input->shape, copy_input->dtype, te::Operation(), 0));
     } else {
-      LoweredOutput lowered_out = (*flower_call)(GetRef<Call>(call_node), inputs, target_);
+      std::string dp_target = "";
+      if(dp_info!=nullptr)
+        dp_target = std::string(dp_info.value());
+
+      LoweredOutput lowered_out;
+      lowered_out = (*flower_call)(GetRef<Call>(call_node), inputs, target_);
+
+      /*
+      if(dp_target.find("NO_OP") == -1){
+        std::cerr << "Regular lowering\n";
+        lowered_out = (*flower_call)(GetRef<Call>(call_node), inputs, target_);
+      }
+      else{
+        std::cerr << "Target-specific lowering\n";
+        lowered_out = (*ftarget_specific_lower_call)(GetRef<Call>(call_node), inputs, target_);
+      }
+      */
+
+
       outputs = lowered_out->outputs;
       impl = lowered_out->implementation;
     }
@@ -374,7 +439,10 @@ class MakeShapeFunc : public backend::MemoizedExprTranslator<Array<te::Tensor>> 
     }
     readable_name_stream_ << "shape_func";
     auto cache_node = make_object<CachedFuncNode>();
+
+
     cache_node->outputs = VisitExpr(prim_func->body);
+
     auto candidate_name = readable_name_stream_.str();
     constexpr static size_t kMaxFuncNameLength = 80;
     if (candidate_name.size() > kMaxFuncNameLength) {

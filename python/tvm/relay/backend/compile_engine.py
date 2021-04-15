@@ -186,6 +186,7 @@ def select_implementation(op, attrs, inputs, out_type, target, use_autotvm=True)
     ret : tuple(relay.op.OpImplementation, List[tvm.te.Tensor])
         The best op implementation and the corresponding output tensors.
     """
+
     all_impls = get_valid_implementations(op, attrs, inputs, out_type, target)
     best_plevel_impl = max(all_impls, key=lambda x: x.plevel)
 
@@ -263,10 +264,83 @@ def select_implementation(op, attrs, inputs, out_type, target, use_autotvm=True)
     return best_plevel_impl, outputs[best_plevel_impl]
 
 
+
+# NOTE: Sung. Need to come up with better name
+@tvm._ffi.register_func("relay.backend.target_specific_lowering")
+def target_specific_lowering(func, inputs, target=None):
+    import sys
+
+    print("\t[Compile_engine.py] Custom lowering?", file=sys.stderr)
+
+    # Eventually, we want to define custom implemenation
+    # However, currently, we do not know how to do it.
+    # So, for now, let's try the hacky way.
+    from tvm.relay.op import op as _op
+    from tvm.relay.analysis import post_order_visit
+    from tvm import relay
+    from tvm import topi
+    from tvm.relay.op.strategy.generic import wrap_compute_softmax, wrap_topi_schedule
+    from tvm import te
+
+    strategy = _op.OpStrategy()
+    # relay express, callback
+    #relay.analysis.post_order_visit(mod['main'], lambda expr: log_backend_op_perf(b_op_lib, expr, target))
+    #inputs = relay.analysis.free_vars(fbody)
+    def extract_attr(expr, ret):
+        if type(expr) == tvm.relay.expr.Call:
+            ret.append([expr.op, expr.args, expr.attrs, expr.checked_type])
+
+    ret = []
+    post_order_visit(func, lambda expr: extract_attr(expr, ret))
+
+
+    # To compute subgraph
+    #   attrs for each op
+    #   input for the subgraph
+    #   -  pattern - will be given
+
+    #  May need rewrite?
+    #
+
+    #return None
+
+    #strategy.add_implementation(
+    #        wrap_compute_softmax(topi.nn.softmax),
+    #        wrap_topi_schedule(topi.cuda.schedule_softmax),
+    #        name="nn.softmax",
+    #        plevel=10,
+    #    )
+
+
+    attrs = ret[0][2]
+    ret_type = ret[0][3]
+
+    strategy.add_implementation(
+            wrap_compute_softmax(topi.cuda.softmax_cudnn),
+            wrap_topi_schedule(topi.cuda.schedule_softmax_cudnn),
+            name="softmax.cudnn",
+            plevel=15,
+        )
+
+    impl, outputs = None, None
+    for spec in strategy.specializations:
+        for impl in spec.implementations:
+            # attribute, inputs, output_type
+            outputs = impl.compute(attrs, inputs, ret_type)
+            return LoweredOutput(outputs, impl)
+
+    # Shouldn't reach
+    return None
+
+
+
 @tvm._ffi.register_func("relay.backend.lower_call")
 def lower_call(call, inputs, target):
     """Lower the call expression to op implementation and tensor outputs."""
     assert isinstance(call.op, tvm.ir.Op)
+
+    print("lower_call: ", type(inputs), type(inputs[0]))
+
     op = call.op
 
     # Prepare the call_node->checked_type(). For the call node inputs, we ensure that
