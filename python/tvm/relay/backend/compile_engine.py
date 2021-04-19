@@ -266,8 +266,8 @@ def select_implementation(op, attrs, inputs, out_type, target, use_autotvm=True)
 
 
 # NOTE: Sung. Need to come up with better name
-@tvm._ffi.register_func("relay.backend.target_specific_lowering")
-def target_specific_lowering(func, inputs, target=None):
+@tvm._ffi.register_func("relay.backend.target_specific_lowering_callnode")
+def target_specific_lowering(call, inputs, target=None):
     import sys
 
     print("\t[Compile_engine.py] Custom lowering?", file=sys.stderr)
@@ -281,36 +281,32 @@ def target_specific_lowering(func, inputs, target=None):
     from tvm import topi
     from tvm.relay.op.strategy.generic import wrap_compute_softmax, wrap_topi_schedule
     from tvm import te
+    from tvm.contrib.cudnn import softmax
 
     strategy = _op.OpStrategy()
     # relay express, callback
     #relay.analysis.post_order_visit(mod['main'], lambda expr: log_backend_op_perf(b_op_lib, expr, target))
     #inputs = relay.analysis.free_vars(fbody)
     def extract_attr(expr, ret):
+        print(expr)
+        print(type(expr))
+        print("----")
         if type(expr) == tvm.relay.expr.Call:
             ret.append([expr.op, expr.args, expr.attrs, expr.checked_type])
 
     ret = []
-    post_order_visit(func, lambda expr: extract_attr(expr, ret))
+    #for arg in ret:
+    #    shape = arg[1][0].type_annotation.shape
+    #    dtype = arg[1][0].type_annotation.dtype
+    #    inputs.append(te.placeholder(shape, dtype=dtype))
 
+    #print(func.body)
+    #print(type(func.body))
 
-    # To compute subgraph
-    #   attrs for each op
-    #   input for the subgraph
-    #   -  pattern - will be given
-
-    #  May need rewrite?
-    #
-
-    #return None
-
-    #strategy.add_implementation(
-    #        wrap_compute_softmax(topi.nn.softmax),
-    #        wrap_topi_schedule(topi.cuda.schedule_softmax),
-    #        name="nn.softmax",
-    #        plevel=10,
-    #    )
-
+    print("\n")
+    print("Before")
+    post_order_visit(call, lambda expr: extract_attr(expr, ret))
+    print("After")
 
     attrs = ret[0][2]
     ret_type = ret[0][3]
@@ -329,9 +325,97 @@ def target_specific_lowering(func, inputs, target=None):
             outputs = impl.compute(attrs, inputs, ret_type)
             return LoweredOutput(outputs, impl)
 
-    # Shouldn't reach
-    return None
+    #outputs = [softmax(inputs[0])]
+    #return LoweredOutput(outputs, None)
 
+
+@tvm._ffi.register_func("relay.backend.target_specific_lowering")
+def target_specific_lowering(func, inputMap, target=None, pattern=None):
+
+    import sys
+
+    print("\t[Compile_engine.py] Custom lowering?", file=sys.stderr)
+
+    # Eventually, we want to define custom implemenation
+    # However, currently, we do not know how to do it.
+    # So, for now, let's try the hacky way.
+    from tvm.relay.op import op as _op
+    from tvm.relay.analysis import post_order_visit
+    from tvm import relay
+    from tvm import topi
+    from tvm.relay.op.strategy.generic import wrap_topi_schedule
+    from tvm.relay.op.strategy.generic import wrap_compute_softmax, wrap_compute_conv2d_bias_relu
+    from tvm import te
+    from tvm.contrib.cudnn import softmax
+
+    strategy = _op.OpStrategy()
+    # relay express, callback
+    #relay.analysis.post_order_visit(mod['main'], lambda expr: log_backend_op_perf(b_op_lib, expr, target))
+    #inputs = relay.analysis.free_vars(func.body)
+
+    ops = []
+    def extract_attr(expr, ops):
+        if type(expr) == tvm.relay.expr.Call:
+            ops.append(expr)
+    post_order_visit(func, lambda expr: extract_attr(expr, ops))
+
+    # temp
+    target = "cudnn"
+    pattern = "softmax"
+    #pattern = "conv2d+bias+relu"
+
+    inputs, attrs, ret_type = [], None, None
+    if target == "cudnn":
+        if pattern == "softmax":
+            strategy.add_implementation(
+                wrap_compute_softmax(topi.cuda.softmax_cudnn),
+                wrap_topi_schedule(topi.generic.schedule_extern),
+                name="softmax.cudnn",
+            )
+            # softmax has single op
+            attrs = ops[0].attrs
+            ret_type = ops[0].checked_type
+
+            for key, varray in inputMap.items():
+                print("Key: ")
+                print(key)
+                print("Val: ")
+                for val in varray:
+                    inputs.append(val)
+                    print(val)
+                print("==============")
+                print("\n")
+
+
+        elif pattern == "conv2d+bias+relu":
+            strategy.add_implementation(
+                wrap_compute_conv2d_bias_relu(topi.cuda.conv2d_bias_relu_cudnn),
+                wrap_topi_schedule(topi.generic.schedule_extern),
+                name="conv2d_bias_relu.cudnn",
+            )
+
+            attrs = ops[0]
+            ret_type = ops[0]
+
+    # To compute subgraph
+    #   attrs for each op
+    #   input for the subgraph
+    #   -  pattern - will be given
+
+    #  May need rewrite?
+    #
+
+
+
+    impl, outputs = None, None
+    for spec in strategy.specializations:
+        for impl in spec.implementations:
+            # attribute, inputs, output_type
+            outputs = impl.compute(attrs, inputs, ret_type)
+            return LoweredOutput(outputs, impl)
+
+    # Should not reach
+    return None
 
 
 @tvm._ffi.register_func("relay.backend.lower_call")

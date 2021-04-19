@@ -110,12 +110,15 @@ class ScheduleGetter : public backend::MemoizedExprTranslator<Array<te::Tensor>>
   CachedFunc Create(const Function& prim_func) {
     auto cache_node = make_object<CachedFuncNode>();
     cache_node->target = target_;
+      
+    Array<tvm::te::Tensor> all_inputs;
     for (Var param : prim_func->params) {
       Array<tvm::te::Tensor> inputs;
       if (const auto* ttype = param->checked_type().as<TensorTypeNode>()) {
         tvm::te::Tensor tensor = tvm::te::placeholder(GetShape(ttype->shape), ttype->dtype);
         cache_node->inputs.push_back(tensor);
         inputs.push_back(tensor);
+        all_inputs.push_back(tensor);
       } else {
         // flatten tuple of tensor type.
         const auto* tuple_type = param->type_as<TupleTypeNode>();
@@ -126,6 +129,7 @@ class ScheduleGetter : public backend::MemoizedExprTranslator<Array<te::Tensor>>
           tvm::te::Tensor tensor = tvm::te::placeholder(GetShape(ttype->shape), ttype->dtype);
           cache_node->inputs.push_back(tensor);
           inputs.push_back(tensor);
+          all_inputs.push_back(tensor);
         }
       }
       memo_[param] = inputs;
@@ -137,26 +141,16 @@ class ScheduleGetter : public backend::MemoizedExprTranslator<Array<te::Tensor>>
     if(dp_info!=nullptr) dp_target = std::string(dp_info.value());
 
     //NOTE: update target --> Target("llvm")
+    std::cerr << "DP_TARGET: " << dp_target << "\n";
     //if(dp_target.size()>0 && dp_target.find("NO_OP")==-1){
-    if(dp_target.size()>0){
+    //if(dp_target.size()>0){
+    if(dp_target.size()<0){
       // Note: Sung  
-      this->VisitExpr(prim_func->body);
-      //cache_node->outputs = this->VisitExpr(prim_func->body);
-      
-      const CallNode* call_node = static_cast<const CallNode*>(prim_func->body.get());
-      auto inputs = getInputs(call_node);
-      std::cerr << ">> Sung's intercept\n";
-      static auto ftarget_specific_lower_call = tvm::runtime::Registry::Get("relay.backend.target_specific_lowering");
-      LoweredOutput lowered_out = (*ftarget_specific_lower_call)(prim_func, inputs);
-      //if(lowered_out == nullptr){
-      //  // We only call original lowering process for TVM operators
-      //}
-      std::cerr << ">> Came back to main\n";
-
-      cache_node->outputs = lowered_out->outputs;
+      cache_node->outputs = myVisitExpr(prim_func);
       
     }else{
       std::cerr << ">> Regular Path\n";
+      std::cerr << prim_func << "\n";
       cache_node->outputs = this->VisitExpr(prim_func->body);
     }
 
@@ -196,26 +190,32 @@ class ScheduleGetter : public backend::MemoizedExprTranslator<Array<te::Tensor>>
       }
 
       // Use TOPI schdule if user specificed, or the function has no auto_scheduler schedule.
-      if (!schedule.defined()) {
-        ICHECK(anchor_implementation_.defined());
-        schedule = anchor_implementation_.Schedule(anchor_attrs_, tensor_outs, target_);
-      }
+      //if(dp_target.size()==0){
+        if(!schedule.defined()){
+          ICHECK(anchor_implementation_.defined());
+          schedule = anchor_implementation_.Schedule(anchor_attrs_, tensor_outs, target_);
+       }
       for (const auto& scalar : scalars_) {
         if (schedule->Contain(scalar)) {
           schedule[scalar].compute_inline();
         }
       }
+      //}
     }
     cache_node->schedule = std::move(schedule);
+
+    
     return CachedFunc(cache_node);
   }
 
   Array<te::Tensor> VisitExpr_(const VarNode* op) final {
+    std::cerr << "### VarNode\n";
     LOG(FATAL) << "Free variable " << op->name_hint();
     return {};
   }
 
   Array<te::Tensor> VisitExpr_(const ConstantNode* op) final {
+    std::cerr << "### ConstantNode\n";
     using tir::make_const;
     ICHECK(op->is_scalar());
     void* data = op->data->data;
@@ -243,24 +243,102 @@ class ScheduleGetter : public backend::MemoizedExprTranslator<Array<te::Tensor>>
     return {value};
   }
 
-  Array<te::Tensor> getInputs(const CallNode* call_node){
-    Array<te::Tensor> inputs;
+
+  void collectInputs(Map<Expr, Array<te::Tensor>>& iMap, const Expr& expr){
+    std::cerr << "Collect: " << expr << "\n";
+    const CallNode* call_node = static_cast<const CallNode*>(expr.get());
+    ICHECK(call_node);
+
     int count_tuple = 0;
     for (Expr arg : call_node->args) {
       if (arg->checked_type().as<TupleTypeNode>()) {
         ++count_tuple;
       }
+      
+      if(static_cast<const CallNode*>(arg.get()))
+        collectInputs(iMap, arg);
+
+      Array<te::Tensor> inputs;
       for (te::Tensor tensor : VisitExpr(arg)) {
         inputs.push_back(tensor);
       }
+      iMap.Set(arg, inputs);
+
     }
-    return inputs;
+
+    if (count_tuple) {
+      ICHECK_EQ(call_node->args.size(), 1U) << "Only allow function with a single tuple input";
+    }
+  }
+
+
+  Array<te::Tensor> myVisitExpr(const Function& prim_func){
+    const CallNode* call_node = static_cast<const CallNode*>(prim_func->body.get());
+
+    using tir::make_const;
+    static auto fpattern = Op::GetAttrMap<TOpPattern>("TOpPattern");
+    static auto flower_call = tvm::runtime::Registry::Get("relay.backend.lower_call");
+    ICHECK(flower_call) << "relay.backend.lower_call is not registered.";
+
+
+    // map of <expr, Array<te:Tensor>> pair
+    Map<Expr, Array<te::Tensor>> inputMap;
+    collectInputs(inputMap, prim_func->body);
+
+    for(auto arg:inputMap)
+      for(auto v:arg.second)
+        std::cerr << arg.first << " ==> " << v << "\n";
+
+    ICHECK(call_node->op.as<OpNode>()) << "Primitive function only allows call into primitive ops";
+    Op op = Downcast<Op>(call_node->op);
+
+    Array<te::Tensor> outputs;
+    OpImplementation impl;
+
+    std::cerr << ">> Sung's intercept\n";
+    static auto ftarget_specific_lower_call = tvm::runtime::Registry::Get("relay.backend.target_specific_lowering");
+    LoweredOutput lowered_out = (*ftarget_specific_lower_call)(prim_func, inputMap);
+    //LoweredOutput lowered_out = (*ftarget_specific_lower_call)(prim_func, inputs);
+    outputs = lowered_out->outputs;
+    impl = lowered_out->implementation;
+    
+    int op_pattern = fpattern[op];
+    if (!use_auto_scheduler_ && op_pattern >= kCommReduce) {
+      ICHECK(!anchor_op_.defined() || anchor_op_pattern_ < kCommReduce)
+          << "Cannot apply TOPI schedule to a primitive function with two complicated ops"
+          << " anchor=" << anchor_op_ << " current=" << op;
+    }
+    if (op_pattern >= anchor_op_pattern_) {
+      anchor_op_ = op;
+      anchor_attrs_ = call_node->attrs;
+      anchor_op_pattern_ = op_pattern;
+      anchor_implementation_ = impl;
+    }
+    
+    if (outputs.size() != 1) {
+      const auto* tuple_type = call_node->checked_type().as<TupleTypeNode>();
+      ICHECK(tuple_type) << "Expect output to be a tuple type";
+      ICHECK_EQ(tuple_type->fields.size(), outputs.size());
+    }
+    
+
+    // Set the name to `__copy`. It will be detected in graph executor to perform
+    // data copy across devices.
+    if (op == device_copy_op_) {
+      readable_name_stream_.str(std::string());
+      readable_name_stream_ << "__copy";
+    } else {
+      readable_name_stream_ << '_' << op->name;
+    }
+    return outputs;
   }
 
   Array<te::Tensor> VisitExpr_(const CallNode* call_node) final {
+    std::cerr << "### CallNode\n";
+
+    using tir::make_const;
     static auto fpattern = Op::GetAttrMap<TOpPattern>("TOpPattern");
     static auto flower_call = tvm::runtime::Registry::Get("relay.backend.lower_call");
-    //static auto ftarget_specific_lower_call = tvm::runtime::Registry::Get("relay.backend.target_specific_lowering");
     ICHECK(flower_call) << "relay.backend.lower_call is not registered.";
     
     Array<te::Tensor> inputs;
@@ -293,6 +371,9 @@ class ScheduleGetter : public backend::MemoizedExprTranslator<Array<te::Tensor>>
 
       LoweredOutput lowered_out;
       lowered_out = (*flower_call)(GetRef<Call>(call_node), inputs, target_);
+      
+      //static auto ftarget_specific_lower_call = tvm::runtime::Registry::Get("relay.backend.target_specific_lowering_callnode");
+      //lowered_out = (*ftarget_specific_lower_call)(GetRef<Call>(call_node), inputs, target_);
 
       /*
       if(dp_target.find("NO_OP") == -1){
@@ -339,11 +420,15 @@ class ScheduleGetter : public backend::MemoizedExprTranslator<Array<te::Tensor>>
   }
 
   Array<te::Tensor> VisitExpr_(const FunctionNode* op) final {
+    std::cerr << "### FunctionNode\n";
+    using tir::make_const;
     LOG(FATAL) << "Do not support sub function";
     return Array<te::Tensor>();
   }
 
   Array<te::Tensor> VisitExpr_(const LetNode* op) final {
+    std::cerr << "### LetNode\n";
+    using tir::make_const;
     Array<te::Tensor> val = VisitExpr(op->value);
     ICHECK(!memo_.count(op->var));
     memo_[op->var] = val;
@@ -351,6 +436,8 @@ class ScheduleGetter : public backend::MemoizedExprTranslator<Array<te::Tensor>>
   }
 
   Array<te::Tensor> VisitExpr_(const TupleNode* op) final {
+    std::cerr << "### TupleNode\n";
+    using tir::make_const;
     Array<te::Tensor> fields;
     for (Expr field : op->fields) {
       ICHECK(field->checked_type().as<TensorTypeNode>()) << "Only allow Tuple of Tensor";
@@ -362,6 +449,8 @@ class ScheduleGetter : public backend::MemoizedExprTranslator<Array<te::Tensor>>
   }
 
   Array<te::Tensor> VisitExpr_(const TupleGetItemNode* op) final {
+    std::cerr << "### TupleGetItemNode\n";
+    using tir::make_const;
     const auto* tuple_type = op->tuple->type_as<TupleTypeNode>();
     Array<te::Tensor> tuple = VisitExpr(op->tuple);
     ICHECK_EQ(tuple_type->fields.size(), tuple.size());
@@ -439,7 +528,6 @@ class MakeShapeFunc : public backend::MemoizedExprTranslator<Array<te::Tensor>> 
     }
     readable_name_stream_ << "shape_func";
     auto cache_node = make_object<CachedFuncNode>();
-
 
     cache_node->outputs = VisitExpr(prim_func->body);
 
@@ -815,6 +903,8 @@ class CompileEngineImpl : public CompileEngineNode {
     auto cfunc = CreateSchedule(key->source_func, key->target);
     auto cache_node = make_object<CachedFuncNode>(*(cfunc.operator->()));
 
+    std::cerr << "@@@ Schedule is creatd\n";
+
     // Skip lowering for device copy node.
     const Expr body = (key->source_func)->body;
     if (const CallNode* call_node = body.as<CallNode>()) {
@@ -830,8 +920,11 @@ class CompileEngineImpl : public CompileEngineNode {
     for (te::Tensor arg : cache_node->outputs) {
       all_args.push_back(arg);
     }
+    
+    std::cerr << "@@@ Lower the function\n";
     // lower the function
     if (const auto* f = runtime::Registry::Get("relay.backend.lower")) {
+      std::cerr << "   -- backend lower\n";
       cache_node->funcs = (*f)(cfunc->schedule, all_args, cache_node->func_name, key->source_func);
     } else {
       using tvm::transform::PassContext;
