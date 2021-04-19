@@ -88,6 +88,7 @@ namespace tvm {
 
     // PATCH(@Soo): New data type for group id and backend op name
     const std::string kInvalidBackendOp = "INVALID_BACKEND_OP";
+    const std::string kInvalidGroupIdOpNamePair = "9999999-INVALID_BACKEND_OP";
     constexpr int kInvalidGroupId = -1;
 
     struct GroupIdOpNamePair {
@@ -111,7 +112,7 @@ namespace tvm {
       }
 
       // Dummy constructor
-      GroupIdOpNamePair() : GroupIdOpNamePair(kInvalidBackendOp) {}
+      GroupIdOpNamePair() : GroupIdOpNamePair(kInvalidGroupIdOpNamePair) {}
 
       void debug_print() {
         std::cerr << "Pair: " << group_id << "," << backend_op_name << std::endl;
