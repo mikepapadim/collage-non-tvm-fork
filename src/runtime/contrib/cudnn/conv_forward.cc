@@ -620,7 +620,7 @@ void FindAlgo(int format, int dims, int groups, const int pad[], const int strid
 TVM_REGISTER_GLOBAL("tvm.contrib.cudnn.conv2d+bias+activation.forward")
     .set_body([](TVMArgs args, TVMRetValue* ret) {
 
-      std::cerr << "In fused func\n";
+//      std::cerr << "---------------------  In fused func\n";
 
       int mode = args[0];
       int format = args[1];
