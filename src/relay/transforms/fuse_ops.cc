@@ -87,7 +87,8 @@ namespace tvm {
     TVM_REGISTER_PASS_CONFIG_OPTION("relay.FuseOps.max_depth", Integer);
 
     // PATCH(@Soo): New data type for group id and backend op name
-    const std::string kInvalidPairStr = "9999999-NO_OP";
+    const std::string kInvalidBackendOp = "INVALID_BACKEND_OP";
+    const std::string kInvalidGroupIdOpNamePair = "9999999-INVALID_BACKEND_OP";
     constexpr int kInvalidGroupId = -1;
 
     struct GroupIdOpNamePair {
@@ -111,7 +112,7 @@ namespace tvm {
       }
 
       // Dummy constructor
-      GroupIdOpNamePair() : GroupIdOpNamePair(kInvalidPairStr) {}
+      GroupIdOpNamePair() : GroupIdOpNamePair(kInvalidGroupIdOpNamePair) {}
 
       void debug_print() {
         std::cerr << "Pair: " << group_id << "," << backend_op_name << std::endl;
@@ -240,9 +241,6 @@ namespace tvm {
 //
 ////        std::cerr << "Expr: " << expr << std::endl;
 //      }
-
-      // PATCH(@Soo): backend operator match information
-//      std::string cur_group_id_op_name_str_ = kInvalidPairStr;
 
       /*! \brief allocator of all the internal node object */
       support::Arena* arena_;
@@ -613,7 +611,7 @@ namespace tvm {
       struct Group {
         // PATCH(@Soo): backend operator name tag
         /*! \brief The corresponding backend operator name. */
-        std::string backend_op_name = kInvalidPairStr;
+        std::string backend_op_name = kInvalidBackendOp;
 
         /*! \brief The parent in the union find data structure. */
         Group* parent{nullptr};
