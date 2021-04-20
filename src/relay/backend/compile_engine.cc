@@ -142,11 +142,9 @@ class ScheduleGetter : public backend::MemoizedExprTranslator<Array<te::Tensor>>
 
     //NOTE: update target --> Target("llvm")
     std::cerr << "DP_TARGET: " << dp_target << "\n";
-    //if(dp_target.size()>0 && dp_target.find("NO_OP")==-1){
-    //if(dp_target.size()>0){
-    if(dp_target.size()<0){
+    if(dp_target.size()>0 && dp_target.find("NO_OP")==-1){
       // Note: Sung  
-      cache_node->outputs = myVisitExpr(prim_func);
+      cache_node->outputs = myVisitExpr(prim_func, dp_target);
       
     }else{
       std::cerr << ">> Regular Path\n";
@@ -209,13 +207,11 @@ class ScheduleGetter : public backend::MemoizedExprTranslator<Array<te::Tensor>>
   }
 
   Array<te::Tensor> VisitExpr_(const VarNode* op) final {
-    std::cerr << "### VarNode\n";
     LOG(FATAL) << "Free variable " << op->name_hint();
     return {};
   }
 
   Array<te::Tensor> VisitExpr_(const ConstantNode* op) final {
-    std::cerr << "### ConstantNode\n";
     using tir::make_const;
     ICHECK(op->is_scalar());
     void* data = op->data->data;
@@ -245,7 +241,6 @@ class ScheduleGetter : public backend::MemoizedExprTranslator<Array<te::Tensor>>
 
 
   void collectInputs(Map<Expr, Array<te::Tensor>>& iMap, const Expr& expr){
-    std::cerr << "Collect: " << expr << "\n";
     const CallNode* call_node = static_cast<const CallNode*>(expr.get());
     ICHECK(call_node);
 
@@ -272,7 +267,7 @@ class ScheduleGetter : public backend::MemoizedExprTranslator<Array<te::Tensor>>
   }
 
 
-  Array<te::Tensor> myVisitExpr(const Function& prim_func){
+  Array<te::Tensor> myVisitExpr(const Function& prim_func, const std::string dp_target){
     const CallNode* call_node = static_cast<const CallNode*>(prim_func->body.get());
 
     using tir::make_const;
@@ -285,9 +280,9 @@ class ScheduleGetter : public backend::MemoizedExprTranslator<Array<te::Tensor>>
     Map<Expr, Array<te::Tensor>> inputMap;
     collectInputs(inputMap, prim_func->body);
 
-    for(auto arg:inputMap)
-      for(auto v:arg.second)
-        std::cerr << arg.first << " ==> " << v << "\n";
+    //for(auto arg:inputMap)
+    //  for(auto v:arg.second)
+    //    std::cerr << arg.first << " ==> " << v << "\n";
 
     ICHECK(call_node->op.as<OpNode>()) << "Primitive function only allows call into primitive ops";
     Op op = Downcast<Op>(call_node->op);
@@ -297,7 +292,7 @@ class ScheduleGetter : public backend::MemoizedExprTranslator<Array<te::Tensor>>
 
     std::cerr << ">> Sung's intercept\n";
     static auto ftarget_specific_lower_call = tvm::runtime::Registry::Get("relay.backend.target_specific_lowering");
-    LoweredOutput lowered_out = (*ftarget_specific_lower_call)(prim_func, inputMap);
+    LoweredOutput lowered_out = (*ftarget_specific_lower_call)(prim_func, inputMap, dp_target);
     //LoweredOutput lowered_out = (*ftarget_specific_lower_call)(prim_func, inputs);
     outputs = lowered_out->outputs;
     impl = lowered_out->implementation;
@@ -334,7 +329,6 @@ class ScheduleGetter : public backend::MemoizedExprTranslator<Array<te::Tensor>>
   }
 
   Array<te::Tensor> VisitExpr_(const CallNode* call_node) final {
-    std::cerr << "### CallNode\n";
 
     using tir::make_const;
     static auto fpattern = Op::GetAttrMap<TOpPattern>("TOpPattern");
@@ -420,14 +414,12 @@ class ScheduleGetter : public backend::MemoizedExprTranslator<Array<te::Tensor>>
   }
 
   Array<te::Tensor> VisitExpr_(const FunctionNode* op) final {
-    std::cerr << "### FunctionNode\n";
     using tir::make_const;
     LOG(FATAL) << "Do not support sub function";
     return Array<te::Tensor>();
   }
 
   Array<te::Tensor> VisitExpr_(const LetNode* op) final {
-    std::cerr << "### LetNode\n";
     using tir::make_const;
     Array<te::Tensor> val = VisitExpr(op->value);
     ICHECK(!memo_.count(op->var));
@@ -436,7 +428,6 @@ class ScheduleGetter : public backend::MemoizedExprTranslator<Array<te::Tensor>>
   }
 
   Array<te::Tensor> VisitExpr_(const TupleNode* op) final {
-    std::cerr << "### TupleNode\n";
     using tir::make_const;
     Array<te::Tensor> fields;
     for (Expr field : op->fields) {
@@ -449,7 +440,6 @@ class ScheduleGetter : public backend::MemoizedExprTranslator<Array<te::Tensor>>
   }
 
   Array<te::Tensor> VisitExpr_(const TupleGetItemNode* op) final {
-    std::cerr << "### TupleGetItemNode\n";
     using tir::make_const;
     const auto* tuple_type = op->tuple->type_as<TupleTypeNode>();
     Array<te::Tensor> tuple = VisitExpr(op->tuple);
