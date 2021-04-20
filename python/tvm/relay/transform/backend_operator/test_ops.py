@@ -7,9 +7,9 @@ from tvm import relay
 from tvm.relay import testing
 import pytest as pyt
 
-#from ..backend_operator.target import Target
-#from ..backend_operator.utils import is_function_node
-#from ..workloads.onnx_workloads import get_network_from_onnx
+from .target import Target
+from .utils import is_function_node
+from ..workloads.onnx_workloads import get_network_from_onnx
 
 
 gt_target = "cuda"
@@ -295,11 +295,10 @@ def ref_tvm_build_cudnn(config):
 
         params = neural_in["params"]
         opt_level = 2
-        target_str = 'cuda'# -libs=cudnn'
         with tvm.transform.PassContext(opt_level=opt_level):
-            lib = relay.build(simple_net, target_str, params=params)#tvm.target.cuda(), params=params)
+            lib = relay.build(simple_net, tvm.target.cuda(), params=params)
 
-        dev = tvm.device(target_str, 0)#"cuda", 0)
+        dev = tvm.device("cuda", 0)
         #dev = tvm.device("cuda -libs=cudnn", 0)
         #lib = relay.build_module.build(simple_net, "cuda")
         mod = runtime.GraphModule(lib["default"](dev))
@@ -804,13 +803,11 @@ def ref_impl(config):
 
 configs = [
 
-    ["conv2d", "cuda -libs=cudnn", 1, (1,3,224,224), 16, (3,3), (1,1), (1,1), (1,1), 1, "NCHW", "OIHW", "", "", (2,2), -1, (1,16)],
-    #["conv2d+bias+relu", "cuda -libs=cudnn", 1, (1,3,224,224), 16, (3,3), (1,1), (1,1), (1,1), 1, "NCHW", "OIHW", "", "", (2,2), -1, (1,16)],
+    #["conv2d", "cuda -libs=cudnn", 1, (1,3,224,224), 16, (3,3), (1,1), (1,1), (1,1), 1, "NCHW", "OIHW", "", "", (2,2), -1, (1,16)],
+    ["conv2d+bias+relu", "cuda -libs=cudnn", 1, (1,3,224,224), 16, (3,3), (1,1), (1,1), (1,1), 1, "NCHW", "OIHW", "", "", (2,2), -1, (1,16)],
     #["conv2d", "cuda -libs=cudnn", 1, (1,3,224,224), 16, (3,3), (2,2), (1,1), (1,1), 1, "NCHW", "OIHW", "", "", (2,2), -1,(1,16)],
     #["conv2d+bias+relu", "cuda -libs=cudnn", 1, (1,3,224,224), 16, (3,3), (2,2), (1,1), (1,1), 1, "NCHW", "OIHW", "", "",(2,2), -1, (1,16)],
-    #["conv2d+bias+relu", "cuda -libs=cudnn", 1, (1,3,224,224), 16, (3,3), (2,2), (1,1), (1,1), 1, "NCHW", "OIHW", "", "",(2,2), -1, (1,16)],
-
-    # ["softmax", "cuda -libs=cudnn", 1, (1,1,4,4), 16, (3,3), (1,1), (1,1), (1,1), 1, "NCHW", "OIHW", "", "", (2,2), -1, (1,16)],
+    #["softmax", "cuda -libs=cudnn", 1, (1,1,4,4), 16, (3,3), (1,1), (1,1), (1,1), 1, "NCHW", "OIHW", "", "", (2,2), -1, (1,16)],
     #["softmax", "cuda -libs=cudnn", 1, (1,1,4,4), 16, (3,3), (1,1), (1,1), (1,1), 1, "NCHW", "OIHW", "", "", (2,2), 0, (1,16)],
     #["relu", "cuda -libs=cudnn", 1, (1,3,224,224), 16, (3,3), (1,1), (1,1), (1,1), 1, "NCHW", "OIHW", "", "", (2,2), -1, (1,16)],
     #["biasadd", "cuda -libs=cudnn", 1, (13,31,224,12), 16, (3,3), (1,1), (1,1), (1,1), 1, "NCHW", "OIHW", "", "", (2,2), -1, (1,16)],
@@ -839,7 +836,6 @@ for config in configs:
 
 OUTPUT = "operator_cost.log"
 # change this to test your ops!
-# CLIENT_IMPLEMENTATION = ref_tvm_op_build_cudnn
 CLIENT_IMPLEMENTATION = ref_tvm_build_cudnn
 #CLIENT_IMPLEMENTATION = ref_impl
 REPEAT = 1

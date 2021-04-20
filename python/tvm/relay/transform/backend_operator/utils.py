@@ -1,6 +1,7 @@
 from tvm import relay
 from tvm.relay.dataflow_pattern import *
 from collections import namedtuple
+import numpy as np
 
 from .pattern import Pattern
 
@@ -18,10 +19,41 @@ def get_diamond():
 # return the shape of input data to expr
 def get_data_shape(expr):
   inputs = relay.analysis.free_vars(expr)
+  # if is_call_node(expr):
+  #   print(f"Input for expr ({expr.op}) {[inputs[0].type_annotation]}, {expr.attrs.axis}")
+
   # for add, shape of lhs and rhs should be identical. for all other backend ops, we take shape of "data" input arg
-  data_shape_imm = inputs[0].type_annotation.shape
-  data_shape = tuple(map(lambda x: x.value, data_shape_imm))
+  # inputs[0] corresponds to Var(name_hint='data')
+  # We consider two different types for that: TupleTypeNode, TensorTypeNode
+  if type(inputs[0].type_annotation) == relay.TensorType:
+    data_shape_imm = inputs[0].type_annotation.shape
+    data_shape = list(map(lambda x: x.value, data_shape_imm))
+  elif type(inputs[0].type_annotation) == relay.TupleType:
+    data_shape = []
+    for tup_item in inputs[0].type_annotation.fields:
+      data_shape.append(tuple((map(lambda x: x.value, tup_item.shape))))
+    data_shape = tuple(data_shape)
+    print("data shape", data_shape)
+  else:
+    raise Exception(f"Unsupported Var type ({type(inputs[0].type_annotation)})")
+
   return data_shape
+
+def get_data(expr):
+  data_shape = get_data_shape(expr)
+  if type(data_shape) == list:
+    print(data_shape)
+    data = np.random.uniform(-1, 1, size=data_shape).astype("float32")
+  elif type(data_shape) == tuple:
+    data = []
+    for shape in data_shape:
+      data.append(np.random.uniform(-1, 1, size=shape).astype("float32"))
+      print(shape)
+    data = tuple(data)
+  else:
+    raise Exception(f"Unsupported data shape type {type(data_shape)}")
+
+  return data
 
 def is_function_node(expr):
   return type(expr) == tvm.relay.Function
@@ -32,12 +64,15 @@ def is_constant_node(expr):
 def is_call_node(expr):
   return type(expr) == tvm.relay.expr.Call
 
+def is_tuple_node(expr):
+  return type(expr) == tvm.relay.expr.Tuple
+
 def is_tuplegetitem_node(expr):
   return type(expr) == tvm.relay.expr.TupleGetItem
 
 def is_call_or_tuplegetitem_node(expr):
   # If not, it means that we need to add codes to deal with other nodes
-  assert is_call_node(expr) or is_tuplegetitem_node(expr) or is_var_node(expr) or is_constant_node(expr)
+  assert is_call_node(expr) or is_tuplegetitem_node(expr) or is_var_node(expr) or is_constant_node(expr) or is_tuple_node(expr)
   return is_call_node(expr) or is_tuplegetitem_node(expr)
 
 def is_var_node(expr):
@@ -52,9 +87,10 @@ def get_attr_vals(expr):
   attrs = expr.attrs 
   op_name = expr.op.name
 
-  if attrs == None:
+  if attrs == None or "keys" not in dir(attrs):
     return (op_name, "")
 
+  # print(f"{expr.op}'s Attrs : {dir(attrs)}")
   keys = attrs.keys()
   values = []
   for key in keys:

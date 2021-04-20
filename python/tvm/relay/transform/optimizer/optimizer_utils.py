@@ -1,11 +1,22 @@
 import tvm
 from ..backend_operator.utils import is_call_node, is_tuplegetitem_node, is_var_node, is_constant_node, is_function_node
 
+DATA_NAME_HINTS = ['data', 'input', 'x']
+
+def is_data_var_node(expr):
+    is_data_var = False
+    for data_name_hint in DATA_NAME_HINTS:
+        if data_name_hint in expr.name_hint:
+            is_data_var = True
+            break
+    return is_data_var
+
+
 def get_next_expr_after_match(relay_expr, prev_relay_expr, depth): 
     target_node = []
 
     if type(relay_expr) == tvm.relay.expr.Var:
-        if relay_expr.name_hint == 'data':
+        if is_data_var_node(relay_expr):
             return [(relay_expr, prev_relay_expr)]
         return [(None, prev_relay_expr)]
     elif is_constant_node(relay_expr):
@@ -19,6 +30,11 @@ def get_next_expr_after_match(relay_expr, prev_relay_expr, depth):
     if type(relay_expr) == tvm.relay.expr.TupleGetItem:
         target_node += get_next_expr_after_match(relay_expr.tuple_value, relay_expr, depth-1)
     else:
+        # Note that batch_matmul also has args
+        # if type(relay_expr) == tvm.relay.nn.batch_matmul:
+        #     target_node += get_next_expr_after_match(relay_expr.x, relay_expr, depth - 1)
+        #     target_node += get_next_expr_after_match(relay_expr.y, relay_expr, depth - 1)
+        # else:
         for node in relay_expr.args:
             target_node += get_next_expr_after_match(node, relay_expr, depth-1)
 #             # FIX: Hacky way to avoid residual connection
@@ -34,6 +50,11 @@ def get_pattern_len(pattern):
         length +=1
     elif type(pattern) == tvm.relay.dataflow_pattern.TupleGetItemPattern:
         length = get_pattern_len(pattern.tuple)
+        length += 1
+    elif type(pattern) == tvm.relay.dataflow_pattern.TuplePattern:
+        for child in pattern.fields:
+            print(type(child))
+            length = max(length, get_pattern_len(child))
         length += 1
 
     return length

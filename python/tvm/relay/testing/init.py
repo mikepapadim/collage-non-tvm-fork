@@ -169,11 +169,14 @@ def create_workload(net, initializer=None, seed=0):
     mod = relay.transform.InferType()(mod)
     shape_dict = {v.name_hint: v.checked_type for v in mod["main"].params}
     np.random.seed(seed)
-    initializer = initializer if initializer else Xavier()
+
+    initializer = initializer if initializer is not None else Xavier()
+
     params = {}
     for k, v in shape_dict.items():
         if k == "data":
             continue
+        #init_value = np.random.uniform(-1,1,size=v.concrete_shape).astype(v.dtype)
         init_value = np.zeros(v.concrete_shape).astype(v.dtype)
         initializer(k, init_value)
         params[k] = tvm.nd.array(init_value, device=tvm.cpu(0))

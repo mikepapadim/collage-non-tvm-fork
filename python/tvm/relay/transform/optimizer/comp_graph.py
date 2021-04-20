@@ -1,6 +1,7 @@
 import tvm
 from tvm import relay
-from ..backend_operator.utils import is_call_node, is_tuplegetitem_node, is_var_node, is_constant_node, is_function_node
+from ..backend_operator.utils import *
+from .optimizer_utils import is_data_var_node
 
 class Node:
     def __init__(self, relay_expr, topological_order):
@@ -59,14 +60,20 @@ class ComputationGraph:
     def _get_n_nodes(self, relay_expr):
         self._memo[hash(relay_expr)] = True
         n_nodes = 1
-        if is_constant_node(relay_expr) or (is_var_node(relay_expr) and relay_expr.name_hint != 'data'):
+        if is_constant_node(relay_expr) or (is_var_node(relay_expr) and not is_data_var_node(relay_expr)):
             n_nodes = 0
-        elif is_var_node(relay_expr) and relay_expr.name_hint == 'data':
+        elif is_var_node(relay_expr) and is_data_var_node(relay_expr):
             n_nodes = 1
         elif is_tuplegetitem_node(relay_expr):
             next_expr = relay_expr.tuple_value
             if hash(next_expr) not in self._memo:
                 n_nodes += self._get_n_nodes(next_expr)
+        elif is_tuple_node(relay_expr):
+            for node_idx, node in enumerate(relay_expr.fields):
+                if hash(node) not in self._memo:
+                    # memorize this visit to prevent it from visiting twice
+                    # +1 here means counting the current node
+                    n_nodes += self._get_n_nodes(node)
         elif is_call_node(relay_expr):
             for node_idx, node in enumerate(relay_expr.args):
                 if hash(node) not in self._memo:
@@ -74,7 +81,7 @@ class ComputationGraph:
                     # +1 here means counting the current node
                     n_nodes += self._get_n_nodes(node)
         else:
-            raise Exception("Unexpected Relay expr type")
+            raise Exception(f"Unexpected Relay expr type {type(relay_expr)}")
 
         return n_nodes
    
@@ -89,13 +96,25 @@ class ComputationGraph:
         self._memo[hash(relay_expr)] = True
 
     def _expr2graph(self, relay_expr, topological_order, parent_expr):
-        if is_constant_node(relay_expr) or (is_var_node(relay_expr) and relay_expr.name_hint != 'data'):
+        if is_constant_node(relay_expr) or (is_var_node(relay_expr) and not is_data_var_node(relay_expr)):
             return
         else:
             self._add_node(relay_expr, topological_order, parent_expr)
 
-            if is_var_node(relay_expr) and relay_expr.name_hint == 'data':
+            if is_var_node(relay_expr) and is_data_var_node(relay_expr):
                 return
+            elif is_tuple_node(relay_expr):
+                for node_idx, node in enumerate(relay_expr.fields):
+                    if hash(node) not in self._memo:
+                        # memorize this visit to prevent it from visiting twice
+                        # +1 here means counting the current node
+                        self._expr2graph(node, topological_order + 1, relay_expr)
+                    else:
+                        # Make sure the node has a right (larger) topological order
+                        # if there are multiple choices
+                        if self.expr2node[hash(node)]._topological_order < topological_order:
+                            self.expr2node[hash(node)]._topological_order = topological_order
+                        self.expr2node[hash(node)].add_parent(relay_expr)
             elif is_tuplegetitem_node(relay_expr):
                 # If it is tuple, you should use tuple_value instead of args
                 next_expr = relay_expr.tuple_value

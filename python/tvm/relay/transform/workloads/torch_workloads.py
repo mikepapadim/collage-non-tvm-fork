@@ -5,12 +5,13 @@ import os
 import copy
 
 from .workloads import WORKLOADS_DIC
-from ..baselines.pytorch.resnets import resnet50, resnext50_32x4d
+from ..baselines.pytorch.resnets import resnet50, resnext50_32x4d, resnet_block
 from ..baselines.pytorch.nasnet_a import NASNetA
 from ..baselines.pytorch.nasrnn import NASRNN
 from ..baselines.pytorch.bert import BERT
 
 NETWORK_TO_TORCH_MODEL = {
+    "resnet_block": resnet_block,
     "resnet50" : resnet50,
     "resnext50_32x4d" : resnext50_32x4d,
     "nasneta" : NASNetA,
@@ -20,7 +21,11 @@ NETWORK_TO_TORCH_MODEL = {
 
 def load_torch_model(name):
     # Get the model
-    model = NETWORK_TO_TORCH_MODEL[name]().cuda()
+    if name == "nasrnn":
+        model = NETWORK_TO_TORCH_MODEL[name](is_gpu=False)#.cuda()
+    else:
+        model = NETWORK_TO_TORCH_MODEL[name]()  # .cuda()
+
     model.eval()
 
     # Create the input data

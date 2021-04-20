@@ -1,5 +1,5 @@
 from tvm import relay
-import tensorflow as tf
+# import tensorflow as tf
 
 import os
 import onnx

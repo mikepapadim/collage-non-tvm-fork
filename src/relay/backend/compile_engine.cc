@@ -45,6 +45,7 @@
 #include <utility>
 #include <vector>
 
+#include <cassert>
 #include "../transforms/pass_utils.h"
 #include "utils.h"
 
@@ -142,9 +143,15 @@ class ScheduleGetter : public backend::MemoizedExprTranslator<Array<te::Tensor>>
 
     //NOTE: update target --> Target("llvm")
     std::cerr << "DP_TARGET: " << dp_target << "\n";
-    if(dp_target.size()>0 && dp_target.find("NO_OP")==-1){
+    bool doCustomLowering = dp_target.size()>0 
+                            && ((int)dp_target.find("INVALID_BACKEND_OP")==-1)
+                            && ((int)dp_target.find("tvmgpu")==-1);
+
+    if(doCustomLowering){
       // Note: Sung  
       cache_node->outputs = myVisitExpr(prim_func, dp_target);
+
+      assert(0);
       
     }else{
       std::cerr << ">> Regular Path\n";
@@ -276,7 +283,6 @@ class ScheduleGetter : public backend::MemoizedExprTranslator<Array<te::Tensor>>
     ICHECK(flower_call) << "relay.backend.lower_call is not registered.";
 
 
-    // map of <expr, Array<te:Tensor>> pair
     Map<Expr, Array<te::Tensor>> inputMap;
     collectInputs(inputMap, prim_func->body);
 
@@ -363,23 +369,7 @@ class ScheduleGetter : public backend::MemoizedExprTranslator<Array<te::Tensor>>
       if(dp_info!=nullptr)
         dp_target = std::string(dp_info.value());
 
-      LoweredOutput lowered_out;
-      lowered_out = (*flower_call)(GetRef<Call>(call_node), inputs, target_);
-      
-      //static auto ftarget_specific_lower_call = tvm::runtime::Registry::Get("relay.backend.target_specific_lowering_callnode");
-      //lowered_out = (*ftarget_specific_lower_call)(GetRef<Call>(call_node), inputs, target_);
-
-      /*
-      if(dp_target.find("NO_OP") == -1){
-        std::cerr << "Regular lowering\n";
-        lowered_out = (*flower_call)(GetRef<Call>(call_node), inputs, target_);
-      }
-      else{
-        std::cerr << "Target-specific lowering\n";
-        lowered_out = (*ftarget_specific_lower_call)(GetRef<Call>(call_node), inputs, target_);
-      }
-      */
-
+      LoweredOutput lowered_out = (*flower_call)(GetRef<Call>(call_node), inputs, target_);
 
       outputs = lowered_out->outputs;
       impl = lowered_out->implementation;
@@ -893,7 +883,7 @@ class CompileEngineImpl : public CompileEngineNode {
     auto cfunc = CreateSchedule(key->source_func, key->target);
     auto cache_node = make_object<CachedFuncNode>(*(cfunc.operator->()));
 
-    std::cerr << "@@@ Schedule is creatd\n";
+    //std::cerr << "@@@ Schedule is creatd\n";
 
     // Skip lowering for device copy node.
     const Expr body = (key->source_func)->body;
@@ -911,10 +901,9 @@ class CompileEngineImpl : public CompileEngineNode {
       all_args.push_back(arg);
     }
     
-    std::cerr << "@@@ Lower the function\n";
+    //std::cerr << "@@@ Lower the function\n";
     // lower the function
     if (const auto* f = runtime::Registry::Get("relay.backend.lower")) {
-      std::cerr << "   -- backend lower\n";
       cache_node->funcs = (*f)(cfunc->schedule, all_args, cache_node->func_name, key->source_func);
     } else {
       using tvm::transform::PassContext;

@@ -273,77 +273,11 @@ def select_implementation(op, attrs, inputs, out_type, target, use_autotvm=True)
     return best_plevel_impl, outputs[best_plevel_impl]
 
 
-"""
-# NOTE: Sung. Need to come up with better name
-@tvm._ffi.register_func("relay.backend.target_specific_lowering_callnode")
-def target_specific_lowering(call, inputs, target=None):
-    import sys
-
-    print("\t[Compile_engine.py] Custom lowering?", file=sys.stderr)
-
-    # Eventually, we want to define custom implemenation
-    # However, currently, we do not know how to do it.
-    # So, for now, let's try the hacky way.
-    from tvm.relay.op import op as _op
-    from tvm.relay.analysis import post_order_visit
-    from tvm import relay
-    from tvm import topi
-    from tvm.relay.op.strategy.generic import wrap_compute_softmax, wrap_topi_schedule
-    from tvm import te
-    from tvm.contrib.cudnn import softmax
-
-    strategy = _op.OpStrategy()
-    # relay express, callback
-    #relay.analysis.post_order_visit(mod['main'], lambda expr: log_backend_op_perf(b_op_lib, expr, target))
-    #inputs = relay.analysis.free_vars(fbody)
-    def extract_attr(expr, ret):
-        print(expr)
-        print(type(expr))
-        print("----")
-        if type(expr) == tvm.relay.expr.Call:
-            ret.append([expr.op, expr.args, expr.attrs, expr.checked_type])
-
-    ret = []
-    #for arg in ret:
-    #    shape = arg[1][0].type_annotation.shape
-    #    dtype = arg[1][0].type_annotation.dtype
-    #    inputs.append(te.placeholder(shape, dtype=dtype))
-
-    #print(func.body)
-    #print(type(func.body))
-
-    print("\n")
-    print("Before")
-    post_order_visit(call, lambda expr: extract_attr(expr, ret))
-    print("After")
-
-    attrs = ret[0][2]
-    ret_type = ret[0][3]
-
-    strategy.add_implementation(
-            wrap_compute_softmax(topi.cuda.softmax_cudnn),
-            wrap_topi_schedule(topi.cuda.schedule_softmax_cudnn),
-            name="softmax.cudnn",
-            plevel=15,
-        )
-
-    impl, outputs = None, None
-    for spec in strategy.specializations:
-        for impl in spec.implementations:
-            # attribute, inputs, output_type
-            outputs = impl.compute(attrs, inputs, ret_type)
-            return LoweredOutput(outputs, impl)
-
-    #outputs = [softmax(inputs[0])]
-    #return LoweredOutput(outputs, None)
-"""
-
 @tvm._ffi.register_func("relay.backend.target_specific_lowering")
 def target_specific_lowering(func, inputMap, target_info=None):
 
     import sys
-
-    print("\t[Compile_engine.py] Custom lowering?", file=sys.stderr)
+    #print("\t[Compile_engine.py] Custom lowering?", file=sys.stderr)
 
     # Eventually, we want to define custom implemenation
     # However, currently, we do not know how to do it.
@@ -354,86 +288,137 @@ def target_specific_lowering(func, inputMap, target_info=None):
     #relay.analysis.post_order_visit(mod['main'], lambda expr: log_backend_op_perf(b_op_lib, expr, target))
     #inputs = relay.analysis.free_vars(func.body)
 
-    ops = []
-    def extract_attr(expr, ops):
+    calls = []
+    def extract_attr(expr, calls):
         if type(expr) == tvm.relay.expr.Call:
-            ops.append(expr)
-    relay.analysis.post_order_visit(func, lambda expr: extract_attr(expr, ops))
+            calls.append(expr)
+    relay.analysis.post_order_visit(func, lambda expr: extract_attr(expr, calls))
 
     tokens = target_info.split('_')
     target = tokens[0]
     pattern = tokens[1]
 
-    def collect_input_for_single_op(inputMap):
+    def collect_input(inputMap):
         inputs = []
         for key, varray in inputMap.items():
-                for val in varray:
-                    inputs.append(val)
+            for val in varray:
+                inputs.append(val)
         return inputs
-
 
     attrs, ret_type = None, None
     if target == "cudnn":
         if pattern == "softmax":
             strategy.add_implementation(
-                wrap_compute_softmax(topi.cuda.softmax_cudnn),
+                wrap_custom_compute_softmax(topi.cuda.softmax_cudnn),
                 wrap_topi_schedule(topi.generic.schedule_extern),
                 name="softmax.cudnn",
             )
             # has single op
-            attrs = ops[0].attrs
-            ret_type = ops[0].checked_type
-            inputs = collect_input_for_single_op(inputMap)
-
+            attrs = calls[0].attrs
+            ret_type = calls[0].checked_type
+            inputs = collect_input(inputMap)
 
         elif pattern == "relu":
             strategy.add_implementation(
-                wrap_compute_relu(topi.cuda.relu_cudnn),
+                wrap_custom_compute_relu(topi.cuda.relu_cudnn),
                 wrap_topi_schedule(topi.generic.schedule_extern),
                 name="relu.cudnn",
             )
             # has single op
-            attrs = ops[0].attrs
-            ret_type = ops[0].checked_type
+            attrs = calls[0].attrs
+            ret_type = calls[0].checked_type
+            inputs = collect_input(inputMap)
 
-            inputs = collect_input_for_single_op(inputMap)
-
+        # TODO: not supported yet
         elif pattern == "biasadd":
             strategy.add_implementation(
-                wrap_compute_biasadd(topi.cuda.biasadd_cudnn),
+                wrap_custom_compute_biasadd(topi.cuda.biasadd_cudnn),
                 wrap_topi_schedule(topi.generic.schedule_extern),
                 name="biasadd.cudnn",
             )
             # has single op
-            attrs = ops[0].attrs
-            ret_type = ops[0].checked_type
-            inputs = collect_input_for_single_op(inputMap)
+            attrs = calls[0].attrs
+            ret_type = calls[0].checked_type
+            inputs = collect_input(inputMap)
 
         elif pattern == "conv2d":
             strategy.add_implementation(
-                wrap_compute_conv2d(topi.cuda.conv2d_cudnn),
+                wrap_custom_compute_conv2d(
+                         topi.cuda.conv2d_cudnn, need_data_layout=True, has_groups=True
+                     ),
+                #wrap_topi_schedule(topi.cuda.schedule_conv2d_cudnn),
                 wrap_topi_schedule(topi.generic.schedule_extern),
                 name="conv2d.cudnn",
             )
+            # has single op
+            attrs = calls[0].attrs
+            ret_type = calls[0].checked_type
+            inputs = collect_input(inputMap)
+
+        elif pattern == "maxpool2d":
+            strategy.add_implementation(
+                wrap_custom_compute_maxpool2d(topi.cuda.maxpool2d_cudnn),
+                wrap_topi_schedule(topi.generic.schedule_extern),
+                name="maxpool2d.cudnn",
+            )
+            # has single op
+            attrs = calls[0].attrs
+            ret_type = calls[0].checked_type
+            inputs = collect_input(inputMap)
+
+        # TODO: not supported yet
+        elif pattern == "bn":
+            #strategy.add_implementation(
+            #    wrap_custom_compute_maxpool2d(topi.cuda.maxpool2d_cudnn),
+            #    wrap_topi_schedule(topi.generic.schedule_extern),
+            #    name="bn.cudnn",
+            #)
 
             # has single op
-            attrs = ops[0].attrs
-            ret_type = ops[0].checked_type
-            inputs = collect_input_for_single_op(inputMap)
+            attrs = calls[0].attrs
+            ret_type = calls[0].checked_type
+            inputs = collect_input(inputMap)
 
 
-
-
-        # fused op
-        elif pattern == "conv2d+bias+relu":
+        # fused ops
+        # TODO: has correctness issue
+        elif pattern == "conv2d+biasadd+relu":
             strategy.add_implementation(
-                wrap_compute_conv2d_bias_relu(topi.cuda.conv2d_bias_relu_cudnn),
+                wrap_custom_compute_conv2d_biasadd_relu(
+                    topi.cuda.conv2d_biasadd_relu_cudnn, need_data_layout=True, has_groups=True
+                ),
                 wrap_topi_schedule(topi.generic.schedule_extern),
-                name="conv2d_bias_relu.cudnn",
+                name="conv2d_biasadd_relu.cudnn",
             )
 
-            attrs = ops[0]
-            ret_type = ops[0]
+            data, kernel, Z, bias = None, None, None, None
+            attrs, ret_type = None, None
+            for call in calls:
+                call_name = call.op.name
+                if "conv2d" in call_name:
+                    attrs = call.attrs
+                    ret_type = call.checked_type
+                    args = call.args
+                    data = inputMap[args[0]]
+                    kernel = inputMap[args[1]]
+                elif "bias_add" in call_name:
+                    bias = inputMap[args[1]]
+                elif "relu" in call_name:
+                    Z = inputMap[args[0]]
+
+            inputs = [data[0], kernel[0], Z[0], bias[0]]
+
+    elif target == "cublas":
+        if pattern == "dense":
+            strategy.add_implementation(
+                wrap_compute_dense(topi.cuda.dense_cublas),
+                wrap_topi_schedule(topi.generic.schedule_extern),
+                name="dense.cublas",
+            )
+            # has single op
+            attrs = calls[0].attrs
+            ret_type = calls[0].checked_type
+            inputs = collect_input(inputMap)
 
 
     # To compute subgraph
@@ -443,8 +428,6 @@ def target_specific_lowering(func, inputMap, target_info=None):
 
     #  May need rewrite?
     #
-
-
 
     impl, outputs = None, None
     for spec in strategy.specializations:
@@ -461,9 +444,6 @@ def target_specific_lowering(func, inputMap, target_info=None):
 def lower_call(call, inputs, target):
     """Lower the call expression to op implementation and tensor outputs."""
     assert isinstance(call.op, tvm.ir.Op)
-
-    print("lower_call: ", type(inputs), type(inputs[0]))
-
     op = call.op
 
     # Prepare the call_node->checked_type(). For the call node inputs, we ensure that
