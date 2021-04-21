@@ -12,6 +12,7 @@ from ..backend_operator.backend_op_lib import BackendOpLib
 from .comp_graph import ComputationGraph
 from .comp_graph_optimizer import CompGraphOptimizer
 
+from ..utility.visualize import visualize_network
 from .optimizer_utils import print_matching_final
 
 def setup_backend_op_lib(network_expr, targets, batch_size):
@@ -39,6 +40,7 @@ def optimize_comp_graph(relay_expr):
     # It is a function if you get it from last pass of Relay build
     # print("Relay expression")
     # print(relay_expr)
+    # visualize_network(relay_expr, "nasneta_opt")
     if type(relay_expr) == tvm.relay.function.Function:
         relay_expr = relay_expr.body
 
@@ -48,12 +50,14 @@ def optimize_comp_graph(relay_expr):
     # target_backend = None # Consider all targets
 
     # targets = [Target.TENSORRT, Target.CUDNN, Target.CUBLAS, Target.TVM_GPU_NO_TUNING, Target.TVM_CPU]
-    # targets = [Target.TVM_GPU_NO_TUNING, Target.TVM_GPU]
     # targets = [Target.TVM_GPU_AUTOSCH]
     # targets = [Target.TENSORRT]
     # targets = [Target.CUDNN, Target.TVM_GPU_NO_TUNING]
     # targets = [Target.TENSORRT, Target.TVM_GPU_NO_TUNING]
-    targets = [Target.TVM_GPU_NO_TUNING, Target.TENSORRT, Target.CUDNN]
+    # targets = [Target.TVM_GPU_NO_TUNING, Target.TVM_GPU_AUTOSCH, Target.TENSORRT, Target.CUDNN]#, Target.CUBLAS]
+    # targets = [Target.CUDNN]
+    # targets = [Target.TVM_GPU_NO_TUNING]
+    targets = [Target.TVM_GPU_NO_TUNING, Target.CUDNN]  # , Target.CUBLAS]
     batch_size = 1
     backendop_lib = setup_backend_op_lib(relay_expr, targets, batch_size)
 

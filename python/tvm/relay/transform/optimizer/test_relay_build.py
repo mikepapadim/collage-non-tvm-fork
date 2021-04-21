@@ -7,6 +7,36 @@ from ..backend_operator.utils import is_function_node
 from ..workloads.onnx_workloads import get_network_from_onnx
 from ..workloads.torch_workloads import get_network_from_torch
 
+def get_concat():
+    data1 = relay.var("data1", relay.TensorType((1, 3, 224, 224), "float32"))
+    data2 = relay.var("data2", relay.TensorType((1, 3, 224, 224), "float32"))
+    data3 = relay.var("data3", relay.TensorType((1, 3, 224, 224), "float32"))
+    data4 = relay.var("data4", relay.TensorType((1, 3, 224, 224), "float32"))
+    tup = relay.Tuple([data1, data2, data3, data4])
+    return tup
+    #concat = relay.concatenate(tup, axis=1)
+    #return concat
+
+def get_conv():
+    # Chain graph
+    out_channels = 16
+    batch_size = 1
+
+    data = relay.var("data", relay.TensorType((batch_size, 3, 224, 224), "float32"))
+    conv_weight = relay.var("weight", relay.TensorType((out_channels, 3, 3, 3), "float32"))
+    # bn_gamma = relay.var("bn_gamma")
+    # bn_beta = relay.var("bn_beta")
+    # bn_mmean = relay.var("bn_mean")
+    # bn_mvar = relay.var("bn_var")
+
+    # simple_net = relay.nn.relu(data)
+    # simple_net = relay.nn.relu(simple_net)
+    simple_net = relay.nn.conv2d(
+        data=data, weight=conv_weight, kernel_size=(3, 3), channels=out_channels, padding=(1, 1)
+    )
+
+    return simple_net
+
 def get_chain_graph():
     # Chain graph
     out_channels = 16
@@ -75,5 +105,16 @@ def build_network(net, params):
 
 # network_name = "resnet50"
 # mod, params, _, _ = get_network_from_onnx(network_name, batch_size=1)
-mod, params, _, _ = get_network_from_torch("resnet50",1)
+# mod, params, _, _ = get_network_from_torch("resnet_block", 1)
+# mod, params, _, _ = get_network_from_torch("resnet50", 1)
+# mod, params, _, _ = get_network_from_torch("resnext50_32x4d",1)
+# mod, params, _, _ = get_network_from_torch("bert",1)
+# mod, params, _, _ = get_network_from_torch("nasrnn",1)
+
+# print(get_concat().attrs.axis)
+
+from tvm.relay.dataflow_pattern import *
+print(is_tuple([wildcard(), wildcard(), wildcard(), wildcard()]).match(get_concat()))
+
+mod, params, _, _ = get_network_from_torch("nasneta",1)
 build_network(mod["main"], params)

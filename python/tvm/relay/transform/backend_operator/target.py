@@ -9,9 +9,10 @@ from tvm import autotvm, auto_scheduler
 import os
 from pathlib import Path
 
-from .utils import is_call_node, is_tuplegetitem_node, is_var_node, no_constraints_func, get_data_shape
+from .utils import *
 
-from tvm.contrib import graph_executor
+from tvm.contrib import graph_executor as runtime
+# from tvm.contrib import graph_executor
 
 # only collect results whose standard deviation is below this
 MAX_STANDARD_DEVIATION = 5E-04
@@ -20,10 +21,11 @@ NUM_MEASUREMENTS_PER_REPEAT = 100
 
 
 cur_dir_path = Path(__file__).parent.absolute()
-AUTOTVM_LOG = f"{cur_dir_path}/../autotune/autotvm_ops.log"
+AUTOTVM_LOG = f"{cur_dir_path}/../logs/autotvm_ops.log"
 # Temporary autoscheduler log file
 # FIXME(@Soo): Accumulate autoscheduler logs to the same file
-AUTOSCH_LOG = f"{cur_dir_path}/../autotune/autosch_ops.json"
+# AUTOSCH_LOG = "/home/byungsoj/backend-aware-graph-opt/package/autotune/tmp/autosch_ops.json.resnet50.tmp"
+AUTOSCH_LOG = f"{cur_dir_path}/../logs/autosch_ops.json"
 
 def measure(ftimer, *args):
     # Warm-up Phase: Run without measurement 
@@ -92,18 +94,18 @@ class TVMSubGraphCostFunc_AutoSch(TargetCostFunc):
 
         # AutoScheduler codes
         target_str = target.__str__()
-        ctx = tvm.context(target_str, 0)
         with auto_scheduler.ApplyHistoryBest(AUTOSCH_LOG):
             with tvm.transform.PassContext(opt_level=3, config={"relay.backend.use_auto_scheduler": True}):
                 lib = relay.build(net, target_str, params=params)
 
-        module = runtime.GraphModule(lib["default"](ctx))
+        dev = tvm.device(target_str, 0)
+        module = runtime.GraphModule(lib["default"](dev))
 
         # Setup execution
         data_shape = get_data_shape(expr)
         data = np.random.uniform(-1, 1, size=data_shape).astype("float32")
         module.set_input("data", data)
-        ftimer = module.module.time_evaluator("run", ctx, number=NUM_MEASUREMENTS_PER_REPEAT, repeat=NUM_REPEATS)
+        ftimer = module.module.time_evaluator("run", dev, number=NUM_MEASUREMENTS_PER_REPEAT, repeat=NUM_REPEATS)
 
         return measure(ftimer)
 
@@ -126,15 +128,17 @@ class TVMSubGraphCostFunc_AutoTVM(TargetCostFunc):
         # Compile kernels with history best records
         with autotvm.apply_history_best(AUTOTVM_LOG):
             target_str = target.__str__()
-            ctx = tvm.context(target_str, 0)
-            lib = relay.build_module.build(net, target_str, params=params)
-            module = runtime.GraphModule(lib["default"](ctx))
+            with tvm.transform.PassContext(opt_level=3):
+                lib = relay.build_module.build(net, target=target_str, params=params)
+
+            dev = tvm.device(str(target), 0)
+            module = runtime.GraphModule(lib["default"](dev))
 
             # Setup execution
             data_shape = get_data_shape(expr)
             data = np.random.uniform(-1, 1, size=data_shape).astype("float32")
             module.set_input("data", data)
-            ftimer = module.module.time_evaluator("run", ctx, number=NUM_MEASUREMENTS_PER_REPEAT, repeat=NUM_REPEATS)
+            ftimer = module.module.time_evaluator("run", dev, number=NUM_MEASUREMENTS_PER_REPEAT, repeat=NUM_REPEATS)
         
         return measure(ftimer)
 
@@ -153,18 +157,20 @@ class TVMSubGraphCostFunc_NoTuning(TargetCostFunc):
 
         # Build the subgraph
         # FIXME(@Soo): We should redesign Target class to deal with new TVM build interface
-        target_backend = tvm.target.cuda()
-        target_dev = tvm.gpu()
+        target_str = target.__str__()
         opt_level = 3
         with tvm.transform.PassContext(opt_level=opt_level):
-            lib = relay.build(net, target_backend, params=params)
+            lib = relay.build(net, target_str, params=params)
+
+        dev = tvm.device(str(target), 0)
+        module = runtime.GraphModule(lib["default"](dev))
 
         # Setup execution
         data_shape = get_data_shape(expr)
-        data = np.random.uniform(-1, 1, size=data_shape).astype("float32")
-        module = graph_executor.GraphModule(lib["default"](target_dev))
+        #data = np.random.uniform(-1, 1, size=data_shape).astype("float32")
+        data = get_data(expr)
         module.set_input("data", data)
-        ftimer = module.module.time_evaluator("run", target_dev, number=NUM_MEASUREMENTS_PER_REPEAT, repeat=NUM_REPEATS)
+        ftimer = module.module.time_evaluator("run", dev, number=NUM_MEASUREMENTS_PER_REPEAT, repeat=NUM_REPEATS)
 
         return measure(ftimer)
 
@@ -180,6 +186,20 @@ class TVMSubGraphCostFunc_NoTuning(TargetCostFunc):
         # ftimer = module.module.time_evaluator("run", ctx, number=NUM_MEASUREMENTS_PER_REPEAT, repeat=NUM_REPEATS)
         #
         # return measure(ftimer)
+
+def get_conv_attr(expr):
+    assert (is_call_node(expr))
+    # note that only call node has "op" attribute corresponding to a single backend operator
+    op, args, attrs, type_args, span = expr.op, expr.args, expr.attrs, expr.type_args, expr.span
+
+    # extract conv attributes
+    strides, padding, out_channels, dilation = \
+        list(attrs.strides), list(attrs.padding), int(attrs.channels), list(attrs.dilation)
+
+    kernel_size = args[1].type_annotation.shape
+    dtype = args[0].type_annotation.dtype
+
+    return strides, padding, out_channels, dilation, kernel_size, dtype
 
 class CuDNNCostFunc(TargetCostFunc):
 
@@ -228,16 +248,14 @@ class CuDNNCostFunc(TargetCostFunc):
         in_channels = data_shape[1]
 
         if "conv2d" in op_name:
-            assert(is_call_node(expr))
-            # note that only call node has "op" attribute corresponding to a single backend operator
-            op, args, attrs, type_args, span = expr.op, expr.args, expr.attrs, expr.type_args, expr.span
 
-            # extract conv attributes
-            strides, padding, out_channels, dilation = \
-                list(attrs.strides), list(attrs.padding), int(attrs.channels), list(attrs.dilation)
-
-            kernel_size = args[1].type_annotation.shape
-            dtype = args[0].type_annotation.dtype
+            if op_name == "conv2d+biasadd+relu":
+                strides, padding, out_channels, dilation, kernel_size, dtype = get_conv_attr(expr.args[0].args[0])
+                print(strides, padding, out_channels, dilation, kernel_size, dtype)
+            elif op_name == 'conv2d':
+                strides, padding, out_channels, dilation, kernel_size, dtype = get_conv_attr(expr)
+            else:
+                raise Exception(f"{op_name} is not supported for CUDNN")
 
             assert(dtype == "float32")
 
@@ -311,40 +329,46 @@ class CuDNNCostFunc(TargetCostFunc):
             perf = measure(ftimer, data, weight, output)
 
 
-        elif op_name == "conv2d+bias+relu":
+        elif op_name == "conv2d+biasadd+relu":
+            # Warning: We assuem that args[1] corresponds to bias
+            bias_tensor = expr.args[0].args[1].data
+
             te_data   = te.placeholder(data_shape, name="data", dtype=dtype)
             te_kernel = te.placeholder(kernel_size, name="kernel", dtype=dtype)
             te_z      = te.placeholder(output_shape, name="Z", dtype=dtype)
-            te_bias   = te.placeholder(params["bias"].shape, name="bias", dtype=dtype)
+
+            # Note that bias is a constant and not in params cuz it's a constant
+            # te_bias   = te.placeholder(params["bias"].shape, name="bias", dtype=dtype)
+            te_bias = te.placeholder(bias_tensor.shape, name="bias", dtype=dtype)
 
             cuDNN_OP = te.extern(
                 output_shape,
                 [te_data, te_kernel, te_z, te_bias],
                 lambda ins, outs: tvm.tir.call_packed(
-                    "tvm.contrib.cudnn.pooling.forward",
-                      conv_mode, # mode: CUDNN_CONVOLUTION
-                      data_layout, # CUDNN_TENSOR_NCHW
-                      conv_algo, # ALGO
-                      padding[0], padding[1],
-                      strides[0], strides[1],
-                      dilation[0], dilation[1],
-                      dtype,
-                      ins[0], # x
-                      ins[1], # w
-                      ins[2], # z
-                      ins[3], # bias
-                      outs[0], # y
-                      groups,
-                      1,#alphas[0],
-                      0,#alphas[1],
-                      1,#alphas[0] for z
-                      0,
-                      activation_mode,
-                      nanProp_mode,
-                      actvCoeff
-                    ),
-                    name="y",
-                )
+                    "tvm.contrib.cudnn.conv2d+bias+activation.forward",
+                    conv_mode,  # mode: CUDNN_CONVOLUTION
+                    data_layout,  # CUDNN_TENSOR_NCHW
+                    conv_algo,
+                    padding[0], padding[1],
+                    strides[0], strides[1],
+                    dilation[0], dilation[1],
+                    dtype,
+                    ins[0],  # x
+                    ins[1],  # w
+                    ins[2],  # z
+                    ins[3],  # bias
+                    outs[0],  # y
+                    groups,
+                    1,  # alphas[0],
+                    0,  # alphas[1],
+                    1,  # alphas[0] for z
+                    0,
+                    activation_mode,
+                    nanProp_mode,
+                    actvCoeff
+                ),
+                name="y",
+            )
 
             s = te.create_schedule(cuDNN_OP.op)
             func = tvm.build(s, [te_data, te_kernel, te_z, te_bias, cuDNN_OP], target_str, target_host="llvm")
@@ -353,7 +377,8 @@ class CuDNNCostFunc(TargetCostFunc):
             data = tvm.nd.array(data_in, ctx)
             weight = tvm.nd.array(params["weight"], ctx)
             ze = tvm.nd.array(np.zeros(output_shape, dtype=dtype), ctx)
-            bias = tvm.nd.array(params["bias"], ctx)
+            # bias = tvm.nd.array(params["bias"], ctx)
+            bias = tvm.nd.array(bias_tensor.asnumpy(), ctx)
             output = tvm.nd.array(np.zeros(output_shape, dtype=dtype), ctx)
 
             ftimer = func.time_evaluator(func.entry_name, ctx, number=NUM_MEASUREMENTS_PER_REPEAT, repeat=NUM_REPEATS)
@@ -389,9 +414,13 @@ class CuDNNCostFunc(TargetCostFunc):
 
         elif op_name == "biasadd":
             axis = expr.attrs.axis
+            # Warning: We assuem that args[1] corresponds to bias
+            bias_tensor = expr.args[1].data
 
+            # Note that bias is a constant and not in params cuz it's a constant
             te_data   = te.placeholder(data_shape, name="data", dtype=dtype)
-            te_bias   = te.placeholder(params["bias"].shape, name="bias", dtype=dtype)
+            # te_bias   = te.placeholder(params["bias"].shape, name="bias", dtype=dtype)
+            te_bias = te.placeholder(bias_tensor.shape, name="bias", dtype=dtype)
             output_shape = data_shape
 
             cuDNN_OP = te.extern(
@@ -411,7 +440,8 @@ class CuDNNCostFunc(TargetCostFunc):
 
             data_in = np.random.uniform(-1, 1, size=data_shape).astype(dtype)
             data = tvm.nd.array(data_in, ctx)
-            bias = tvm.nd.array(params["bias"], ctx)
+            # bias = tvm.nd.array(params["bias"], ctx)
+            bias = tvm.nd.array(bias_tensor.asnumpy(), ctx)
             output = tvm.nd.array(np.zeros(output_shape, dtype=dtype), ctx)
 
             ftimer = func.time_evaluator(func.entry_name, ctx, number=NUM_MEASUREMENTS_PER_REPEAT, repeat=NUM_REPEATS)

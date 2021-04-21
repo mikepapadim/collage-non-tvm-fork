@@ -26,7 +26,7 @@ class ExprMatcher:
         self._memo = {}
         self._optimized_match = {}
 
-        dummy_annotation = (9999999, "NO_PYTHON_OP")
+        dummy_annotation = (9999999, "PYTHON_INVALID_BACKEND_OP")
         self.visit_expr(expr, dummy_annotation)
 
         return self._optimized_match, self._topo_order_to_op
@@ -67,6 +67,13 @@ class ExprMatcher:
         # is_leaf_node = is_constant_node(expr) or is_var_node(expr)
         # if not is_leaf_node:
         if expr not in self._optimized_match:
+            # annotation[0] -> group number, annotation[1] -> backend op name
+            # Func(Relu2(Conv2(Func(Relu1(Conv1)))))
+            # Dictionary
+            # Conv1 : 0, tensrort_fused_conv
+            # Relu1 : 0, tensrort_fused_conv
+            # Conv2 : 1, tensrort_fused_conv
+            # Relu2 : 1, tensrort_fused_conv
             self._optimized_match[expr] = f"{annotation[0]}-{annotation[1]}"
             self._topo_order_to_op.append((node_type, self._optimized_match[expr]))
         else:
@@ -172,33 +179,49 @@ class CompGraphOptimizer:
         pair2match = {}
         self.loc2match = {hash(comp_graph.get_root()): {"match":[], "cost":0, "string":""}}
         while not frontiers.empty():
+            # Facilitate the debugging process
+            self._backendop_lib.save_to_log()
             f = frontiers.get()
             f_expr = f.get_relay_expr()
-            print("Topologicla order : ", f._topological_order)
+            if is_call_node(f_expr):
+                print(f"(topo_order, op_type) : {f._topological_order}, {f_expr.op}")
+            else:
+                print(f"(topo_order, op_type) : {f._topological_order}, {f_expr}, Non-call node")
+            
+            # print(self._backendop_lib.get_all_patterns())
             for pat in self._backendop_lib.get_all_patterns():
                 # print(pat)
                 if pat.get_pattern().match(f_expr):
                     # Check if there is an existing frontier with the same goal idx
+                    # Conv(Data, Weight)
+                    # get_next_expr_after_match -> [Data, Weight]
+                    # next_expr_after_match = Conv()
                     assert get_pattern_len(pat.get_pattern()) >= 1
                     tuple_after_matches = get_next_expr_after_match(f_expr, None, get_pattern_len(pat.get_pattern()))
-
+                    print("PATTERN MATCHED", pat.get_pattern())
                     # Consdier only valid nodes
                     tuple_after_matches = [tup for tup in tuple_after_matches if hash(tup[0]) in comp_graph.expr2node]
                     for t_idx, (expr_after_match, prev_expr_after_match) in enumerate(tuple_after_matches):
                         # Get new frontier, matched backend ops, and their costs
                         new_loc = comp_graph.expr2node[hash(expr_after_match)]
                         pat_op, pat_cost = get_optimal_backendop(self._backendop_lib, f_expr, pat, self._target_backend)
+
+                        # new_match = self.loc2match[hash(f)]["match"] + [(pat_op, pat_cost, hash(f_expr))]
+                        # new_cost = self.loc2match[hash(f)]["cost"] + pat_cost
+                        # new_string = self.loc2match[hash(f)]['string'] + "-" + self._pattern_to_name[pat]
+
                         # Flush matchings from second branch if there are more than one branches
                         if t_idx == 0:
-                            new_match = self.loc2match[hash(f)]["match"] + [(pat_op, pat_cost, hash(f))]
+                            new_match = self.loc2match[hash(f)]["match"] + [(pat_op, pat_cost, hash(f_expr))]
                             new_cost = self.loc2match[hash(f)]["cost"] + pat_cost
                             new_string = self.loc2match[hash(f)]['string'] + "-" + self._pattern_to_name[pat]
+                            print(f"Assign matched op : {pat_op}")
                         else:
                             new_match, new_cost, new_string = [], 0, "+"
 
                         # Maintain pair2match for keeping track of match results for each branch
                         new_loc.matched_expr[hash(prev_expr_after_match)] = 1
-                        out_key = hash(new_loc)
+                        out_key = hash(new_loc) # new_loc is node
                         in_key = hash(prev_expr_after_match)
 
                         if out_key not in pair2match:

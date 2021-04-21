@@ -40,12 +40,12 @@ def schedule_bias_add(outs):
     return schedule_injective(outs)
 
 
-def bias_add_cudnn(data, bias, axis=1):
+def biasadd_cudnn(data, bias, axis=1):
     """Perform bias_add on the data using cudnn"""
     print("Python topi cuda cudnn bias_add!!")
-    return cudnn.bias_add(data, bias, axis)
+    return cudnn.biasadd(data, bias, axis)
 
 
-def schedule_bias_add_cudnn(outs):
+def schedule_biasadd_cudnn(outs):
     """Schedule for softmax cudnn op"""
     return generic.schedule_extern(outs)

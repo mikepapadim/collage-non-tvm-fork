@@ -135,6 +135,7 @@ def schedule_adaptive_pool(attrs, outs, target):
         return topi.generic.schedule_adaptive_pool(outs)
 
 
+
 # softmax
 def wrap_compute_softmax(topi_compute):
     """Wrap softmax topi compute"""
@@ -144,6 +145,125 @@ def wrap_compute_softmax(topi_compute):
         return [topi_compute(inputs[0], axis)]
 
     return _compute_softmax
+
+
+# sung: softmax
+def wrap_custom_compute_softmax(topi_compute):
+    """Wrap softmax topi compute"""
+
+    def _compute_softmax(attrs, inputs, out_type):
+        axis = attrs.get_int("axis")
+        return [topi_compute(inputs[0], axis)]
+
+    return _compute_softmax
+
+
+
+# sung: pooling
+def wrap_custom_compute_maxpool2d(topi_compute):
+    """Wrap pooling topi compute"""
+
+    def _compute_pool(attrs, inputs, out_type):
+        #data, kernel, stride, padding, pool_type, ceil_mode=False, layout="NCHW", count_include_pad=True
+        pool_size = get_const_tuple(attrs.pool_size)
+        padding = get_const_tuple(attrs.padding)
+        padding = get_const_tuple(attrs.padding)
+        strides = get_const_tuple(attrs.strides)
+        data_layout = attrs.get_str("layout")
+        ceil_mode = attrs.ceil_mode
+
+        return [topi_compute(inputs[0], pool_size, strides, padding, "max", ceil_mode, data_layout, True)]
+
+    return _compute_pool
+
+
+# sung: relu
+def wrap_custom_compute_relu(topi_compute):
+    """Wrap relu topi compute"""
+
+    def _compute_relu(attrs, inputs, out_type):
+        return [topi_compute(inputs[0])]
+
+    return _compute_relu
+
+
+# sung: biasadd
+def wrap_custom_compute_biasadd(topi_compute):
+    """Wrap bias add topi compute"""
+
+    def _compute_biasadd(attrs, inputs, out_type):
+        axis = attrs.get_int("axis")
+        return [topi_compute(inputs[0], inputs[1], axis)]
+
+    return _compute_biasadd
+
+
+# sung: conv2d
+def wrap_custom_compute_conv2d(
+    topi_compute,
+    need_data_layout=False,
+    need_out_layout=False,
+    has_groups=False,
+    need_auto_scheduler_layout=False,
+):
+    """Wrap conv2d topi compute"""
+
+    def _compute_conv2d(attrs, inputs, out_type):
+        padding = get_const_tuple(attrs.padding)
+        strides = get_const_tuple(attrs.strides)
+        dilation = get_const_tuple(attrs.dilation)
+        data_layout = attrs.get_str("data_layout")
+        out_layout = attrs.get_str("out_layout")
+        out_dtype = attrs.out_dtype
+        out_dtype = inputs[0].dtype if out_dtype in ("same", "") else out_dtype
+        args = [inputs[0], inputs[1], strides, padding, dilation]
+        if has_groups:
+            args.append(attrs.groups)
+        if need_data_layout:
+            args.append(data_layout)
+        if need_out_layout:
+            args.append(out_layout)
+        args.append(out_dtype)
+        if need_auto_scheduler_layout:
+            args.append(get_auto_scheduler_rewritten_layout(attrs))
+        return [topi_compute(*args)]
+
+    return _compute_conv2d
+
+
+def wrap_custom_compute_conv2d_biasadd_relu(
+    topi_compute,
+    need_data_layout=False,
+    need_out_layout=False,
+    has_groups=False,
+    need_auto_scheduler_layout=False,
+):
+    """Wrap bias add topi compute"""
+    def _compute_conv2d_biasadd_relu(attrs, inputs, out_type):
+        padding = get_const_tuple(attrs.padding)
+        strides = get_const_tuple(attrs.strides)
+        dilation = get_const_tuple(attrs.dilation)
+        data_layout = attrs.get_str("data_layout")
+        out_layout = attrs.get_str("out_layout")
+        out_dtype = attrs.out_dtype
+        out_dtype = inputs[0].dtype if out_dtype in ("same", "") else out_dtype
+
+        args = [inputs[0], inputs[1], inputs[2], inputs[3], \
+                strides, padding, dilation]
+        if has_groups:
+            args.append(attrs.groups)
+        if need_data_layout:
+            args.append(data_layout)
+        if need_out_layout:
+            args.append(out_layout)
+        args.append(out_dtype)
+        if need_auto_scheduler_layout:
+            args.append(get_auto_scheduler_rewritten_layout(attrs))
+        return [topi_compute(*args)]
+
+
+
+    return _compute_conv2d_biasadd_relu
 
 
 @override_native_generic_func("softmax_strategy")
@@ -201,6 +321,7 @@ get_auto_scheduler_rewritten_layout = _ffi.get_global_func(
 )
 
 # conv2d
+
 def wrap_compute_conv2d(
     topi_compute,
     need_data_layout=False,
@@ -231,6 +352,7 @@ def wrap_compute_conv2d(
         return [topi_compute(*args)]
 
     return _compute_conv2d
+
 
 
 @override_native_generic_func("conv2d_strategy")

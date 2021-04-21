@@ -40,6 +40,8 @@ TVM_REGISTER_GLOBAL("tvm.contrib.cudnn.add")
       int axis = args[4];
 
       int ndim = x->ndim;
+      assert(ndim==2);
+
       int64_t* shape = x->shape;
       if (axis < 0) axis += ndim;
       ICHECK(axis >= 0 && axis < ndim);

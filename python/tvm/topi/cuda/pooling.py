@@ -20,6 +20,7 @@ import tvm
 from tvm import te
 from .. import tag
 from ..utils import traverse_inline
+from tvm.contrib import cudnn
 
 
 def schedule_adaptive_pool(outs, layout="NCHW"):
@@ -201,3 +202,9 @@ def schedule_pool_grad(outs):
     traverse_inline(s, outs[0].op, _callback)
 
     return s
+
+def maxpool2d_cudnn(x, pool_size, strides, padding, pool_type, ceil_mode, data_layout, count_include_pad):
+    """Perform max pool2d on the data using cudnn"""
+    return cudnn.maxpool2d(x, pool_size, strides, padding, pool_type, ceil_mode, data_layout, count_include_pad)
+
+

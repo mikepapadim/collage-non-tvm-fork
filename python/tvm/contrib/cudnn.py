@@ -470,9 +470,8 @@ def softmax(x, axis=-1):
         name="y",
     )
 
-#inputs[0], pool_size, strides, padding, "max", ceil_mode, data_layout, True)
 
-def max_pool2d(x, pool_size, strides, padding, pool_type, ceil_mode, data_layout, count_include_pad):
+def maxpool2d(x, pool_size, strides, padding, pool_type, ceil_mode, data_layout, count_include_pad):
     """Compute softmax using CuDNN
 
     Parameters
@@ -501,13 +500,23 @@ def max_pool2d(x, pool_size, strides, padding, pool_type, ceil_mode, data_layout
        int horizontalStride = args[11];
 
     """
-    print("Python cudnn.py pool2d!!", file=sys.stderr)
+    dims = 2
+    data_shape = x.shape
+    output_shape = list(data_shape)
+    #outputDim = 1 + (inputDim + 2*padding - windowDim)/poolingStride;
+    for i in range(dims):
+        output_shape[i+2] = int(1 + tvm.tir.div((data_shape[i+2] + 2*padding[i]-pool_size[i]),strides[i]))
+
     return te.extern(
-        x.shape,
+        output_shape,
         [x],
         lambda ins, outs: tvm.tir.call_packed(
             "tvm.contrib.cudnn.pooling.forward", ins[0], outs[0],
-            1.0, 0.0, 0, 0, pool_size[0], pool_size[1], padding[0], padding[1],
+            1, 0,  # alpha, beta
+            3, # MODE: CUDNN_POOLING_MAX_DETERMINISTIC
+            0, # CUDNN_NOT_PROPAGATE_NAN
+            pool_size[0], pool_size[1],
+            padding[0], padding[1],
             strides[0], strides[1]
         ),
         name="y",
@@ -515,7 +524,6 @@ def max_pool2d(x, pool_size, strides, padding, pool_type, ceil_mode, data_layout
 
 
 def relu(x):
-    print("Python cudnn.py relu!!", file=sys.stderr)
     return te.extern(
         x.shape,
         [x],
@@ -526,28 +534,113 @@ def relu(x):
         name="y",
     )
 
-def bias_add(data, bias, axis):
-    print("Python cudnn.py bias_add!!", file=sys.stderr)
+def biasadd(data, bias, axis):
     return te.extern(
         data.shape,
-        [bias, data],
+        [bias], #inputs
         lambda ins, outs: tvm.tir.call_packed(
             "tvm.contrib.cudnn.add", ins[0], outs[0],
-            1, 1
+            1, 1, axis
         ),
+        #out_buffers = [data],
         name="y",
     )
 
 
 
-def conv_bias_activation_forward(data, ):
+def prepare(x, w, pad, stride, dilation, tensor_format, algo, conv_dtype, groups):
+    dims = len(x.shape)
+    assert dims in (4, 5)
+
+    conv_dtype = x.dtype if conv_dtype is None else conv_dtype
+    pad, stride, dilation, _, _ = _prepare_global_func_params(dims - 2, pad, stride, dilation)
+
+    x_shape = list(x.shape)
+
+    if isinstance(x.shape[0], tvm.tir.expr.IntImm):
+        oshape = conv_output_shape(
+            tensor_format,
+            pad,
+            stride,
+            dilation,
+            x_shape,
+            list(w.shape),
+            x.dtype,
+            conv_dtype,
+            groups,
+        )
+        if algo == -1:
+            # For now if we try to call `cudnnFindConvolutionForwardAlgorithm` when
+            # using INT8 data type, CuDNN will crash down.
+            # On the other hand, CuDNN only support IMPLICIT_PRECOMP_GEMM at NHWC format
+            if tensor_format == 1 and conv_dtype == "int32":
+                algo = 1
+            else:
+                algo = conv_find_algo(
+                    tensor_format,
+                    pad,
+                    stride,
+                    dilation,
+                    list(x.shape),
+                    list(w.shape),
+                    oshape,
+                    x.dtype,
+                    conv_dtype,
+                    groups,
+                )
+    else:
+        # The dynamic batch size case, pretend this is a single batch
+        x_shape[0] = 1
+        oshape = conv_output_shape(
+            tensor_format,
+            pad,
+            stride,
+            dilation,
+            x_shape,
+            list(w.shape),
+            x.dtype,
+            conv_dtype,
+            groups,
+        )
+        oshape[0] = x.shape[0]
+        # This picks CUDNN_CONVOLUTION_FWD_ALGO_IMPLICIT_PRECOMP_GEMM
+        # It seems this is the fastest among algorithms that are always applicable
+        algo = 1
+
+    return dims, conv_dtype, pad, stride, dilation, oshape, algo
+
+
+
+def conv2d_biasadd_relu(x, w, z, b, pad, stride, dilation, conv_mode, tensor_format, algo, conv_dtype, activ_mode, nan_prop_mode, actv_coeff, groups=1):
+
+    dims, conv_dtype, pad, stride, dilation, oshape, algo = \
+        prepare(x, w, pad, stride, dilation, tensor_format, algo, conv_dtype, groups)
+
     return te.extern(
-        oshape,
-        [x, w],
-
-        lambda ins, outs: tvm.tir.call_packed(
-                "tvm.contrib.cudnn.conv2d+bias+activation.forward",
-        ),
-        name="y",
-    )
-
+                 oshape,
+                 [x, w, z, b],
+                 lambda ins, outs: tvm.tir.call_packed(
+                     "tvm.contrib.cudnn.conv2d+bias+activation.forward",
+                       conv_mode, # mode: CUDNN_CONVOLUTION
+                       tensor_format, # CUDNN_TENSOR_NCHW
+                       algo,
+                       pad[0], pad[1],
+                       stride[0], stride[1],
+                       dilation[0], dilation[1],
+                       conv_dtype,
+                       ins[0], # x
+                       ins[1], # w
+                       ins[2], # z
+                       ins[3], # bias
+                       outs[0], # y
+                       groups,
+                       1,#alphas[0],
+                       0,#alphas[1],
+                       1,#alphas[0] for z
+                       0,
+                       activ_mode,
+                       nan_prop_mode,
+                       actv_coeff
+                     ),
+                     name="y",
+            )

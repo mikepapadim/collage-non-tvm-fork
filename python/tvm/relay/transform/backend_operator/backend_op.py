@@ -15,14 +15,14 @@ from pathlib import Path
 
 from .pattern import Pattern
 from .utils import get_diamond
-from .utils import is_call_node, is_tuplegetitem_node, is_var_node, no_constraints_func, is_constant_node
+from .utils import *
 from .op_config import Config, MeasuredConfigs
 from .target import Target, get_target_cost_func
 from .op_type import OpType, optype_to_pattern, relayop_to_varnames
 
 # It gives the path of backend_op.py no matter where you import this file
 # cur_dir_path = Path(__file__).parent.absolute()
-# RES_LOG = f"{cur_dir_path}/logs/runtime_results.log"
+# RES_LOG = f"{cur_dir_path}/../logs/runtime_results.log"
 
 # redirect stdout to this log so it is not intertwined with by TVM backend log output
 # sys.stdout = open(RES_LOG, 'w')
@@ -62,9 +62,13 @@ class BackendOp(object):
     config = Config(self._name, self._op_type.name(), expr)
     # print(config)
 
+    # For Tuple, we do not need to measure it
+    if is_tuple_node(expr) or is_tuplegetitem_node(expr):
+      return 0, 0
+
     # if constraints are not satisfied, return infinite cost
     if not self._constraint_func(config):
-      return float('inf')
+      return float('inf'), 0
 
     cost_info = self._measured_configs.get_cost(config)
     if cost_info != None:
@@ -104,12 +108,10 @@ def extract_subgraph(expr, max_depth):
     if is_call_node(expr):
       # note that only call node has "op" attribute corresponding to a single backend operator
       op, args, attrs, type_args, span = expr.op, expr.args, expr.attrs, expr.type_args, expr.span
-
       new_args = []
       # at depth 1, turn call expr arguments into free variables with the same attributes and data shapes!
       if depth == 1:
         var_names = relayop_to_varnames[op.name]
-        
         # # of arguments should match # of type arguments
         # Fix: This happens in BERT. We need to deal with it
         # It means that type inference hasn't been executed (type_args are not filled)
@@ -117,12 +119,18 @@ def extract_subgraph(expr, max_depth):
         if len(expr.args) != len(expr.type_args):
           raise Exception("The type inference pass hasn't been executed.")
         else:
+          # print(expr.op, var_names)
           for i in range(len(expr.args)):
             type_arg = expr.type_args[i]
             var_name = var_names[i]
-
+            
+            # Tuple should be treated separately
+            if (type(type_arg) is tvm.ir.type.TupleType):
+                input_data = expr.args[i]
+                #print(type_arg.fields)
+                new_args.append(relay.Tuple([relay.var(var_name, d) for i, d in enumerate(type_arg.fields)] ))
             # Bias should be constant
-            if var_name == 'bias':
+            elif var_name == 'bias':
               input_data = expr.args[i].data
               new_args.append(relay.Constant(input_data))
             else:

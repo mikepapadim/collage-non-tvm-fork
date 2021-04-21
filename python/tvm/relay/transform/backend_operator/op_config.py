@@ -4,7 +4,7 @@ import pickle
 from os import path
 
 cur_dir_path = Path(__file__).parent.absolute()
-COST_LOG = f"{cur_dir_path}/logs/operator_cost.log"
+COST_LOG = f"{cur_dir_path}/../logs/operator_cost.log"
 
 # configuration includes operator name, operator type (backend operators from different targets might have the same type),
 # data shape of all free variables, and node attributes
@@ -15,7 +15,7 @@ class Config(object):
     self._op_type = op_type
     
     if expr != None:
-      self._data_shape = get_data_shape(expr)
+      self._data_shape = tuple(get_data_shape(expr))
       self._attrs = extract_attrs(expr)
     else:
       # Debugging purpose
