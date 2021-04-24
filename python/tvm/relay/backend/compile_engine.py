@@ -277,6 +277,7 @@ def select_implementation(op, attrs, inputs, out_type, target, use_autotvm=True)
 def target_specific_lowering(func, inputMap, target_info=None):
 
     import sys
+    from tvm.relay.op.contrib.tensorrt import partition_for_tensorrt
     #print("\t[Compile_engine.py] Custom lowering?", file=sys.stderr)
 
     # Eventually, we want to define custom implemenation
@@ -355,6 +356,8 @@ def target_specific_lowering(func, inputMap, target_info=None):
             ret_type = calls[0].checked_type
             inputs = collect_input(inputMap)
 
+            print("Custom lowering -- kernel layout: ", attrs.get_str("kernel_layout"))
+
         elif pattern == "maxpool2d":
             strategy.add_implementation(
                 wrap_custom_compute_maxpool2d(topi.cuda.maxpool2d_cudnn),
@@ -408,6 +411,10 @@ def target_specific_lowering(func, inputMap, target_info=None):
 
             inputs = [data[0], kernel[0], Z[0], bias[0]]
 
+        else:
+            # Unsupported backend op
+            assert(0)
+
     elif target == "cublas":
         if pattern == "dense":
             strategy.add_implementation(
@@ -419,6 +426,16 @@ def target_specific_lowering(func, inputMap, target_info=None):
             attrs = calls[0].attrs
             ret_type = calls[0].checked_type
             inputs = collect_input(inputMap)
+        else:
+            # Unsupported backend op
+            assert(0)
+
+    elif target == "tensorrt":
+        s
+
+    else:
+        # Unsupported target
+        assert(0)
 
 
     # To compute subgraph

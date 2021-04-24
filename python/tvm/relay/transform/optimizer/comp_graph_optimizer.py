@@ -4,7 +4,7 @@ from tvm.contrib import graph_runtime as runtime
 import numpy as np
 
 from .optimizer_utils import get_pattern_len, get_next_expr_after_match
-from ..backend_operator.utils import is_call_node, is_tuplegetitem_node, is_var_node, is_constant_node, is_function_node
+from ..backend_operator.utils import *
 from ..backend_operator.backend_op import get_optimal_backendop
 
 from ..backend_operator.utils import get_data_shape
@@ -52,7 +52,7 @@ class ExprMatcher:
             self.visit_expr_var(expr, annotation)
             node_type = "Var"
         elif is_tuplegetitem_node(expr):
-            self.visit_expr_tuple(expr, annotation)
+            self.visit_expr_tuplegetitem(expr, annotation)
             node_type = "TupleGetItem"
         elif is_call_node(expr):
             self.visit_expr_call(expr, annotation)
@@ -60,6 +60,9 @@ class ExprMatcher:
         elif is_function_node(expr):
             self.visit_expr_func(expr, annotation)
             node_type = "Function"
+        elif is_tuple_node(expr):
+            self.visit_expr_tuple(expr, annotation)
+            node_type = "Tuple"
         else:
             raise Exception(f"Unexpected expression type, {type(expr)}")
         
@@ -88,8 +91,12 @@ class ExprMatcher:
         pass
     
     def visit_expr_tuple(self, expr, annotation):
+        for arg in expr.fields:
+            self.visit_expr(arg, annotation)
+
+    def visit_expr_tuplegetitem(self, expr, annotation):
         self.visit_expr(expr.tuple_value, annotation)
-    
+
     def visit_expr_call(self, expr, annotation):
         op, args, attrs, type_args, span = expr.op, expr.args, expr.attrs, expr.type_args, expr.span
         
@@ -99,51 +106,6 @@ class ExprMatcher:
     def visit_expr_func(self, expr, annotation):
         params, body, ret_type, type_params = expr.params, expr.body, expr.ret_type, expr.type_params
         self.visit_expr(body, annotation)
-
-# class ExprVisitor:
-#     def __init__(self):
-#         self._memo = {}
-#
-#     def visit(self, expr):
-#         return self.visit_expr(expr)
-#
-#     # Visit Relay expressions in post-order
-#     def visit_expr(self, expr):
-#         # We assume that child class at least have methods for these
-#         print(repr(expr))
-#
-#         if is_constant_node(expr):
-#             self.visit_expr_const(expr)
-#         elif is_var_node(expr):
-#             self.visit_expr_var(expr)
-#         elif is_tuplegetitem_node(expr):
-#             self.visit_expr_tuple(expr)
-#         elif is_call_node(expr):
-#             self.visit_expr_call(expr)
-#         elif is_function_node(expr):
-#             self.visit_expr_func(expr)
-#         else:
-#             raise Exception(f"Unexpected expression type, {type(expr)}")
-#
-#     def visit_expr_const(self, expr):
-#         pass
-#
-#     def visit_expr_var(self, expr):
-#         pass
-#
-#     def visit_expr_tuple(self, expr):
-#         self.visit_expr(expr.tuple_value)
-#
-#     def visit_expr_call(self, expr):
-#         for arg in expr.args:
-#             if hash(arg) not in self._memo:
-#                 # memorize this visit to prevent it from visiting twice
-#                 new_arg = self.visit_expr(arg)
-#                 self._memo[hash(arg)] = True
-#
-#     def visit_expr_func(self, expr):
-#         self.visit_expr(expr.body)
-
     
 class CompGraphOptimizer:
     def __init__(self, backendop_lib, target_backend=None):
@@ -186,7 +148,7 @@ class CompGraphOptimizer:
             if is_call_node(f_expr):
                 print(f"(topo_order, op_type) : {f._topological_order}, {f_expr.op}")
             else:
-                print(f"(topo_order, op_type) : {f._topological_order}, {f_expr}, Non-call node")
+                print(f"(topo_order, op_type) : {f._topological_order}, {type(f_expr)}, Non-call node")
             
             # print(self._backendop_lib.get_all_patterns())
             for pat in self._backendop_lib.get_all_patterns():
@@ -221,7 +183,7 @@ class CompGraphOptimizer:
 
                         # Maintain pair2match for keeping track of match results for each branch
                         new_loc.matched_expr[hash(prev_expr_after_match)] = 1
-                        out_key = hash(new_loc) # new_loc is node
+                        out_key = hash(new_loc) # new_loc is node after match
                         in_key = hash(prev_expr_after_match)
 
                         if out_key not in pair2match:
@@ -342,6 +304,9 @@ class CompGraphOptimizer:
         result_idx = -1
         final_match = {}
         fused_group_id = 0
+        # print(self.loc2match)
+        # print([hash(node) for node in comp_graph._nodes])
+        # print(comp_graph._nodes[-1].get_relay_expr())
         for (pat_op, pat_cost, hash_expr) in self.loc2match[hash(comp_graph._nodes[result_idx])]["match"]:
             final_match[hash_expr] = (fused_group_id, pat_op)
             fused_group_id += 1

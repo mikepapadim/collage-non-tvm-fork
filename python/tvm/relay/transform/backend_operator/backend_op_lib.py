@@ -124,10 +124,12 @@ class BackendOpLib(object):
 
     # CUBLAS
     # TODO: Add patterns. matmul, batch matmul
-    # self._add_backendop("cublas_dense", Target.CUBLAS, OpType.DENSE, 1)
+    self._add_backendop("cublas_dense", Target.CUBLAS, OpType.DENSE, 1)
+    self._add_backendop("cublas_batch_matmul", Target.CUBLAS, OpType.BATCH_MATMUL, 1)
 
     # TVM_GPU
     add_all_backend_ops_to_lib(self, Target.TVM_GPU_AUTOSCH)
+    add_all_backend_ops_to_lib(self, Target.TVM_GPU_AUTOTVM)
     # add_all_backend_ops_to_lib_except_fused(backendop_lib, Target.TVM_GPU)
 
     # TVM_GPU_NO_TUNING

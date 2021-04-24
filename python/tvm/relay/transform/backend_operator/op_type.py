@@ -33,7 +33,7 @@ class OpType(Enum):
   BIAS_ADD = (15, 'biasadd', 1)
   AVG_POOL2D = (16, 'avgpool2d', 1)
   MAX_POOL2D = (17, 'maxpool2d', 1)
-  TUPLE_FOUR_IDX = (27, 'tuple_four_idx', 1)
+  TUPLE_FIVE_IDX = (27, 'tuple_five_idx', 1)
 
   # Others
   DIAMOND = (18, 'diamond', 6)  # Not sure yet if it works well for DP
@@ -82,7 +82,7 @@ optype_to_pattern = {
   OpType.BIAS_ADD : Pattern(is_op("nn.bias_add")(wildcard(), wildcard())),
   OpType.AVG_POOL2D : Pattern(is_op("nn.avg_pool2d")(wildcard())),
   OpType.MAX_POOL2D : Pattern(is_op("nn.max_pool2d")(wildcard())),
-  OpType.TUPLE_FOUR_IDX : Pattern(is_tuple([wildcard(), wildcard(), wildcard(), wildcard(), wildcard()])),
+  OpType.TUPLE_FIVE_IDX : Pattern(is_tuple([wildcard(), wildcard(), wildcard(), wildcard(), wildcard()])),
 
   # Others
   OpType.DIAMOND : get_diamond(),

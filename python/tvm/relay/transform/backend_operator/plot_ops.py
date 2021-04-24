@@ -83,11 +83,55 @@ def draw_plot(df, fig_name):
         x_axis = ax1.axes.get_xaxis()
         x_axis.set_visible(False)
 
+    plt.xticks(rotation=45)
     plt.savefig(fig_name, bbox_inches='tight')
 
+def plot_resnet50():
+    # Conv GPU plots
+    conv_df = filter_df_with_regex(df=df, regex = 'conv2d_\d{1,2}',
+                                   cols_to_exclude=['tvmcpu', 'cublas'])#, 'cudnn', 'tensorrt'])#'tvmgpu-no-tuning'])
+    draw_plot(df=conv_df, fig_name=f'rtx_{network_name}_bn{target_batch_size}_conv.png')
+
+    # # Fused ops
+    fused_df = df.filter(like='+', axis=0)
+    fused_df = fused_df[fused_df.columns.difference(['cudnn', 'tvmcpu'])]
+    draw_plot(df=fused_df, fig_name=f'rtx_{network_name}_bn{target_batch_size}_fused.png')
+
+    # Other ops
+    # forbidden_str = ['+','conv2d','dense']
+    # re_str = '|'.join(forbidden_str)
+    drop_str = [f"conv2d_{i}" for i in range(1, 23)] + [val for val in df.index.values if "+" in val]# + ['dense_1']
+    other_df = df.drop(index=drop_str)
+    other_df = other_df[other_df.columns.difference(['cublas', 'tvmcpu'])]
+    draw_plot(df=other_df, fig_name=f'rtx_{network_name}_bn{target_batch_size}_others.png')
+
+def plot_bert():
+    # Matmul (Dense) GPU plot
+    # batch_matmul_\d{1,2}
+    # print(df[df.index.str.match('conv*')== False])
+    dense_df = filter_df_with_regex(df=df, regex='(:?dense_\d{1,2}|batch_matmul_\d{1,2})',
+                                    cols_to_exclude=['tvmcpu'])
+    # print(dense_df)
+    draw_plot(df=dense_df, fig_name=f'rtx_{network_name}_bn{target_batch_size}_matmul.png')
+
+    # Other ops
+    # forbidden_str = ['+','conv2d','dense']
+    # re_str = '|'.join(forbidden_str)
+    drop_str = [f"dense_{i}" for i in range(1, 3)] + [f"batch_matmul_{i}" for i in range(1, 2)]
+    other_df = df.drop(index=drop_str)
+    other_df = other_df[other_df.columns.difference(['tvmcpu'])]
+
+    draw_plot(df=other_df, fig_name=f'rtx_{network_name}_bn{target_batch_size}_others.png')
 
 if __name__ == "__main__":
     target_batch_size = 1
+    network_name = 'bert'
+    NETWORK_TO_PLOT_FUNC = {
+        'resnet50': plot_resnet50,
+        'resnext50': plot_resnet50,
+        'resnext50': plot_bert,
+    }
+
     set_plt_font_size()
 
     measured_configs = MeasuredConfigs()
@@ -103,28 +147,23 @@ if __name__ == "__main__":
     # df['tvmgpu'] /= df['tvmgpu']
 
     # Conv GPU plots
-    conv_df = filter_df_with_regex(df=df, regex = 'conv2d_\d{1,2}',
-                                   cols_to_exclude=['tvmcpu', 'cublas', 'cudnn', 'tensorrt'])#'tvmgpu-no-tuning'])
-    draw_plot(df=conv_df, fig_name=f'conv_rtx_bn{target_batch_size}.png')
+    # conv_df = filter_df_with_regex(df=df, regex = 'conv2d_\d{1,2}',
+    #                                cols_to_exclude=['tvmcpu', 'cublas'])#, 'cudnn', 'tensorrt'])#'tvmgpu-no-tuning'])
+    # draw_plot(df=conv_df, fig_name=f'rtx_{network_name}_bn{target_batch_size}_conv.png')
 
     # Matmul (Dense) GPU plot
     # batch_matmul_\d{1,2}
     # print(df[df.index.str.match('conv*')== False])
     dense_df = filter_df_with_regex(df=df, regex='(:?dense_\d{1,2}|batch_matmul_\d{1,2})',
-                                   cols_to_exclude=['tvmcpu', 'cublas', 'cudnn'])
+                                   cols_to_exclude=['tvmcpu'])
     # print(dense_df)
-    draw_plot(df=dense_df, fig_name=f'matmul_rtx_bn{target_batch_size}.png')
+    draw_plot(df=dense_df, fig_name=f'rtx_{network_name}_bn{target_batch_size}_matmul.png')
 
-    # # Fused ops
-    # fused_df = df.filter(like='+', axis=0)
-    # fused_df = fused_df[fused_df.columns.difference(['cudnn', 'cublas', 'tvmcpu', 'tvmgpu-no-tuning'])]
-    # draw_plot(df=fused_df, fig_name=f'fused_rtx_bn{target_batch_size}.png')
-    #
-    # # Other ops
-    # # forbidden_str = ['+','conv2d','dense']
-    # # re_str = '|'.join(forbidden_str)
-    # drop_str = [f"conv2d_{i}" for i in range(1, 21)] + [val for val in df.index.values if "+" in val] + ['dense_1']
-    # other_df = df.drop(index=drop_str)
-    # other_df = other_df[other_df.columns.difference(['cublas', 'tvmcpu', 'tvmgpu-no-tuning'])]
-    #
-    # draw_plot(df=other_df, fig_name=f'others_rtx_bn{target_batch_size}.png')
+    # Other ops
+    # forbidden_str = ['+','conv2d','dense']
+    # re_str = '|'.join(forbidden_str)
+    drop_str = [f"dense_{i}" for i in range(1, 3)] + [f"batch_matmul_{i}" for i in range(1, 2)]
+    other_df = df.drop(index=drop_str)
+    other_df = other_df[other_df.columns.difference(['tvmcpu'])]
+
+    draw_plot(df=other_df, fig_name=f'rtx_{network_name}_bn{target_batch_size}_others.png')

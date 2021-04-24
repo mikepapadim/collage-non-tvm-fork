@@ -203,6 +203,7 @@ def wrap_custom_compute_conv2d(
     topi_compute,
     need_data_layout=False,
     need_out_layout=False,
+    #need_kernel_layout=False,
     has_groups=False,
     need_auto_scheduler_layout=False,
 ):
@@ -214,6 +215,7 @@ def wrap_custom_compute_conv2d(
         dilation = get_const_tuple(attrs.dilation)
         data_layout = attrs.get_str("data_layout")
         out_layout = attrs.get_str("out_layout")
+
         out_dtype = attrs.out_dtype
         out_dtype = inputs[0].dtype if out_dtype in ("same", "") else out_dtype
         args = [inputs[0], inputs[1], strides, padding, dilation]
@@ -226,6 +228,8 @@ def wrap_custom_compute_conv2d(
         args.append(out_dtype)
         if need_auto_scheduler_layout:
             args.append(get_auto_scheduler_rewritten_layout(attrs))
+        #if need_kernel_layout:
+        #    args.append(kernel_layout)
         return [topi_compute(*args)]
 
     return _compute_conv2d

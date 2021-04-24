@@ -1,5 +1,5 @@
 import tvm
-from ..backend_operator.utils import is_call_node, is_tuplegetitem_node, is_var_node, is_constant_node, is_function_node
+from ..backend_operator.utils import *
 
 DATA_NAME_HINTS = ['data', 'input', 'x']
 
@@ -29,6 +29,9 @@ def get_next_expr_after_match(relay_expr, prev_relay_expr, depth):
     # Caution: depth or depth-1?
     if type(relay_expr) == tvm.relay.expr.TupleGetItem:
         target_node += get_next_expr_after_match(relay_expr.tuple_value, relay_expr, depth-1)
+    elif is_tuple_node(relay_expr):
+        for node in relay_expr.fields:
+            target_node += get_next_expr_after_match(node, relay_expr, depth-1)
     else:
         # Note that batch_matmul also has args
         # if type(relay_expr) == tvm.relay.nn.batch_matmul:
@@ -53,7 +56,6 @@ def get_pattern_len(pattern):
         length += 1
     elif type(pattern) == tvm.relay.dataflow_pattern.TuplePattern:
         for child in pattern.fields:
-            print(type(child))
             length = max(length, get_pattern_len(child))
         length += 1
 

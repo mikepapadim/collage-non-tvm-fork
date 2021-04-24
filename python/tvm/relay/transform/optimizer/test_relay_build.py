@@ -7,6 +7,18 @@ from ..backend_operator.utils import is_function_node
 from ..workloads.onnx_workloads import get_network_from_onnx
 from ..workloads.torch_workloads import get_network_from_torch
 
+def get_batch_matmul():
+    data1 = relay.var("data", relay.TensorType((16, 16, 1024), "float32"))
+    data2 = relay.var("data", relay.TensorType((16, 16, 1024), "float32"))
+    batmul = relay.nn.batch_matmul(data1, data2)
+
+    inputs = relay.analysis.free_vars(batmul)
+    expr_func = relay.Function(inputs, batmul)
+    net, params = testing.create_workload(expr_func)
+
+    return net, params
+
+
 def get_concat():
     data1 = relay.var("data1", relay.TensorType((1, 3, 224, 224), "float32"))
     data2 = relay.var("data2", relay.TensorType((1, 3, 224, 224), "float32"))
@@ -108,13 +120,9 @@ def build_network(net, params):
 # mod, params, _, _ = get_network_from_torch("resnet_block", 1)
 # mod, params, _, _ = get_network_from_torch("resnet50", 1)
 # mod, params, _, _ = get_network_from_torch("resnext50_32x4d",1)
-# mod, params, _, _ = get_network_from_torch("bert",1)
+mod, params, _, _ = get_network_from_torch("bert",1)
 # mod, params, _, _ = get_network_from_torch("nasrnn",1)
+# mod, params, _, _ = get_network_from_torch("nasneta",1)
 
-# print(get_concat().attrs.axis)
-
-from tvm.relay.dataflow_pattern import *
-print(is_tuple([wildcard(), wildcard(), wildcard(), wildcard()]).match(get_concat()))
-
-mod, params, _, _ = get_network_from_torch("nasneta",1)
+# mod, params = get_batch_matmul()
 build_network(mod["main"], params)

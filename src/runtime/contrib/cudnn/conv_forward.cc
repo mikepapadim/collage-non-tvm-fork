@@ -25,7 +25,7 @@
 #include <tvm/runtime/registry.h>
 #include <limits>
 #include "cudnn_utils.h"
-  
+#include <assert.h>  
 
 // cudnn v8
 #include <cudnn_frontend_find_plan.h>
@@ -259,7 +259,7 @@ void ConvolutionBiasActivationForward(int mode, int format, int algo, int convDi
       entry_ptr->fused_conv_entry.tensor_format
       );
   
-  /*
+  /* 
   std::cout << "X:\t" << std::get<X_TENSOR>(tensors).describe() << std::endl;
   std::cout << "Y:\t " << std::get<Y_TENSOR>(tensors).describe() << std::endl;
   std::cout << "W:\t" << std::get<W_TENSOR>(tensors).describe() << std::endl;
@@ -350,20 +350,45 @@ void ConvolutionBiasActivationForward(int mode, int format, int algo, int convDi
   // Create an Operation Graph. In this case it is convolution add bias activation
   std::array<cudnn_frontend::Operation const*, 4> ops = {&conv_op, &add_op1, &add_op2, &act_op};
 
+  //std::cerr << "Operation Graph Builder\n";
   auto opGraph = cudnn_frontend::OperationGraphBuilder()
                       .setHandle(entry_ptr->handle)
                       .setOperationGraph(ops.size(), ops.data())
                       .build();
 
+
+  //std::cerr << "ConvForwardWorkspace\n";
   size_t workspace_size = 0;
   CUDNN_CALL(cudnnGetConvolutionForwardWorkspaceSize(
       entry_ptr->handle, entry_ptr->conv_entry.input_desc, entry_ptr->conv_entry.filter_desc,
       entry_ptr->conv_entry.conv_desc, entry_ptr->conv_entry.output_desc,
       entry_ptr->conv_entry.fwd_algo, &workspace_size));
- 
-  //auto max_workspace_size = 10 * 1024 * 1024;  // 10 MiB
+
+  std::cerr << "Space: " << workspace_size << "\n";
+
+  /*
+  size_t limit = 0;
+  cudaDeviceGetLimit(&limit, cudaLimitStackSize);
+  printf("cudaLimitStackSize: %u\n", (unsigned)limit);
+  cudaDeviceGetLimit(&limit, cudaLimitPrintfFifoSize);
+  printf("cudaLimitPrintfFifoSize: %u\n", (unsigned)limit);
+  cudaDeviceGetLimit(&limit, cudaLimitMallocHeapSize);
+  printf("cudaLimitMallocHeapSize: %u\n", (unsigned)limit);
+  */
+
+  //size_t max_workspace_size = 10*1024;  // KB 
+  //assert(workspace_size <= max_workspace_size);
+  //workspace_size = std::min(max_workspace_size, workspace_size);
+  
+  // workspace error
+  if(workspace_size>=10*1024 or workspace_size==0) {
+    CUDNN_CALL(CUDNN_STATUS_INTERNAL_ERROR);
+  }
+
+  //assert(workspace_size <= 10*1024);
   entry_ptr->fused_conv_entry.UpdateWorkspace(workspace_size);
 
+  //std::cerr << "After Update workspace\n";
   void* data_ptrs[] = {x->data, y->data, w->data, z->data, bias->data};
   int64_t uids[]    = {'x', 'y', 'w', 'z', 'b'};
   auto variantPack  = cudnn_frontend::VariantPackBuilder()
@@ -374,7 +399,7 @@ void ConvolutionBiasActivationForward(int mode, int format, int algo, int convDi
   //std::cout << "variantPack " << variantPack.describe() << std::endl;
 
   auto sample_predicate_function = [=](cudnn_frontend::ExecutionPlan const& plan) -> bool {
-            return plan.getWorkspaceSize() > workspace_size;
+            return (size_t)plan.getWorkspaceSize() > workspace_size;
   };
 
   std::array<cudnn_frontend::GeneratorSource const, 1> sources = {heurgen_method};
@@ -417,9 +442,9 @@ void ConvolutionForward(int mode, int format, int algo, int dims, int groups, co
   std::vector<int> dim(full_dims);
   std::vector<int> tensor_stride(full_dims);
 
+
   // Note: For 2D tenor, using ND setters causes CUDNN_STATUS_NOT_SUPPORTED error
   // in following cudnnGetConvolutionForwardWorkspaceSize() when data type is fp16, int
-
   CUDNN_CALL(cudnnSetConvolutionGroupCount(entry_ptr->conv_entry.conv_desc, groups));
   if (dims == 2) {
     // Set Desc
@@ -505,6 +530,16 @@ void ConvolutionForward(int mode, int format, int algo, int dims, int groups, co
 void OutputShape(int format, int dims, int groups, const int pad[], const int stride[],
                  const int dilation[], const int x_dim[], const int w_dim[], void* out_shape,
                  const std::string& data_dtype, const std::string& conv_dtype) {
+
+
+  std::cerr << "format: " << format << ", dims:" << dims << ", groups: " << groups << ", data_dtype: " << data_dtype << ", conv_dtype: " << conv_dtype << "\n";
+
+  for(int i=0;i<dims;i++){
+      std::cerr << pad[i] << ", " << stride[i] << ", " << dilation[i] << "\n";
+    }
+
+
+
   CuDNNThreadEntry* entry_ptr = CuDNNThreadEntry::ThreadLocal();
 
   // Set Data Type
@@ -538,9 +573,14 @@ void OutputShape(int format, int dims, int groups, const int pad[], const int st
         static_cast<int*>(out_shape) + 3, static_cast<int*>(out_shape) + 1,
         static_cast<int*>(out_shape) + 2));
   } else {
+    std::cerr << "Before creating tensor stride\n";
     // Set Input
     std::vector<int> tensor_stride(full_dims);
     GetCudnnStride(full_dims, x_dim, tensor_stride.data());
+
+    for(int i=0;i<full_dims;i++){
+      std::cerr << x_dim[i] << ", " << w_dim[i] << "\n";
+    }
 
     CUDNN_CALL(cudnnSetTensorNdDescriptor(entry_ptr->conv_entry.input_desc, data_type, full_dims,
                                           x_dim, tensor_stride.data()));
@@ -548,6 +588,8 @@ void OutputShape(int format, int dims, int groups, const int pad[], const int st
     CUDNN_CALL(cudnnSetFilterNdDescriptor(entry_ptr->conv_entry.filter_desc, data_type,
                                           entry_ptr->conv_entry.tensor_format, full_dims, w_dim));
 
+    
+    std::cerr << "Compute OutputDim\n";
     CUDNN_CALL(cudnnGetConvolutionNdForwardOutputDim(
         entry_ptr->conv_entry.conv_desc, entry_ptr->conv_entry.input_desc,
         entry_ptr->conv_entry.filter_desc, full_dims, static_cast<int*>(out_shape)));
@@ -620,7 +662,7 @@ void FindAlgo(int format, int dims, int groups, const int pad[], const int strid
 TVM_REGISTER_GLOBAL("tvm.contrib.cudnn.conv2d+bias+activation.forward")
     .set_body([](TVMArgs args, TVMRetValue* ret) {
 
-//      std::cerr << "---------------------  In fused func\n";
+      //std::cerr << "### Fused ops\n";
 
       int mode = args[0];
       int format = args[1];

@@ -43,6 +43,7 @@ TVM_REGISTER_GLOBAL("tvm.contrib.cudnn.activation.forward")
       int nanOpt = args[5];
       double coeff = args[6];
 
+
       CuDNNThreadEntry* entry_ptr = CuDNNThreadEntry::ThreadLocal();
       entry_ptr->activation_entry.data_type = CuDNNDataType::DLTypeToCuDNNType(x->dtype);
 
@@ -56,12 +57,30 @@ TVM_REGISTER_GLOBAL("tvm.contrib.cudnn.activation.forward")
         coeff
         ));
 
+      int ndim = x->ndim;
+      // cuDNN only supports 4d or 5d
+      assert(ndim == 4 or ndim == 5);
 
-      CUDNN_CALL(cudnnSetTensor4dDescriptor(
-        entry_ptr->activation_entry.shape_desc, CUDNN_TENSOR_NCHW, 
-        entry_ptr->activation_entry.data_type,
-        static_cast<int>(x->shape[0]), static_cast<int>(x->shape[1]),
-        static_cast<int>(x->shape[2]), static_cast<int>(x->shape[3])));
+      if(ndim == 4){
+        CUDNN_CALL(cudnnSetTensor4dDescriptor(
+          entry_ptr->activation_entry.shape_desc, CUDNN_TENSOR_NCHW, 
+          entry_ptr->activation_entry.data_type,
+          static_cast<int>(x->shape[0]), static_cast<int>(x->shape[1]),
+          static_cast<int>(x->shape[2]), static_cast<int>(x->shape[3])));
+      }else{
+        std::vector<int> dims(ndim);
+        std::vector<int> tensor_stride(ndim);
+        // Set Filter
+        for (int i = 0; i < ndim; i++) {
+          dims[i] = static_cast<int>(x->shape[i]);
+        }
+        GetCudnnStride(ndim, dims.data(), tensor_stride.data());
+        CUDNN_CALL(cudnnSetTensorNdDescriptor(
+              entry_ptr->activation_entry.shape_desc, 
+              entry_ptr->activation_entry.data_type,     
+              ndim, dims.data(),
+              tensor_stride.data()));
+      }
 
 
       CUDNN_CALL(cudnnActivationForward(entry_ptr->handle, 

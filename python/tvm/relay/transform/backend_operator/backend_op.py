@@ -64,11 +64,11 @@ class BackendOp(object):
 
     # For Tuple, we do not need to measure it
     if is_tuple_node(expr) or is_tuplegetitem_node(expr):
-      return 0, 0
+      return 0#, 0
 
     # if constraints are not satisfied, return infinite cost
     if not self._constraint_func(config):
-      return float('inf'), 0
+      return float('inf')#, 0
 
     cost_info = self._measured_configs.get_cost(config)
     if cost_info != None:
@@ -157,6 +157,9 @@ def extract_subgraph(expr, max_depth):
     elif is_constant_node(expr):
       return expr
 
+    elif is_tuple_node(expr):
+      return expr
+
     else:
       raise Exception("Expr type not implemented")
 
@@ -179,6 +182,7 @@ def get_optimal_backendop(b_op_lib, expr, pattern, target = None):
     subgraph = extract_subgraph(expr, max_depth)
     # print("Subgraph: ", subgraph)
     cost = op.get_cost(subgraph)
+    # print("Cost: ", cost)
 
     assert cost != None
     if cost < min_cost:

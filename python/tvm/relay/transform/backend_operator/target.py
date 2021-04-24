@@ -21,7 +21,7 @@ NUM_MEASUREMENTS_PER_REPEAT = 100
 
 
 cur_dir_path = Path(__file__).parent.absolute()
-AUTOTVM_LOG = f"{cur_dir_path}/../logs/autotvm_ops.log"
+AUTOTVM_LOG = f"{cur_dir_path}/../logs/autotvm_ops.json"
 # Temporary autoscheduler log file
 # FIXME(@Soo): Accumulate autoscheduler logs to the same file
 # AUTOSCH_LOG = "/home/byungsoj/backend-aware-graph-opt/package/autotune/tmp/autosch_ops.json.resnet50.tmp"
@@ -139,7 +139,6 @@ class TVMSubGraphCostFunc_AutoTVM(TargetCostFunc):
             data = np.random.uniform(-1, 1, size=data_shape).astype("float32")
             module.set_input("data", data)
             ftimer = module.module.time_evaluator("run", dev, number=NUM_MEASUREMENTS_PER_REPEAT, repeat=NUM_REPEATS)
-        
         return measure(ftimer)
 
 class TVMSubGraphCostFunc_NoTuning(TargetCostFunc):

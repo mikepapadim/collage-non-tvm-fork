@@ -136,6 +136,14 @@ def extract_attrs(expr):
     elif is_tuplegetitem_node(expr):
       helper(expr.tuple_value, attrs)
 
+    elif is_tuple_node(expr):
+      children = list(filter(is_call_or_tuplegetitem_node, expr.fields))
+      if len(children) == 0:
+        res.add(attrs)
+
+      for child in children:
+        helper(child, attrs)
+
     elif is_var_node(expr):
       raise Exception("Should not reach var node")
 
