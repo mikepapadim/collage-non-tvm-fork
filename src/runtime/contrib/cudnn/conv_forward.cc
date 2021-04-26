@@ -193,7 +193,7 @@ auto heurgen_method = [](cudnn_frontend::OperationGraph &opGraph) -> cudnn_front
 
 
 
-
+// NOTE: Need to support grouped conv!
 void ConvolutionBiasActivationForward(int mode, int format, int algo, int convDim, int groups,
     const int64_t pad[],const int64_t stride[], const int64_t dilation[],
     DLTensor* x, DLTensor* w, DLTensor* z, DLTensor* bias, DLTensor* y,
@@ -216,6 +216,7 @@ void ConvolutionBiasActivationForward(int mode, int format, int algo, int convDi
   int full_dims = convDim + 2;
   assert(convDim==2);
 
+  CUDNN_CALL(cudnnSetConvolutionGroupCount(entry_ptr->fused_conv_entry.conv_desc, groups));
   std::vector<int> dim(full_dims);
   std::vector<int> tensor_stride(full_dims);
 
