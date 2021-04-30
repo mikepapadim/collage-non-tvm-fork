@@ -147,14 +147,20 @@ def partition_for_tensorrt(
                 }
             ),
             transform.FoldConstant(),
+            tvm.ir.transform.PrintIR("Before annotating target"),
             transform.AnnotateTarget("tensorrt"),
+            tvm.ir.transform.PrintIR("After annotating target"),
             transform.MergeCompilerRegions(),
+            tvm.ir.transform.PrintIR("After merging compiler region"),
             transform.PartitionGraph(),
+            tvm.ir.transform.PrintIR("After partitioning graph"),
             transform.InferType(),
         ]
     )
     with tvm.transform.PassContext(opt_level=3, config={"relay.ext.tensorrt.options": config}):
+        print("-"*50)
         mod = seq(mod)
+        print("=" * 50)
         mod = prune_tensorrt_subgraphs(mod)
     return mod, config
 

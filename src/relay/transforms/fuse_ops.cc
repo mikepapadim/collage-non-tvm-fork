@@ -969,7 +969,7 @@ namespace tvm {
           gmap_[graph.post_dfs_order[nid]->ref] = groups[nid];
         }
         // The following line can be used for debug.
-//        this->DebugDumpGroup(body);
+        this->DebugDumpGroup(body);
         return this->Mutate(body);
       }
 
@@ -1147,6 +1147,77 @@ namespace tvm {
       }
     };
 
+    class ExtCompilerMutator : private MixedModeMutator {
+     public:
+      // Run the transform
+      Expr Transform(const Expr& body) {
+        _is_ext_compiler = false;
+        return this->Mutate(body);
+      }
+
+     private:
+      bool _is_ext_compiler;
+      using MixedModeMutator::VisitExpr_;
+
+      Expr VisitExpr_(const FunctionNode* fn_node) {
+        std::cerr << "FUNCTION NODE VISITED" << std::endl;
+        // Keep it going if this is the top-level function
+        if (fn_node->GetAttr<IntImm>(attr::kCustomFusionPass).defined()) {
+          std::cerr << "Top level function" << std::endl;
+          return ExprMutator::VisitExpr_(fn_node);
+        } else {
+          assert (fn_node->GetAttr<String>(attr::kBackendOp).defined());
+          std::cerr << "Op function" << std::endl;
+          // Get backend_name from backend_op_name
+          std::string backend_op_name = std::string(fn_node->GetAttr<String>(attr::kBackendOp).value());
+          int delim_pos = backend_op_name.find("_");
+          std::string backend_name = backend_op_name.substr(0, delim_pos);
+
+          // Start mutation if backend is tensorrt
+          if (backend_name == "tensorrt") {
+            std::cerr << "Find TensorRT" << std::endl;
+            _is_ext_compiler = true;
+            return ExprMutator::VisitExpr_(fn_node);
+          } else {
+            return ExprMutator::VisitExpr_(fn_node);
+          }
+        }
+      }
+
+      Expr Rewrite_(const CallNode* call, const Expr& post) {
+        std::cerr << "Rewrite!! " << call->op << std::endl;
+        if (call->op.as<OpNode>()) {
+          std::cerr << "op rewrite" << call->op << std::endl;
+          ExprMutator::VisitExpr_(call);
+        } else if (call->op.as<FunctionNode>()) {
+          std::cerr << "function rewrite" << call->op << std::endl;
+          return ExprMutator::VisitExpr_(call->op.as<FunctionNode>());
+        } else {
+          std::cerr << "something else than function or op rewrite" << std::endl;
+          return ExprMutator::VisitExpr_(call);
+        }
+
+      }
+
+//      Expr MakeNewFunction(GraphPartitioner::Group* group, Type ret_type, Expr body) {
+//        // If the function has no call, it is not a primitive function.
+//        struct HasCallVisitor : ExprVisitor {
+//          bool has_call = false;
+//          void VisitExpr_(const CallNode* op) final { has_call = true; }
+//        } visitor;
+//        visitor(body);
+//        const GroupInfo& ginfo = ginfo_[group];
+//        auto func = Function(ginfo.params, body, ret_type, {});
+//        func = WithAttr(std::move(func), attr::kPrimitive, tvm::Integer(visitor.has_call));
+//
+//        // PATCH(@Soo): Add backend op attribute.
+//        func = WithAttr(std::move(func), attr::kBackendOp, String(group->backend_op_name));
+//    //        std::cerr << "Func: " << func << std::endl;
+//    //        std::cerr << "Backend op name: " << group->backend_op_name << std::endl;
+//        return Call(func, ginfo.arguments, Attrs());
+//      }
+    };
+
     // For op measurements, execute original fusion pass
     // For end-to-end measure, execute DP fusion pass
     Expr FuseOps(const Expr& expr, int fuse_opt_level, size_t max_fuse_depth, const IRModule& module) {
@@ -1171,10 +1242,16 @@ namespace tvm {
         Map<Expr, String> backend_op_match = (*fdp_call)(expr);
         std::cerr << "\tDP optimization (Python side) is done!" << "\n\n";
         fused_expr = FuseMutator().Transform(expr, fuse_opt_level, max_fuse_depth, backend_op_match);
+        std::cerr << "\tFusion is done!" << "\n\n";
+        std::cerr << "\tFused expressions (before extcompiler): " << fused_expr << "\n\n";
+        ExtCompilerMutator().Transform(expr);
+        std::cerr << "\tExternal compiler mutation is done!" << "\n\n";
       } else {
         // PATCH(@Soo): Original fusion pass for op measurements
         fused_expr = FuseMutator().Transform(expr, fuse_opt_level, max_fuse_depth);
       }
+
+      std::cerr << "\tFused expressions (after extcompiler): " << fused_expr << "\n\n";
 
       return fused_expr;
     }

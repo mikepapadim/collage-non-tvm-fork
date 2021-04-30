@@ -142,7 +142,7 @@ class ScheduleGetter : public backend::MemoizedExprTranslator<Array<te::Tensor>>
     if(dp_info!=nullptr) dp_target = std::string(dp_info.value());
 
     //NOTE: update target --> Target("llvm")
-    std::cerr << "DP_TARGET: " << dp_target << "\n";
+//    std::cerr << "DP_TARGET: " << dp_target << "\n";
     bool doCustomLowering = dp_target.size()>0 
                             && ((int)dp_target.find("INVALID_BACKEND_OP")==-1)
                             && ((int)dp_target.find("tvmgpu")==-1);
@@ -154,8 +154,8 @@ class ScheduleGetter : public backend::MemoizedExprTranslator<Array<te::Tensor>>
       assert(0);
       
     }else{
-      std::cerr << ">> Regular Path\n";
-      std::cerr << prim_func << "\n";
+//      std::cerr << ">> Regular Path\n";
+//      std::cerr << prim_func << "\n";
       cache_node->outputs = this->VisitExpr(prim_func->body);
     }
 
@@ -864,11 +864,11 @@ class CompileEngineImpl : public CompileEngineNode {
     }
     cur_ccache_key_ = key;
 
-    std::cerr << "@@@ Lower Internal\n";
+//    std::cerr << "@@@ Lower Internal\n";
     // No need to lower external functions for now. We will invoke the external
     // codegen tool once and lower all functions together.
     if (key->source_func->GetAttr<String>(attr::kCompiler).defined()) {
-      std::cerr << "External codegen\n";
+//      std::cerr << "External codegen\n";
 
       auto cache_node = make_object<CachedFuncNode>();
       const auto name_node = key->source_func->GetAttr<String>(tvm::attr::kGlobalSymbol);
@@ -886,7 +886,7 @@ class CompileEngineImpl : public CompileEngineNode {
     auto cfunc = CreateSchedule(key->source_func, key->target);
     auto cache_node = make_object<CachedFuncNode>(*(cfunc.operator->()));
 
-    std::cerr << "@@@ Schedule is creatd\n";
+//    std::cerr << "@@@ Schedule is creatd\n";
 
     // Skip lowering for device copy node.
     const Expr body = (key->source_func)->body;
@@ -904,7 +904,7 @@ class CompileEngineImpl : public CompileEngineNode {
       all_args.push_back(arg);
     }
     
-    std::cerr << "@@@ Lower the function\n";
+//    std::cerr << "@@@ Lower the function\n";
     // lower the function
     if (const auto* f = runtime::Registry::Get("relay.backend.lower")) {
       cache_node->funcs = (*f)(cfunc->schedule, all_args, cache_node->func_name, key->source_func);
