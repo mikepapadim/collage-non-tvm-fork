@@ -356,8 +356,6 @@ def target_specific_lowering(func, inputMap, target_info=None):
             ret_type = calls[0].checked_type
             inputs = collect_input(inputMap)
 
-            print("Custom lowering -- kernel layout: ", attrs.get_str("kernel_layout"))
-
         elif pattern == "maxpool2d":
             strategy.add_implementation(
                 wrap_custom_compute_maxpool2d(topi.cuda.maxpool2d_cudnn),
@@ -382,9 +380,7 @@ def target_specific_lowering(func, inputMap, target_info=None):
             ret_type = calls[0].checked_type
             inputs = collect_input(inputMap)
 
-
         # fused ops
-        # TODO: has correctness issue
         elif pattern == "conv2d+biasadd+relu":
             strategy.add_implementation(
                 wrap_custom_compute_conv2d_biasadd_relu(
@@ -411,6 +407,33 @@ def target_specific_lowering(func, inputMap, target_info=None):
 
             inputs = [data[0], kernel[0], Z[0], bias[0]]
 
+        elif pattern == "conv2d+relu":
+            strategy.add_implementation(
+                wrap_custom_compute_conv2d_relu(
+                    topi.cuda.conv2d_relu_cudnn, need_data_layout=True, has_groups=True
+                ),
+                wrap_topi_schedule(topi.generic.schedule_extern),
+                name="conv2d_relu.cudnn",
+            )
+
+            data, kernel, Z, bias = None, None, None, None
+            attrs, ret_type = None, None
+            for call in calls:
+                call_name = call.op.name
+                if "conv2d" in call_name:
+                    attrs = call.attrs
+                    ret_type = call.checked_type
+                    args = call.args
+                    data = inputMap[args[0]]
+                    kernel = inputMap[args[1]]
+                elif "bias_add" in call_name:
+                    bias = inputMap[args[1]]
+                elif "relu" in call_name:
+                    Z = inputMap[args[0]]
+
+            inputs = [data[0], kernel[0]]
+
+
         else:
             # Unsupported backend op
             assert(0)
@@ -432,7 +455,6 @@ def target_specific_lowering(func, inputMap, target_info=None):
 
     elif target == "tensorrt":
         assert False, "tensorrt should be passed to the external compiler"
-
     else:
         # Unsupported target
         assert False, "Unsupported target"

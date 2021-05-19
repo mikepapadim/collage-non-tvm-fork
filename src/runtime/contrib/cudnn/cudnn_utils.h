@@ -99,6 +99,32 @@ struct FusedConvEntry {
 };  // FusedConvThreadEntry
 
 
+struct FusedMatmulEntry {
+  //cudnnConvolutionDescriptor_t conv_desc;
+  //cudnnConvolutionMode_t mode;
+  //cudnnFilterDescriptor_t filter_desc;
+  //cudnnConvolutionFwdAlgo_t fwd_algo;
+  
+  cudnnDataType_t data_type;
+  cudnnTensorFormat_t tensor_format;
+  cudnnTensorDescriptor_t input_desc;
+  cudnnTensorDescriptor_t output_desc;
+  cudnnActivationDescriptor_t activation_desc;
+  // cudnnMathType_t math_type;
+  //TVMContext ctx;
+  Device device;
+  //DLContext ctx;
+  runtime::DeviceAPI* cuda_api;
+  void* workspace{nullptr};
+  size_t workspace_size{0};
+  FusedMatmulEntry();
+  ~FusedMatmulEntry();
+  void UpdateWorkspace(const size_t wsize);
+  void CleanWorkspace();
+};  // FusedMatmulThreadEntry
+
+
+
 struct ConvEntry {
   cudnnConvolutionDescriptor_t conv_desc;
   cudnnConvolutionMode_t mode;
@@ -189,6 +215,7 @@ struct CuDNNThreadEntry {
   ~CuDNNThreadEntry();
   cudnnHandle_t handle{nullptr};
   FusedConvEntry fused_conv_entry;
+  FusedMatmulEntry fused_matmul_entry;
   ConvEntry conv_entry;
   SoftmaxEntry softmax_entry;
   BiasEntry bias_entry;

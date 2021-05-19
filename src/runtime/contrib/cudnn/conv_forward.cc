@@ -192,8 +192,421 @@ auto heurgen_method = [](cudnn_frontend::OperationGraph &opGraph) -> cudnn_front
 };
 
 
+void MatmulActivationForward(int mode, int format, int algo, int dim, int groups,
+    const int64_t pad[],const int64_t stride[], const int64_t dilation[],
+    DLTensor* x, DLTensor* w, DLTensor* y,
+    const std::string& dtype, const void* alphas[], int actvMode, int reluNanOpt, double actvCoeff) {
 
-// NOTE: Need to support grouped conv!
+
+  /*
+  CuDNNThreadEntry* entry_ptr = CuDNNThreadEntry::ThreadLocal();
+  // Set Format
+  entry_ptr->fused_matmul_entry.tensor_format = static_cast<cudnnTensorFormat_t>(format);
+  // Set device
+  entry_ptr->fused_matmul_entry.device = x->device;
+  // Set Data Type
+  entry_ptr->fused_matmul_entry.data_type = CuDNNDataType::DLTypeToCuDNNType(String2DLDataType(dtype));
+  //cudnnDataType_t data_type = CuDNNDataType::DLTypeToCuDNNType(x->dtype);
+  // Dims includes N and C
+  int full_dims = dim + 2;
+  assert(dim==2);
+
+  std::vector<int> dim(full_dims);
+  std::vector<int> tensor_stride(full_dims);
+
+  int64_t x_dim_padded[full_dims], w_dim_padded[full_dims], y_dim_padded[full_dims];
+
+  if (dim == 2) {
+    int ni, ci, hi, wi;
+    if (entry_ptr->fused_matmul_entry.tensor_format == CUDNN_TENSOR_NHWC) {
+      ni = 0;
+      ci = 3;
+      hi = 1;
+      wi = 2;
+    } else {
+      ni = 0;
+      ci = 1;
+      hi = 2;
+      wi = 3;
+    }
+    int order[4] = {ni,ci,hi,wi};
+
+    for(int i=0;i<full_dims;i++){
+        x_dim_padded[i] = static_cast<int>(x->shape[order[i]]);
+        w_dim_padded[i] = static_cast<int>(w->shape[order[i]]);
+        y_dim_padded[i] = static_cast<int>(y->shape[order[i]]);
+    }
+
+  }else{
+      for(int i=0;i<full_dims;i++){
+        x_dim_padded[i] = static_cast<int>(x->shape[i]);
+        w_dim_padded[i] = static_cast<int>(w->shape[i]);
+        y_dim_padded[i] = static_cast<int>(y->shape[i]);
+      }
+
+  }
+  ///////////////////////////////////
+  // Creates the necessary tensor descriptors
+  int64_t stride[3];
+  // the intension is to compute stride for a [1, M, K] matrix with K in the inner most dimension, and
+  //
+  // CUDNN_TENSOR_NCHW is a borrowed notation
+  generateStrides(x_dim_padded, stride, 3, CUDNN_TENSOR_NCHW);
+  auto aMatrixTensor = cudnn_frontend::TensorBuilder()
+                           .setDim(3, x_dim_padded)
+                           .setStrides(3, stride)
+                           .setId('a')
+                           .setAlignment(16)  // 16B alignment is needed to run a tensor core engine
+                           .setDataType(dataType)
+                           .build();
+
+  generateStrides(w_dim_padded, stride, 3, CUDNN_TENSOR_NCHW);
+  auto bMatrixTensor = cudnn_frontend::TensorBuilder()
+                           .setDim(3, w_dim_padded)
+                           .setStrides(3, stride)
+                           .setId('b')
+                           .setAlignment(16)
+                           .setDataType(dataType)
+                           .build();
+
+  generateStrides(y_dim_padded, stride, 3, CUDNN_TENSOR_NCHW);
+  auto afterMatMulTensor = cudnn_frontend::TensorBuilder()
+                               .setDim(3, y_dim_padded)
+                               .setStrides(3, stride)
+                               .setId('A')  // after matmul
+                               .setAlignment(16)
+                               .setVirtual()
+                               .setDataType(dataType)
+                               .build();
+
+  auto outputTensor = cudnn_frontend::TensorBuilder()
+                          .setDim(3, y_dim_padded)
+                          .setStrides(3, stride)
+                          .setId('c')  // output after gelu
+                          .setAlignment(16)
+                          .setDataType(dataType)
+                          .build();
+
+  std::cout << aMatrixTensor.describe() << std::endl;
+  std::cout << bMatrixTensor.describe() << std::endl;
+  std::cout << afterMatMulTensor.describe() << std::endl;
+  std::cout << outputTensor.describe() << std::endl;
+  
+  // Define the activation descriptor
+  auto actDesc = cudnn_frontend::PointWiseDescBuilder()
+                     .setMode(CUDNN_POINTWISE_RELU_FWD)
+                     .setMathPrecision(CUDNN_DATA_FLOAT)
+                     .build();
+  std::cout << actDesc.describe() << std::endl;
+
+  // Define the matmul desc
+  auto matmulDesc = cudnn_frontend::MatMulDescBuilder().setMathPrecision(CUDNN_DATA_FLOAT).build();
+  std::cout << matmulDesc.describe() << std::endl;
+
+  // Create a matmul Node
+  auto matmul_op = cudnn_frontend::OperationBuilder(CUDNN_BACKEND_OPERATION_MATMUL_DESCRIPTOR)
+                       .setaMatDesc(aMatrixTensor)
+                       .setbMatDesc(bMatrixTensor)
+                       .setcMatDesc(afterMatMulTensor)
+                       .setmatmulDesc(matmulDesc)
+                       .build();
+  std::cout << matmul_op.describe() << std::endl;
+
+  // Create an Activation Node.
+  auto act_op = cudnn_frontend::OperationBuilder(CUDNN_BACKEND_OPERATION_POINTWISE_DESCRIPTOR)
+                    .setxDesc(afterMatMulTensor.getOutputTensor())
+                    .setyDesc(outputTensor)
+                    .setpwDesc(actDesc)
+                    .build();
+  std::cout << act_op.describe() << std::endl;
+
+
+  ///////////////////////////////////
+  // Create an Operation Graph. In this case it is convolution add bias activation
+  std::array<cudnn_frontend::Operation const*, 2> ops = {&matmul_op, &act_op};
+
+  //std::cerr << "Operation Graph Builder\n";
+  auto opGraph = cudnn_frontend::OperationGraphBuilder()
+                      .setHandle(entry_ptr->handle)
+                      .setOperationGraph(ops.size(), ops.data())
+                      .build();
+
+
+  // How many engines support this operation graph ?
+  auto total_engines = opGraph.getEngineCount();
+  //std::cout << opGraph.describe() << " has " << total_engines << " engines." << std::endl;
+  // We have to randomly pick one engine from [0, total_engines)
+  // Selecting "0" by default
+  auto engine = cudnn_frontend::EngineBuilder().setGlobalEngineIdx(0).setOperationGraph(opGraph).build();
+  //std::cout << engine.describe() << std::endl;
+  auto& knobs = engine.getSupportedKnobs();
+  //for (auto it = std::begin(knobs); it != std::end(knobs); ++it) {
+  //    std::cout << it->describe() << std::endl;
+  //}
+  if (knobs.begin() != knobs.end()) {
+      //std::cout << "Updated knob choice" << std::endl;
+      knobs.begin()->setChoice(knobs.begin()->getMinValue() + 1);
+      //std::cout << knobs.begin()->describe() << std::endl;
+  }
+
+  // Create the requisite engine config
+  auto engine_config = cudnn_frontend::EngineConfigBuilder().setEngine(engine).build();
+  //std::cout << engine_config.describe() << std::endl;
+
+  auto plan = cudnn_frontend::ExecutionPlanBuilder().setHandle(entry_ptr->handle).setEngineConfig(engine_config).build();
+
+  //std::cout << "Plan tag: " << plan.getTag() << std::endl;
+
+  auto workspace_size = plan.getWorkspaceSize();
+  entry_ptr->fused_matmul_entry.UpdateWorkspace(workspace_size);
+
+  //std::cerr << "After Update workspace\n";
+  void* data_ptrs[] = {x->data, y->data, w->data};
+  int64_t uids[]    = {'x', 'y', 'w'};
+  auto variantPack  = cudnn_frontend::VariantPackBuilder()
+                      .setWorkspacePointer(entry_ptr->fused_matmul_entry.workspace)
+                      .setDataPointers(3, data_ptrs)
+                      .setUids(3, uids)
+                      .build();
+  //std::cout << "variantPack " << variantPack.describe() << std::endl;
+
+  auto sample_predicate_function = [=](cudnn_frontend::ExecutionPlan const& plan) -> bool {
+            return (size_t)plan.getWorkspaceSize() > workspace_size;
+  };
+
+  std::array<cudnn_frontend::GeneratorSource const, 1> sources = {heurgen_method};
+  cudnn_frontend::EngineConfigGenerator generator(sources.size(), sources.data());
+
+  auto options = generator.cudnnFindPlan<cudnn_frontend::CudnnFindSamplingTechnique::CUDNN_FIND_SAMPLE_MEDIAN_OF_THREE>(
+            entry_ptr->handle, std::move(opGraph), variantPack, sample_predicate_function);
+
+  //cudnnStatus_t status =
+  CUDNN_CALL(cudnnBackendExecute(entry_ptr->handle, options.front().plan.get_raw_desc(), variantPack.get_raw_desc()));
+  */
+
+}
+
+
+void ConvolutionActivationForward(int mode, int format, int algo, int convDim, int groups,
+    const int64_t pad[],const int64_t stride[], const int64_t dilation[],
+    DLTensor* x, DLTensor* w, DLTensor* y,
+    const std::string& conv_dtype, const void* alphas[], int actvMode, int reluNanOpt, double actvCoeff) {
+
+
+  CuDNNThreadEntry* entry_ptr = CuDNNThreadEntry::ThreadLocal();
+  // Set Mode
+  entry_ptr->fused_conv_entry.mode = static_cast<cudnnConvolutionMode_t>(mode);
+  // Set Format
+  entry_ptr->fused_conv_entry.tensor_format = static_cast<cudnnTensorFormat_t>(format);
+  // Set Algo
+  entry_ptr->fused_conv_entry.fwd_algo = static_cast<cudnnConvolutionFwdAlgo_t>(algo);
+  // Set device
+  entry_ptr->fused_conv_entry.device = x->device;
+  // Set Data Type
+  entry_ptr->fused_conv_entry.data_type = CuDNNDataType::DLTypeToCuDNNType(String2DLDataType(conv_dtype));
+  //cudnnDataType_t data_type = CuDNNDataType::DLTypeToCuDNNType(x->dtype);
+  // Dims includes N and C
+  int full_dims = convDim + 2;
+  assert(convDim==2);
+
+  CUDNN_CALL(cudnnSetConvolutionGroupCount(entry_ptr->fused_conv_entry.conv_desc, groups));
+  std::vector<int> dim(full_dims);
+  std::vector<int> tensor_stride(full_dims);
+
+  int64_t x_dim_padded[full_dims], w_dim_padded[full_dims], y_dim_padded[full_dims];
+
+  if (convDim == 2) {
+    int ni, ci, hi, wi;
+    if (entry_ptr->fused_conv_entry.tensor_format == CUDNN_TENSOR_NHWC) {
+      ni = 0;
+      ci = 3;
+      hi = 1;
+      wi = 2;
+    } else {
+      ni = 0;
+      ci = 1;
+      hi = 2;
+      wi = 3;
+    }
+    int order[4] = {ni,ci,hi,wi};
+
+    for(int i=0;i<full_dims;i++){
+        x_dim_padded[i] = static_cast<int>(x->shape[order[i]]);
+        w_dim_padded[i] = static_cast<int>(w->shape[order[i]]);
+        y_dim_padded[i] = static_cast<int>(y->shape[order[i]]);
+    }
+
+  }else{
+      for(int i=0;i<full_dims;i++){
+        x_dim_padded[i] = static_cast<int>(x->shape[i]);
+        w_dim_padded[i] = static_cast<int>(w->shape[i]);
+        y_dim_padded[i] = static_cast<int>(y->shape[i]);
+      }
+
+  }
+
+  common_convbias_descriptors tensors = create_conv_bias_add_act_descriptors(
+      convDim, x_dim_padded,
+      pad, stride, dilation,
+      w_dim_padded, y_dim_padded,
+      entry_ptr->fused_conv_entry.data_type,
+      entry_ptr->fused_conv_entry.tensor_format
+      );
+  
+  /*
+  std::cout << "X:\t" << std::get<X_TENSOR>(tensors).describe() << std::endl;
+  std::cout << "Y:\t " << std::get<Y_TENSOR>(tensors).describe() << std::endl;
+  std::cout << "W:\t" << std::get<W_TENSOR>(tensors).describe() << std::endl;
+  std::cout << "After conv:\t" << std::get<AFTERCONV_TENSOR>(tensors).describe() << std::endl;
+  */
+
+
+  // Define the activation operation
+  auto actDesc = cudnn_frontend::PointWiseDescBuilder()
+                     .setMode(CUDNN_POINTWISE_RELU_FWD)
+                     .setMathPrecision(CUDNN_DATA_FLOAT)
+                     .build();
+  //std::cout << actDesc.describe() << std::endl;
+
+
+  // Define the convolution problem
+  auto convDesc = cudnn_frontend::ConvDescBuilder()
+                      .setDataType(entry_ptr->fused_conv_entry.data_type)
+                      .setMathMode(entry_ptr->fused_conv_entry.mode)
+                      //.setMathMode(CUDNN_CONVOLUTION)
+                      .setNDims(convDim)
+                      .setStrides(convDim, stride)
+                      .setPrePadding(convDim, pad)
+                      .setPostPadding(convDim, pad)
+                      .setDilation(convDim, dilation)
+                      .build();
+  //std::cout << convDesc.describe() << std::endl;
+
+  // TODO: What is the best practice for supporting diverse type of alphas?
+  // Create a convolution Node
+  auto conv_op = cudnn_frontend::OperationBuilder(CUDNN_BACKEND_OPERATION_CONVOLUTION_FORWARD_DESCRIPTOR)
+                      .setxDesc(std::get<X_TENSOR>(tensors))
+                      .setwDesc(std::get<W_TENSOR>(tensors))
+                      .setyDesc(std::get<AFTERCONV_TENSOR>(tensors))
+                      .setcDesc(convDesc)
+                      .setAlpha(GET_FLOAT(alphas[0]))
+                      .setBeta(GET_FLOAT(alphas[1]))
+                      .build();
+  //std::cout << conv_op.describe() << std::endl;
+
+  // Create an Activation Node.
+  auto act_op = cudnn_frontend::OperationBuilder(CUDNN_BACKEND_OPERATION_POINTWISE_DESCRIPTOR)
+                      .setxDesc(conv_op.getOutputTensor())
+                      .setyDesc(std::get<Y_TENSOR>(tensors))
+                      .setpwDesc(actDesc)
+                      .build();
+  //std::cout << act_op.describe() << std::endl;
+
+
+
+  // Create an Operation Graph. In this case it is convolution add bias activation
+  std::array<cudnn_frontend::Operation const*, 2> ops = {&conv_op, &act_op};
+
+  //std::cerr << "Operation Graph Builder\n";
+  auto opGraph = cudnn_frontend::OperationGraphBuilder()
+                      .setHandle(entry_ptr->handle)
+                      .setOperationGraph(ops.size(), ops.data())
+                      .build();
+
+  /*
+  //std::cerr << "ConvForwardWorkspace\n";
+  size_t workspace_size = 0;
+  CUDNN_CALL(cudnnGetConvolutionForwardWorkspaceSize(
+      entry_ptr->handle, entry_ptr->conv_entry.input_desc, entry_ptr->conv_entry.filter_desc,
+      entry_ptr->conv_entry.conv_desc, entry_ptr->conv_entry.output_desc,
+      entry_ptr->conv_entry.fwd_algo, &workspace_size));
+
+  std::cerr << "Space: " << workspace_size << "\n";
+
+  size_t limit = 0;
+  cudaDeviceGetLimit(&limit, cudaLimitStackSize);
+  printf("cudaLimitStackSize: %u\n", (unsigned)limit);
+  cudaDeviceGetLimit(&limit, cudaLimitPrintfFifoSize);
+  printf("cudaLimitPrintfFifoSize: %u\n", (unsigned)limit);
+  cudaDeviceGetLimit(&limit, cudaLimitMallocHeapSize);
+  printf("cudaLimitMallocHeapSize: %u\n", (unsigned)limit);
+
+  //size_t max_workspace_size = 10*1024;  // KB 
+  //assert(workspace_size <= max_workspace_size);
+  //workspace_size = std::min(max_workspace_size, workspace_size);
+  
+  // workspace error
+  if(workspace_size>=10*1024 or workspace_size==0) {
+    CUDNN_CALL(CUDNN_STATUS_INTERNAL_ERROR);
+  }
+  */
+
+  // How many engines support this operation graph ?
+  auto total_engines = opGraph.getEngineCount();
+  //std::cout << opGraph.describe() << " has " << total_engines << " engines." << std::endl;
+  // We have to randomly pick one engine from [0, total_engines)
+  // Selecting "0" by default
+  auto engine = cudnn_frontend::EngineBuilder().setGlobalEngineIdx(0).setOperationGraph(opGraph).build();
+  //std::cout << engine.describe() << std::endl;
+  auto& knobs = engine.getSupportedKnobs();
+  //for (auto it = std::begin(knobs); it != std::end(knobs); ++it) {
+  //    std::cout << it->describe() << std::endl;
+  //}
+  if (knobs.begin() != knobs.end()) {
+      //std::cout << "Updated knob choice" << std::endl;
+      knobs.begin()->setChoice(knobs.begin()->getMinValue() + 1);
+      //std::cout << knobs.begin()->describe() << std::endl;
+  }
+
+  // Create the requisite engine config
+  auto engine_config = cudnn_frontend::EngineConfigBuilder().setEngine(engine).build();
+  //std::cout << engine_config.describe() << std::endl;
+
+  auto plan = cudnn_frontend::ExecutionPlanBuilder().setHandle(entry_ptr->handle).setEngineConfig(engine_config).build();
+
+  //std::cout << "Plan tag: " << plan.getTag() << std::endl;
+
+  auto workspace_size = plan.getWorkspaceSize();
+  //std::cout << plan.describe() << " requires workspace " << workspace_size << std::endl;
+
+
+  //assert(workspace_size <= 10*1024);
+  entry_ptr->fused_conv_entry.UpdateWorkspace(workspace_size);
+
+  //std::cerr << "After Update workspace\n";
+  void* data_ptrs[] = {x->data, y->data, w->data};
+  int64_t uids[]    = {'x', 'y', 'w'};
+  auto variantPack  = cudnn_frontend::VariantPackBuilder()
+                      .setWorkspacePointer(entry_ptr->fused_conv_entry.workspace)
+                      .setDataPointers(3, data_ptrs)
+                      .setUids(3, uids)
+                      .build();
+  //std::cout << "variantPack " << variantPack.describe() << std::endl;
+
+  auto sample_predicate_function = [=](cudnn_frontend::ExecutionPlan const& plan) -> bool {
+            return (size_t)plan.getWorkspaceSize() > workspace_size;
+  };
+
+  std::array<cudnn_frontend::GeneratorSource const, 1> sources = {heurgen_method};
+  cudnn_frontend::EngineConfigGenerator generator(sources.size(), sources.data());
+
+  auto options = generator.cudnnFindPlan<cudnn_frontend::CudnnFindSamplingTechnique::CUDNN_FIND_SAMPLE_MEDIAN_OF_THREE>(
+            entry_ptr->handle, std::move(opGraph), variantPack, sample_predicate_function);
+
+  /*
+  std::for_each(options.begin(), options.end(), [](struct cudnn_frontend::executionOption& opt) {
+      std::cout << "Plan: " << opt.plan.getTag() << " finished in " << opt.time_ms << " ms,"
+                << " workspace: " << opt.plan.getWorkspaceSize() << " bytes" << std::endl;
+  });
+  */
+
+  //cudnnStatus_t status =
+  CUDNN_CALL(cudnnBackendExecute(entry_ptr->handle, options.front().plan.get_raw_desc(), variantPack.get_raw_desc()));
+
+}
+
+
+
 void ConvolutionBiasActivationForward(int mode, int format, int algo, int convDim, int groups,
     const int64_t pad[],const int64_t stride[], const int64_t dilation[],
     DLTensor* x, DLTensor* w, DLTensor* z, DLTensor* bias, DLTensor* y,
@@ -358,6 +771,7 @@ void ConvolutionBiasActivationForward(int mode, int format, int algo, int convDi
                       .build();
 
 
+  /*
   //std::cerr << "ConvForwardWorkspace\n";
   size_t workspace_size = 0;
   CUDNN_CALL(cudnnGetConvolutionForwardWorkspaceSize(
@@ -367,7 +781,6 @@ void ConvolutionBiasActivationForward(int mode, int format, int algo, int convDi
 
   std::cerr << "Space: " << workspace_size << "\n";
 
-  /*
   size_t limit = 0;
   cudaDeviceGetLimit(&limit, cudaLimitStackSize);
   printf("cudaLimitStackSize: %u\n", (unsigned)limit);
@@ -375,7 +788,6 @@ void ConvolutionBiasActivationForward(int mode, int format, int algo, int convDi
   printf("cudaLimitPrintfFifoSize: %u\n", (unsigned)limit);
   cudaDeviceGetLimit(&limit, cudaLimitMallocHeapSize);
   printf("cudaLimitMallocHeapSize: %u\n", (unsigned)limit);
-  */
 
   //size_t max_workspace_size = 10*1024;  // KB 
   //assert(workspace_size <= max_workspace_size);
@@ -385,6 +797,37 @@ void ConvolutionBiasActivationForward(int mode, int format, int algo, int convDi
   if(workspace_size>=10*1024 or workspace_size==0) {
     CUDNN_CALL(CUDNN_STATUS_INTERNAL_ERROR);
   }
+  */
+
+  // How many engines support this operation graph ?
+  auto total_engines = opGraph.getEngineCount();
+  //std::cout << opGraph.describe() << " has " << total_engines << " engines." << std::endl;
+  // We have to randomly pick one engine from [0, total_engines)
+  // Selecting "0" by default
+  auto engine = cudnn_frontend::EngineBuilder().setGlobalEngineIdx(0).setOperationGraph(opGraph).build();
+  //std::cout << engine.describe() << std::endl;
+  auto& knobs = engine.getSupportedKnobs();
+  //for (auto it = std::begin(knobs); it != std::end(knobs); ++it) {
+  //    std::cout << it->describe() << std::endl;
+  //}
+  if (knobs.begin() != knobs.end()) {
+      //std::cout << "Updated knob choice" << std::endl;
+      knobs.begin()->setChoice(knobs.begin()->getMinValue() + 1);
+      //std::cout << knobs.begin()->describe() << std::endl;
+  }
+
+  // Create the requisite engine config
+  auto engine_config = cudnn_frontend::EngineConfigBuilder().setEngine(engine).build();
+  //std::cout << engine_config.describe() << std::endl;
+
+  auto plan = cudnn_frontend::ExecutionPlanBuilder().setHandle(entry_ptr->handle).setEngineConfig(engine_config).build();
+
+  //std::cout << "Plan tag: " << plan.getTag() << std::endl;
+
+  auto workspace_size = plan.getWorkspaceSize();
+  //std::cout << plan.describe() << " requires workspace " << workspace_size << std::endl;
+
+
 
   //assert(workspace_size <= 10*1024);
   entry_ptr->fused_conv_entry.UpdateWorkspace(workspace_size);
@@ -532,13 +975,13 @@ void OutputShape(int format, int dims, int groups, const int pad[], const int st
                  const int dilation[], const int x_dim[], const int w_dim[], void* out_shape,
                  const std::string& data_dtype, const std::string& conv_dtype) {
 
-
+  /*
   std::cerr << "format: " << format << ", dims:" << dims << ", groups: " << groups << ", data_dtype: " << data_dtype << ", conv_dtype: " << conv_dtype << "\n";
 
   for(int i=0;i<dims;i++){
       std::cerr << pad[i] << ", " << stride[i] << ", " << dilation[i] << "\n";
     }
-
+  */
 
 
   CuDNNThreadEntry* entry_ptr = CuDNNThreadEntry::ThreadLocal();
@@ -574,14 +1017,14 @@ void OutputShape(int format, int dims, int groups, const int pad[], const int st
         static_cast<int*>(out_shape) + 3, static_cast<int*>(out_shape) + 1,
         static_cast<int*>(out_shape) + 2));
   } else {
-    std::cerr << "Before creating tensor stride\n";
+    //std::cerr << "Before creating tensor stride\n";
     // Set Input
     std::vector<int> tensor_stride(full_dims);
     GetCudnnStride(full_dims, x_dim, tensor_stride.data());
 
-    for(int i=0;i<full_dims;i++){
-      std::cerr << x_dim[i] << ", " << w_dim[i] << "\n";
-    }
+    //for(int i=0;i<full_dims;i++){
+    //  std::cerr << x_dim[i] << ", " << w_dim[i] << "\n";
+    //}
 
     CUDNN_CALL(cudnnSetTensorNdDescriptor(entry_ptr->conv_entry.input_desc, data_type, full_dims,
                                           x_dim, tensor_stride.data()));
@@ -590,7 +1033,7 @@ void OutputShape(int format, int dims, int groups, const int pad[], const int st
                                           entry_ptr->conv_entry.tensor_format, full_dims, w_dim));
 
     
-    std::cerr << "Compute OutputDim\n";
+    //std::cerr << "Compute OutputDim\n";
     CUDNN_CALL(cudnnGetConvolutionNdForwardOutputDim(
         entry_ptr->conv_entry.conv_desc, entry_ptr->conv_entry.input_desc,
         entry_ptr->conv_entry.filter_desc, full_dims, static_cast<int*>(out_shape)));
@@ -660,6 +1103,7 @@ void FindAlgo(int format, int dims, int groups, const int pad[], const int strid
 
   ret[0] = best_algo;
 }
+
 TVM_REGISTER_GLOBAL("tvm.contrib.cudnn.conv2d+bias+activation.forward")
     .set_body([](TVMArgs args, TVMRetValue* ret) {
 
@@ -701,6 +1145,45 @@ TVM_REGISTER_GLOBAL("tvm.contrib.cudnn.conv2d+bias+activation.forward")
 
 
     });
+
+TVM_REGISTER_GLOBAL("tvm.contrib.cudnn.conv2d+activation.forward")
+    .set_body([](TVMArgs args, TVMRetValue* ret) {
+      //std::cerr << "### Fused ops\n";
+
+      int mode = args[0];
+      int format = args[1];
+      int algo = args[2];
+
+      int64_t pad_v[2], stride_v[2], dilation_v[2];
+      for (int i = 0; i < 2; i++) {
+        pad_v[i] = args[3 + i];
+        stride_v[i] = args[5 + i];
+        dilation_v[i] = args[7 + i];
+      }
+
+      std::string conv_dtype = args[9];
+
+      DLTensor* x = args[10];
+      DLTensor* w = args[11];
+      DLTensor* y = args[12];
+
+      int groups = args[13];
+
+      const void* alphas[4];
+      alphas[0] = CuDNNDataType::GetConst(CuDNNDataType::DLTypeToCuDNNType(String2DLDataType(conv_dtype)), (double)args[14]);
+      alphas[1] = CuDNNDataType::GetConst(CuDNNDataType::DLTypeToCuDNNType(String2DLDataType(conv_dtype)), (double)args[15]);
+      alphas[2] = CuDNNDataType::GetConst(CuDNNDataType::DLTypeToCuDNNType(String2DLDataType(conv_dtype)), (double)args[16]);
+      alphas[3] = CuDNNDataType::GetConst(CuDNNDataType::DLTypeToCuDNNType(String2DLDataType(conv_dtype)), (double)args[17]);
+
+      int actvMode = args[18];
+      int reluNanOpt = args[19];
+      double actvCoeff = args[20];
+
+      ConvolutionActivationForward(mode, format, algo, 2, groups, pad_v, stride_v, dilation_v,
+          x, w, y, conv_dtype, alphas, actvMode, reluNanOpt, actvCoeff);
+    });
+
+
 
 
 TVM_REGISTER_GLOBAL("tvm.contrib.cudnn.conv2d.forward")

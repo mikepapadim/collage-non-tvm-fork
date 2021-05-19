@@ -168,6 +168,19 @@ FusedConvEntry::~FusedConvEntry() {
   CleanWorkspace();
 }
 
+FusedMatmulEntry::FusedMatmulEntry() {
+  CUDNN_CALL(cudnnCreateTensorDescriptor(&input_desc));
+  CUDNN_CALL(cudnnCreateTensorDescriptor(&output_desc));
+  CUDNN_CALL(cudnnCreateActivationDescriptor(&activation_desc));
+}
+
+FusedMatmulEntry::~FusedMatmulEntry() {
+  CUDNN_CALL(cudnnDestroyTensorDescriptor(input_desc));
+  CUDNN_CALL(cudnnDestroyTensorDescriptor(output_desc));
+  CUDNN_CALL(cudnnDestroyActivationDescriptor(activation_desc));
+  CleanWorkspace();
+}
+
 FusedOpsEntry::FusedOpsEntry(){
 
 }
@@ -240,7 +253,6 @@ ReduceEntry::~ReduceEntry() {
 }
 
 
-
 void ConvEntry::UpdateWorkspace(const size_t wsize) {
   if (workspace_size < wsize) {
     if (workspace != nullptr) {
@@ -255,6 +267,22 @@ void ConvEntry::CleanWorkspace() {
   if (workspace) cuda_api->FreeWorkspace(device, workspace);
   workspace_size = 0;
 }
+
+void FusedMatmulEntry::UpdateWorkspace(const size_t wsize) {
+  if (workspace_size < wsize) {
+    if (workspace != nullptr) {
+      CleanWorkspace();
+    }
+    workspace_size = wsize;
+    workspace = cuda_api->AllocWorkspace(device, workspace_size);
+  }
+}
+
+void FusedMatmulEntry::CleanWorkspace() {
+  if (workspace) cuda_api->FreeWorkspace(device, workspace);
+  workspace_size = 0;
+}
+
 
 void FusedConvEntry::UpdateWorkspace(const size_t wsize) {
   if (workspace_size < wsize) {
