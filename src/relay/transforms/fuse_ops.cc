@@ -969,7 +969,7 @@ namespace tvm {
           gmap_[graph.post_dfs_order[nid]->ref] = groups[nid];
         }
         // The following line can be used for debug.
-        this->DebugDumpGroup(body);
+//        this->DebugDumpGroup(body);
         return this->Mutate(body);
       }
 
@@ -1149,53 +1149,134 @@ namespace tvm {
 
     class ExtCompilerMutator : private MixedModeMutator {
      public:
+      explicit ExtCompilerMutator(const IRModule& module) : module_(module) {}
       // Run the transform
-      Expr Transform(const Expr& body) {
-        _is_ext_compiler = false;
-        return this->Mutate(body);
+      IRModule Transform() {
+        // Update expression and module accorindlgy.
+        // other functions in a module than main don't need to be updated.
+        auto fn_node = module_->Lookup("main").as<FunctionNode>();
+        if (fn_node->GetAttr<IntImm>(attr::kCustomFusionPass).defined()) {
+          std::cerr << "Custom fusion pass [ExtCompiler] " << std::endl;
+          auto new_main = this->Mutate(module_->Lookup("main"));
+          module_->Update(module_->GetGlobalVar("main"),
+                          Downcast<Function>(new_main));
+          module_ = transform::InferType()(module_);
+
+          std::cerr << "\tExternal compiler mutation is done!" << "\n\n";
+//          std::cerr << "\tFused expressions (after extcompiler): " << new_main << "\n\n";
+
+//          std::cerr << "\txxxxxxxxxxxxxxxxxxxxxxxx" << std::endl;
+//          auto glob_funcs = module_->functions;
+//          for (const auto& pair : glob_funcs) {
+//            std::cerr << "Func : " << pair.second << std::endl;
+//            std::cerr << "GlobalVar: " << pair.first << std::endl;
+//          }
+        }
+
+        return module_;
       }
 
      private:
-      bool _is_ext_compiler;
+      /*!\brief The IRModule used for partitioning. */
+      IRModule module_;
+      int region_id_ = 0;
       using MixedModeMutator::VisitExpr_;
 
-      Expr VisitExpr_(const FunctionNode* fn_node) {
-        std::cerr << "FUNCTION NODE VISITED" << std::endl;
-        // Keep it going if this is the top-level function
-        if (fn_node->GetAttr<IntImm>(attr::kCustomFusionPass).defined()) {
-          std::cerr << "Top level function" << std::endl;
-          return ExprMutator::VisitExpr_(fn_node);
-        } else {
-          assert (fn_node->GetAttr<String>(attr::kBackendOp).defined());
-          std::cerr << "Op function" << std::endl;
-          // Get backend_name from backend_op_name
-          std::string backend_op_name = std::string(fn_node->GetAttr<String>(attr::kBackendOp).value());
-          int delim_pos = backend_op_name.find("_");
-          std::string backend_name = backend_op_name.substr(0, delim_pos);
+//      Expr VisitExpr_(const FunctionNode* fn_node) {
+//        std::cerr << "FUNCTION NODE VISITED" << std::endl;
+//        // Keep it going if this is the top-level function
+//        if (fn_node->GetAttr<IntImm>(attr::kCustomFusionPass).defined()) {
+//          std::cerr << "Top level function" << std::endl;
+//          return ExprMutator::VisitExpr_(fn_node);
+//        } else {
+//        }
+//      }
 
-          // Start mutation if backend is tensorrt
-          if (backend_name == "tensorrt") {
-            std::cerr << "Find TensorRT" << std::endl;
-            _is_ext_compiler = true;
-            return ExprMutator::VisitExpr_(fn_node);
-          } else {
-            return ExprMutator::VisitExpr_(fn_node);
-          }
-        }
+      bool IsTensorRTFunc(const FunctionNode* fn_node) {
+        assert (fn_node->GetAttr<String>(attr::kBackendOp).defined());
+
+        // Get backend_name from backend_op_name
+        std::string backend_op_name = std::string(fn_node->GetAttr<String>(attr::kBackendOp).value());
+        int delim_pos = backend_op_name.find("_");
+        std::string backend_name = backend_op_name.substr(0, delim_pos);
+
+//        std::cerr << "Check if it is TensorRT op ("
+//                  << backend_op_name << ")" << std::endl;
+        // Check backend op name
+        bool is_tensorrt = false;
+        if (backend_name == "tensorrt") is_tensorrt = true;
+
+        return is_tensorrt;
       }
 
       Expr Rewrite_(const CallNode* call, const Expr& post) {
-        std::cerr << "Rewrite!! " << call->op << std::endl;
-        if (call->op.as<OpNode>()) {
-          std::cerr << "op rewrite" << call->op << std::endl;
-          ExprMutator::VisitExpr_(call);
-        } else if (call->op.as<FunctionNode>()) {
-          std::cerr << "function rewrite" << call->op << std::endl;
-          return ExprMutator::VisitExpr_(call->op.as<FunctionNode>());
-        } else {
-          std::cerr << "something else than function or op rewrite" << std::endl;
-          return ExprMutator::VisitExpr_(call);
+//        std::cerr << "Rewrite (Call)" << call->op << std::endl;
+        if (call->op.as<FunctionNode>() && IsTensorRTFunc(call->op.as<FunctionNode>())) {
+//          std::cerr << "This is TensorRT op: " << call->op << std::endl;
+          Function global_region_func = Downcast<Function>(call->op);
+          const FunctionNode* global_region_func_node = call->op.as<FunctionNode>();
+
+          std::string target = "tensorrt";
+          std::string name = target + "_" + std::to_string(region_id_++);
+//          std::cerr << "Found TensorRT op " << name << std::endl;
+
+          // Create parameters for a tensorrt global function
+          Array<Expr> param_expr;
+          Map<Var, Expr> params_bind;
+          int idx_param = 0;
+          for (const auto& arg : call->args) {
+            // Warning(@Soo): Assume that all constants are folded by previous passes
+            if (arg.as<ConstantNode>()) {
+              params_bind.Set(global_region_func_node->params[idx_param], arg);
+            } else {
+              Expr new_arg = this->Mutate(arg);
+              param_expr.push_back(new_arg);
+            }
+            ++idx_param;
+          }
+
+          // Constant propagation
+          if (!params_bind.empty()) {
+            global_region_func = Downcast<Function>(relay::Bind(global_region_func, params_bind));
+          }
+
+          // HELPME(@Soo): I don't get what this does.
+//          std::string ext_opt = "relay.ext." + target + ".optimize";
+//          auto pf = tvm::runtime::Registry::Get(ext_opt);
+
+//          if (pf != nullptr) {
+//            std::cerr << "null pointer" << std::endl;
+//            auto mod = IRModule::FromExpr(global_region_func);
+//            mod = transform::InferType()(mod);
+//            mod = (*pf)(mod);
+//            global_region_func = Downcast<Function>(mod->Lookup("main"));
+//          }
+
+          global_region_func =
+              WithAttr(std::move(global_region_func), tvm::attr::kGlobalSymbol, runtime::String(name));
+          global_region_func = WithAttr(std::move(global_region_func), attr::kPrimitive, tvm::Integer(1));
+          global_region_func =
+              WithAttr(std::move(global_region_func), attr::kCompiler, tvm::runtime::String(target));
+          global_region_func = WithAttr(std::move(global_region_func), attr::kInline, tvm::Integer(1));
+
+          std::string fname = name;
+          ICHECK(!module_->ContainGlobalVar(fname)) << "Global function " << fname << " already exists";
+
+          GlobalVar glob_func(fname);
+          module_->Add(glob_func, global_region_func);
+          module_ = relay::transform::InferType()(module_);
+//          std::cerr << "global call: " << Call(glob_func, param_expr) << std::endl;
+
+//          std::cerr << "\t+++++++++++++++++++++++++" << std::endl;
+//          auto glob_funcs = module_->functions;
+//          for (const auto& pair : glob_funcs) {
+//            std::cerr << "Func : " << pair.second << std::endl;
+//            std::cerr << "GlobalVar: " << pair.first << std::endl;
+//          }
+          return Call(glob_func, param_expr);
         }
+
+        return ExprMutator::VisitExpr_(call);
 
       }
 
@@ -1225,7 +1306,7 @@ namespace tvm {
 //      std::cerr << "\t[Fused Pass] Expr before pass: " << expr << "\n\n";
 //      Expr orig_expr = FuseMutator().Transform(expr, fuse_opt_level, max_fuse_depth);
 ////      std::cerr << "\t[Fused Pass] Expr after pass: " << orig_expr << "\n\n";
-//
+//e
 //      return orig_expr;
 
 //      std::cerr << "\t[Fused Pass] Begins" << "\n\n";
@@ -1243,16 +1324,17 @@ namespace tvm {
         std::cerr << "\tDP optimization (Python side) is done!" << "\n\n";
         fused_expr = FuseMutator().Transform(expr, fuse_opt_level, max_fuse_depth, backend_op_match);
         std::cerr << "\tFusion is done!" << "\n\n";
-        std::cerr << "\tFused expressions (before extcompiler): " << fused_expr << "\n\n";
-        ExtCompilerMutator().Transform(expr);
-        std::cerr << "\tExternal compiler mutation is done!" << "\n\n";
+//        std::cerr << "\tFused expressions (before extcompiler): " << fused_expr << "\n\n";
+//        std::cerr << "\t======================" << std::endl;
+//        auto glob_funcs = module->functions;
+//        for (const auto& pair : glob_funcs) {
+//          std::cerr << "Func : " << pair.second << std::endl;
+//          std::cerr << "GlobalVar: " << pair.first << std::endl;
+//        }
       } else {
         // PATCH(@Soo): Original fusion pass for op measurements
         fused_expr = FuseMutator().Transform(expr, fuse_opt_level, max_fuse_depth);
       }
-
-      std::cerr << "\tFused expressions (after extcompiler): " << fused_expr << "\n\n";
-
       return fused_expr;
     }
 
@@ -1263,9 +1345,19 @@ namespace tvm {
             [=](Function f, IRModule m, PassContext pc) {
               int opt_level = fuse_opt_level == -1 ? pc->opt_level : fuse_opt_level;
               auto max_fuse_depth = pc->GetConfig("relay.FuseOps.max_depth", Integer(kMaxFusedOps));
-              return Downcast<Function>(FuseOps(f, opt_level, max_fuse_depth.value(), m));
+              return Downcast<Function>(FusOps(f, opt_level, max_fuse_depth.value(), m));
             };
-        return CreateFunctionPass(pass_func, 1, "FuseOps", {"InferType"});
+
+        // Custom Module pass to deal with external compiler, e.g., tensorrt
+        runtime::TypedPackedFunc<IRModule(IRModule, PassContext)> ext_compiler_func =
+            [=](IRModule m, PassContext pc) { return ExtCompilerMutator(m).Transform(); };
+
+        auto fuse_pass = CreateFunctionPass(pass_func, 1, "FuseOps", {"InferType"});
+        auto ext_compiler_pass = CreateModulePass(ext_compiler_func, 0,
+                                                  "ExternalCompilerMutator", {});
+
+        return Sequential({fuse_pass, ext_compiler_pass});
+//        return CreateFunctionPass(pass_func, 1, "FuseOps", {"InferType"});
       }
 
       TVM_REGISTER_GLOBAL("relay._transform.FuseOps").set_body_typed(FuseOps);

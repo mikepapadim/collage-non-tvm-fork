@@ -147,16 +147,17 @@ class ScheduleGetter : public backend::MemoizedExprTranslator<Array<te::Tensor>>
                             && ((int)dp_target.find("INVALID_BACKEND_OP")==-1)
                             && ((int)dp_target.find("tvmgpu")==-1);
 
+    ICHECK_EQ((int)dp_target.find("tensorrt"), -1);
     if(doCustomLowering){
-      // Note: Sung  
+      // Note: Sung
       cache_node->outputs = myVisitExpr(prim_func, dp_target);
-
       assert(0);
       
     }else{
 //      std::cerr << ">> Regular Path\n";
 //      std::cerr << prim_func << "\n";
       cache_node->outputs = this->VisitExpr(prim_func->body);
+      assert(0);
     }
 
 
@@ -296,7 +297,7 @@ class ScheduleGetter : public backend::MemoizedExprTranslator<Array<te::Tensor>>
     Array<te::Tensor> outputs;
     OpImplementation impl;
 
-    std::cerr << ">> Sung's intercept\n";
+//    std::cerr << ">> Sung's intercept\n";
     static auto ftarget_specific_lower_call = tvm::runtime::Registry::Get("relay.backend.target_specific_lowering");
     LoweredOutput lowered_out = (*ftarget_specific_lower_call)(prim_func, inputMap, dp_target);
     //LoweredOutput lowered_out = (*ftarget_specific_lower_call)(prim_func, inputs);

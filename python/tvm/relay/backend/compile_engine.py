@@ -431,11 +431,11 @@ def target_specific_lowering(func, inputMap, target_info=None):
             assert(0)
 
     elif target == "tensorrt":
-        s
+        assert False, "tensorrt should be passed to the external compiler"
 
     else:
         # Unsupported target
-        assert(0)
+        assert False, "Unsupported target"
 
 
     # To compute subgraph
