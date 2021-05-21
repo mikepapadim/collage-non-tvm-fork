@@ -312,7 +312,7 @@ class RelayBuildModule : public runtime::ModuleNode {
     // Alter layout transformation is only applied to homogeneous execution yet.
     if (targets.size() == 1) {
       pass_seqs.push_back(transform::InferType());
-      pass_seqs.push_back(transform::AlterOpLayout());
+//      pass_seqs.push_back(transform::AlterOpLayout());
     }
 
     // Fast math optimizations.
@@ -340,6 +340,9 @@ class RelayBuildModule : public runtime::ModuleNode {
     }
 
     // Fuse the operations if it is needed.
+    // Warning(@Soo): Added to resolve type missing issue in Fuse pass
+    // But, it did not resolve. So, I commented it
+//    relay_module = transform::InferType()(relay_module);
     relay_module = transform::FuseOps()(relay_module);
 
     // Do layout rewrite for auto-scheduler.
