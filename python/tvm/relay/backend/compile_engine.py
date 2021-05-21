@@ -436,7 +436,7 @@ def target_specific_lowering(func, inputMap, target_info=None):
 
         else:
             # Unsupported backend op
-            assert(0)
+            assert False, "{} is currently not supported in {}".format(target_info, target)
 
     elif target == "cublas":
         if pattern == "dense":
@@ -449,9 +449,23 @@ def target_specific_lowering(func, inputMap, target_info=None):
             attrs = calls[0].attrs
             ret_type = calls[0].checked_type
             inputs = collect_input(inputMap)
+
+        # NOTE: hacky solution for now
+        # It would be better not to have '_' in pattern name
+        elif pattern == "batch" and tokens[2] == "matmul":
+            strategy.add_implementation(
+                wrap_compute_batch_matmul(topi.cuda.batch_matmul_cublas),
+                wrap_topi_schedule(topi.generic.schedule_extern),
+                name="batch_matmul.cublas",
+            )
+            # has single op
+            attrs = calls[0].attrs
+            ret_type = calls[0].checked_type
+            inputs = collect_input(inputMap)
+
         else:
             # Unsupported backend op
-            assert(0)
+            assert False, "{} is currently not supported in {}".format(target_info, target)
 
     elif target == "tensorrt":
         assert False, "tensorrt should be passed to the external compiler"
