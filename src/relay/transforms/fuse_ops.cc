@@ -656,6 +656,8 @@ namespace tvm {
       std::vector<Group*> Partition(const IndexedForwardGraph& graph);
 
     private:
+      /*! \brief The map between op_name and . */
+     std::unordered_map<int, IndexedForwardGraph::Node*> b_op_to_last_node_;
       /*! \brief The internal arena for temporary space. */
       support::Arena* arena_;
       /*! \brief optimization level for fuse operation. */
@@ -802,9 +804,7 @@ namespace tvm {
       void RunFuseDP(const IndexedForwardGraph& graph, const DominatorTree& post_dom_tree) {
 
         // WARNING(@Soo): We assume that fused ops are always continuous in the post dfs order.
-        // So far, we don't have any corner cases violating it.
-        int prev_group_id = kInvalidGroupId;
-        int prev_nid = kInvalidGroupId;
+        // THIS IS NOT TRUE, e.g., conv+add+relu for ResNet-50.
         std::cerr << "# of groups : " << groups_.size() << std::endl;
 
         for (size_t nid = 0; nid < groups_.size(); ++nid) {
@@ -826,15 +826,14 @@ namespace tvm {
           // Softmax is also kOpaque
           if (group_node->pattern == kOpaque) continue;
 
-          // Get group id for cur and prev node
+          // Commit fuse if there was previous node
+          // for correspding bakcend_op_id (= group_id)
           int cur_group_id = pair_info.group_id;
-          auto* prev_graph_node = graph.post_dfs_order[prev_nid];
-          if (cur_group_id == prev_group_id) {
-//            std::cerr << "cur, pre nid: " << nid << " / " << prev_nid << std::endl;
+          if (b_op_to_last_node_.find(cur_group_id) != b_op_to_last_node_.end()) {
+            auto* prev_graph_node = b_op_to_last_node_[cur_group_id];
             CommitFuse(prev_graph_node, graph_node);
           }
-          prev_group_id = cur_group_id;
-          prev_nid = nid;
+          b_op_to_last_node_[cur_group_id] = graph_node;
         }
       }
 
