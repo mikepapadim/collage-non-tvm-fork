@@ -801,7 +801,7 @@ namespace tvm {
       }
 
       // Fused based on backend operator matches from DP
-      void RunFuseDP(const IndexedForwardGraph& graph, const DominatorTree& post_dom_tree) {
+      void RunFuseWithMap(const IndexedForwardGraph& graph, const DominatorTree& post_dom_tree) {
 
         // WARNING(@Soo): We assume that fused ops are always continuous in the post dfs order.
         // THIS IS NOT TRUE, e.g., conv+add+relu for ResNet-50.
@@ -948,8 +948,8 @@ namespace tvm {
           this->RunFuse(graph, post_dom_tree, phase);
         }
       } else {
-        std::cerr << "DP fusion pass" << std::endl;
-        this->RunFuseDP(graph, post_dom_tree);
+        std::cerr << "Custom fusion pass" << std::endl;
+        this->RunFuseWithMap(graph, post_dom_tree);
       }
 
       return std::move(groups_);
@@ -1301,28 +1301,38 @@ namespace tvm {
     // For op measurements, execute original fusion pass
     // For end-to-end measure, execute DP fusion pass
     Expr FuseOps(const Expr& expr, int fuse_opt_level, size_t max_fuse_depth, const IRModule& module) {
-      // PATCH(@Soo): Uncomment this part for executing original fusion pass (instead of DP)
-//      std::cerr << "\t[Fused Pass] Expr before pass: " << expr << "\n\n";
-//      Expr orig_expr = FuseMutator().Transform(expr, fuse_opt_level, max_fuse_depth);
-////      std::cerr << "\t[Fused Pass] Expr after pass: " << orig_expr << "\n\n";
-//e
-//      return orig_expr;
-
-//      std::cerr << "\t[Fused Pass] Begins" << "\n\n";
       // WARNING(@Soo): Assume that all exprs are function!
       Expr fused_expr;
       const FunctionNode* fn_node = static_cast<const FunctionNode*>(expr.get());
 
+      // PATCH(@Soo): New custom fusion pass type
+      constexpr int kUserDefinedFusion = 0;
+      constexpr int kDP = 1;
+      constexpr int kExhaustiveSearch = 2;
+
       if (fn_node->GetAttr<IntImm>(attr::kCustomFusionPass).defined()) {
+        int64_t custom_fusion_pass_type = fn_node->GetAttr<IntImm>(attr::kCustomFusionPass).as<IntImmNode>()->value;
+        std::string custom_fusion_pass_str;
+        // PATCH(@Soo): Custom (DP) fusion pass for user defined fusion
+        if (custom_fusion_pass_type == kUserDefinedFusion) {
+          custom_fusion_pass_str = "relay.transform.optimizer.get_user_fusion";
         // PATCH(@Soo): Custom (DP) fusion pass for end-to-end measurements
         // Note that if fuse_opt_level == 0, no fusion applied no matter whether it's original or DP.
+        } else if (custom_fusion_pass_type == kDP) {
+          custom_fusion_pass_str = "relay.transform.optimizer.optimize_comp_graph";
+        } else {
+          ICHECK(false) << "Fusion pass type " << fn_node->GetAttr<IntImm>(attr::kCustomFusionPass)
+              << "is not expected\n\n";
+        }
 
-        static auto fdp_call = tvm::runtime::Registry::Get("relay.transform.optimizer.optimize_comp_graph");
-        std::cerr << "\tDP optimization (Python side) begins!" << "\n\n";
+        static auto fdp_call = tvm::runtime::Registry::Get(custom_fusion_pass_str);
         Map<Expr, String> backend_op_match = (*fdp_call)(expr);
-        std::cerr << "\tDP optimization (Python side) is done!" << "\n\n";
+        std::cerr << "\t[Done] Custom fusion pairs are ready - " << custom_fusion_pass_str << "\n\n";
+
         fused_expr = FuseMutator().Transform(expr, fuse_opt_level, max_fuse_depth, backend_op_match);
-        std::cerr << "\tFusion is done!" << "\n\n";
+        std::cerr << "\t[Done] Relay IR reflected fusion pairs accordingly" << "\n\n";
+
+        // Debug
 //        std::cerr << "\tFused expressions (before extcompiler): " << fused_expr << "\n\n";
 //        std::cerr << "\t======================" << std::endl;
 //        auto glob_funcs = module->functions;
