@@ -657,7 +657,11 @@ namespace tvm {
 
     private:
       /*! \brief The map between op_name and . */
-     std::unordered_map<int, IndexedForwardGraph::Node*> b_op_to_last_node_;
+      std::unordered_map<int, IndexedForwardGraph::Node*> b_op_to_last_node_;
+      /*! \brief Whether current op is from tensorrt or not to allow wider variety of fusion */
+      bool is_tensorrt_op_ = false;
+
+
       /*! \brief The internal arena for temporary space. */
       support::Arena* arena_;
       /*! \brief optimization level for fuse operation. */
@@ -706,9 +710,13 @@ namespace tvm {
         return true;
       }
       // Combine two patterns together.
-      static OpPatternKind CombinePattern(OpPatternKind lhs, OpPatternKind rhs) {
-        if (lhs > kBroadcast && rhs > kBroadcast) {
-          LOG(FATAL) << "Cannot merge two complex group together";
+      static OpPatternKind CombinePattern(OpPatternKind lhs, OpPatternKind rhs,
+                                          bool is_tensorrt=false) {
+        // For custom fusion pass, if it is TensorRT op, we should allow fusion
+        if (!is_tensorrt) {
+          if (lhs > kBroadcast && rhs > kBroadcast) {
+            LOG(FATAL) << "Cannot merge two complex group together";
+          }
         }
         if (lhs > rhs) return lhs;
         return rhs;
@@ -727,9 +735,10 @@ namespace tvm {
         child->parent = parent;
         // update anchor ref and pattern
         if (child->anchor_ref != nullptr) {
-          ICHECK(parent->anchor_ref == nullptr);
+          // For custom fusion pass, if it is TensorRT op, we should allow fusion
+          if (!is_tensorrt_op_) ICHECK(parent->anchor_ref == nullptr);
           parent->anchor_ref = child->anchor_ref;
-          parent->pattern = CombinePattern(child->pattern, parent->pattern);
+          parent->pattern = CombinePattern(child->pattern, parent->pattern, is_tensorrt_op_);
         }
       }
       // Internal implelementation of CommitFuse
@@ -800,6 +809,14 @@ namespace tvm {
         }
       }
 
+      bool IsTensorRTOp(std::string backend_op_name) {
+        int delim_pos = backend_op_name.find("_");
+        std::string backend_name = backend_op_name.substr(0, delim_pos);
+        bool is_tensorrt = false;
+        if (backend_name == "tensorrt") is_tensorrt = true;
+
+        return is_tensorrt;
+      }
       // Fused based on backend operator matches from DP
       void RunFuseWithMap(const IndexedForwardGraph& graph, const DominatorTree& post_dom_tree) {
 
@@ -831,6 +848,7 @@ namespace tvm {
           int cur_group_id = pair_info.group_id;
           if (b_op_to_last_node_.find(cur_group_id) != b_op_to_last_node_.end()) {
             auto* prev_graph_node = b_op_to_last_node_[cur_group_id];
+            is_tensorrt_op_ = IsTensorRTOp(pair_info.backend_op_name);
             CommitFuse(prev_graph_node, graph_node);
           }
           b_op_to_last_node_[cur_group_id] = graph_node;
@@ -968,7 +986,7 @@ namespace tvm {
           gmap_[graph.post_dfs_order[nid]->ref] = groups[nid];
         }
         // The following line can be used for debug.
-//        this->DebugDumpGroup(body);
+        this->DebugDumpGroup(body);
         return this->Mutate(body);
       }
 
