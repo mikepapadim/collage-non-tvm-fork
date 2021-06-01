@@ -1338,6 +1338,8 @@ namespace tvm {
         // Note that if fuse_opt_level == 0, no fusion applied no matter whether it's original or DP.
         } else if (custom_fusion_pass_type == kDP) {
           custom_fusion_pass_str = "relay.transform.optimizer.optimize_comp_graph";
+        } else if (custom_fusion_pass_type == kExhaustiveSearch) {
+          custom_fusion_pass_str = "relay.transform.optimizer.exhaustive_search";
         } else {
           ICHECK(false) << "Fusion pass type " << fn_node->GetAttr<IntImm>(attr::kCustomFusionPass)
               << "is not expected\n\n";
