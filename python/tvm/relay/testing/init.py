@@ -174,7 +174,7 @@ def create_workload(net, initializer=None, seed=0):
 
     params = {}
     for k, v in shape_dict.items():
-        if k == "data":
+        if k == "data" or k == "input0":
             continue
         #init_value = np.random.uniform(-1,1,size=v.concrete_shape).astype(v.dtype)
         init_value = np.zeros(v.concrete_shape).astype(v.dtype)
