@@ -1371,8 +1371,8 @@ namespace tvm {
         std::cerr << "\t[Done] Relay IR reflected fusion pairs accordingly" << "\n\n";
 
         // Debug
-        std::cerr << "\tFused expressions (before extcompiler): " << fused_expr << "\n\n";
-        std::cerr << "\t======================" << std::endl;
+//        std::cerr << "\tFused expressions (before extcompiler): " << fused_expr << "\n\n";
+//        std::cerr << "\t======================" << std::endl;
 //        auto glob_funcs = module->functions;
 //        for (const auto& pair : glob_funcs) {
 //          std::cerr << "Func : " << pair.second << std::endl;
