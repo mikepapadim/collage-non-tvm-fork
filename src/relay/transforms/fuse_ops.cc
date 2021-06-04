@@ -1198,7 +1198,7 @@ namespace tvm {
           module_ = transform::InferType()(module_);
 
           std::cerr << "\tExternal compiler mutation is done!" << "\n\n";
-          std::cerr << "\tFused expressions (after extcompiler): " << new_main << "\n\n";
+//          std::cerr << "\tFused expressions (after extcompiler): " << new_main << "\n\n";
 
 //          std::cerr << "\txxxxxxxxxxxxxxxxxxxxxxxx" << std::endl;
 //          auto glob_funcs = module_->functions;
