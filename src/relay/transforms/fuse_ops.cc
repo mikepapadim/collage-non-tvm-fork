@@ -660,6 +660,7 @@ namespace tvm {
       std::unordered_map<int, IndexedForwardGraph::Node*> b_op_to_last_node_;
       /*! \brief Whether current op is from tensorrt or not to allow wider variety of fusion */
       bool is_tensorrt_op_ = false;
+      bool is_custom_fusion_pass_ = false;
 
 
       /*! \brief The internal arena for temporary space. */
@@ -727,6 +728,11 @@ namespace tvm {
        * \param parent The parent group.
        */
       void MergeFromTo(Group* child, Group* parent) {
+//        if (is_tensorrt_op_) {
+//        std::cerr << "*********************************************" << std::endl;
+//        std::cerr << "child root: " << GetRef<ObjectRef>(child->root_ref) << std::endl;
+//        std::cerr << "parent root: " << GetRef<ObjectRef>(parent->root_ref) << std::endl;
+//        }
         child = child->FindRoot();
         parent = parent->FindRoot();
         if (child == parent) return;
@@ -741,7 +747,7 @@ namespace tvm {
           parent->pattern = CombinePattern(child->pattern, parent->pattern, is_tensorrt_op_);
         }
       }
-      // Internal implelementation of CommitFuse
+      // Internal implementation of CommitFuse
       void CommitFuse_(IndexedForwardGraph::Node* src, IndexedForwardGraph::Node* sink, Group* target) {
         if (src == sink) return;
         if (visited_.count(src)) return;
@@ -750,8 +756,10 @@ namespace tvm {
         ICHECK(gnode != nullptr);
         // merge the current group to the parent if possible.
         MergeFromTo(gnode, target);
-        for (auto link = src->outputs.head; link != nullptr; link = link->next) {
-          CommitFuse_(link->value.node, sink, target);
+        if (!is_custom_fusion_pass_) {
+          for (auto link = src->outputs.head; link != nullptr; link = link->next) {
+            CommitFuse_(link->value.node, sink, target);
+          }
         }
       }
       /*!
@@ -822,7 +830,7 @@ namespace tvm {
 
         // WARNING(@Soo): We assume that fused ops are always continuous in the post dfs order.
         // THIS IS NOT TRUE, e.g., conv+add+relu for ResNet-50.
-        std::cerr << "# of groups : " << groups_.size() << std::endl;
+//        std::cerr << "# of groups : " << groups_.size() << std::endl;
 
         for (size_t nid = 0; nid < groups_.size(); ++nid) {
           // the group of current node has been specified already.
@@ -848,10 +856,17 @@ namespace tvm {
           int cur_group_id = pair_info.group_id;
           if (b_op_to_last_node_.find(cur_group_id) != b_op_to_last_node_.end()) {
             auto* prev_graph_node = b_op_to_last_node_[cur_group_id];
+//            std::cerr << "Merge from "  << prev_graph_node->index << " to " << nid << std::endl;
             is_tensorrt_op_ = IsTensorRTOp(pair_info.backend_op_name);
             CommitFuse(prev_graph_node, graph_node);
           }
           b_op_to_last_node_[cur_group_id] = graph_node;
+        }
+
+//        std::cerr << "------------------------------------" << std::endl;
+        for (size_t nid = 0; nid < groups_.size(); ++nid) {
+          Group* group_node = groups_[nid];
+//          std::cerr << "\tGroup " << nid << " (root_group): " << GetRef<ObjectRef>(group_node->FindRoot()->root_ref) << std::endl;
         }
       }
 
@@ -967,6 +982,7 @@ namespace tvm {
         }
       } else {
         std::cerr << "Custom fusion pass" << std::endl;
+        is_custom_fusion_pass_ = true;
         this->RunFuseWithMap(graph, post_dom_tree);
       }
 
@@ -1033,6 +1049,7 @@ namespace tvm {
 
       // Transform calls.
       Expr Rewrite_(const CallNode* call, const Expr& post) {
+//        std::cerr << "\tCall: " << GetRef<Expr>(call) << std::endl;
         if (call->op.as<OpNode>()) {
           static auto fnoncomputational = Op::GetAttrMap<TNonComputational>("TNonComputational");
 
@@ -1050,7 +1067,7 @@ namespace tvm {
           Array<Expr> new_args = GetNewArguments(call->args, ret_group);
 
           auto new_call = Call(call->op, new_args, call->attrs, call->type_args, call->span);
-
+//          std::cerr << "\troot_ref" << std::endl;
           if (ret_group->root_ref == call) {
             // This is the root of the group
             // create the new call node.
@@ -1169,6 +1186,7 @@ namespace tvm {
       explicit ExtCompilerMutator(const IRModule& module) : module_(module) {}
       // Run the transform
       IRModule Transform() {
+        std::cerr << "\tExternal compiler mutation begins!" << "\n\n";
         // Update expression and module accorindlgy.
         // other functions in a module than main don't need to be updated.
         auto fn_node = module_->Lookup("main").as<FunctionNode>();
@@ -1180,7 +1198,7 @@ namespace tvm {
           module_ = transform::InferType()(module_);
 
           std::cerr << "\tExternal compiler mutation is done!" << "\n\n";
-//          std::cerr << "\tFused expressions (after extcompiler): " << new_main << "\n\n";
+          std::cerr << "\tFused expressions (after extcompiler): " << new_main << "\n\n";
 
 //          std::cerr << "\txxxxxxxxxxxxxxxxxxxxxxxx" << std::endl;
 //          auto glob_funcs = module_->functions;
@@ -1353,8 +1371,8 @@ namespace tvm {
         std::cerr << "\t[Done] Relay IR reflected fusion pairs accordingly" << "\n\n";
 
         // Debug
-//        std::cerr << "\tFused expressions (before extcompiler): " << fused_expr << "\n\n";
-//        std::cerr << "\t======================" << std::endl;
+        std::cerr << "\tFused expressions (before extcompiler): " << fused_expr << "\n\n";
+        std::cerr << "\t======================" << std::endl;
 //        auto glob_funcs = module->functions;
 //        for (const auto& pair : glob_funcs) {
 //          std::cerr << "Func : " << pair.second << std::endl;
