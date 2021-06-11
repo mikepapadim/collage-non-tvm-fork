@@ -1,0 +1,119 @@
+import tvm
+from tvm import relay
+from tvm.contrib import graph_executor as runtime
+
+from tvm.relay.transform.backend_operator.utils import is_function_node
+from tvm.relay.transform.backend_operator.target import measure, NUM_MEASUREMENTS_PER_REPEAT, NUM_REPEATS, AUTOTVM_LOG, AUTOSCH_LOG
+from tvm.relay.transform.backend_operator.target import OPT_LEVEL
+from tvm.relay.transform.optimizer.custom_fusion_pass import *
+
+from workloads.onnx_workloads import get_network_from_onnx
+from workloads.torch_workloads import *
+from workloads.relay_workloads import get_network_from_relay
+
+from measure_end_to_end import verify_network_output
+import numpy as np
+import argparse
+from workloads.workloads import WORKLOADS_DIC
+
+def measure_network(lib, target_str, shape_dict):
+    # Create workload
+    dev = tvm.device(target_str, 0)
+    module = runtime.GraphModule(lib["default"](dev))
+
+    # Setup execution
+    for input_name, input_shape in shape_dict.items():
+        input_data = np.random.uniform(-1, 1, size=input_shape).astype("float32")
+        module.set_input(input_name, input_data)
+
+    ftimer = module.module.time_evaluator("run", dev, number=NUM_MEASUREMENTS_PER_REPEAT, repeat=NUM_REPEATS)
+
+    return measure(ftimer)
+
+def build_network_dp(net, params):
+    assert is_function_node(net)
+    net = net.with_attr("CustomFusionPass", CustomFusionPass.DP)
+
+    with tvm.transform.PassContext(opt_level=OPT_LEVEL):
+        lib = relay.build(net, "cuda", params=params)
+
+    return lib
+
+def build_network_user_defined_fusion(net, params):
+    assert is_function_node(net)
+    net = net.with_attr("CustomFusionPass", CustomFusionPass.USER_DEFINED_FUSION)
+
+    with tvm.transform.PassContext(opt_level=OPT_LEVEL):
+        lib = relay.build(net, "cuda", params=params)
+
+    return lib
+
+
+def build_network_tensorrt(mod, params):
+    from tvm.relay.op.contrib.tensorrt import partition_for_tensorrt
+    mod, config = partition_for_tensorrt(mod, params)
+
+    # print("-"*50)
+    # print("Expr" + "-"*30)
+    # print(repr(mod["main"]))
+    # print("config" + "-"*30)
+    # print(config)
+
+    target = "cuda"
+    with tvm.transform.PassContext(opt_level=OPT_LEVEL, config={'relay.ext.tensorrt.options': config}):
+        lib = relay.build(mod, target=target, params=params)
+
+    lib.export_library('compiled.so')
+
+    dev = tvm.gpu(0)
+    loaded_lib = tvm.runtime.load_module('compiled.so')
+    module = tvm.contrib.graph_executor.GraphModule(loaded_lib['default'](dev))
+
+def args_checker(args, parser):
+    is_missing_arg = not args.network
+    # is_missing_arg |= not args.target
+    # is_missing_arg |= not args.dtype
+    # is_missing_arg |= not args.batch_size
+
+    if is_missing_arg:
+        parser.error('Make sure you input all arguments')
+
+def get_args():
+    parser = argparse.ArgumentParser()
+    # Default type is string for argparse
+    parser.add_argument("-n", "--network", help="name of a neural network")
+    # parser.add_argument("-t", "--target", help="target device")
+    # parser.add_argument("-dt", "--dtype", help="data type")
+    # parser.add_argument("-bs", "--batch-size", type=int, help="batch size")
+    args = parser.parse_args()
+
+    args_checker(args, parser)
+    return args
+
+if __name__ == "__main__":
+    args = get_args()
+
+    # NasNet-A only works for opt_level 2 (not 3 due to the avgpool2d issue)
+    if args.network == "nasneta":
+        OPT_LEVEL = 2
+
+    mod, params, shape_dict, _ = get_network_from_torch(args.network, 1)
+    # mod, params, shape_dict, _ = crop_network_from_torch(args.network, 1, 43)
+    # mod, params = get_network_from_relay(args.network, 1)
+    # print(repr(mod["main"]))
+
+    # build_network_tensorrt(mod, params)
+    lib = build_network_dp(mod["main"], params)
+    # lib = build_network_user_defined_fusion(mod["main"], params)
+    print(f"We successfully built the {args.network}")
+
+    # Verify if the network output is same after our optimization
+    verify_network_output(mod["main"], params, 'cuda', shape_dict)
+
+    # Verify if the network can be measured
+    # For Conv2d and conv2d+relu
+    # inference_time = measure_network(lib, "cuda", {"data": [1, 3, 224, 224]})
+    # For (conv2d+relu)x2
+    # inference_time = measure_network(lib, "cuda", {"data": [1, 64, 56, 56]})
+    # inference_time = measure_network(lib, "cuda", WORKLOADS_DIC[args.network])
+    # print(f"Inference time: {inference_time}")

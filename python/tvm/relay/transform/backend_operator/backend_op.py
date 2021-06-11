@@ -71,6 +71,10 @@ class BackendOp(object):
       return float('inf')#, 0
 
     cost_info = self._measured_configs.get_cost(config)
+
+    # if self._target == Target.CUDNN and  self._op_type.name() == "conv2d+biasadd+relu":
+    #   cost_info = (0, 0)
+
     if cost_info != None:
       # pass
       print("REUSED RESULT!!!!")
@@ -93,7 +97,7 @@ class BackendOp(object):
 # longest branch will be useful
 # Additionally, we use a cache to memoize calculated results
 @lru_cache(None)
-def extract_subgraph(expr, max_depth):
+def extract_subgraph(expr, max_depth, pattern):
   # use this to make sure the nodes (exprs) are consistent between different branches
   old_expr_to_new = dict()
 
@@ -102,10 +106,23 @@ def extract_subgraph(expr, max_depth):
       return old_expr_to_new[expr]
     return expr
 
-  def helper(expr, depth):
+  def helper(expr, depth, pattern):
     expr = get_expr(expr)
 
-    if is_call_node(expr):
+    if isinstance(pattern, WildcardPattern):
+      # Warning(@Soo): Hacky exception handling for NasNet-A (same avgpool2d for two inputs of add)
+      # The issue is that avgpool2d somehow is missing type information even after type inference
+      # try:
+      #   ret = relay.var("data", expr.checked_type)
+      # except ValueError:
+      #
+      #   assert is_op("nn.avg_pool2d")(wildcard()).match(expr)
+      #   ret = relay.var("data", expr.args[0].checked_type)
+      ret = relay.var("data", expr.checked_type)
+      return ret
+    elif isinstance(pattern, ConstantPattern):
+      return expr
+    elif is_call_node(expr):
       # note that only call node has "op" attribute corresponding to a single backend operator
       op, args, attrs, type_args, span = expr.op, expr.args, expr.attrs, expr.type_args, expr.span
       new_args = []
@@ -129,6 +146,10 @@ def extract_subgraph(expr, max_depth):
                 input_data = expr.args[i]
                 #print(type_arg.fields)
                 new_args.append(relay.Tuple([relay.var(var_name, d) for i, d in enumerate(type_arg.fields)] ))
+            # Note(@Soo): we get same perf no matter whether we use Var or Constant
+            # elif var_name == 'weight':
+            #   input_data = expr.args[i].data
+            #   new_args.append(relay.Constant(input_data))
             # Bias should be constant
             elif var_name == 'bias':
               input_data = expr.args[i].data
@@ -136,8 +157,9 @@ def extract_subgraph(expr, max_depth):
             else:
               new_args.append(relay.var(var_name, type_arg))
       else:
-        for child in expr.args:
-          new_args.append(helper(child, depth - 1))
+        for c_idx, child in enumerate(expr.args):
+          pat_child = pattern.args[c_idx]
+          new_args.append(helper(child, depth - 1, pat_child))
 
       args = new_args
 
@@ -145,8 +167,15 @@ def extract_subgraph(expr, max_depth):
       old_expr_to_new[expr] = new_expr
       return new_expr
 
+    elif is_tuple_node(expr):
+      new_args = []
+      for c_idx, child in enumerate(expr.fields):
+        pat_child = pattern.fields[c_idx]
+        new_args.append(helper(child, depth - 1, pat_child))
+      return relay.Tuple(new_args)
+
     elif is_tuplegetitem_node(expr):
-      tuple_value = helper(expr.tuple_value, depth)
+      tuple_value = helper(expr.tuple_value, depth, pattern.tuple)
       new_expr = tvm.relay.expr.TupleGetItem(tuple_value, expr.index)
       old_expr_to_new[expr] = new_expr
       return new_expr
@@ -157,13 +186,10 @@ def extract_subgraph(expr, max_depth):
     elif is_constant_node(expr):
       return expr
 
-    elif is_tuple_node(expr):
-      return expr
-
     else:
-      raise Exception("Expr type not implemented")
+      raise Exception(f"Expr type not implemented {type(expr)}")
 
-  return helper(expr, max_depth)
+  return helper(expr, max_depth, pattern)
 
 # given a pattern and a relay expr matching that pattern, return the cheapest backend operator
 # satisfying the constraints and its cost. Return None if no backend operators satisfy constraints.
@@ -179,10 +205,21 @@ def get_optimal_backendop(b_op_lib, expr, pattern, target = None):
       continue
 
     max_depth = op.get_max_depth()
-    subgraph = extract_subgraph(expr, max_depth)
-    # print("Subgraph: ", subgraph)
+    subgraph = extract_subgraph(expr, max_depth, pattern.get_pattern())
+    # if is_op("nn.conv2d")(wildcard(), wildcard()).match(expr):
+    #   eprint(f"subgraph expr: {repr(subgraph)}")
+
+    # Print the useful logs
+    print("-" * 45)
+
+    # Warning(@Soo): there is a bug in printing repr of tuple in TVM.
+    if is_tuple_node(subgraph):
+      print(f"Subgraph to measure (target: {str(op._target.name())}):", subgraph)
+    else:
+      print(f"Subgraph to measure (target: {str(op._target.name())}):", repr(subgraph))
     cost = op.get_cost(subgraph)
-    # print("Cost: ", cost)
+    print(f"Cost of subgraph : {cost:4f}")
+    print("-" * 45)
 
     assert cost != None
     if cost < min_cost:
@@ -190,8 +227,8 @@ def get_optimal_backendop(b_op_lib, expr, pattern, target = None):
       cheapest_op = op
 
   if min_cost == float('inf'):
-    raise Exception("No corresponding backend operators")
-    return None
+    raise Exception("No corresponding backend operators / or backend op errors out (e.g., CuDNN conv_bias_relu)")
+    return None, None
   return cheapest_op, min_cost
 
 

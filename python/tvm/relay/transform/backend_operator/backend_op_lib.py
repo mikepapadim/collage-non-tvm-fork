@@ -4,17 +4,17 @@ from collections import defaultdict
 from .backend_op import BackendOp, get_optimal_backendop
 from .op_config import Config, MeasuredConfigs
 
-from ..workloads.onnx_workloads import get_network_from_onnx
+#from ..workloads.onnx_workloads import get_network_from_onnx
 from .utils import no_constraints_func
 from .target import Target
 from .op_type import OpType
 
-def add_all_backend_ops_to_lib(b_op_lib, target):
+def add_all_backend_ops_to_lib(b_op_lib, target, exclued_ops=[OpType.DIAMOND]):
   t_name = target.name()
 
   for op_type in OpType:
     # Skip diamond pattern for now
-    if op_type == OpType.DIAMOND:
+    if op_type in exclued_ops:# or op_type == OpType.CONV2D_BIAS_ADD_RELU:
       continue
 
     op_name, op_depth = op_type.name(), op_type.depth()
@@ -106,13 +106,14 @@ class BackendOpLib(object):
     # CUDNN
     # FIXME(@Soo): For ResNext, some of CUDNN convolution doesn't work.
     self._add_backendop("cudnn_conv2d", Target.CUDNN, OpType.CONV2D, 1)
-    self._add_backendop("cudnn_relu", Target.CUDNN, OpType.RELU, 1)
-    self._add_backendop("cudnn_biasadd", Target.CUDNN, OpType.BIAS_ADD, 1)
+    self._add_backendop("cudnn_conv2d+relu", Target.CUDNN, OpType.CONV2D_RELU, 2)
+    # self._add_backendop("cudnn_relu", Target.CUDNN, OpType.RELU, 1)
+    # self._add_backendop("cudnn_biasadd", Target.CUDNN, OpType.BIAS_ADD, 1)
 
     # Not implemented for recording
     # self._add_backendop("cudnn_add", Target.CUDNN, OpType.ADD, 1)
 
-    self._add_backendop("cudnn_softmax", Target.CUDNN, OpType.SOFTMAX, 1)
+    # self._add_backendop("cudnn_softmax", Target.CUDNN, OpType.SOFTMAX, 1)
     # self._add_backendop("cudnn_bn", Target.CUDNN, OpType.BN, 1)
     # measure_cost doesn't work, we need to fix this later.
     # self._add_backendop("cudnn_maxpool2d", Target.CUDNN, OpType.MAX_POOL2D, 1)
@@ -120,7 +121,7 @@ class BackendOpLib(object):
     self._add_backendop("cudnn_conv2d+biasadd+relu", Target.CUDNN, OpType.CONV2D_BIAS_ADD_RELU, 3)
 
     # TENSORRT
-    add_all_backend_ops_to_lib(self, Target.TENSORRT)
+    add_all_backend_ops_to_lib(self, Target.TENSORRT, [OpType.DIAMOND, OpType.TRANSPOSE, OpType.BATCH_MATMUL])
 
     # CUBLAS
     # TODO: Add patterns. matmul, batch matmul

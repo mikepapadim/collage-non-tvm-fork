@@ -2,7 +2,6 @@
 class Pattern(object):
     def __init__(self, pattern):
         self._pattern = pattern
-        
         # Serialize and reverse patterns
         
     def __eq__(self, another):
@@ -13,6 +12,15 @@ class Pattern(object):
 
     def __repr__(self):
         return str(self._pattern)
+
+    def match(self, expr):
+        return self._pattern.match(expr)
+
+    def set_op_type(self, op_type):
+        self._op_type = op_type
+
+    def get_op_type(self):
+        return self._op_type
 
     def get_pattern(self):
         return self._pattern

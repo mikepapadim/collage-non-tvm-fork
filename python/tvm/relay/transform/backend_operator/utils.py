@@ -2,8 +2,14 @@ from tvm import relay
 from tvm.relay.dataflow_pattern import *
 from collections import namedtuple
 import numpy as np
+import tvm
 
 from .pattern import Pattern
+
+import sys
+
+def eprint(*args, **kwargs):
+    print(*args, file=sys.stderr, **kwargs)
 
 # an example of a diamond pattern that occurs in resnet-18
 def get_diamond():
@@ -16,7 +22,18 @@ def get_diamond():
   diamond = is_op("add")(conv2d1_2, conv2d2)
   return Pattern(diamond)
 
-# return the shape of input data to expr
+def is_data_tensor(ndarr):
+  assert isinstance(ndarr, tvm.runtime.NDArray)
+  return np.sum(ndarr.asnumpy()) == 0
+
+def setup_mod_inputs(mod):
+  for i in range(mod.get_num_inputs()):
+    input = mod.get_input(i)
+    if is_data_tensor(input):
+      input_shape = input.asnumpy().shape
+      print("Data shape: ", i, input_shape)
+      mod.set_input(i, np.random.uniform(-1, 1, size=input_shape).astype("float32"))
+
 def get_data_shape(expr):
   inputs = relay.analysis.free_vars(expr)
   # if is_call_node(expr):
@@ -39,21 +56,49 @@ def get_data_shape(expr):
 
   return data_shape
 
-def get_data(expr):
-  data_shape = get_data_shape(expr)
-  if type(data_shape) == list:
-    print(data_shape)
-    data = np.random.uniform(-1, 1, size=data_shape).astype("float32")
-  elif type(data_shape) == tuple:
-    data = []
-    for shape in data_shape:
-      data.append(np.random.uniform(-1, 1, size=shape).astype("float32"))
-      print(shape)
-    data = tuple(data)
-  else:
-    raise Exception(f"Unsupported data shape type {type(data_shape)}")
+# Deprecated (@Soo)
+# def get_data(expr):
+#   data_shape = get_data_shape(expr)
+#   if type(data_shape) == list:
+#     print(data_shape)
+#     data = np.random.uniform(-1, 1, size=data_shape).astype("float32")
+#   elif type(data_shape) == tuple:
+#     data = []
+#     for shape in data_shape:
+#       data.append(np.random.uniform(-1, 1, size=shape).astype("float32"))
+#       print(shape)
+#     data = tuple(data)
+#   else:
+#     raise Exception(f"Unsupported data shape type {type(data_shape)}")
+#
+#   return data
 
-  return data
+
+"""
+Helper functions for parsing backend op name annotation
+e.g., 0-tensorrt_conv2d+relu
+"""
+def create_backend_op_annotation(group_id, annotation):
+  return f"{group_id}-{annotation}"
+
+def get_group_id_from_backend_op_annotation(annotation):
+  return annotation.split("-")[0]
+
+def get_backendop_name_from_backend_op_annotation(annotation):
+  backend_op_name_pos = annotation.find("-")+1
+  return annotation[backend_op_name_pos:]
+
+def get_backend_from_backend_op_annotation(annotation):
+  return get_backendop_name_from_backend_op_annotation(annotation).split("_")[0]
+
+def get_op_name_from_backend_op_annotation(annotation):
+  op_name_pos = annotation.find("_") + 1
+  return annotation[op_name_pos:]
+
+def get_group_id_and_backend_op_name(annotation):
+  return get_group_id_from_backend_op_annotation(annotation), get_backendop_name_from_backend_op_annotation(annotation)
+
+
 
 def is_function_node(expr):
   return type(expr) == tvm.relay.Function

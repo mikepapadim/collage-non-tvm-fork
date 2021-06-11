@@ -18,7 +18,8 @@ from tvm.contrib import graph_executor as runtime
 MAX_STANDARD_DEVIATION = 5E-04
 NUM_REPEATS = 3
 NUM_MEASUREMENTS_PER_REPEAT = 100
-
+OPT_LEVEL = 3
+EXTERNAL_COMPILERS = ['tensorrt']
 
 cur_dir_path = Path(__file__).parent.absolute()
 AUTOTVM_LOG = f"{cur_dir_path}/../logs/autotvm_ops.json"
@@ -28,7 +29,15 @@ AUTOTVM_LOG = f"{cur_dir_path}/../logs/autotvm_ops.json"
 AUTOSCH_LOG = f"{cur_dir_path}/../logs/autosch_ops.json"
 
 def measure(ftimer, *args):
-    # Warm-up Phase: Run without measurement 
+    # Dummy run to check whether it runs correctly e.g., segfault due to large workspace
+    import sys
+
+    try:
+        ftimer(*args)
+    except:
+        return float('inf'), 0
+
+    # Warm-up Phase: Run without measurement
     # TimeEvaluator itself come with the warmup,
     # so we don't need this part technically.
     for i in range(5):
@@ -39,7 +48,7 @@ def measure(ftimer, *args):
     while True:
         perfs = np.array(ftimer(*args).results) * 1000  # convert to millisecond
         std_perf = np.std(perfs)
-        # print(std)
+        print(f"Mean, std of perf : {np.mean(perfs)}, {std_perf}")
         if std_perf <= MAX_STANDARD_DEVIATION:
             mean_perf = np.mean(perfs)
             break
@@ -55,7 +64,7 @@ class Target(Enum):
     TVM_GPU_NO_TUNING = (4, "cuda", "tvmgpu-no-tuning")
     TVM_GPU_AUTOTVM = (5, "cuda", "tvmgpu-autotvm")
     TVM_GPU_AUTOSCH = (6, "cuda", "tvmgpu-autosch")
-    
+
     # Intel CPU
     TVM_CPU= (7, "llvm", "tvmcpu")
 #     ONEDNN = (8, "onednn", "onednn") # not implemented
@@ -95,16 +104,17 @@ class TVMSubGraphCostFunc_AutoSch(TargetCostFunc):
         # AutoScheduler codes
         target_str = target.__str__()
         with auto_scheduler.ApplyHistoryBest(AUTOSCH_LOG):
-            with tvm.transform.PassContext(opt_level=3, config={"relay.backend.use_auto_scheduler": True}):
+            with tvm.transform.PassContext(opt_level=OPT_LEVEL, config={"relay.backend.use_auto_scheduler": True}):
                 lib = relay.build(net, target_str, params=params)
 
         dev = tvm.device(target_str, 0)
         module = runtime.GraphModule(lib["default"](dev))
 
         # Setup execution
-        data_shape = get_data_shape(expr)
-        data = np.random.uniform(-1, 1, size=data_shape).astype("float32")
-        module.set_input("data", data)
+        setup_mod_inputs(module)
+        # data_shape = get_data_shape(expr)
+        # data = np.random.uniform(-1, 1, size=data_shape).astype("float32")
+        # module.set_input("data", data)
         ftimer = module.module.time_evaluator("run", dev, number=NUM_MEASUREMENTS_PER_REPEAT, repeat=NUM_REPEATS)
 
         return measure(ftimer)
@@ -128,16 +138,17 @@ class TVMSubGraphCostFunc_AutoTVM(TargetCostFunc):
         # Compile kernels with history best records
         with autotvm.apply_history_best(AUTOTVM_LOG):
             target_str = target.__str__()
-            with tvm.transform.PassContext(opt_level=3):
+            with tvm.transform.PassContext(opt_level=OPT_LEVEL):
                 lib = relay.build_module.build(net, target=target_str, params=params)
 
             dev = tvm.device(str(target), 0)
             module = runtime.GraphModule(lib["default"](dev))
 
             # Setup execution
-            data_shape = get_data_shape(expr)
-            data = np.random.uniform(-1, 1, size=data_shape).astype("float32")
-            module.set_input("data", data)
+            setup_mod_inputs(module)
+            # data_shape = get_data_shape(expr)
+            # data = np.random.uniform(-1, 1, size=data_shape).astype("float32")
+            # module.set_input("data", data)
             ftimer = module.module.time_evaluator("run", dev, number=NUM_MEASUREMENTS_PER_REPEAT, repeat=NUM_REPEATS)
         return measure(ftimer)
 
@@ -157,18 +168,19 @@ class TVMSubGraphCostFunc_NoTuning(TargetCostFunc):
         # Build the subgraph
         # FIXME(@Soo): We should redesign Target class to deal with new TVM build interface
         target_str = target.__str__()
-        opt_level = 3
-        with tvm.transform.PassContext(opt_level=opt_level):
+        with tvm.transform.PassContext(opt_level=OPT_LEVEL):
             lib = relay.build(net, target_str, params=params)
 
         dev = tvm.device(str(target), 0)
         module = runtime.GraphModule(lib["default"](dev))
 
         # Setup execution
-        data_shape = get_data_shape(expr)
+        setup_mod_inputs(module)
+
+        # data_shape = get_data_shape(expr)
         #data = np.random.uniform(-1, 1, size=data_shape).astype("float32")
-        data = get_data(expr)
-        module.set_input("data", data)
+        # data = get_data(expr)
+        # module.set_input("data", data)
         ftimer = module.module.time_evaluator("run", dev, number=NUM_MEASUREMENTS_PER_REPEAT, repeat=NUM_REPEATS)
 
         return measure(ftimer)
@@ -195,10 +207,11 @@ def get_conv_attr(expr):
     strides, padding, out_channels, dilation = \
         list(attrs.strides), list(attrs.padding), int(attrs.channels), list(attrs.dilation)
 
-    kernel_size = args[1].type_annotation.shape
+    #kernel_size = args[1].type_annotation.shape
+    kernel_size = list(map(lambda x: x.value, args[1].type_annotation.shape))
     dtype = args[0].type_annotation.dtype
 
-    return strides, padding, out_channels, dilation, kernel_size, dtype
+    return strides, padding, out_channels, dilation, kernel_size, dtype, attrs.groups, attrs.data_layout, attrs.kernel_layout
 
 class CuDNNCostFunc(TargetCostFunc):
 
@@ -249,13 +262,22 @@ class CuDNNCostFunc(TargetCostFunc):
         if "conv2d" in op_name:
 
             if op_name == "conv2d+biasadd+relu":
-                strides, padding, out_channels, dilation, kernel_size, dtype = get_conv_attr(expr.args[0].args[0])
-                print(strides, padding, out_channels, dilation, kernel_size, dtype)
+                strides, padding, out_channels, dilation, kernel_size, dtype, groups, str_data_layout, str_kernel_layout = get_conv_attr(expr.args[0].args[0])
+            elif op_name == 'conv2d+relu':
+                strides, padding, out_channels, dilation, kernel_size, dtype, groups, str_data_layout, str_kernel_layout = get_conv_attr(expr.args[0])
             elif op_name == 'conv2d':
-                strides, padding, out_channels, dilation, kernel_size, dtype = get_conv_attr(expr)
+                strides, padding, out_channels, dilation, kernel_size, dtype, groups, str_data_layout, str_kernel_layout = get_conv_attr(expr)
             else:
                 raise Exception(f"{op_name} is not supported for CUDNN")
 
+            if "conv2d" in op_name:
+                import sys
+                print("####################Conv2d Attr: ", str_data_layout, str_kernel_layout, file=sys.stderr)
+                print(expr, file=sys.stderr)
+                print(groups, data_shape, out_channels, kernel_size, dtype, file=sys.stderr)
+
+
+            assert(str_data_layout == "NCHW")
             assert(dtype == "float32")
 
             output_shape = cudnn.conv_output_shape(
@@ -326,6 +348,56 @@ class CuDNNCostFunc(TargetCostFunc):
 
             ftimer = func.time_evaluator(func.entry_name, ctx, number=NUM_MEASUREMENTS_PER_REPEAT, repeat=NUM_REPEATS)
             perf = measure(ftimer, data, weight, output)
+
+
+        elif op_name == "conv2d+relu":
+            te_data   = te.placeholder(data_shape, name="data", dtype=dtype)
+            te_kernel = te.placeholder(kernel_size, name="kernel", dtype=dtype)
+
+            print("Conv2d+RELU")
+            cuDNN_OP = te.extern(
+                output_shape,
+                [te_data, te_kernel],
+                lambda ins, outs: tvm.tir.call_packed(
+                    "tvm.contrib.cudnn.conv2d+activation.forward",
+                    conv_mode,  # mode: CUDNN_CONVOLUTION
+                    data_layout,  # CUDNN_TENSOR_NCHW
+                    conv_algo,
+                    padding[0], padding[1],
+                    strides[0], strides[1],
+                    dilation[0], dilation[1],
+                    dtype,
+                    ins[0],  # x
+                    ins[1],  # w
+                    outs[0],  # y
+                    groups,
+                    1,  # alphas[0],
+                    0,  # alphas[1],
+                    1,  # alphas[0] for z
+                    0,
+                    activation_mode,
+                    nanProp_mode,
+                    actvCoeff
+                ),
+                name="y",
+            )
+            print("Build Conv2d+RELU")
+
+            s = te.create_schedule(cuDNN_OP.op)
+            func = tvm.build(s, [te_data, te_kernel, cuDNN_OP], target_str, target_host="llvm")
+
+            data_in = np.random.uniform(-1, 1, size=data_shape).astype(dtype)
+            kernel_in = np.random.uniform(-1, 1, size=kernel_size).astype(dtype)
+            data = tvm.nd.array(data_in, ctx)
+            weight = tvm.nd.array(kernel_in, ctx)
+            #weight = tvm.nd.array(params["weight"], ctx)
+            output = tvm.nd.array(np.zeros(output_shape, dtype=dtype), ctx)
+
+            print("Measure Conv2d+RELU")
+            ftimer = func.time_evaluator(func.entry_name, ctx, number=NUM_MEASUREMENTS_PER_REPEAT, repeat=NUM_REPEATS)
+            perf = measure(ftimer, data, weight, output)
+            print(" ==> perf: ", perf)
+
 
 
         elif op_name == "conv2d+biasadd+relu":
@@ -580,7 +652,7 @@ class CuDNNCostFunc(TargetCostFunc):
         else:
             # NOT IMPLEMENTED
             assert(0)
-    
+
         # Note that perf contains (mean(perf), std(perf))
         return perf
 
@@ -602,7 +674,7 @@ class TensorRTCostFunc(TargetCostFunc):
         mod, config = partition_for_tensorrt(net, params)
 
         target = "cuda"
-        with tvm.transform.PassContext(opt_level=3, config={'relay.ext.tensorrt.options': config}):
+        with tvm.transform.PassContext(opt_level=OPT_LEVEL, config={'relay.ext.tensorrt.options': config}):
             lib = relay.build(mod, target=target, params=params)
 
         lib.export_library('compiled.so')
@@ -611,9 +683,10 @@ class TensorRTCostFunc(TargetCostFunc):
         loaded_lib = tvm.runtime.load_module('compiled.so')
         module = tvm.contrib.graph_executor.GraphModule(loaded_lib['default'](dev))
 
-        input_shape = get_data_shape(expr)
-        input_data = np.random.uniform(0, 1, input_shape).astype("float32")
-        module.set_input("data", input_data)
+        setup_mod_inputs(module)
+        # input_shape = get_data_shape(expr)
+        # input_data = np.random.uniform(0, 1, input_shape).astype("float32")
+        # module.set_input("data", input_data)
         ftimer = module.module.time_evaluator("run", dev, number=NUM_MEASUREMENTS_PER_REPEAT, repeat=NUM_REPEATS)
         measure_info = measure(ftimer)
         return measure_info

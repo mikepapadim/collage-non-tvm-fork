@@ -11,8 +11,7 @@ def is_data_var_node(expr):
             break
     return is_data_var
 
-
-def get_next_expr_after_match(relay_expr, prev_relay_expr, depth): 
+def get_next_expr_after_match(relay_expr, prev_relay_expr, pattern):
     target_node = []
 
     if type(relay_expr) == tvm.relay.expr.Var:
@@ -21,29 +20,68 @@ def get_next_expr_after_match(relay_expr, prev_relay_expr, depth):
         return [(None, prev_relay_expr)]
     elif is_constant_node(relay_expr):
         return [(None, prev_relay_expr)]
-    
-    if depth == 0:
+
+    if isinstance(pattern, WildcardPattern):
         return [(relay_expr, prev_relay_expr)]
+    # Warning(@Soo): This is hacky way
+    elif isinstance(pattern, ConstantPattern):
+        return [(None, prev_relay_expr)]
 
     # If it is tuple, you should use tuple_value instead of args
     # Caution: depth or depth-1?
     if type(relay_expr) == tvm.relay.expr.TupleGetItem:
-        target_node += get_next_expr_after_match(relay_expr.tuple_value, relay_expr, depth-1)
+        target_node += get_next_expr_after_match(relay_expr.tuple_value, relay_expr, pattern.tuple)
     elif is_tuple_node(relay_expr):
-        for node in relay_expr.fields:
-            target_node += get_next_expr_after_match(node, relay_expr, depth-1)
+        for f_idx, node in enumerate(relay_expr.fields):
+            target_node += get_next_expr_after_match(node, relay_expr, pattern.fields[f_idx])
     else:
         # Note that batch_matmul also has args
         # if type(relay_expr) == tvm.relay.nn.batch_matmul:
         #     target_node += get_next_expr_after_match(relay_expr.x, relay_expr, depth - 1)
         #     target_node += get_next_expr_after_match(relay_expr.y, relay_expr, depth - 1)
         # else:
-        for node in relay_expr.args:
-            target_node += get_next_expr_after_match(node, relay_expr, depth-1)
+        # print("Expr : ", relay_expr)
+        # print("Pattern : ", pattern)
+        for a_idx, node in enumerate(relay_expr.args):
+            target_node += get_next_expr_after_match(node, relay_expr, pattern.args[a_idx])
 #             # FIX: Hacky way to avoid residual connection
 #             break
 
     return target_node
+
+
+# def get_next_expr_after_match(relay_expr, prev_relay_expr, depth):
+#     target_node = []
+#
+#     if type(relay_expr) == tvm.relay.expr.Var:
+#         if is_data_var_node(relay_expr):
+#             return [(relay_expr, prev_relay_expr)]
+#         return [(None, prev_relay_expr)]
+#     elif is_constant_node(relay_expr):
+#         return [(None, prev_relay_expr)]
+#
+#     if depth == 0:
+#         return [(relay_expr, prev_relay_expr)]
+#
+#     # If it is tuple, you should use tuple_value instead of args
+#     # Caution: depth or depth-1?
+#     if type(relay_expr) == tvm.relay.expr.TupleGetItem:
+#         target_node += get_next_expr_after_match(relay_expr.tuple_value, relay_expr, depth-1)
+#     elif is_tuple_node(relay_expr):
+#         for node in relay_expr.fields:
+#             target_node += get_next_expr_after_match(node, relay_expr, depth-1)
+#     else:
+#         # Note that batch_matmul also has args
+#         # if type(relay_expr) == tvm.relay.nn.batch_matmul:
+#         #     target_node += get_next_expr_after_match(relay_expr.x, relay_expr, depth - 1)
+#         #     target_node += get_next_expr_after_match(relay_expr.y, relay_expr, depth - 1)
+#         # else:
+#         for node in relay_expr.args:
+#             target_node += get_next_expr_after_match(node, relay_expr, depth-1)
+# #             # FIX: Hacky way to avoid residual connection
+# #             break
+#
+#     return target_node
 
 def get_pattern_len(pattern):
     length = 0
