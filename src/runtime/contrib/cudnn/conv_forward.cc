@@ -192,13 +192,14 @@ auto heurgen_method = [](cudnn_frontend::OperationGraph &opGraph) -> cudnn_front
 };
 
 
-void MatmulActivationForward(int mode, int format, int algo, int dim, int groups,
+void MatmulActivationForward(int mode, int format, int algo, int mmdim, int groups,
     const int64_t pad[],const int64_t stride[], const int64_t dilation[],
     DLTensor* x, DLTensor* w, DLTensor* y,
     const std::string& dtype, const void* alphas[], int actvMode, int reluNanOpt, double actvCoeff) {
 
 
   /*
+  
   CuDNNThreadEntry* entry_ptr = CuDNNThreadEntry::ThreadLocal();
   // Set Format
   entry_ptr->fused_matmul_entry.tensor_format = static_cast<cudnnTensorFormat_t>(format);
@@ -208,15 +209,16 @@ void MatmulActivationForward(int mode, int format, int algo, int dim, int groups
   entry_ptr->fused_matmul_entry.data_type = CuDNNDataType::DLTypeToCuDNNType(String2DLDataType(dtype));
   //cudnnDataType_t data_type = CuDNNDataType::DLTypeToCuDNNType(x->dtype);
   // Dims includes N and C
-  int full_dims = dim + 2;
-  assert(dim==2);
+  int full_dims = mmdim + 2;
+  assert(mmdim==2);
+
+  
 
   std::vector<int> dim(full_dims);
   std::vector<int> tensor_stride(full_dims);
 
   int64_t x_dim_padded[full_dims], w_dim_padded[full_dims], y_dim_padded[full_dims];
-
-  if (dim == 2) {
+  if (mmdim == 2) {
     int ni, ci, hi, wi;
     if (entry_ptr->fused_matmul_entry.tensor_format == CUDNN_TENSOR_NHWC) {
       ni = 0;
@@ -542,7 +544,7 @@ void ConvolutionActivationForward(int mode, int format, int algo, int convDim, i
   */
 
   // How many engines support this operation graph ?
-  auto total_engines = opGraph.getEngineCount();
+  //auto total_engines = opGraph.getEngineCount();
   //std::cout << opGraph.describe() << " has " << total_engines << " engines." << std::endl;
   // We have to randomly pick one engine from [0, total_engines)
   // Selecting "0" by default
@@ -584,7 +586,7 @@ void ConvolutionActivationForward(int mode, int format, int algo, int convDim, i
   //std::cout << "variantPack " << variantPack.describe() << std::endl;
 
   auto sample_predicate_function = [=](cudnn_frontend::ExecutionPlan const& plan) -> bool {
-            return (size_t)plan.getWorkspaceSize() > workspace_size;
+            return (size_t)plan.getWorkspaceSize() > (size_t)workspace_size;
   };
 
   std::array<cudnn_frontend::GeneratorSource const, 1> sources = {heurgen_method};
@@ -605,9 +607,179 @@ void ConvolutionActivationForward(int mode, int format, int algo, int convDim, i
 
 }
 
-
-
 void ConvolutionBiasActivationForward(int mode, int format, int algo, int convDim, int groups,
+    const int pad[],const int stride[], const int dilation[],
+    DLTensor* x, DLTensor* w, DLTensor* z, DLTensor* bias, DLTensor* y,
+    const std::string& conv_dtype, const void* alphas[], int actvMode, int reluNanOpt, double actvCoeff) {
+
+  CuDNNThreadEntry* entry_ptr = CuDNNThreadEntry::ThreadLocal();
+  // Set Mode
+  entry_ptr->fused_conv_entry.mode = static_cast<cudnnConvolutionMode_t>(mode);
+
+  //std::cerr << "ConvBiasActForward: " << mode << "\n";
+  // Set Format
+  entry_ptr->fused_conv_entry.tensor_format = static_cast<cudnnTensorFormat_t>(format);
+  // Set Algo
+  entry_ptr->fused_conv_entry.fwd_algo = static_cast<cudnnConvolutionFwdAlgo_t>(algo);
+  // Set device
+  entry_ptr->fused_conv_entry.device = x->device;
+  // Set Data Type
+  entry_ptr->fused_conv_entry.data_type = CuDNNDataType::DLTypeToCuDNNType(String2DLDataType(conv_dtype));
+  cudnnDataType_t data_type = entry_ptr->fused_conv_entry.data_type; //CuDNNDataType::DLTypeToCuDNNType(x->dtype);
+  
+  // Dims includes N and C
+  int full_dims = convDim + 2;
+  assert(convDim==2);
+
+  // Note: For 2D tenor, using ND setters causes CUDNN_STATUS_NOT_SUPPORTED error
+  // in following cudnnGetConvolutionForwardWorkspaceSize() when data type is fp16, int
+  CUDNN_CALL(cudnnSetConvolutionGroupCount(entry_ptr->fused_conv_entry.conv_desc, groups));
+  if (convDim == 2) {
+    // Set Desc
+    CUDNN_CALL(cudnnSetConvolution2dDescriptor(
+        entry_ptr->fused_conv_entry.conv_desc, pad[0], pad[1], stride[0], stride[1], dilation[0],
+        dilation[1], entry_ptr->fused_conv_entry.mode, entry_ptr->fused_conv_entry.data_type));
+    int ni, ci, hi, wi;
+    if (entry_ptr->fused_conv_entry.tensor_format == CUDNN_TENSOR_NHWC) {
+      ni = 0;
+      ci = 3;
+      hi = 1;
+      wi = 2;
+    } else {
+      ni = 0;
+      ci = 1;
+      hi = 2;
+      wi = 3;
+    }
+
+    // Set Filter
+    CUDNN_CALL(cudnnSetFilter4dDescriptor(
+        entry_ptr->fused_conv_entry.filter_desc, data_type, entry_ptr->fused_conv_entry.tensor_format,
+        static_cast<int>(w->shape[ni]), static_cast<int>(w->shape[ci]),
+        static_cast<int>(w->shape[hi]), static_cast<int>(w->shape[wi])));
+    // Set Input
+    CUDNN_CALL(cudnnSetTensor4dDescriptor(
+        entry_ptr->fused_conv_entry.input_desc, entry_ptr->fused_conv_entry.tensor_format, data_type,
+        static_cast<int>(x->shape[ni]), static_cast<int>(x->shape[ci]),
+        static_cast<int>(x->shape[hi]), static_cast<int>(x->shape[wi])));
+    // Set Bias
+    CUDNN_CALL(cudnnSetTensor4dDescriptor(
+        entry_ptr->fused_conv_entry.bias_desc, entry_ptr->fused_conv_entry.tensor_format, data_type,
+        static_cast<int>(bias->shape[ni]), static_cast<int>(bias->shape[ci]),
+        static_cast<int>(bias->shape[hi]), static_cast<int>(bias->shape[wi])));
+    // Set Z
+    CUDNN_CALL(cudnnSetTensor4dDescriptor(
+        entry_ptr->fused_conv_entry.z_desc, entry_ptr->fused_conv_entry.tensor_format, data_type,
+        static_cast<int>(z->shape[ni]), static_cast<int>(z->shape[ci]),
+        static_cast<int>(z->shape[hi]), static_cast<int>(z->shape[wi])));
+    // Set Output
+    CUDNN_CALL(cudnnSetTensor4dDescriptor(
+        entry_ptr->fused_conv_entry.output_desc, entry_ptr->fused_conv_entry.tensor_format, data_type,
+        static_cast<int>(y->shape[ni]), static_cast<int>(y->shape[ci]),
+        static_cast<int>(y->shape[hi]), static_cast<int>(y->shape[wi])));
+  } else {
+    std::vector<int> dim(full_dims);
+    std::vector<int> tensor_stride(full_dims);
+    CUDNN_CALL(cudnnSetConvolutionNdDescriptor(entry_ptr->fused_conv_entry.conv_desc, convDim, pad, stride,
+                                               dilation, entry_ptr->fused_conv_entry.mode,
+                                               entry_ptr->fused_conv_entry.data_type));
+
+    // Set Filter
+    for (int i = 0; i < full_dims; i++) {
+      dim[i] = static_cast<int>(w->shape[i]);
+    }
+    CUDNN_CALL(cudnnSetFilterNdDescriptor(entry_ptr->fused_conv_entry.filter_desc, data_type,
+                                          entry_ptr->fused_conv_entry.tensor_format, full_dims,
+                                          dim.data()));
+    // Set Input
+    for (int i = 0; i < full_dims; i++) {
+      dim[i] = static_cast<int>(x->shape[i]);
+    }
+    GetCudnnStride(full_dims, dim.data(), tensor_stride.data());
+    CUDNN_CALL(cudnnSetTensorNdDescriptor(entry_ptr->fused_conv_entry.input_desc, data_type, full_dims,
+                                          dim.data(), tensor_stride.data()));
+
+    // Set Bias
+    for (int i = 0; i < full_dims; i++) {
+      dim[i] = static_cast<int>(bias->shape[i]);
+    }
+    GetCudnnStride(full_dims, dim.data(), tensor_stride.data());
+    CUDNN_CALL(cudnnSetTensorNdDescriptor(entry_ptr->fused_conv_entry.bias_desc, data_type, full_dims,
+                                          dim.data(), tensor_stride.data()));
+ 
+    // Set Z
+    for (int i = 0; i < full_dims; i++) {
+      dim[i] = static_cast<int>(z->shape[i]);
+    }
+    GetCudnnStride(full_dims, dim.data(), tensor_stride.data());
+    CUDNN_CALL(cudnnSetTensorNdDescriptor(entry_ptr->fused_conv_entry.z_desc, data_type, full_dims,
+                                          dim.data(), tensor_stride.data()));
+ 
+    // Set Output
+    for (int i = 0; i < full_dims; i++) {
+      dim[i] = static_cast<int>(y->shape[i]);
+    }
+    GetCudnnStride(full_dims, dim.data(), tensor_stride.data());
+    CUDNN_CALL(cudnnSetTensorNdDescriptor(entry_ptr->fused_conv_entry.output_desc, data_type, full_dims,
+                                          dim.data(), tensor_stride.data()));
+  }
+
+  if (cudnnGetVersion() > 7000) {
+    CUDNN_CALL(cudnnSetConvolutionMathType(entry_ptr->fused_conv_entry.conv_desc, CUDNN_TENSOR_OP_MATH))
+  }
+
+  CUDNN_CALL(cudnnSetActivationDescriptor(entry_ptr->fused_conv_entry.activation_desc,
+        static_cast<cudnnActivationMode_t>(actvMode),
+        static_cast<cudnnNanPropagation_t>(reluNanOpt),
+        actvCoeff));
+
+
+  // Set workspace
+  size_t workspace_size = 0;
+  CUDNN_CALL(cudnnGetConvolutionForwardWorkspaceSize(
+      entry_ptr->handle, entry_ptr->fused_conv_entry.input_desc, entry_ptr->fused_conv_entry.filter_desc,
+      entry_ptr->fused_conv_entry.conv_desc, entry_ptr->fused_conv_entry.output_desc,
+      entry_ptr->fused_conv_entry.fwd_algo, &workspace_size));
+  entry_ptr->fused_conv_entry.UpdateWorkspace(workspace_size);
+
+  
+  assert(entry_ptr->fused_conv_entry.input_desc);
+  assert(entry_ptr->fused_conv_entry.filter_desc);
+  assert(entry_ptr->fused_conv_entry.conv_desc);
+  assert(entry_ptr->fused_conv_entry.z_desc);
+  assert(entry_ptr->fused_conv_entry.bias_desc);
+  assert(entry_ptr->fused_conv_entry.activation_desc);
+  assert(entry_ptr->fused_conv_entry.output_desc);
+  assert(x->data);
+  assert(w->data);
+  assert(z->data);
+  assert(y->data);
+  assert(entry_ptr->fused_conv_entry.workspace);
+
+  CUDNN_CALL(cudnnConvolutionBiasActivationForward(
+      entry_ptr->handle, 
+      CuDNNDataType::GetConst<1>(entry_ptr->fused_conv_entry.data_type),
+      entry_ptr->fused_conv_entry.input_desc, 
+      x->data, 
+      entry_ptr->fused_conv_entry.filter_desc, 
+      w->data,
+      entry_ptr->fused_conv_entry.conv_desc,
+      entry_ptr->fused_conv_entry.fwd_algo,
+      entry_ptr->fused_conv_entry.workspace, 
+      workspace_size,
+      CuDNNDataType::GetConst<0>(entry_ptr->fused_conv_entry.data_type),
+      entry_ptr->fused_conv_entry.z_desc, 
+      z->data, 
+      entry_ptr->fused_conv_entry.bias_desc, 
+      bias->data,
+      entry_ptr->fused_conv_entry.activation_desc, 
+      entry_ptr->fused_conv_entry.output_desc,
+      y->data));
+}
+
+
+// conv+bias+relu with fuse engine
+void ConvolutionBiasActivationForwardWithFE(int mode, int format, int algo, int convDim, int groups,
     const int64_t pad[],const int64_t stride[], const int64_t dilation[],
     DLTensor* x, DLTensor* w, DLTensor* z, DLTensor* bias, DLTensor* y,
     const std::string& conv_dtype, const void* alphas[], int actvMode, int reluNanOpt, double actvCoeff) {
@@ -616,6 +788,8 @@ void ConvolutionBiasActivationForward(int mode, int format, int algo, int convDi
   CuDNNThreadEntry* entry_ptr = CuDNNThreadEntry::ThreadLocal();
   // Set Mode
   entry_ptr->fused_conv_entry.mode = static_cast<cudnnConvolutionMode_t>(mode);
+
+  //std::cerr << "ConvBiasActForward: " << mode << "\n";
   // Set Format
   entry_ptr->fused_conv_entry.tensor_format = static_cast<cudnnTensorFormat_t>(format);
   // Set Algo
@@ -800,7 +974,7 @@ void ConvolutionBiasActivationForward(int mode, int format, int algo, int convDi
   */
 
   // How many engines support this operation graph ?
-  auto total_engines = opGraph.getEngineCount();
+  //auto total_engines = opGraph.getEngineCount();
   //std::cout << opGraph.describe() << " has " << total_engines << " engines." << std::endl;
   // We have to randomly pick one engine from [0, total_engines)
   // Selecting "0" by default
@@ -843,7 +1017,7 @@ void ConvolutionBiasActivationForward(int mode, int format, int algo, int convDi
   //std::cout << "variantPack " << variantPack.describe() << std::endl;
 
   auto sample_predicate_function = [=](cudnn_frontend::ExecutionPlan const& plan) -> bool {
-            return (size_t)plan.getWorkspaceSize() > workspace_size;
+            return (size_t)plan.getWorkspaceSize() > (size_t)workspace_size;
   };
 
   std::array<cudnn_frontend::GeneratorSource const, 1> sources = {heurgen_method};
@@ -1113,7 +1287,7 @@ TVM_REGISTER_GLOBAL("tvm.contrib.cudnn.conv2d+bias+activation.forward")
       int format = args[1];
       int algo = args[2];
 
-      int64_t pad_v[2], stride_v[2], dilation_v[2];
+      int pad_v[2], stride_v[2], dilation_v[2];
       for (int i = 0; i < 2; i++) {
         pad_v[i] = args[3 + i];
         stride_v[i] = args[5 + i];

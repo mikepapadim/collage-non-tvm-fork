@@ -72,7 +72,6 @@ struct FusedOpsEntry {
 };  // FusedOpsEntry
 
 
-
 struct FusedConvEntry {
   cudnnConvolutionDescriptor_t conv_desc;
   cudnnConvolutionMode_t mode;
