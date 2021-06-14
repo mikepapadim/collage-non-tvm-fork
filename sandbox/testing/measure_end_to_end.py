@@ -15,7 +15,7 @@ def measure_end_to_end_perf_tensorrt(mod, params, target_str, shape_dict, is_our
     from tvm.relay.op.contrib.tensorrt import partition_for_tensorrt
     mod, config = partition_for_tensorrt(mod, params)
 
-    with tvm.transform.PassContext(opt_level=OPT_LEVEL, config={'relay.ext.tensorrt.options': config}):
+    with tvm.transform.PassContext(opt_level=OPT_LEVEL.get(), config={'relay.ext.tensorrt.options': config}):
         lib = relay.build(mod, target=target_str, params=params)
 
     lib.export_library('compiled.so')
@@ -39,7 +39,7 @@ def measure_end_to_end_perf_autotvm(net, params, target_str, shape_dict, is_ours
         net = net.with_attr("CustomFusionPass", CustomFusionPass.DP)
 
     with autotvm.apply_history_best(AUTOTVM_LOG):
-        with tvm.transform.PassContext(opt_level=OPT_LEVEL):
+        with tvm.transform.PassContext(opt_level=OPT_LEVEL.get()):
             lib = relay.build(net, target_str, params=params)
         print(f"We successfully built the network")
         # Create workload
@@ -62,7 +62,7 @@ def measure_end_to_end_perf_autosch(net, params, target_str, shape_dict, is_ours
         net = net.with_attr("CustomFusionPass", CustomFusionPass.DP)
 
     with auto_scheduler.ApplyHistoryBest(AUTOSCH_LOG):
-        with tvm.transform.PassContext(opt_level=OPT_LEVEL):
+        with tvm.transform.PassContext(opt_level=OPT_LEVEL.get()):
             lib = relay.build(net, target_str, params=params)
 
     # Create workload
@@ -90,7 +90,7 @@ def verify_network_output(net, params, target_str, shape_dict):
 
     # Run original TVM (or AutoTVM)
     with autotvm.apply_history_best(AUTOTVM_LOG):
-        with tvm.transform.PassContext(opt_level=OPT_LEVEL):
+        with tvm.transform.PassContext(opt_level=OPT_LEVEL.get()):
             lib = relay.build(net, "cuda", params=params)
 
     # Create workload
@@ -107,7 +107,7 @@ def verify_network_output(net, params, target_str, shape_dict):
     # Run ours
     net = net.with_attr("CustomFusionPass", CustomFusionPass.DP)
     with autotvm.apply_history_best(AUTOTVM_LOG):
-        with tvm.transform.PassContext(opt_level=OPT_LEVEL):
+        with tvm.transform.PassContext(opt_level=OPT_LEVEL.get()):
             lib = relay.build(net, "cuda", params=params)
 
     # Create workload
@@ -157,7 +157,7 @@ if __name__ == "__main__":
 
     # NasNet-A only works for opt_level 2 (not 3 due to the avgpool2d issue)
     if args.network == "nasneta":
-        OPT_LEVEL = 2
+        OPT_LEVEL.set(2)
 
     # We can't test this because this network include batch norm.
     mod, params, shape_dict, _ = get_network_from_torch(args.network, 1)

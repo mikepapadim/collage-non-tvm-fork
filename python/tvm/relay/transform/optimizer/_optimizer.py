@@ -79,13 +79,17 @@ def optimize_comp_graph(relay_expr):
     # target_backend = None # Consider all targets
 
     # Sanity check: AutoTVM
-    # targets = [Target.TVM_GPU_AUTOTVM]
+    targets = [Target.TVM_GPU_AUTOTVM]
 
     # Sanity check: Only CuDNN
     # targets = [Target.TVM_GPU_AUTOTVM, Target.CUDNN]
 
+    # Enable all backends except for CuDNN
+    # targets = [Target.TVM_GPU_AUTOTVM, Target.CUBLAS, Target.TENSORRT]
+
     # Enable all backends
-    targets = [Target.TVM_GPU_AUTOTVM, Target.CUBLAS, Target.CUDNN, Target.TENSORRT]
+    # targets = [Target.TVM_GPU_AUTOTVM, Target.CUBLAS, Target.CUDNN, Target.TENSORRT]
+
     batch_size = 1
     backendop_lib = setup_backend_op_lib(relay_expr, targets, batch_size)
 

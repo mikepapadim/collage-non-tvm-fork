@@ -18,7 +18,7 @@ from tvm.contrib import graph_executor as runtime
 MAX_STANDARD_DEVIATION = 5E-04
 NUM_REPEATS = 3
 NUM_MEASUREMENTS_PER_REPEAT = 100
-OPT_LEVEL = 3
+OPT_LEVEL = OptLevel(3)
 EXTERNAL_COMPILERS = ['tensorrt']
 
 cur_dir_path = Path(__file__).parent.absolute()
@@ -104,7 +104,7 @@ class TVMSubGraphCostFunc_AutoSch(TargetCostFunc):
         # AutoScheduler codes
         target_str = target.__str__()
         with auto_scheduler.ApplyHistoryBest(AUTOSCH_LOG):
-            with tvm.transform.PassContext(opt_level=OPT_LEVEL, config={"relay.backend.use_auto_scheduler": True}):
+            with tvm.transform.PassContext(opt_level=OPT_LEVEL.get(), config={"relay.backend.use_auto_scheduler": True}):
                 lib = relay.build(net, target_str, params=params)
 
         dev = tvm.device(target_str, 0)
@@ -138,7 +138,7 @@ class TVMSubGraphCostFunc_AutoTVM(TargetCostFunc):
         # Compile kernels with history best records
         with autotvm.apply_history_best(AUTOTVM_LOG):
             target_str = target.__str__()
-            with tvm.transform.PassContext(opt_level=OPT_LEVEL):
+            with tvm.transform.PassContext(opt_level=OPT_LEVEL.get()):
                 lib = relay.build_module.build(net, target=target_str, params=params)
 
             dev = tvm.device(str(target), 0)
@@ -168,7 +168,7 @@ class TVMSubGraphCostFunc_NoTuning(TargetCostFunc):
         # Build the subgraph
         # FIXME(@Soo): We should redesign Target class to deal with new TVM build interface
         target_str = target.__str__()
-        with tvm.transform.PassContext(opt_level=OPT_LEVEL):
+        with tvm.transform.PassContext(opt_level=OPT_LEVEL.get()):
             lib = relay.build(net, target_str, params=params)
 
         dev = tvm.device(str(target), 0)
@@ -678,7 +678,7 @@ class TensorRTCostFunc(TargetCostFunc):
         mod, config = partition_for_tensorrt(net, params)
 
         target = "cuda"
-        with tvm.transform.PassContext(opt_level=OPT_LEVEL, config={'relay.ext.tensorrt.options': config}):
+        with tvm.transform.PassContext(opt_level=OPT_LEVEL.get(), config={'relay.ext.tensorrt.options': config}):
             lib = relay.build(mod, target=target, params=params)
 
         lib.export_library('compiled.so')

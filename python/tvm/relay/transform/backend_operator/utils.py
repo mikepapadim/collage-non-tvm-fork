@@ -198,6 +198,16 @@ def extract_attrs(expr):
   helper(expr, ())
   return frozenset(res)
 
+class OptLevel():
+  def __init__(self, opt_level):
+    self.opt_level = opt_level
+
+  def set(self, opt_level):
+    self.opt_level = opt_level
+
+  def get(self):
+    return self.opt_level
+
 # extract the node attributes of a relay expr. Use a list of tvm node attributes to represent each path (branch) in the expr.
 # Then use an immutable set of these lists to represent all node attributes of the expr. 
 # def extract_attrs(expr):

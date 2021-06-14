@@ -7,11 +7,11 @@ from tvm.relay.transform.backend_operator.target import measure, NUM_MEASUREMENT
 from tvm.relay.transform.backend_operator.target import OPT_LEVEL
 from tvm.relay.transform.optimizer.custom_fusion_pass import *
 
+from measure_end_to_end import verify_network_output
 from workloads.onnx_workloads import get_network_from_onnx
 from workloads.torch_workloads import *
 from workloads.relay_workloads import get_network_from_relay
 
-from measure_end_to_end import verify_network_output
 import numpy as np
 import argparse
 from workloads.workloads import WORKLOADS_DIC
@@ -34,7 +34,7 @@ def build_network_dp(net, params):
     assert is_function_node(net)
     net = net.with_attr("CustomFusionPass", CustomFusionPass.DP)
 
-    with tvm.transform.PassContext(opt_level=OPT_LEVEL):
+    with tvm.transform.PassContext(opt_level=OPT_LEVEL.get()):
         lib = relay.build(net, "cuda", params=params)
 
     return lib
@@ -43,7 +43,7 @@ def build_network_user_defined_fusion(net, params):
     assert is_function_node(net)
     net = net.with_attr("CustomFusionPass", CustomFusionPass.USER_DEFINED_FUSION)
 
-    with tvm.transform.PassContext(opt_level=OPT_LEVEL):
+    with tvm.transform.PassContext(opt_level=OPT_LEVEL.get()):
         lib = relay.build(net, "cuda", params=params)
 
     return lib
@@ -60,7 +60,7 @@ def build_network_tensorrt(mod, params):
     # print(config)
 
     target = "cuda"
-    with tvm.transform.PassContext(opt_level=OPT_LEVEL, config={'relay.ext.tensorrt.options': config}):
+    with tvm.transform.PassContext(opt_level=OPT_LEVEL.get(), config={'relay.ext.tensorrt.options': config}):
         lib = relay.build(mod, target=target, params=params)
 
     lib.export_library('compiled.so')
@@ -95,7 +95,7 @@ if __name__ == "__main__":
 
     # NasNet-A only works for opt_level 2 (not 3 due to the avgpool2d issue)
     if args.network == "nasneta":
-        OPT_LEVEL = 2
+        OPT_LEVEL.set(2)
 
     mod, params, shape_dict, _ = get_network_from_torch(args.network, 1)
     # mod, params, shape_dict, _ = crop_network_from_torch(args.network, 1, 43)
