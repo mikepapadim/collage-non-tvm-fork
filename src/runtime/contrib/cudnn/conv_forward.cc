@@ -48,16 +48,6 @@ using common_convbias_descriptors = std::tuple<cudnn_frontend::Tensor,
                                                cudnn_frontend::Tensor,
                                                cudnn_frontend::Tensor>;
 
-enum {
-    X_TENSOR,
-    Y_TENSOR,
-    W_TENSOR,
-    Z_TENSOR,
-    B_TENSOR,
-    AFTERADD_TENSOR,
-    AFTERBIAS_TENSOR,
-    AFTERCONV_TENSOR,
-};
 
 void generateStrides(const int64_t* dimA, int64_t* strideA, int nbDims, cudnnTensorFormat_t filterFormat) {
     if (filterFormat == CUDNN_TENSOR_NCHW) {
@@ -416,6 +406,7 @@ void ConvolutionActivationForward(int mode, int format, int algo, int convDim, i
   std::vector<int> tensor_stride(full_dims);
 
   int64_t x_dim_padded[full_dims], w_dim_padded[full_dims], y_dim_padded[full_dims];
+  assert(convDim==2);
 
   if (convDim == 2) {
     int ni, ci, hi, wi;
@@ -447,13 +438,47 @@ void ConvolutionActivationForward(int mode, int format, int algo, int convDim, i
 
   }
 
-  common_convbias_descriptors tensors = create_conv_bias_add_act_descriptors(
-      convDim, x_dim_padded,
-      pad, stride, dilation,
-      w_dim_padded, y_dim_padded,
-      entry_ptr->fused_conv_entry.data_type,
-      entry_ptr->fused_conv_entry.tensor_format
-      );
+  int64_t x_stride_padded[full_dims] = {0};
+  int64_t y_stride_padded[full_dims] = {0};
+  int64_t w_stride_padded[full_dims] = {0};
+
+  generateStrides(w_dim_padded, w_stride_padded, full_dims, entry_ptr->fused_conv_entry.tensor_format);
+  generateStrides(x_dim_padded, x_stride_padded, full_dims, entry_ptr->fused_conv_entry.tensor_format);
+  generateStrides(y_dim_padded, y_stride_padded, full_dims, entry_ptr->fused_conv_entry.tensor_format);
+
+  std::tuple<cudnn_frontend::Tensor,
+            cudnn_frontend::Tensor,
+            cudnn_frontend::Tensor,
+            cudnn_frontend::Tensor> tensors (cudnn_frontend::TensorBuilder()
+                                      .setDim(full_dims, x_dim_padded)
+                                      .setStrides(full_dims, x_stride_padded)
+                                      .setId('x')
+                                      .setAlignment(full_dims)
+                                      .setDataType(entry_ptr->fused_conv_entry.data_type)
+                                      .build(),
+                              cudnn_frontend::TensorBuilder()
+                                      .setDim(full_dims, y_dim_padded)
+                                      .setStrides(full_dims, y_stride_padded)
+                                      .setId('y')
+                                      .setAlignment(full_dims)
+                                      .setDataType(entry_ptr->fused_conv_entry.data_type)
+                                      .build(),
+                              cudnn_frontend::TensorBuilder()
+                                      .setDim(full_dims, w_dim_padded)
+                                      .setStrides(full_dims, w_stride_padded)
+                                      .setId('w')
+                                      .setAlignment(full_dims)
+                                      .setDataType(entry_ptr->fused_conv_entry.data_type)
+                                      .build(),
+                              cudnn_frontend::TensorBuilder()
+                                      .setDim(full_dims, y_dim_padded)
+                                      .setStrides(full_dims, y_stride_padded)
+                                      .setId('A')  // after conv
+                                      .setAlignment(full_dims)
+                                      .setVirtual()
+                                      .setDataType(entry_ptr->fused_conv_entry.data_type)
+                                      .build());
+
   
   /*
   std::cout << "X:\t" << std::get<X_TENSOR>(tensors).describe() << std::endl;
@@ -462,6 +487,12 @@ void ConvolutionActivationForward(int mode, int format, int algo, int convDim, i
   std::cout << "After conv:\t" << std::get<AFTERCONV_TENSOR>(tensors).describe() << std::endl;
   */
 
+  enum {
+    X_TENSOR,
+    Y_TENSOR,
+    W_TENSOR,
+    AFTERCONV_TENSOR,
+  };
 
   // Define the activation operation
   auto actDesc = cudnn_frontend::PointWiseDescBuilder()
@@ -505,7 +536,6 @@ void ConvolutionActivationForward(int mode, int format, int algo, int convDim, i
   //std::cout << act_op.describe() << std::endl;
 
 
-
   // Create an Operation Graph. In this case it is convolution add bias activation
   std::array<cudnn_frontend::Operation const*, 2> ops = {&conv_op, &act_op};
 
@@ -515,37 +545,10 @@ void ConvolutionActivationForward(int mode, int format, int algo, int convDim, i
                       .setOperationGraph(ops.size(), ops.data())
                       .build();
 
-  /*
-  //std::cerr << "ConvForwardWorkspace\n";
-  size_t workspace_size = 0;
-  CUDNN_CALL(cudnnGetConvolutionForwardWorkspaceSize(
-      entry_ptr->handle, entry_ptr->conv_entry.input_desc, entry_ptr->conv_entry.filter_desc,
-      entry_ptr->conv_entry.conv_desc, entry_ptr->conv_entry.output_desc,
-      entry_ptr->conv_entry.fwd_algo, &workspace_size));
-
-  std::cerr << "Space: " << workspace_size << "\n";
-
-  size_t limit = 0;
-  cudaDeviceGetLimit(&limit, cudaLimitStackSize);
-  printf("cudaLimitStackSize: %u\n", (unsigned)limit);
-  cudaDeviceGetLimit(&limit, cudaLimitPrintfFifoSize);
-  printf("cudaLimitPrintfFifoSize: %u\n", (unsigned)limit);
-  cudaDeviceGetLimit(&limit, cudaLimitMallocHeapSize);
-  printf("cudaLimitMallocHeapSize: %u\n", (unsigned)limit);
-
-  //size_t max_workspace_size = 10*1024;  // KB 
-  //assert(workspace_size <= max_workspace_size);
-  //workspace_size = std::min(max_workspace_size, workspace_size);
-  
-  // workspace error
-  if(workspace_size>=10*1024 or workspace_size==0) {
-    CUDNN_CALL(CUDNN_STATUS_INTERNAL_ERROR);
-  }
-  */
-
   // How many engines support this operation graph ?
-  //auto total_engines = opGraph.getEngineCount();
-  //std::cout << opGraph.describe() << " has " << total_engines << " engines." << std::endl;
+  auto total_engines = opGraph.getEngineCount();
+  std::cout << opGraph.describe() << " has " << total_engines << " engines." << std::endl;
+  
   // We have to randomly pick one engine from [0, total_engines)
   // Selecting "0" by default
   auto engine = cudnn_frontend::EngineBuilder().setGlobalEngineIdx(0).setOperationGraph(opGraph).build();
@@ -565,6 +568,7 @@ void ConvolutionActivationForward(int mode, int format, int algo, int convDim, i
   //std::cout << engine_config.describe() << std::endl;
 
   auto plan = cudnn_frontend::ExecutionPlanBuilder().setHandle(entry_ptr->handle).setEngineConfig(engine_config).build();
+  /*
 
   //std::cout << "Plan tag: " << plan.getTag() << std::endl;
 
@@ -594,7 +598,7 @@ void ConvolutionActivationForward(int mode, int format, int algo, int convDim, i
 
   auto options = generator.cudnnFindPlan<cudnn_frontend::CudnnFindSamplingTechnique::CUDNN_FIND_SAMPLE_MEDIAN_OF_THREE>(
             entry_ptr->handle, std::move(opGraph), variantPack, sample_predicate_function);
-
+*/
   /*
   std::for_each(options.begin(), options.end(), [](struct cudnn_frontend::executionOption& opt) {
       std::cout << "Plan: " << opt.plan.getTag() << " finished in " << opt.time_ms << " ms,"
@@ -603,7 +607,7 @@ void ConvolutionActivationForward(int mode, int format, int algo, int convDim, i
   */
 
   //cudnnStatus_t status =
-  CUDNN_CALL(cudnnBackendExecute(entry_ptr->handle, options.front().plan.get_raw_desc(), variantPack.get_raw_desc()));
+  //CUDNN_CALL(cudnnBackendExecute(entry_ptr->handle, options.front().plan.get_raw_desc(), variantPack.get_raw_desc()));
 
 }
 
@@ -802,8 +806,9 @@ void ConvolutionBiasActivationForwardWithFE(int mode, int format, int algo, int 
   entry_ptr->fused_conv_entry.data_type = CuDNNDataType::DLTypeToCuDNNType(String2DLDataType(conv_dtype));
   //cudnnDataType_t data_type = CuDNNDataType::DLTypeToCuDNNType(x->dtype);
   // Dims includes N and C
-  int full_dims = convDim + 2;
+  
   assert(convDim==2);
+  int full_dims = convDim + 2;
 
   CUDNN_CALL(cudnnSetConvolutionGroupCount(entry_ptr->fused_conv_entry.conv_desc, groups));
   std::vector<int> dim(full_dims);
@@ -841,6 +846,16 @@ void ConvolutionBiasActivationForwardWithFE(int mode, int format, int algo, int 
 
   }
 
+
+  std::tuple<cudnn_frontend::Tensor,
+                                               cudnn_frontend::Tensor,
+                                               cudnn_frontend::Tensor,
+                                               cudnn_frontend::Tensor,
+                                               cudnn_frontend::Tensor,
+                                               cudnn_frontend::Tensor,
+                                               cudnn_frontend::Tensor,
+                                               cudnn_frontend::Tensor>;
+
   common_convbias_descriptors tensors = create_conv_bias_add_act_descriptors(
       convDim, x_dim_padded,
       pad, stride, dilation,
@@ -848,7 +863,98 @@ void ConvolutionBiasActivationForwardWithFE(int mode, int format, int algo, int 
       entry_ptr->fused_conv_entry.data_type,
       entry_ptr->fused_conv_entry.tensor_format
       );
-  
+ 
+  int full_dims = dim+2;
+  int64_t b_dim_padded[full_dims];
+
+  b_dim_padded[0] = y_dim_padded[0];
+  b_dim_padded[1] = y_dim_padded[1];
+  b_dim_padded[2] = 1;
+  b_dim_padded[3] = 1;
+
+  int64_t x_stride_padded[full_dims] = {0};
+  int64_t y_stride_padded[full_dims] = {0};
+  int64_t w_stride_padded[full_dims] = {0};
+  int64_t b_stride_padded[full_dims] = {0};
+
+  generateStrides(w_dim_padded, w_stride_padded, full_dims, format);
+  generateStrides(x_dim_padded, x_stride_padded, full_dims, format);
+  generateStrides(y_dim_padded, y_stride_padded, full_dims, format);
+  generateStrides(b_dim_padded, b_stride_padded, full_dims, format);
+
+
+  return common_convbias_descriptors(cudnn_frontend::TensorBuilder()
+                                      .setDim(full_dims, x_dim_padded)
+                                      .setStrides(full_dims, x_stride_padded)
+                                      .setId('x')
+                                      .setAlignment(full_dims)
+                                      .setDataType(data_type)
+                                      .build(),
+                              cudnn_frontend::TensorBuilder()
+                                      .setDim(full_dims, y_dim_padded)
+                                      .setStrides(full_dims, y_stride_padded)
+                                      .setId('y')
+                                      .setAlignment(full_dims)
+                                      .setDataType(data_type)
+                                      .build(),
+                              cudnn_frontend::TensorBuilder()
+                                      .setDim(full_dims, w_dim_padded)
+                                      .setStrides(full_dims, w_stride_padded)
+                                      .setId('w')
+                                      .setAlignment(full_dims)
+                                      .setDataType(data_type)
+                                      .build(),
+                              cudnn_frontend::TensorBuilder()
+                                      .setDim(full_dims, y_dim_padded)
+                                      .setStrides(full_dims, y_stride_padded)
+                                      .setId('z')
+                                      .setAlignment(full_dims)
+                                      .setDataType(data_type)
+                                      .build(),
+                              cudnn_frontend::TensorBuilder()
+                                      .setDim(full_dims, b_dim_padded)
+                                      .setStrides(full_dims, b_stride_padded)
+                                      .setId('b')
+                                      .setAlignment(full_dims)
+                                      .setDataType(data_type)
+                                      .build(),
+                              cudnn_frontend::TensorBuilder()
+                                      .setDim(full_dims, y_dim_padded)
+                                      .setStrides(full_dims, y_stride_padded)
+                                      .setVirtual()
+                                      .setId('A')  // after add
+                                      .setAlignment(full_dims)
+                                      .setDataType(data_type)
+                                      .build(),
+                              cudnn_frontend::TensorBuilder()
+                                      .setDim(full_dims, y_dim_padded)
+                                      .setStrides(full_dims, y_stride_padded)
+                                      .setVirtual()
+                                      .setId('B')  // after bias
+                                      .setAlignment(full_dims)
+                                      .setDataType(data_type)
+                                      .build(),
+                              cudnn_frontend::TensorBuilder()
+                                      .setDim(full_dims, y_dim_padded)
+                                      .setStrides(full_dims, y_stride_padded)
+                                      .setId('C')  // after conv
+                                      .setAlignment(full_dims)
+                                      .setVirtual()
+                                      .setDataType(data_type)
+                                      .build());
+
+
+  enum {
+    X_TENSOR,
+    Y_TENSOR,
+    W_TENSOR,
+    Z_TENSOR,
+    B_TENSOR,
+    AFTERADD_TENSOR,
+    AFTERBIAS_TENSOR,
+    AFTERCONV_TENSOR,
+  };
+ 
   /* 
   std::cout << "X:\t" << std::get<X_TENSOR>(tensors).describe() << std::endl;
   std::cout << "Y:\t " << std::get<Y_TENSOR>(tensors).describe() << std::endl;
@@ -947,38 +1053,12 @@ void ConvolutionBiasActivationForwardWithFE(int mode, int format, int algo, int 
                       .build();
 
 
-  /*
-  //std::cerr << "ConvForwardWorkspace\n";
-  size_t workspace_size = 0;
-  CUDNN_CALL(cudnnGetConvolutionForwardWorkspaceSize(
-      entry_ptr->handle, entry_ptr->conv_entry.input_desc, entry_ptr->conv_entry.filter_desc,
-      entry_ptr->conv_entry.conv_desc, entry_ptr->conv_entry.output_desc,
-      entry_ptr->conv_entry.fwd_algo, &workspace_size));
-
-  std::cerr << "Space: " << workspace_size << "\n";
-
-  size_t limit = 0;
-  cudaDeviceGetLimit(&limit, cudaLimitStackSize);
-  printf("cudaLimitStackSize: %u\n", (unsigned)limit);
-  cudaDeviceGetLimit(&limit, cudaLimitPrintfFifoSize);
-  printf("cudaLimitPrintfFifoSize: %u\n", (unsigned)limit);
-  cudaDeviceGetLimit(&limit, cudaLimitMallocHeapSize);
-  printf("cudaLimitMallocHeapSize: %u\n", (unsigned)limit);
-
-  //size_t max_workspace_size = 10*1024;  // KB 
-  //assert(workspace_size <= max_workspace_size);
-  //workspace_size = std::min(max_workspace_size, workspace_size);
-  
-  // workspace error
-  if(workspace_size>=10*1024 or workspace_size==0) {
-    CUDNN_CALL(CUDNN_STATUS_INTERNAL_ERROR);
-  }
-  */
-
   // How many engines support this operation graph ?
-  //auto total_engines = opGraph.getEngineCount();
-  //std::cout << opGraph.describe() << " has " << total_engines << " engines." << std::endl;
+  auto total_engines = opGraph.getEngineCount();
+  std::cout << opGraph.describe() << " has " << total_engines << " engines." << std::endl;
   // We have to randomly pick one engine from [0, total_engines)
+  
+   
   // Selecting "0" by default
   auto engine = cudnn_frontend::EngineBuilder().setGlobalEngineIdx(0).setOperationGraph(opGraph).build();
   //std::cout << engine.describe() << std::endl;

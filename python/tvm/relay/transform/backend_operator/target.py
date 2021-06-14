@@ -32,10 +32,10 @@ def measure(ftimer, *args):
     # Dummy run to check whether it runs correctly e.g., segfault due to large workspace
     import sys
 
-    try:
-        ftimer(*args)
-    except:
-        return float('inf'), 0
+    #try:
+    #    ftimer(*args)
+    #except:
+    #    return float('inf'), 0
 
     # Warm-up Phase: Run without measurement
     # TimeEvaluator itself come with the warmup,
