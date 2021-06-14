@@ -272,7 +272,7 @@ class CuDNNCostFunc(TargetCostFunc):
 
             if "conv2d" in op_name:
                 import sys
-                print("####################Conv2d Attr: ", str_data_layout, str_kernel_layout, file=sys.stderr)
+                print("####################Conv2d Attr: ", str_data_layout, str_kernel_layout, str(groups), file=sys.stderr)
                 print(expr, file=sys.stderr)
                 print(groups, data_shape, out_channels, kernel_size, dtype, file=sys.stderr)
 
@@ -452,8 +452,12 @@ class CuDNNCostFunc(TargetCostFunc):
             bias = tvm.nd.array(bias_tensor.asnumpy(), ctx)
             output = tvm.nd.array(np.zeros(output_shape, dtype=dtype), ctx)
 
+            print("Measure Conv2d+BIAS+RELU")
+            print(" ==> ", data_shape, kernel_size, output_shape, bias_tensor.shape)
+            print(" ==> ", conv_algo, conv_mode, padding, strides, dilation)
             ftimer = func.time_evaluator(func.entry_name, ctx, number=NUM_MEASUREMENTS_PER_REPEAT, repeat=NUM_REPEATS)
             perf = measure(ftimer, data, weight, ze, bias, output)
+            print(" ==> perf: ", perf)
 
 
         elif op_name == "softmax":

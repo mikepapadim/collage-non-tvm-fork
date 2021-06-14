@@ -1,10 +1,12 @@
 from pathlib import Path
 from .utils import extract_attrs, get_data_shape
+import json
 import pickle
 from os import path
 
 cur_dir_path = Path(__file__).parent.absolute()
 COST_LOG = f"{cur_dir_path}/../logs/operator_cost.log"
+COST_LOG_READABLE = f"{cur_dir_path}/../logs/operator_cost.json"
 
 # configuration includes operator name, operator type (backend operators from different targets might have the same type),
 # data shape of all free variables, and node attributes
@@ -13,7 +15,7 @@ class Config(object):
   def __init__(self, op_name, op_type, expr, data_shape=None, attrs=None):
     self._op_name = op_name
     self._op_type = op_type
-    
+
     if expr != None:
       self._data_shape = tuple(get_data_shape(expr))
       self._attrs = extract_attrs(expr)
@@ -27,12 +29,18 @@ class Config(object):
 
   def __eq__(self, other):
 #     print(f"Check equality, {type(self._op_name)}, {type(self._op_type)}, {type(self._data_shape)}, {type(self._attrs)}")
-    return (self._op_name == other._op_name and self._op_type == other._op_type 
+    return (self._op_name == other._op_name and self._op_type == other._op_type
     and self._data_shape == other._data_shape and self._attrs == other._attrs)
 
   def __repr__(self):
     return "op_name: {0}, op_type: {1}, data_shape: {2}, attrs: {3}".format(
       self._op_name, self._op_type, self._data_shape, self._attrs)
+
+  def __str__(self):
+    return "op_type: {0}, data_shape: {1}, attrs: {2}, op_name: {3}".format(
+      self._op_type, self._data_shape, self._attrs, self._op_name)
+
+
 
 # class to save costs of already evaluated configurations so we do not need to reevaluate them
 class MeasuredConfigs(object):
@@ -52,6 +60,13 @@ class MeasuredConfigs(object):
   def save_to_log(self):
     with open(COST_LOG, 'wb+') as log:
       pickle.dump(self.measured_configs, log)
+
+    str_configs = dict()
+    for key, perf in self.measured_configs.items():
+        str_configs[str(key)] = perf
+
+    with open(COST_LOG_READABLE, 'w+') as log:
+      json.dump(str_configs, log, sort_keys=True, indent=4)
 
   # If log doesn't exist, it uses default empty dictionary.
   def load_from_log(self):

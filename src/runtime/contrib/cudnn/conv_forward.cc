@@ -755,6 +755,8 @@ void ConvolutionBiasActivationForward(int mode, int format, int algo, int convDi
   assert(z->data);
   assert(y->data);
   assert(entry_ptr->fused_conv_entry.workspace);
+  std::cerr << "Workspace size: " << workspace_size << "\n";
+  std::cerr << x->data << " // " << y->data << " // " << z->data << "\n";
 
   CUDNN_CALL(cudnnConvolutionBiasActivationForward(
       entry_ptr->handle, 
@@ -1287,7 +1289,7 @@ TVM_REGISTER_GLOBAL("tvm.contrib.cudnn.conv2d+bias+activation.forward")
       int format = args[1];
       int algo = args[2];
 
-      int pad_v[2], stride_v[2], dilation_v[2];
+      int64_t pad_v[2], stride_v[2], dilation_v[2];
       for (int i = 0; i < 2; i++) {
         pad_v[i] = args[3 + i];
         stride_v[i] = args[5 + i];
@@ -1314,7 +1316,7 @@ TVM_REGISTER_GLOBAL("tvm.contrib.cudnn.conv2d+bias+activation.forward")
       int reluNanOpt = args[21];
       double actvCoeff = args[22];
 
-      ConvolutionBiasActivationForward(mode, format, algo, 2, groups, pad_v, stride_v, dilation_v,
+      ConvolutionBiasActivationForwardWithFE(mode, format, algo, 2, groups, pad_v, stride_v, dilation_v,
           x, w, z, bias, y, conv_dtype, alphas, actvMode, reluNanOpt, actvCoeff);
 
 
