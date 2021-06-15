@@ -6,6 +6,7 @@ from tvm.relay.transform.backend_operator.utils import is_function_node
 from tvm.relay.transform.backend_operator.target import measure, NUM_MEASUREMENTS_PER_REPEAT, NUM_REPEATS, AUTOTVM_LOG, AUTOSCH_LOG
 from tvm.relay.transform.backend_operator.target import OPT_LEVEL
 from tvm.relay.transform.optimizer.custom_fusion_pass import *
+from tvm import autotvm, auto_scheduler
 
 from measure_end_to_end import verify_network_output
 from workloads.onnx_workloads import get_network_from_onnx
@@ -14,7 +15,9 @@ from workloads.relay_workloads import get_network_from_relay
 
 import numpy as np
 import argparse
+
 from workloads.workloads import WORKLOADS_DIC
+
 
 def measure_network(lib, target_str, shape_dict):
     # Create workload
@@ -29,6 +32,18 @@ def measure_network(lib, target_str, shape_dict):
     ftimer = module.module.time_evaluator("run", dev, number=NUM_MEASUREMENTS_PER_REPEAT, repeat=NUM_REPEATS)
 
     return measure(ftimer)
+
+def build_and_measure_network_user_defined_fusion_autotvm(net, params, target_str, shape_dict):
+    assert is_function_node(net)
+    net = net.with_attr("CustomFusionPass", CustomFusionPass.USER_DEFINED_FUSION)
+
+    with autotvm.apply_history_best(AUTOTVM_LOG):
+        with tvm.transform.PassContext(opt_level=OPT_LEVEL.get()):
+            lib = relay.build(net, "cuda", params=params)
+
+    inference_time = measure_network(lib, target_str, shape_dict)
+
+    return inference_time
 
 def build_network_dp(net, params):
     assert is_function_node(net)
@@ -97,18 +112,18 @@ if __name__ == "__main__":
     if args.network == "nasneta":
         OPT_LEVEL.set(2)
 
-    mod, params, shape_dict, _ = get_network_from_torch(args.network, 1)
+    # mod, params, shape_dict, _ = get_network_from_torch(args.network, 1)
     # mod, params, shape_dict, _ = crop_network_from_torch(args.network, 1, 43)
-    # mod, params = get_network_from_relay(args.network, 1)
+    mod, params = get_network_from_relay(args.network, 1)
     # print(repr(mod["main"]))
 
     # build_network_tensorrt(mod, params)
-    lib = build_network_dp(mod["main"], params)
+    # lib = build_network_dp(mod["main"], params)
     # lib = build_network_user_defined_fusion(mod["main"], params)
-    print(f"We successfully built the {args.network}")
+    # print(f"We successfully built the {args.network}")
 
     # Verify if the network output is same after our optimization
-    verify_network_output(mod["main"], params, 'cuda', shape_dict)
+    # verify_network_output(mod["main"], params, 'cuda', shape_dict)
 
     # Verify if the network can be measured
     # For Conv2d and conv2d+relu
@@ -117,3 +132,6 @@ if __name__ == "__main__":
     # inference_time = measure_network(lib, "cuda", {"data": [1, 64, 56, 56]})
     # inference_time = measure_network(lib, "cuda", WORKLOADS_DIC[args.network])
     # print(f"Inference time: {inference_time}")
+
+    inference_time = build_and_measure_network_user_defined_fusion_autotvm(mod["main"], params, "cuda", {"data": [1, 64, 56, 56]})
+    print(f"Inference time: {inference_time}")

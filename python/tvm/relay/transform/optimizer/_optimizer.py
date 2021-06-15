@@ -32,13 +32,22 @@ def get_user_fusion(relay_expr):
     # Debug
     fusion_dic = {}
     print(repr(relay_expr))
-    fusion_dic[relay_expr] = "0-tensorrt_relu" # Relu
-    fusion_dic[relay_expr.args[0]] = "1-tensorrt_conv2d" # Conv
-    fusion_dic[relay_expr.args[0].args[0]] = "2-tensorrt_relu"  # Relu
-    fusion_dic[relay_expr.args[0].args[1]] = "1-tensorrt_conv2d" # Param
-    fusion_dic[relay_expr.args[0].args[0].args[0]] = "3-tensorrt_conv2d"  #
-    fusion_dic[relay_expr.args[0].args[0].args[0].args[1]] = "3-tensorrt_conv2d" # Param
-    fusion_dic[relay_expr.args[0].args[0].args[0].args[0]]= "3-tensorrt_conv2d" # Data
+
+    # fusion_dic[relay_expr] = "0-tvmgpu-autotvm_relu"  # Relu
+    # fusion_dic[relay_expr.args[0]] = "1-tvmgpu-autotvm_conv2d"  # Conv
+    # fusion_dic[relay_expr.args[0].args[0]] = "1-tvmgpu-autotvm_conv2d"  # Relu
+    # fusion_dic[relay_expr.args[0].args[1]] = "1-tvmgpu-autotvm_conv2d"  # Param
+    # fusion_dic[relay_expr.args[0].args[0].args[0]] = "3-cudnn_conv2d"  #
+    # fusion_dic[relay_expr.args[0].args[0].args[0].args[1]] = "3-cudnn_conv2d"  # Param
+    # fusion_dic[relay_expr.args[0].args[0].args[0].args[0]] = "3-cudnn_conv2d"  # Data
+
+    fusion_dic[relay_expr] = "0-tvmgpu-no-tuning_relu" # Relu
+    fusion_dic[relay_expr.args[0]] = "1-tvmgpu-no-tuning_conv2d" # Conv
+    fusion_dic[relay_expr.args[0].args[0]] = "2-tvmgpu-no-tuning_relu"  # Relu
+    fusion_dic[relay_expr.args[0].args[1]] = "1-tvmgpu-no-tuning_conv2d" # Param
+    fusion_dic[relay_expr.args[0].args[0].args[0]] = "3-tvmgpu-no-tuning_conv2d"  #
+    fusion_dic[relay_expr.args[0].args[0].args[0].args[1]] = "3-tvmgpu-no-tuning_conv2d" # Param
+    fusion_dic[relay_expr.args[0].args[0].args[0].args[0]]= "3-tvmgpu-no-tuning_conv2d" # Data
 
     # Enable External compiler merging or not
     # print(f"fusion dic (before merge): {fusion_dic}")

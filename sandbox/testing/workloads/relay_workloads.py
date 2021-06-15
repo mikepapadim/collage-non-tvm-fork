@@ -43,26 +43,54 @@ def get_conv2d_relu(batch_size):
 
     return mod, params
 
+# This is first two conv + relu in ResNet-50
 def get_conv2d_relu_x2(batch_size):
     # Chain graph
     # batch_size = 1
 
     data = relay.var("data", relay.TensorType((batch_size, 64, 56, 56), "float32"))
-    conv_weight = relay.var("weight", relay.TensorType((64, 64, 1, 1), "float32"))
+    conv_weight = relay.var("2_weight", relay.TensorType((64, 64, 1, 1), "float32"))
     expr = relay.nn.conv2d(
-        data=data, weight=conv_weight, kernel_size=(1, 1), channels=64, padding=(1, 1)
+        data=data, weight=conv_weight, kernel_size=(1, 1), channels=64, padding=(0, 0)
     )
     expr = relay.nn.relu(expr)
 
+    # Input size: [1, 64, 58, 58]
+    conv_weight2 = relay.var("1_weight", relay.TensorType((64, 64, 3, 3), "float32"))
     expr = relay.nn.conv2d(
-        data=expr, weight=conv_weight, kernel_size=(1, 1), channels=64, padding=(1, 1)
+        data=expr, weight=conv_weight2, kernel_size=(3, 3), channels=64, padding=(1, 1)
     )
     expr = relay.nn.relu(expr)
 
     mod, params = create_relay_workload(expr)
-    # mod = relay.transform.InferType()(mod)
+    mod = relay.transform.InferType()(mod)
     # print(mod["main"].body.checked_type)
+
     return mod, params
+
+# def get_conv2d_relu_x2(batch_size):
+#     # Chain graph
+#     # batch_size = 1
+#
+#     data = relay.var("data", relay.TensorType((batch_size, 64, 56, 56), "float32"))
+#     conv_weight = relay.var("weight", relay.TensorType((64, 64, 1, 1), "float32"))
+#     expr = relay.nn.conv2d(
+#         data=data, weight=conv_weight, kernel_size=(1, 1), channels=64, padding=(1, 1)
+#     )
+#     expr = relay.nn.relu(expr)
+#
+#     # Input size: [1, 64, 58, 58]
+#     expr = relay.nn.conv2d(
+#         data=expr, weight=conv_weight, kernel_size=(1, 1), channels=64, padding=(1, 1)
+#     )
+#     expr = relay.nn.relu(expr)
+#
+#     mod, params = create_relay_workload(expr)
+#     # mod = relay.transform.InferType()(mod)
+#     # print(mod["main"].body.checked_type)
+#
+#     return mod, params
+
 
 # def get_batch_matmul():
 #     data1 = relay.var("data", relay.TensorType((16, 16, 1024), "float32"))
