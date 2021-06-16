@@ -55,9 +55,76 @@ def get_user_fusion(relay_expr):
     # print(f"fusion dic (after  merge): {fusion_dic}")
     return fusion_dic
 
+@tvm._ffi.register_func("relay.transform.optimizer.run_two_level_opt")
+def run_two_level_opt(relay_expr):
+    """Optimizing pass for computation graph representation (Relay IR).
 
-@tvm._ffi.register_func("relay.transform.optimizer.optimize_comp_graph")
-def optimize_comp_graph(relay_expr):
+    Parameters
+    ----------
+    relay_expr : tvm.relay.expr
+        Relay IR for computation graph
+
+    Returns
+    -------
+    matched_relay_expr : tvm.relay.expr
+        The result matching between backend operators and Relay operators
+    """
+
+    # It is a function if you get it from last pass of Relay build
+    print("Optimizing on the Python side")
+    print("Run two-level optimization")
+    # print("Relay expression")
+    # print(relay_expr)
+    # profile_ops_in_net(relay_expr, "bert", "tensorrt")
+    # import sys
+    # sys.exit(0)
+    # visualize_network(relay_expr, "o3_bert")
+    if type(relay_expr) == tvm.relay.function.Function:
+        relay_expr = relay_expr.body
+
+    comp_graph = ComputationGraph(relay_expr)
+
+    # Warning: ResNet-8 doesn't have tuned operators / CuDNN doesn't work for ResNet-8
+    # target_backend = None # Consider all targets
+
+    # Sanity check: Only AutoTVM
+    targets = [Target.TVM_GPU_AUTOTVM]
+
+    # Sanity check: Enable all backends except for TensorRT
+    # targets = [Target.TVM_GPU_AUTOTVM, Target.CUDNN, Target.CUBLAS]
+
+    batch_size = 1
+    backendop_lib = setup_backend_op_lib(relay_expr, targets, batch_size)
+
+    # Optimizing graph
+    print("Computation graph created")
+    optimizer = CompGraphOptimizer(backendop_lib, targets)
+    print("Optimizer created")
+    optimizer.optimize(comp_graph)
+    print("It's optimized")
+    optimized_match, post_order_match_result = optimizer.get_optimized_match(comp_graph)
+
+    # print("Match result: ", optimized_match)
+    # post_order_match_result is for debugging to check if it matches the final result from the TVM DP fusion pass
+    print("Match result")
+    for idx, pair in enumerate(post_order_match_result):
+        print(idx, pair)
+    # Debug (@soo)
+    print_matching_final(comp_graph, optimizer.loc2match)
+    print("-"*40)
+    # print("Optimized match")
+    # print(optimized_match)
+
+    # print(f"fusion dic (before merge): {optimized_match}")
+    # optimized_match = ExtCompilerOpMerger(optimized_match).merge(relay_expr)
+    # print(f"fusion dic (after  merge): {optimized_match}")
+
+    backendop_lib.save_to_log()
+
+    return optimized_match
+
+@tvm._ffi.register_func("relay.transform.optimizer.run_dp")
+def run_dp(relay_expr):
     """Optimizing pass for computation graph representation (Relay IR).
 
     Parameters
@@ -129,8 +196,15 @@ def optimize_comp_graph(relay_expr):
 
     return optimized_match
 
-@tvm._ffi.register_func("relay.transform.optimizer.exhaustive_search")
-def exhaustive_search(relay_expr):
+"""
+This is still work in progress.
+
+Pros: it gives us upper bound
+Cons: How do you consider all possible TensorRT operators? I don't have good answers to that yet.
+
+"""
+@tvm._ffi.register_func("relay.transform.optimizer.run_exhaustive_search")
+def run_exhaustive_search(relay_expr):
     # It is a function if you get it from last pass of Relay build
     print("Optimizing on the Python side")
     # print("Relay expression")

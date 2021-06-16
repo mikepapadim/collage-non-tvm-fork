@@ -1,1 +1,1 @@
-from ._optimizer import optimize_comp_graph
+from ._optimizer import run_dp

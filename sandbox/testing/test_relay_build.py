@@ -18,6 +18,17 @@ import argparse
 
 from workloads.workloads import WORKLOADS_DIC
 
+def build_network(net, params, mode):
+    assert is_function_node(net)
+    assert CustomFusionPass.has_value(mode)
+
+    net = net.with_attr("CustomFusionPass", mode)
+
+    with autotvm.apply_history_best(AUTOTVM_LOG):
+        with tvm.transform.PassContext(opt_level=OPT_LEVEL.get()):
+            lib = relay.build(net, "cuda", params=params)
+
+    return lib
 
 def measure_network(lib, target_str, shape_dict):
     # Create workload
@@ -32,37 +43,6 @@ def measure_network(lib, target_str, shape_dict):
     ftimer = module.module.time_evaluator("run", dev, number=NUM_MEASUREMENTS_PER_REPEAT, repeat=NUM_REPEATS)
 
     return measure(ftimer)
-
-def build_and_measure_network_user_defined_fusion_autotvm(net, params, target_str, shape_dict):
-    assert is_function_node(net)
-    net = net.with_attr("CustomFusionPass", CustomFusionPass.USER_DEFINED_FUSION)
-
-    with autotvm.apply_history_best(AUTOTVM_LOG):
-        with tvm.transform.PassContext(opt_level=OPT_LEVEL.get()):
-            lib = relay.build(net, "cuda", params=params)
-
-    inference_time = measure_network(lib, target_str, shape_dict)
-
-    return inference_time
-
-def build_network_dp(net, params):
-    assert is_function_node(net)
-    net = net.with_attr("CustomFusionPass", CustomFusionPass.DP)
-
-    with tvm.transform.PassContext(opt_level=OPT_LEVEL.get()):
-        lib = relay.build(net, "cuda", params=params)
-
-    return lib
-
-def build_network_user_defined_fusion(net, params):
-    assert is_function_node(net)
-    net = net.with_attr("CustomFusionPass", CustomFusionPass.USER_DEFINED_FUSION)
-
-    with tvm.transform.PassContext(opt_level=OPT_LEVEL.get()):
-        lib = relay.build(net, "cuda", params=params)
-
-    return lib
-
 
 def build_network_tensorrt(mod, params):
     from tvm.relay.op.contrib.tensorrt import partition_for_tensorrt
@@ -112,26 +92,28 @@ if __name__ == "__main__":
     if args.network == "nasneta":
         OPT_LEVEL.set(2)
 
-    # mod, params, shape_dict, _ = get_network_from_torch(args.network, 1)
+    mod, params, shape_dict, _ = get_network_from_torch(args.network, 1)
     # mod, params, shape_dict, _ = crop_network_from_torch(args.network, 1, 43)
-    mod, params = get_network_from_relay(args.network, 1)
+    # mod, params = get_network_from_relay(args.network, 1)
     # print(repr(mod["main"]))
 
     # build_network_tensorrt(mod, params)
-    # lib = build_network_dp(mod["main"], params)
-    # lib = build_network_user_defined_fusion(mod["main"], params)
-    # print(f"We successfully built the {args.network}")
+    lib = build_network(mod["main"], params, CustomFusionPass.TWO_LEVEL_OPT)
+    # lib = build_network(mod["main"], params, CustomFusionPass.DP)
+    # lib = build_network(mod["main"], params, CustomFusionPass.USER_DEFINED_FUSION)
+    print(f"We successfully built the {args.network}")
 
     # Verify if the network output is same after our optimization
     # verify_network_output(mod["main"], params, 'cuda', shape_dict)
 
+
     # Verify if the network can be measured
     # For Conv2d and conv2d+relu
     # inference_time = measure_network(lib, "cuda", {"data": [1, 3, 224, 224]})
+
     # For (conv2d+relu)x2
     # inference_time = measure_network(lib, "cuda", {"data": [1, 64, 56, 56]})
-    # inference_time = measure_network(lib, "cuda", WORKLOADS_DIC[args.network])
-    # print(f"Inference time: {inference_time}")
 
-    inference_time = build_and_measure_network_user_defined_fusion_autotvm(mod["main"], params, "cuda", {"data": [1, 64, 56, 56]})
+    # For networks from torch
+    inference_time = measure_network(lib, "cuda", WORKLOADS_DIC[args.network])
     print(f"Inference time: {inference_time}")

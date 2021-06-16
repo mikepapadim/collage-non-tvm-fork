@@ -1345,6 +1345,7 @@ namespace tvm {
       constexpr int kUserDefinedFusion = 0;
       constexpr int kDP = 1;
       constexpr int kExhaustiveSearch = 2;
+      constexpr int kTwoLevelOpt = 3;
 
       if (fn_node->GetAttr<IntImm>(attr::kCustomFusionPass).defined()) {
         int64_t custom_fusion_pass_type = fn_node->GetAttr<IntImm>(attr::kCustomFusionPass).as<IntImmNode>()->value;
@@ -1355,9 +1356,11 @@ namespace tvm {
         // PATCH(@Soo): Custom (DP) fusion pass for end-to-end measurements
         // Note that if fuse_opt_level == 0, no fusion applied no matter whether it's original or DP.
         } else if (custom_fusion_pass_type == kDP) {
-          custom_fusion_pass_str = "relay.transform.optimizer.optimize_comp_graph";
+          custom_fusion_pass_str = "relay.transform.optimizer.run_dp";
+        } else if (custom_fusion_pass_type == kTwoLevelOpt) {
+          custom_fusion_pass_str = "relay.transform.optimizer.run_two_level_opt";
         } else if (custom_fusion_pass_type == kExhaustiveSearch) {
-          custom_fusion_pass_str = "relay.transform.optimizer.exhaustive_search";
+          custom_fusion_pass_str = "relay.transform.optimizer.run_exhaustive_search";
         } else {
           ICHECK(false) << "Fusion pass type " << fn_node->GetAttr<IntImm>(attr::kCustomFusionPass)
               << "is not expected\n\n";

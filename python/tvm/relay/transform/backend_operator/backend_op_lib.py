@@ -106,7 +106,7 @@ class BackendOpLib(object):
     # CUDNN
     # FIXME(@Soo): For ResNext, some of CUDNN convolution doesn't work.
     self._add_backendop("cudnn_conv2d", Target.CUDNN, OpType.CONV2D, 1)
-    self._add_backendop("cudnn_conv2d+relu", Target.CUDNN, OpType.CONV2D_RELU, 2)
+    # self._add_backendop("cudnn_conv2d+relu", Target.CUDNN, OpType.CONV2D_RELU, 2)
     # self._add_backendop("cudnn_relu", Target.CUDNN, OpType.RELU, 1)
     # self._add_backendop("cudnn_biasadd", Target.CUDNN, OpType.BIAS_ADD, 1)
 
@@ -118,7 +118,7 @@ class BackendOpLib(object):
     # measure_cost doesn't work, we need to fix this later.
     # self._add_backendop("cudnn_maxpool2d", Target.CUDNN, OpType.MAX_POOL2D, 1)
     # conv_bias_add_relu --> ResNet doesn't have this pattern, so it wouldn't be measured
-    self._add_backendop("cudnn_conv2d+biasadd+relu", Target.CUDNN, OpType.CONV2D_BIAS_ADD_RELU, 3)
+    # self._add_backendop("cudnn_conv2d+biasadd+relu", Target.CUDNN, OpType.CONV2D_BIAS_ADD_RELU, 3)
 
     # TENSORRT
     add_all_backend_ops_to_lib(self, Target.TENSORRT, [OpType.DIAMOND, OpType.TRANSPOSE, OpType.BATCH_MATMUL])
