@@ -12,6 +12,7 @@ from ..backend_operator.backend_op_lib import BackendOpLib
 from .comp_graph import ComputationGraph
 from .comp_graph_optimizer import *
 from .ext_compiler_op_merger import *
+from .backend_op_state import MatchToOpStateTranslator
 
 #from ..utility.visualize import visualize_network
 from ..utility.profile_ops_in_net import profile_ops_in_net
@@ -55,37 +56,11 @@ def get_user_fusion(relay_expr):
     # print(f"fusion dic (after  merge): {fusion_dic}")
     return fusion_dic
 
-@tvm._ffi.register_func("relay.transform.optimizer.run_two_level_opt")
-def run_two_level_opt(relay_expr):
-    """Optimizing pass for computation graph representation (Relay IR).
-
-    Parameters
-    ----------
-    relay_expr : tvm.relay.expr
-        Relay IR for computation graph
-
-    Returns
-    -------
-    matched_relay_expr : tvm.relay.expr
-        The result matching between backend operators and Relay operators
-    """
-
-    # It is a function if you get it from last pass of Relay build
-    print("Optimizing on the Python side")
-    print("Run two-level optimization")
-    # print("Relay expression")
-    # print(relay_expr)
-    # profile_ops_in_net(relay_expr, "bert", "tensorrt")
-    # import sys
-    # sys.exit(0)
-    # visualize_network(relay_expr, "o3_bert")
+def run_op_level_opt(relay_expr):
     if type(relay_expr) == tvm.relay.function.Function:
         relay_expr = relay_expr.body
 
     comp_graph = ComputationGraph(relay_expr)
-
-    # Warning: ResNet-8 doesn't have tuned operators / CuDNN doesn't work for ResNet-8
-    # target_backend = None # Consider all targets
 
     # Sanity check: Only AutoTVM
     targets = [Target.TVM_GPU_AUTOTVM]
@@ -112,8 +87,45 @@ def run_two_level_opt(relay_expr):
     # Debug (@soo)
     print_matching_final(comp_graph, optimizer.loc2match)
     print("-"*40)
-    # print("Optimized match")
-    # print(optimized_match)
+
+    return optimized_match, relay_expr, backendop_lib
+
+
+@tvm._ffi.register_func("relay.transform.optimizer.run_two_level_opt")
+def run_two_level_opt(relay_expr):
+    """
+    Two-level optimization pass
+    First level is for backend operators from TVM and CuDNN, which are not external compilers.
+    Second level is for external compilers such as TensorRT.
+    We have two separate levels because
+    1) First level remove need to enumerate all possible extenral compiler patterns
+    2) First level provide us with optimal solutions for backend operators.
+    Thus, for each backend operators, second level only needs to consider between
+    TensorRT operators and chosen optimal backend operators from first level.
+
+    Parameters
+    ----------
+    relay_expr : tvm.relay.expr
+        Relay IR for computation graph
+
+    Returns
+    -------
+    matched_relay_expr : tvm.relay.expr
+        The result matching between backend operators and Relay operators
+    """
+
+    # It is a function if you get it from last pass of Relay build
+    print("[Python side] Run two-level optimization")
+
+    # op-level optimization: DP with all backends but external compilers, e.g., TensorRT
+    optimized_match, relay_expr, backendop_lib = run_op_level_opt(relay_expr)
+    print("[Python side] Op-level optimization is done")
+
+    # subgraph-level optimization for external compilers
+    # Translate optimized_match into OpState class that can be used for evolutionary search
+    state_id_to_exprs_anno = MatchToOpStateTranslator().translate(relay_expr, optimized_match)
+    print(state_id_to_exprs_anno)
+    # Run evolutionary search
 
     # print(f"fusion dic (before merge): {optimized_match}")
     # optimized_match = ExtCompilerOpMerger(optimized_match).merge(relay_expr)

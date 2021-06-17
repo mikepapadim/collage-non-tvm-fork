@@ -115,5 +115,5 @@ if __name__ == "__main__":
     # inference_time = measure_network(lib, "cuda", {"data": [1, 64, 56, 56]})
 
     # For networks from torch
-    inference_time = measure_network(lib, "cuda", WORKLOADS_DIC[args.network])
-    print(f"Inference time: {inference_time}")
+    # inference_time = measure_network(lib, "cuda", WORKLOADS_DIC[args.network])
+    # print(f"Inference time: {inference_time}")
