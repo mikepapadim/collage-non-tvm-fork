@@ -126,6 +126,10 @@ def is_var_node(expr):
 def no_constraints_func(config):
   return True
 
+def get_function_body(expr):
+  assert is_function_node(expr)
+  return expr.body
+
 # given a tvm.ir.Attrs node, return list of attribute values
 def get_attr_vals(expr):
   assert is_call_node(expr)

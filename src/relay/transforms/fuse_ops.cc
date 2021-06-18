@@ -1366,7 +1366,8 @@ namespace tvm {
               << "is not expected\n\n";
         }
 
-        static auto fdp_call = tvm::runtime::Registry::Get(custom_fusion_pass_str);
+        std::cerr << "\t[Start] Custom fusion - " << custom_fusion_pass_str << "\n\n";
+        auto fdp_call = tvm::runtime::Registry::Get(custom_fusion_pass_str);
         Map<Expr, String> backend_op_match = (*fdp_call)(expr);
         std::cerr << "\t[Done] Custom fusion pairs are ready - " << custom_fusion_pass_str << "\n\n";
 

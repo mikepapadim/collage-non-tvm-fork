@@ -35,10 +35,15 @@ class Node:
 class ComputationGraph:
     def __init__(self, relay_expr):
         self._relay_expr = relay_expr
-     
+
+        # This is # of nodes except for constant and data
         self._memo = {}
         self._n_nodes = self._get_n_nodes(relay_expr)
-        
+
+        # This counts all relay nodes including constant and data
+        self._memo = {}
+        self.n_relay_nodes = self._get_n_nodes(relay_expr, is_relay_nodes=1)
+
         self._nodes = []
         self.expr2node = {}
         self._memo = {}
@@ -57,29 +62,29 @@ class ComputationGraph:
     def get_n_nodes(self):
         return self._n_nodes
         
-    def _get_n_nodes(self, relay_expr):
+    def _get_n_nodes(self, relay_expr, is_relay_nodes=0):
         self._memo[hash(relay_expr)] = True
         n_nodes = 1
         if is_constant_node(relay_expr) or (is_var_node(relay_expr) and not is_data_var_node(relay_expr)):
-            n_nodes = 0
+            n_nodes = is_relay_nodes
         elif is_var_node(relay_expr) and is_data_var_node(relay_expr):
             n_nodes = 1
         elif is_tuplegetitem_node(relay_expr):
             next_expr = relay_expr.tuple_value
             if hash(next_expr) not in self._memo:
-                n_nodes += self._get_n_nodes(next_expr)
+                n_nodes += self._get_n_nodes(next_expr, is_relay_nodes)
         elif is_tuple_node(relay_expr):
             for node_idx, node in enumerate(relay_expr.fields):
                 if hash(node) not in self._memo:
                     # memorize this visit to prevent it from visiting twice
                     # +1 here means counting the current node
-                    n_nodes += self._get_n_nodes(node)
+                    n_nodes += self._get_n_nodes(node, is_relay_nodes)
         elif is_call_node(relay_expr):
             for node_idx, node in enumerate(relay_expr.args):
                 if hash(node) not in self._memo:
                     # memorize this visit to prevent it from visiting twice
                     # +1 here means counting the current node
-                    n_nodes += self._get_n_nodes(node)
+                    n_nodes += self._get_n_nodes(node, is_relay_nodes)
         else:
             raise Exception(f"Unexpected Relay expr type {type(relay_expr)}")
 

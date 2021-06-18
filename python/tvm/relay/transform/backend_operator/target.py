@@ -22,11 +22,14 @@ OPT_LEVEL = OptLevel(3)
 EXTERNAL_COMPILERS = ['tensorrt']
 
 cur_dir_path = Path(__file__).parent.absolute()
-AUTOTVM_LOG = f"{cur_dir_path}/../logs/autotvm_ops.json"
+LOG_PATH = f"{cur_dir_path}/../logs"
+BEST_MATCH_LOG = f"{LOG_PATH}/best_match"
+USER_DEFINED_MATCH_LOG = f"{LOG_PATH}/user_defined_match.log"
+AUTOTVM_LOG = f"{LOG_PATH}/autotvm_ops.json"
 # Temporary autoscheduler log file
 # FIXME(@Soo): Accumulate autoscheduler logs to the same file
 # AUTOSCH_LOG = "/home/byungsoj/backend-aware-graph-opt/package/autotune/tmp/autosch_ops.json.resnet50.tmp"
-AUTOSCH_LOG = f"{cur_dir_path}/../logs/autosch_ops.json"
+AUTOSCH_LOG = f"{LOG_PATH}/autosch_ops.json"
 
 def measure(ftimer, *args):
     # Dummy run to check whether it runs correctly e.g., segfault due to large workspace
@@ -53,7 +56,6 @@ def measure(ftimer, *args):
             mean_perf = np.mean(perfs)
             break
     return mean_perf, std_perf
-
 
 # (id, parameter, name)
 class Target(Enum):
