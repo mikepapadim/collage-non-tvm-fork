@@ -92,9 +92,9 @@ if __name__ == "__main__":
     if args.network == "nasneta":
         OPT_LEVEL.set(2)
 
-    # mod, params, shape_dict, _ = get_network_from_torch(args.network, 1)
+    mod, params, shape_dict, _ = get_network_from_torch(args.network, 1)
     # mod, params, shape_dict, _ = crop_network_from_torch(args.network, 1, 43)
-    mod, params = get_network_from_relay(args.network, 1)
+    # mod, params = get_network_from_relay(args.network, 1)
     # print(repr(mod["main"]))
 
     # build_network_tensorrt(mod, params)

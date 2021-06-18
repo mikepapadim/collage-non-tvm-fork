@@ -42,10 +42,10 @@ def run_op_level_opt(relay_expr):
     print(f"# of relay nodes in comp graph: {n_relay_nodes}")
 
     # Sanity check: Only AutoTVM
-    targets = [Target.TVM_GPU_AUTOTVM]
+    # targets = [Target.TVM_GPU_AUTOTVM]
 
     # Sanity check: Enable all backends except for TensorRT
-    # targets = [Target.TVM_GPU_AUTOTVM, Target.CUDNN, Target.CUBLAS]
+    targets = [Target.TVM_GPU_AUTOTVM, Target.CUDNN, Target.CUBLAS]
 
     batch_size = 1
     backendop_lib = setup_backend_op_lib(relay_expr, targets, batch_size)
@@ -117,7 +117,11 @@ def run_two_level_opt(relay_expr):
     print(f"# of matched operators after first level : {n_ops}")
 
     # Warning(@soo): Network name is hardcoded for now. We can fix it later
-    net_name = "conv2d+relu_x2"
+    # net_name = "resnet50"
+    # net_name = "resnext50_32x4d"
+    # net_name = "nasrnn"
+    # net_name = "nasneta"
+    net_name = "bert"
     ev_searcher = EvolutionarySearcher(op_state_to_match_translator, relay_expr, net_name, n_ops=n_ops,
                                        pop_size=5, max_iter=1)
     second_opt_match = ev_searcher.search(rnd_seed=64)

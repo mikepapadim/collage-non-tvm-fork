@@ -26,6 +26,8 @@ from deap import tools
 from .custom_fusion_pass import measure_end_to_end_user_defined
 from ..backend_operator.utils import *
 from workloads.relay_workloads import get_network_from_relay
+from workloads.torch_workloads import *
+
 from .op_match_logger import OpMatchLogger
 from ..backend_operator.target import BEST_MATCH_LOG
 
@@ -36,17 +38,20 @@ class EvolutionarySearcher:
 
         self.op_state_to_match_translator = op_state_to_match_translator
         self.op_match_logger = OpMatchLogger()
+        self.n_ops = n_ops
 
         # duplicate checker
         self._memo_state = {}
         
-        # Load network to measure
-        self.net_name = net_name
-        self.mod, self.params = get_network_from_relay(net_name, 1)
         self.expr = expr
 
+        # Load network to measure
+        self.net_name = net_name
         self.target_str = 'cuda'
-        self.shape_dict = {"data": [1, 64, 56, 56]}
+
+        self.mod, self.params, self.shape_dict, _ = get_network_from_torch(net_name, 1)
+        # self.mod, self.params = get_network_from_relay(net_name, 1)
+        # self.shape_dict = {"data": [1, 64, 56, 56]}
 
         # Hyperparameters
         self.pop_size = pop_size
@@ -146,6 +151,10 @@ class EvolutionarySearcher:
         # each individual is a list of integers)
         pop = self.toolbox.population(n=self.pop_size)
 
+        # Warning(@Soo): Force initial population to have best results from first level and TensorRT
+        pop[0] = creator.Individual([0 for i in range(self.n_ops)])
+        pop[1] = creator.Individual([1 for i in range(self.n_ops)])
+
         # CXPB  is the probability with which two individuals
         #       are crossed
         #
@@ -239,6 +248,6 @@ class EvolutionarySearcher:
         print(f"Final best individual is {best_ind}")
         # print(self.op_state_to_match_translator.optimized_match)
 
-        print("-"*30)
-        print(best_opt_match)
+        # print("-"*30)
+        # print(best_opt_match)
         return best_opt_match
