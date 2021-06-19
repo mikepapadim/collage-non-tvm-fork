@@ -15,9 +15,11 @@ from tvm.contrib import graph_executor as runtime
 # from tvm.contrib import graph_executor
 
 # only collect results whose standard deviation is below this
-MAX_STANDARD_DEVIATION = 5E-04
+# MAX_STANDARD_DEVIATION = 5E-04
+MAX_STANDARD_DEVIATION = 5E-03
 NUM_REPEATS = 3
-NUM_MEASUREMENTS_PER_REPEAT = 100
+#NUM_MEASUREMENTS_PER_REPEAT = 100
+NUM_MEASUREMENTS_PER_REPEAT = 20
 OPT_LEVEL = OptLevel(3)
 EXTERNAL_COMPILERS = ['tensorrt']
 
@@ -31,7 +33,14 @@ AUTOTVM_LOG = f"{LOG_PATH}/autotvm_ops.json"
 # AUTOSCH_LOG = "/home/byungsoj/backend-aware-graph-opt/package/autotune/tmp/autosch_ops.json.resnet50.tmp"
 AUTOSCH_LOG = f"{LOG_PATH}/autosch_ops.json"
 
-def measure(ftimer, *args):
+"""
+measure
+- 1) network
+    > Skip while loop
+- 2) operator
+    > Keep as is
+"""
+def measure(ftimer, is_net, *args):
     # Dummy run to check whether it runs correctly e.g., segfault due to large workspace
     import sys
 
@@ -43,8 +52,8 @@ def measure(ftimer, *args):
     # Warm-up Phase: Run without measurement
     # TimeEvaluator itself come with the warmup,
     # so we don't need this part technically.
-    for i in range(5):
-        ftimer(*args)
+    # for i in range(5):
+    #     ftimer(*args)
 
     mean_perf, std_perf = None, None
     # Measure performance. Continue until we get results within the max standard deviation
@@ -52,9 +61,11 @@ def measure(ftimer, *args):
         perfs = np.array(ftimer(*args).results) * 1000  # convert to millisecond
         std_perf = np.std(perfs)
         print(f"Mean, std of perf : {np.mean(perfs)}, {std_perf}")
-        if std_perf <= MAX_STANDARD_DEVIATION:
+
+        if is_net or std_perf <= MAX_STANDARD_DEVIATION:
             mean_perf = np.mean(perfs)
             break
+
     return mean_perf, std_perf
 
 # (id, parameter, name)
@@ -119,7 +130,7 @@ class TVMSubGraphCostFunc_AutoSch(TargetCostFunc):
         # module.set_input("data", data)
         ftimer = module.module.time_evaluator("run", dev, number=NUM_MEASUREMENTS_PER_REPEAT, repeat=NUM_REPEATS)
 
-        return measure(ftimer)
+        return measure(ftimer, is_net=False)
 
 class TVMSubGraphCostFunc_AutoTVM(TargetCostFunc):
     def __init__(self):
@@ -152,7 +163,7 @@ class TVMSubGraphCostFunc_AutoTVM(TargetCostFunc):
             # data = np.random.uniform(-1, 1, size=data_shape).astype("float32")
             # module.set_input("data", data)
             ftimer = module.module.time_evaluator("run", dev, number=NUM_MEASUREMENTS_PER_REPEAT, repeat=NUM_REPEATS)
-        return measure(ftimer)
+        return measure(ftimer, is_net=False)
 
 class TVMSubGraphCostFunc_NoTuning(TargetCostFunc):
     def __init__(self):
@@ -185,7 +196,7 @@ class TVMSubGraphCostFunc_NoTuning(TargetCostFunc):
         # module.set_input("data", data)
         ftimer = module.module.time_evaluator("run", dev, number=NUM_MEASUREMENTS_PER_REPEAT, repeat=NUM_REPEATS)
 
-        return measure(ftimer)
+        return measure(ftimer, is_net=False)
 
         # target_str = target.__str__()
         # ctx = tvm.context(target_str, 0)
@@ -198,7 +209,7 @@ class TVMSubGraphCostFunc_NoTuning(TargetCostFunc):
         # module.set_input("data", data)
         # ftimer = module.module.time_evaluator("run", ctx, number=NUM_MEASUREMENTS_PER_REPEAT, repeat=NUM_REPEATS)
         #
-        # return measure(ftimer)
+        # return measure(ftimer, is_net=False)
 
 def get_conv_attr(expr):
     assert (is_call_node(expr))
@@ -349,7 +360,7 @@ class CuDNNCostFunc(TargetCostFunc):
             output = tvm.nd.array(np.zeros(output_shape, dtype=dtype), ctx)
 
             ftimer = func.time_evaluator(func.entry_name, ctx, number=NUM_MEASUREMENTS_PER_REPEAT, repeat=NUM_REPEATS)
-            perf = measure(ftimer, data, weight, output)
+            perf = measure(ftimer, False, data, weight, output)
 
 
         elif op_name == "conv2d+relu":
@@ -397,7 +408,7 @@ class CuDNNCostFunc(TargetCostFunc):
 
             print("Measure Conv2d+RELU")
             ftimer = func.time_evaluator(func.entry_name, ctx, number=NUM_MEASUREMENTS_PER_REPEAT, repeat=NUM_REPEATS)
-            perf = measure(ftimer, data, weight, output)
+            perf = measure(ftimer, False, data, weight, output)
             print(" ==> perf: ", perf)
 
 
@@ -458,7 +469,7 @@ class CuDNNCostFunc(TargetCostFunc):
             print(" ==> ", data_shape, kernel_size, output_shape, bias_tensor.shape)
             print(" ==> ", conv_algo, conv_mode, padding, strides, dilation)
             ftimer = func.time_evaluator(func.entry_name, ctx, number=NUM_MEASUREMENTS_PER_REPEAT, repeat=NUM_REPEATS)
-            perf = measure(ftimer, data, weight, ze, bias, output)
+            perf = measure(ftimer, False, data, weight, ze, bias, output)
             print(" ==> perf: ", perf)
 
 
@@ -486,7 +497,7 @@ class CuDNNCostFunc(TargetCostFunc):
             output = tvm.nd.array(np.zeros(output_shape, dtype=dtype), ctx)
 
             ftimer = func.time_evaluator(func.entry_name, ctx, number=NUM_MEASUREMENTS_PER_REPEAT, repeat=NUM_REPEATS)
-            perf = measure(ftimer, data, output)
+            perf = measure(ftimer, False, data, output)
 
 
         elif op_name == "biasadd":
@@ -522,7 +533,7 @@ class CuDNNCostFunc(TargetCostFunc):
             output = tvm.nd.array(np.zeros(output_shape, dtype=dtype), ctx)
 
             ftimer = func.time_evaluator(func.entry_name, ctx, number=NUM_MEASUREMENTS_PER_REPEAT, repeat=NUM_REPEATS)
-            perf = measure(ftimer, data, bias, output)
+            perf = measure(ftimer, False, data, bias, output)
 
 
         elif op_name == "relu":
@@ -551,7 +562,7 @@ class CuDNNCostFunc(TargetCostFunc):
             output = tvm.nd.array(np.zeros(output_shape, dtype=dtype), ctx)
 
             ftimer = func.time_evaluator(func.entry_name, ctx, number=NUM_MEASUREMENTS_PER_REPEAT, repeat=NUM_REPEATS)
-            perf = measure(ftimer, data, output)
+            perf = measure(ftimer, False, data, output)
 
 
         elif op_name == "maxpool2d":
@@ -598,7 +609,7 @@ class CuDNNCostFunc(TargetCostFunc):
             output = tvm.nd.array(np.zeros(output_shape, dtype=dtype), ctx)
 
             ftimer = func.time_evaluator(func.entry_name, ctx, number=NUM_MEASUREMENTS_PER_REPEAT, repeat=NUM_REPEATS)
-            perf = measure(ftimer, data, output)
+            perf = measure(ftimer, False, data, output)
 
         elif op_name == "bn":
             assert(is_tuplegetitem_node(expr))
@@ -653,7 +664,7 @@ class CuDNNCostFunc(TargetCostFunc):
             output = tvm.nd.array(np.zeros(output_shape, dtype=dtype), ctx)
 
             ftimer = func.time_evaluator(func.entry_name, ctx, number=NUM_MEASUREMENTS_PER_REPEAT, repeat=NUM_REPEATS)
-            perf = measure(ftimer, data, gamma, beta, mean, var, output)
+            perf = measure(ftimer, False, data, gamma, beta, mean, var, output)
 
         else:
             # NOT IMPLEMENTED
@@ -694,7 +705,7 @@ class TensorRTCostFunc(TargetCostFunc):
         # input_data = np.random.uniform(0, 1, input_shape).astype("float32")
         # module.set_input("data", input_data)
         ftimer = module.module.time_evaluator("run", dev, number=NUM_MEASUREMENTS_PER_REPEAT, repeat=NUM_REPEATS)
-        measure_info = measure(ftimer)
+        measure_info = measure(ftimer, is_net=False)
         return measure_info
 
         # from tvm.relay.op.contrib.tensorrt import partition_for_tensorrt

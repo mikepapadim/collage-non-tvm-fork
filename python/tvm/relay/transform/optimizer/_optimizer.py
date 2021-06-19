@@ -117,13 +117,16 @@ def run_two_level_opt(relay_expr):
     print(f"# of matched operators after first level : {n_ops}")
 
     # Warning(@soo): Network name is hardcoded for now. We can fix it later
-    # net_name = "resnet50"
+    net_name = "resnet50"
     # net_name = "resnext50_32x4d"
     # net_name = "nasrnn"
     # net_name = "nasneta"
-    net_name = "bert"
+    # net_name = "bert"
+
+    # Example: In case of ResNet50, pop_size * max_iter (=5) takes 2 min
     ev_searcher = EvolutionarySearcher(op_state_to_match_translator, relay_expr, net_name, n_ops=n_ops,
-                                       pop_size=5, max_iter=1)
+                                       pop_size=10, max_iter=36)
+
     second_opt_match = ev_searcher.search(rnd_seed=64)
 
     # print(f"fusion dic (before merge): {optimized_match}")

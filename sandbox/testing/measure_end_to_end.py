@@ -31,7 +31,7 @@ def measure_end_to_end_perf_tensorrt(mod, params, target_str, shape_dict, is_our
 
     ftimer = module.module.time_evaluator("run", dev, number=NUM_MEASUREMENTS_PER_REPEAT, repeat=NUM_REPEATS)
 
-    return measure(ftimer)
+    return measure(ftimer, is_net=False)
 
 def measure_end_to_end_perf_autotvm(net, params, target_str, shape_dict, is_ours):
     assert is_function_node(net)
@@ -54,7 +54,7 @@ def measure_end_to_end_perf_autotvm(net, params, target_str, shape_dict, is_ours
 
         ftimer = module.module.time_evaluator("run", dev, number=NUM_MEASUREMENTS_PER_REPEAT, repeat=NUM_REPEATS)
 
-    return measure(ftimer)
+    return measure(ftimer, is_net=False)
 
 def measure_end_to_end_perf_autosch(net, params, target_str, shape_dict, is_ours):
     assert is_function_node(net)
@@ -76,7 +76,7 @@ def measure_end_to_end_perf_autosch(net, params, target_str, shape_dict, is_ours
 
     ftimer = module.module.time_evaluator("run", dev, number=NUM_MEASUREMENTS_PER_REPEAT, repeat=NUM_REPEATS)
 
-    return measure(ftimer)
+    return measure(ftimer, is_net=False)
 
 
 def verify_network_output(net, params, target_str, shape_dict):

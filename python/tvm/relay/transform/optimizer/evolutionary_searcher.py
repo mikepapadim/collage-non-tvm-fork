@@ -30,6 +30,7 @@ from workloads.torch_workloads import *
 
 from .op_match_logger import OpMatchLogger
 from ..backend_operator.target import BEST_MATCH_LOG
+import time
 
 # the goal ('fitness') function to be maximized
 class EvolutionarySearcher:
@@ -141,6 +142,7 @@ class EvolutionarySearcher:
 
     def search(self, rnd_seed = 64):
         # Initialize
+        search_start_time = time.time()
         random.seed(rnd_seed)
 
         # Pair of individual and fitness score (negative inference time)
@@ -178,6 +180,7 @@ class EvolutionarySearcher:
 
         # Begin the evolution
         while g < self.max_iter:
+            start_time = time.time()
             # A new generation
             g = g + 1
             print("-- Generation %i --" % g)
@@ -230,7 +233,7 @@ class EvolutionarySearcher:
             print("  Max %s" % max(fits))
             print("  Avg %s" % mean)
             print("  Std %s" % std)
-
+            print()
             # Best will choose individual with the biggest negative inference time
             cur_pop_best_ind = tools.selBest(pop, 1)[0]
             # cur_pop_best_ind = tools.selWorst(pop, 1)[0]
@@ -242,10 +245,12 @@ class EvolutionarySearcher:
             best_match_log_path = f"{BEST_MATCH_LOG}_{self.net_name}.log"
             self.op_match_logger.save(self.expr, best_opt_match, log_path = best_match_log_path)
             print(f"Best individual is {best_ind}")
+            print(f"Elapsed time: {time.time()-start_time:.2f}s")
 
         print("-- End of (successful) evolution --")
 
         print(f"Final best individual is {best_ind}")
+        print(f"Total search time: {time.time() - search_start_time:.2f}s")
         # print(self.op_state_to_match_translator.optimized_match)
 
         # print("-"*30)

@@ -36,4 +36,4 @@ def measure_end_to_end_user_defined(net, params, target_str, shape_dict):
 
         ftimer = module.module.time_evaluator("run", dev, number=NUM_MEASUREMENTS_PER_REPEAT, repeat=NUM_REPEATS)
 
-    return measure(ftimer)
+    return measure(ftimer, is_net=True)
