@@ -31,6 +31,9 @@ from workloads.torch_workloads import *
 from .op_match_logger import OpMatchLogger
 from ..backend_operator.target import BEST_MATCH_LOG
 import time
+from functools import lru_cache
+
+import gc
 
 # the goal ('fitness') function to be maximized
 class EvolutionarySearcher:
@@ -42,7 +45,7 @@ class EvolutionarySearcher:
         self.n_ops = n_ops
 
         # duplicate checker
-        self._memo_state = {}
+        # self._memo_state = {}
         
         self.expr = expr
 
@@ -104,25 +107,30 @@ class EvolutionarySearcher:
     def get_hash_of_individual(self, individual):
         return "".join((map(str, individual)))
 
+    def get_individual_from_hash(self, individual_hash):
+        return [i for i in individual_hash]
+
+    def get_ind_perf_from_pair(self, individual):
+        return individual[1][0]
+
     def update_best_individual(self, best_ind, cur_pop_best_ind):
-        if best_ind == None or best_ind[0] < cur_pop_best_ind[0]:
+        if best_ind == None:
             best_ind = cur_pop_best_ind
+        else:
+            # Note that perf is negative inference time
+            best_ind_perf = self.get_ind_perf_from_pair(best_ind)
+            cur_pop_best_ind_perf = self.get_ind_perf_from_pair(cur_pop_best_ind)
+            print("*"*30)
+            print(best_ind, cur_pop_best_ind)
+            print(best_ind_perf, cur_pop_best_ind_perf)
+            if best_ind_perf > cur_pop_best_ind_perf:
+                best_ind = cur_pop_best_ind
 
         return best_ind
 
-    def measure_comp_graph(self, individual):
-        print("measure_comp_graph" + "-"*30)
-        # Note that the type of individual is (defined as) list
-
-        # If this individual was measured before, we can skip
-        # Warning(@Soo): If it takes up too much memory, we can comment this out
-        individual_hash = self.get_hash_of_individual(individual)
-        if individual_hash in self._memo_state:
-            print(f"[Evaluation] Individual({individual}) was measured before ")
-            return self._memo_state[individual_hash],
-
-        # Translate individual into match
-        print(f"[Evaluation] Individual: {individual}")
+    @lru_cache(maxsize=300)
+    def measure_with_lru_cache(self, individual_hash):
+        individual = self.get_individual_from_hash(individual_hash)
         opt_match = self.op_state_to_match_translator.translate(individual)
         # print(f"opt_match: {opt_match}")
 
@@ -135,10 +143,29 @@ class EvolutionarySearcher:
                                                               self.target_str, self.shape_dict)
         print(f"[Evaluation] individual {individual} perf: {mean_perf} ")
 
-        self._memo_state[individual_hash] = -mean_perf
+        # self._memo_state[individual_hash] = -mean_perf
+
+        # Deallocate opt_match
+        del opt_match
 
         return -mean_perf,
         # return sum(individual),
+
+    def measure_comp_graph(self, individual):
+        print("measure_comp_graph" + "-"*30)
+        # Note that the type of individual is (defined as) list
+
+        # If this individual was measured before, we can skip
+        # Warning(@Soo): If it takes up too much memory, we can comment this out
+        # individual_hash = self.get_hash_of_individual(individual)
+        # if individual_hash in self._memo_state:
+        #     print(f"[Evaluation] Individual({individual}) was measured before ")
+        #     return self._memo_state[individual_hash],
+
+        # Translate individual into match
+        print(f"[Evaluation] Individual: {individual}")
+        return self.measure_with_lru_cache(self.get_hash_of_individual(individual))
+
 
     def search(self, rnd_seed = 64):
         # Initialize
@@ -190,24 +217,25 @@ class EvolutionarySearcher:
             # Clone the selected individuals
             offspring = list(map(self.toolbox.clone, offspring))
 
-            # Apply crossover and mutation on the offspring
-            for child1, child2 in zip(offspring[::2], offspring[1::2]):
+            if g > 1:
+                # Apply crossover and mutation on the offspring
+                for child1, child2 in zip(offspring[::2], offspring[1::2]):
 
-                # cross two individuals with probability CXPB
-                if random.random() < self.cx_prob:
-                    self.toolbox.mate(child1, child2)
+                    # cross two individuals with probability CXPB
+                    if random.random() < self.cx_prob:
+                        self.toolbox.mate(child1, child2)
 
-                    # fitness values of the children
-                    # must be recalculated later
-                    del child1.fitness.values
-                    del child2.fitness.values
+                        # fitness values of the children
+                        # must be recalculated later
+                        del child1.fitness.values
+                        del child2.fitness.values
 
-            for mutant in offspring:
+                for mutant in offspring:
 
-                # mutate an individual with probability MUTPB
-                if random.random() < self.mut_prob:
-                    self.toolbox.mutate(mutant)
-                    del mutant.fitness.values
+                    # mutate an individual with probability MUTPB
+                    if random.random() < self.mut_prob:
+                        self.toolbox.mutate(mutant)
+                        del mutant.fitness.values
 
             # Evaluate the individuals with an invalid fitness
             invalid_ind = [ind for ind in offspring if not ind.fitness.valid]
@@ -234,7 +262,9 @@ class EvolutionarySearcher:
             print("  Avg %s" % mean)
             print("  Std %s" % std)
             print()
+
             # Best will choose individual with the biggest negative inference time
+            # Warning(@Soo): Note that best_ind is a pair of individual and its perf (negative inference time)
             cur_pop_best_ind = tools.selBest(pop, 1)[0]
             # cur_pop_best_ind = tools.selWorst(pop, 1)[0]
             cur_pop_best_ind = (cur_pop_best_ind, cur_pop_best_ind.fitness.values)
@@ -244,7 +274,20 @@ class EvolutionarySearcher:
             best_opt_match = self.op_state_to_match_translator.translate(best_ind[0])
             best_match_log_path = f"{BEST_MATCH_LOG}_{self.net_name}.log"
             self.op_match_logger.save(self.expr, best_opt_match, log_path = best_match_log_path)
-            print(f"Best individual is {best_ind}")
+
+            # Dump the best performance with best match
+            best_perf_log_path = f"{BEST_MATCH_LOG}_{self.net_name}_perf.log"
+            with open(best_perf_log_path, "w") as best_output:
+                best_output.write(f"Best perf: {self.get_ind_perf_from_pair(best_ind)}\n")
+                best_output.write(f"Best match: {best_ind[0]}\n")
+                best_output.write(f"-> 0 means optimal from first pass and 1 means TensorRT")
+
+            # Deallocate memory for useless space
+            if g < self.max_iter:
+                del best_opt_match
+                gc.collect()
+
+            print(f"Best individual up to this generation is {best_ind}")
             print(f"Elapsed time: {time.time()-start_time:.2f}s")
 
         print("-- End of (successful) evolution --")

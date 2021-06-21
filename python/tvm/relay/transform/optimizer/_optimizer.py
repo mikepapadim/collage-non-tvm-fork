@@ -125,11 +125,11 @@ def run_two_level_opt(relay_expr):
 
     # n_ops for each network (it may vary depending on trials)
     # Search space size: 2^n_ops
-    # ResNet: 65
-    # ResNext: 79
-    # Nasrnn: 97
-    # NasNet: 312
-    # BERT: 96
+    # ResNet: 65 / 169
+    # ResNext: 79 / 169
+    # Nasrnn: 97 / 311
+    # NasNet: 312 / 683
+    # BERT: 96 / 169
 
     # Evolutionary search hyperparameter info
     # Example: pop_size * max_iter (=1) roughly takes 2~4 secs
