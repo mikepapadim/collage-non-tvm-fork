@@ -117,15 +117,28 @@ def run_two_level_opt(relay_expr):
     print(f"# of matched operators after first level : {n_ops}")
 
     # Warning(@soo): Network name is hardcoded for now. We can fix it later
-    net_name = "resnet50"
-    # net_name = "resnext50_32x4d"
+    # net_name = "resnet50"
+    net_name = "resnext50_32x4d"
     # net_name = "nasrnn"
     # net_name = "nasneta"
     # net_name = "bert"
 
-    # Example: In case of ResNet50, pop_size * max_iter (=5) takes 2 min
+    # n_ops for each network (it may vary depending on trials)
+    # Search space size: 2^n_ops
+    # ResNet: 65
+    # ResNext: 79
+    # Nasrnn: 97
+    # NasNet: 312
+    # BERT: 96
+
+    # Evolutionary search hyperparameter info
+    # Example: pop_size * max_iter (=1) roughly takes 2~4 secs
+    # References: ResNet50, 10 * 56 (560) takes 1559.51 s (2.78 secs per pop size per iteration)
+    # References: ResNext50, 20 * 100 (2000) takes 4474 s (2.27 secs per pop size per iteration)
+    # With 2.27, 100 * 200 (20000) should roughly take around 12 hrs
+    # Note that some of individuals may not be measured in each generation if they are measured anytime earlier
     ev_searcher = EvolutionarySearcher(op_state_to_match_translator, relay_expr, net_name, n_ops=n_ops,
-                                       pop_size=10, max_iter=36)
+                                       pop_size=100, max_iter=200)
 
     second_opt_match = ev_searcher.search(rnd_seed=64)
 
