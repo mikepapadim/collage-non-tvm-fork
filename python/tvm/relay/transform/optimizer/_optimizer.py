@@ -135,12 +135,14 @@ def run_two_level_opt(relay_expr):
     # Example: pop_size * max_iter (=1) roughly takes 2~4 secs
     # References: ResNet50, 10 * 56 (560) takes 1559.51 s (2.78 secs per pop size per iteration)
     # References: ResNext50, 20 * 100 (2000) takes 4474 s (2.27 secs per pop size per iteration)
-    # With 2.27, 100 * 200 (20000) should roughly take around 12 hrs
+
+    # 100 * 200 (20000) leads to out of memory issues. We attribute this to large population issue of deap lib
     # Note that some of individuals may not be measured in each generation if they are measured anytime earlier
     ev_searcher = EvolutionarySearcher(op_state_to_match_translator, relay_expr, net_name, n_ops=n_ops,
-                                       pop_size=100, max_iter=200)
+                                       pop_size=20, max_iter=1000)
 
-    second_opt_match = ev_searcher.search(rnd_seed=64)
+    # second_opt_match = ev_searcher.search(rnd_seed=64)
+    second_opt_match = ev_searcher.search_test(rnd_seed=64)
 
     # print(f"fusion dic (before merge): {optimized_match}")
     # optimized_match = ExtCompilerOpMerger(optimized_match).merge(relay_expr)

@@ -101,7 +101,8 @@ class EvolutionarySearcher:
         # generation: each individual of the current generation
         # is replaced by the 'fittest' (best) of three individuals
         # drawn randomly from the current generation.
-        self.toolbox.register("select", tools.selTournament, tournsize=3)
+        # self.toolbox.register("select", tools.selTournament, tournsize=3)
+        self.toolbox.register("select", tools.selTournament, tournsize=5)
         # self.toolbox.register("select", tools.selBest)
 
     def get_hash_of_individual(self, individual):
@@ -120,14 +121,16 @@ class EvolutionarySearcher:
             # Note that perf is negative inference time
             best_ind_perf = self.get_ind_perf_from_pair(best_ind)
             cur_pop_best_ind_perf = self.get_ind_perf_from_pair(cur_pop_best_ind)
-            print("*"*30)
-            print(best_ind, cur_pop_best_ind)
-            print(best_ind_perf, cur_pop_best_ind_perf)
-            if best_ind_perf > cur_pop_best_ind_perf:
+            # print("*"*30)
+            # print(best_ind, cur_pop_best_ind)
+            # perf is negative inference time; the more the better
+            if best_ind_perf < cur_pop_best_ind_perf:
                 best_ind = cur_pop_best_ind
 
         return best_ind
 
+    # @lru_cache(maxsize=300) # oom error
+    # Suspect for oom
     @lru_cache(maxsize=300)
     def measure_with_lru_cache(self, individual_hash):
         individual = self.get_individual_from_hash(individual_hash)
@@ -166,6 +169,49 @@ class EvolutionarySearcher:
         print(f"[Evaluation] Individual: {individual}")
         return self.measure_with_lru_cache(self.get_hash_of_individual(individual))
 
+    def log_best_match_and_perf(self, best_ind, cur_pop_best_ind):
+        best_ind = self.update_best_individual(best_ind, cur_pop_best_ind)
+
+        # Dump the best match
+        best_opt_match = self.op_state_to_match_translator.translate(best_ind[0])
+        best_match_log_path = f"{BEST_MATCH_LOG}_{self.net_name}.log"
+        self.op_match_logger.save(self.expr, best_opt_match, log_path=best_match_log_path)
+
+        # Dump the best performance with best match
+        best_perf_log_path = f"{BEST_MATCH_LOG}_{self.net_name}_perf.log"
+        with open(best_perf_log_path, "w") as best_output:
+            best_output.write(f"Best perf: {self.get_ind_perf_from_pair(best_ind)}\n")
+            best_output.write(f"Best match: {best_ind[0]}\n")
+            best_output.write(f"-> 0 means optimal from first pass and 1 means TensorRT")
+
+        return best_ind, best_opt_match
+
+    # Random search; without evolutioinary method for debugging
+    def search_test(self, rnd_seed=64):
+        g = 0
+        best_ind = None
+        search_start_time = time.time()
+        while g < self.max_iter:
+            start_time = time.time()
+            g += 1
+            print(f"Generation {g} "+ "-" * 30)
+            pop = [np.random.randint(2, size=self.n_ops).tolist() for i in range(self.pop_size)]
+            if g == 1:
+                pop[0] = [0 for i in range(self.n_ops)]
+                pop[1] = [1 for i in range(self.n_ops)]
+
+            pop_hash = list(map(self.get_hash_of_individual, pop))
+            pop_eval = list(map(self.measure_with_lru_cache, pop_hash))
+            max_idx = np.argmax(pop_eval, axis=0)[0]
+            cur_pop_best_ind = (pop[max_idx], pop_eval[max_idx])
+            # print(f"Best individual before this generation is {best_ind}")
+            # print(f"Best individual for this generation is {cur_pop_best_ind}")
+            best_ind, best_opt_match = self.log_best_match_and_perf(best_ind, cur_pop_best_ind)
+            print(f"Best individual up to this generation is {best_ind}")
+            print(f"Elapsed time: {time.time() - start_time:.2f}s")
+
+        print(f"Total search time: {time.time() - search_start_time:.2f}s")
+        print("-" * 30)
 
     def search(self, rnd_seed = 64):
         # Initialize
@@ -213,74 +259,117 @@ class EvolutionarySearcher:
             print("-- Generation %i --" % g)
 
             # Select the next generation individuals
-            offspring = self.toolbox.select(pop, len(pop))
+            try:
+                offspring = self.toolbox.select(pop, len(pop))
+            except MemoryError as mem_err:
+                print(f"[Error message] {mem_err}")
+                print("[OOM error] selecting")
+            except Exception as inst:
+                print(f"[Error message] {inst}")
+                print("[Unexpected error] selecting")
+
             # Clone the selected individuals
-            offspring = list(map(self.toolbox.clone, offspring))
+            # Warning(@Soo): potential risk for oom error
+            try:
+                offspring = list(map(self.toolbox.clone, offspring))
+            except MemoryError as mem_err:
+                print(f"[Error message] {mem_err}")
+                print("[OOM error] cloning")
+            except Exception as inst:
+                print(f"[Error message] {inst}")
+                print("[Unexpected error] cloning")
 
             if g > 1:
-                # Apply crossover and mutation on the offspring
-                for child1, child2 in zip(offspring[::2], offspring[1::2]):
+                try:
+                    # Apply crossover and mutation on the offspring
+                    for child1, child2 in zip(offspring[::2], offspring[1::2]):
 
-                    # cross two individuals with probability CXPB
-                    if random.random() < self.cx_prob:
-                        self.toolbox.mate(child1, child2)
+                        # cross two individuals with probability CXPB
+                        if random.random() < self.cx_prob:
+                            self.toolbox.mate(child1, child2)
 
-                        # fitness values of the children
-                        # must be recalculated later
-                        del child1.fitness.values
-                        del child2.fitness.values
+                            # fitness values of the children
+                            # must be recalculated later
+                            del child1.fitness.values
+                            del child2.fitness.values
 
-                for mutant in offspring:
+                except MemoryError as mem_err:
+                    print(f"[Error message] {mem_err}")
+                    print("[OOM error] crossover")
+                except Exception as inst:
+                    print(f"[Error message] {inst}")
+                    print("[Unexpected error] crossover")
 
-                    # mutate an individual with probability MUTPB
-                    if random.random() < self.mut_prob:
-                        self.toolbox.mutate(mutant)
-                        del mutant.fitness.values
+                try:
+                    for mutant in offspring:
 
-            # Evaluate the individuals with an invalid fitness
-            invalid_ind = [ind for ind in offspring if not ind.fitness.valid]
-            fitnesses = map(self.toolbox.evaluate, invalid_ind)
-            for ind, fit in zip(invalid_ind, fitnesses):
-                ind.fitness.values = fit
+                        # mutate an individual with probability MUTPB
+                        if random.random() < self.mut_prob:
+                            self.toolbox.mutate(mutant)
+                            del mutant.fitness.values
+                except MemoryError as mem_err:
+                    print(f"[Error message] {mem_err}")
+                    print("[OOM error] mutation")
+                except Exception as inst:
+                    print(f"[Error message] {inst}")
+                    print("[Unexpected error] mutation")
+
+            try:
+                # Evaluate the individuals with an invalid fitness
+                invalid_ind = [ind for ind in offspring if not ind.fitness.valid]
+                fitnesses = map(self.toolbox.evaluate, invalid_ind)
+                for ind, fit in zip(invalid_ind, fitnesses):
+                    ind.fitness.values = fit
+
+            except MemoryError as mem_err:
+                print(f"[Error message] {mem_err}")
+                print("[OOM error] eval")
+            except Exception as inst:
+                print(f"[Error message] {inst}")
+                print("[Unexpected error] eval")
 
             print("  Evaluated %i individuals" % len(invalid_ind))
 
-            # The population is entirely replaced by the offspring
-            pop[:] = offspring
+            try:
+                # The population is entirely replaced by the offspring
+                pop[:] = offspring
 
-            # Gather all the fitnesses in one list and print the stats
-            fits = [ind.fitness.values[0] for ind in pop]
+                # Gather all the fitnesses in one list and print the stats
+                fits = [ind.fitness.values[0] for ind in pop]
 
-            length = len(pop)
-            mean = sum(fits) / length
-            sum2 = sum(x * x for x in fits)
-            std = abs(sum2 / length - mean ** 2) ** 0.5
+                length = len(pop)
+                mean = sum(fits) / length
+                sum2 = sum(x * x for x in fits)
+                std = abs(sum2 / length - mean ** 2) ** 0.5
 
-            print("Current generation statistics")
-            print("  Min %s" % min(fits))
-            print("  Max %s" % max(fits))
-            print("  Avg %s" % mean)
-            print("  Std %s" % std)
-            print()
+                print("Current generation statistics")
+                print("  Min %s" % min(fits))
+                print("  Max %s" % max(fits))
+                print("  Avg %s" % mean)
+                print("  Std %s" % std)
+                print()
+            except MemoryError as mem_err:
+                print(f"[Error message] {mem_err}")
+                print("[OOM error] stat")
+            except Exception as inst:
+                print(f"[Error message] {inst}")
+                print("[Unexpected error] stat")
 
-            # Best will choose individual with the biggest negative inference time
-            # Warning(@Soo): Note that best_ind is a pair of individual and its perf (negative inference time)
-            cur_pop_best_ind = tools.selBest(pop, 1)[0]
-            # cur_pop_best_ind = tools.selWorst(pop, 1)[0]
-            cur_pop_best_ind = (cur_pop_best_ind, cur_pop_best_ind.fitness.values)
-            best_ind = self.update_best_individual(best_ind, cur_pop_best_ind)
 
-            # Dump the best match
-            best_opt_match = self.op_state_to_match_translator.translate(best_ind[0])
-            best_match_log_path = f"{BEST_MATCH_LOG}_{self.net_name}.log"
-            self.op_match_logger.save(self.expr, best_opt_match, log_path = best_match_log_path)
+            try:
+                # Best will choose individual with the biggest negative inference time
+                # Warning(@Soo): Note that best_ind is a pair of individual and its perf (negative inference time)
+                cur_pop_best_ind = tools.selBest(pop, 1)[0]
+                # cur_pop_best_ind = tools.selWorst(pop, 1)[0]
+                cur_pop_best_ind = (cur_pop_best_ind, cur_pop_best_ind.fitness.values)
+                best_ind, best_opt_match = self.log_best_match_and_perf(best_ind, cur_pop_best_ind)
 
-            # Dump the best performance with best match
-            best_perf_log_path = f"{BEST_MATCH_LOG}_{self.net_name}_perf.log"
-            with open(best_perf_log_path, "w") as best_output:
-                best_output.write(f"Best perf: {self.get_ind_perf_from_pair(best_ind)}\n")
-                best_output.write(f"Best match: {best_ind[0]}\n")
-                best_output.write(f"-> 0 means optimal from first pass and 1 means TensorRT")
+            except MemoryError as mem_err:
+                print(f"[Error message] {mem_err}")
+                print("[OOM error] logging")
+            except Exception as inst:
+                print(f"[Error message] {inst}")
+                print("[Unexpected error] logging")
 
             # Deallocate memory for useless space
             if g < self.max_iter:
