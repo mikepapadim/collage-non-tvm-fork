@@ -1,6 +1,8 @@
 from enum import IntEnum
 from ..backend_operator.target import *
 
+#import gc
+
 CONFIG_VAR_USER_DEFINED_FUSION_PASS = "relay.FuseOps.UserDefinedFusion"
 
 class CustomFusionPass(IntEnum):
@@ -14,7 +16,7 @@ class CustomFusionPass(IntEnum):
     def has_value(cls, value):
         return value in cls._value2member_map_
 
-def measure_end_to_end_user_defined(net, params, target_str, shape_dict):
+def measure_end_to_end_user_defined(net, params, shape_dict, target_str):
     assert is_function_node(net)
 
     # print(f"[measure_end_to_end_user_defined] User-defined fusion (ID: {CustomFusionPass.USER_DEFINED_FUSION})")
@@ -24,7 +26,7 @@ def measure_end_to_end_user_defined(net, params, target_str, shape_dict):
         with tvm.transform.PassContext(opt_level=OPT_LEVEL.get()):
             lib = relay.build(net, target_str, params=params)
 
-        print(f"[measure_end_to_end_user_defined] We successfully built the network")
+        #print(f"[measure_end_to_end_user_defined] We successfully built the network")
         # Create workload
         dev = tvm.device(target_str, 0)
         module = runtime.GraphModule(lib["default"](dev))
@@ -36,4 +38,14 @@ def measure_end_to_end_user_defined(net, params, target_str, shape_dict):
 
         ftimer = module.module.time_evaluator("run", dev, number=NUM_MEASUREMENTS_PER_REPEAT, repeat=NUM_REPEATS)
 
-    return measure(ftimer, is_net=True)
+    perf, std = measure(ftimer, is_net=True)
+
+    #del dev
+    #del lib
+    #del module
+    #del ftimer
+    #del input_name
+    #del input_shape
+    #gc.collect()
+
+    return perf, std

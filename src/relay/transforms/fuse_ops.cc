@@ -115,7 +115,7 @@ namespace tvm {
       GroupIdOpNamePair() : GroupIdOpNamePair(kInvalidGroupIdOpNamePair) {}
 
       void debug_print() {
-        std::cerr << "Pair: " << group_id << "," << backend_op_name << std::endl;
+        //std::cerr << "Pair: " << group_id << "," << backend_op_name << std::endl;
       }
 
     };
@@ -975,13 +975,13 @@ namespace tvm {
 
       // If we don't use DP, execute original TVM fusion
       if (graph.expr_to_backend_op == nullptr) {
-        std::cerr << "original fusion pass" << std::endl;
+        //std::cerr << "original fusion pass" << std::endl;
         // run fusion algorithm.
         for (int phase = 0; phase < 3; ++phase) {
           this->RunFuse(graph, post_dom_tree, phase);
         }
       } else {
-        std::cerr << "Custom fusion pass" << std::endl;
+        //std::cerr << "Custom fusion pass" << std::endl;
         is_custom_fusion_pass_ = true;
         this->RunFuseWithMap(graph, post_dom_tree);
       }
@@ -1002,7 +1002,7 @@ namespace tvm {
           gmap_[graph.post_dfs_order[nid]->ref] = groups[nid];
         }
         // The following line can be used for debug.
-        this->DebugDumpGroup(body);
+        //this->DebugDumpGroup(body);
         return this->Mutate(body);
       }
 
@@ -1186,18 +1186,18 @@ namespace tvm {
       explicit ExtCompilerMutator(const IRModule& module) : module_(module) {}
       // Run the transform
       IRModule Transform() {
-        std::cerr << "\tExternal compiler mutation begins!" << "\n\n";
+        //std::cerr << "\tExternal compiler mutation begins!" << "\n\n";
         // Update expression and module accorindlgy.
         // other functions in a module than main don't need to be updated.
         auto fn_node = module_->Lookup("main").as<FunctionNode>();
         if (fn_node->GetAttr<IntImm>(attr::kCustomFusionPass).defined()) {
-          std::cerr << "Custom fusion pass [ExtCompiler] " << std::endl;
+          //std::cerr << "Custom fusion pass [ExtCompiler] " << std::endl;
           auto new_main = this->Mutate(module_->Lookup("main"));
           module_->Update(module_->GetGlobalVar("main"),
                           Downcast<Function>(new_main));
           module_ = transform::InferType()(module_);
 
-          std::cerr << "\tExternal compiler mutation is done!" << "\n\n";
+          //std::cerr << "\tExternal compiler mutation is done!" << "\n\n";
 //          std::cerr << "\tFused expressions (after extcompiler): " << new_main << "\n\n";
 
 //          std::cerr << "\txxxxxxxxxxxxxxxxxxxxxxxx" << std::endl;
@@ -1366,13 +1366,13 @@ namespace tvm {
               << "is not expected\n\n";
         }
 
-        std::cerr << "\t[Start] Custom fusion - " << custom_fusion_pass_str << "\n\n";
+        //std::cerr << "\t[Start] Custom fusion - " << custom_fusion_pass_str << "\n\n";
         auto fdp_call = tvm::runtime::Registry::Get(custom_fusion_pass_str);
         Map<Expr, String> backend_op_match = (*fdp_call)(expr);
-        std::cerr << "\t[Done] Custom fusion pairs are ready - " << custom_fusion_pass_str << "\n\n";
+        //std::cerr << "\t[Done] Custom fusion pairs are ready - " << custom_fusion_pass_str << "\n\n";
 
         fused_expr = FuseMutator().Transform(expr, fuse_opt_level, max_fuse_depth, backend_op_match);
-        std::cerr << "\t[Done] Relay IR reflected fusion pairs accordingly" << "\n\n";
+        //std::cerr << "\t[Done] Relay IR reflected fusion pairs accordingly" << "\n\n";
 
         // Debug
 //        std::cerr << "\tFused expressions (before extcompiler): " << fused_expr << "\n\n";

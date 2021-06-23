@@ -29,7 +29,7 @@ def setup_backend_op_lib(network_expr, targets, batch_size):
 
 @tvm._ffi.register_func("relay.transform.optimizer.get_user_fusion")
 def get_user_fusion(relay_expr):
-    print("User-defined fusion", file=sys.stderr)
+    #print("User-defined fusion", file=sys.stderr)
     relay_expr = get_function_body(relay_expr)
     opt_match = OpMatchReader().read(relay_expr)
     return opt_match
@@ -117,8 +117,8 @@ def run_two_level_opt(relay_expr):
     print(f"# of matched operators after first level : {n_ops}")
 
     # Warning(@soo): Network name is hardcoded for now. We can fix it later
-    # net_name = "resnet50"
-    net_name = "resnext50_32x4d"
+    net_name = "resnet50"
+    #net_name = "resnext50_32x4d"
     # net_name = "nasrnn"
     # net_name = "nasneta"
     # net_name = "bert"
@@ -136,13 +136,14 @@ def run_two_level_opt(relay_expr):
     # References: ResNet50, 10 * 56 (560) takes 1559.51 s (2.78 secs per pop size per iteration)
     # References: ResNext50, 20 * 100 (2000) takes 4474 s (2.27 secs per pop size per iteration)
 
+
     # 100 * 200 (20000) leads to out of memory issues. We attribute this to large population issue of deap lib
     # Note that some of individuals may not be measured in each generation if they are measured anytime earlier
     ev_searcher = EvolutionarySearcher(op_state_to_match_translator, relay_expr, net_name, n_ops=n_ops,
-                                       pop_size=20, max_iter=1000)
+                                       pop_size=10, max_iter=1)
 
-    # second_opt_match = ev_searcher.search(rnd_seed=64)
-    second_opt_match = ev_searcher.search_test(rnd_seed=64)
+    second_opt_match = ev_searcher.search(rnd_seed=64)
+    #second_opt_match = ev_searcher.search_test(rnd_seed=64)
 
     # print(f"fusion dic (before merge): {optimized_match}")
     # optimized_match = ExtCompilerOpMerger(optimized_match).merge(relay_expr)

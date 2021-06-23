@@ -3,7 +3,7 @@ from ..backend_operator.target import USER_DEFINED_MATCH_LOG
 from ..backend_operator.utils import *
 import pandas as pd
 from tvm.ir import Op
-
+from ..utility.debug_helper import printe
 
 DUMMY_VAL = 0
 COL_NAME = 'annotation'
@@ -44,6 +44,9 @@ class OpMatchLogger(ExprVisitor):
         df.columns = [COL_NAME]
         df.index.name = "post_dfs_order"
         df.to_csv(log_path)
+
+
+        printe(df)
 
     # Visit Relay expressions in post-order
     def visit(self, expr):
