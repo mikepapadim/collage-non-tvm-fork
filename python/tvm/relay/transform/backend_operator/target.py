@@ -13,13 +13,14 @@ from .utils import *
 
 from tvm.contrib import graph_executor as runtime
 # from tvm.contrib import graph_executor
+from ..utility.debug_helper import printe
 
 # only collect results whose standard deviation is below this
-# MAX_STANDARD_DEVIATION = 5E-04
-MAX_STANDARD_DEVIATION = 5E-03
+MAX_STANDARD_DEVIATION = 5E-04
+# MAX_STANDARD_DEVIATION = 5E-03
 NUM_REPEATS = 3
-#NUM_MEASUREMENTS_PER_REPEAT = 100
-NUM_MEASUREMENTS_PER_REPEAT = 20
+NUM_MEASUREMENTS_PER_REPEAT = 100
+# NUM_MEASUREMENTS_PER_REPEAT = 20
 OPT_LEVEL = OptLevel(3)
 EXTERNAL_COMPILERS = ['tensorrt']
 
@@ -60,9 +61,10 @@ def measure(ftimer, is_net, *args):
     while True:
         perfs = np.array(ftimer(*args).results) * 1000  # convert to millisecond
         std_perf = np.std(perfs)
-        print(f"Mean, std of perf : {np.mean(perfs)}, {std_perf}")
+        printe(f"Mean, std of perf : {np.mean(perfs)}, {std_perf}")
 
-        if is_net or std_perf <= MAX_STANDARD_DEVIATION:
+        if std_perf <= MAX_STANDARD_DEVIATION:
+        #if is_net or std_perf <= MAX_STANDARD_DEVIATION:
             mean_perf = np.mean(perfs)
             break
 

@@ -46,6 +46,9 @@ class EvolutionarySearcher:
         self.op_match_logger = OpMatchLogger()
         self.n_ops = n_ops
 
+        # Debug usage to limit # of measurements
+        self.n_test = 0
+
         # duplicate checker
         # self._memo_state = {}
 
@@ -55,7 +58,7 @@ class EvolutionarySearcher:
         self.net_name = net_name
         self.target_str = 'cuda'
 
-        #self.mod, self.params, self.shape_dict, _ = get_network_from_torch(net_name, 1)
+        self.mod, self.params, self.shape_dict, _ = get_network_from_torch(net_name, 1)
         # self.mod, self.params = get_network_from_relay(net_name, 1)
         # self.shape_dict = {"data": [1, 64, 56, 56]}
 
@@ -111,7 +114,7 @@ class EvolutionarySearcher:
         return "".join((map(str, individual)))
 
     def get_individual_from_hash(self, individual_hash):
-        return [i for i in individual_hash]
+        return [int(i) for i in individual_hash]
 
     def get_ind_perf_from_pair(self, individual):
         return individual[1][0]
@@ -131,6 +134,21 @@ class EvolutionarySearcher:
 
         return best_ind
 
+    # We use subprocess to prevent memory leak;
+    # We can remove memory usage of subprocess by discarding subprocess
+    # There is no more oom with this!
+    def measure_subprocess(self):
+        from subprocess import Popen, PIPE, STDOUT, DEVNULL
+        cmd = ['python3',  'testing/tmp_measure_network.py', self.net_name, self.target_str]
+        p = Popen(cmd, stdout=DEVNULL, stderr=PIPE)
+        p.wait()
+        out, err = p.communicate()
+        res = err.decode("utf-8").partition("##result:")
+        assert(len(res)==3)
+        numbers = res[2].split()
+        mean_perf, std_perf = float(numbers[0]), float(numbers[1])
+
+        return mean_perf, std_perf
 
     @lru_cache(maxsize=300)
     def measure_with_lru_cache(self, individual_hash):
@@ -144,20 +162,21 @@ class EvolutionarySearcher:
         #printe(f"[Evaluation] Match log saved")
         # Measure entire computation graph with opt_match
 
-        from subprocess import Popen, PIPE, STDOUT, DEVNULL
-        cmd = ['python3',  'testing/tmp_measure_network.py', self.net_name, self.target_str]
-        p = Popen(cmd, stdout=DEVNULL, stderr=PIPE)
-        p.wait()
-        out, err = p.communicate()
-        res = err.decode("utf-8").partition("##result:")
-        assert(len(res)==3)
-        numbers = res[2].split()
-        mean_perf, std_perf = float(numbers[0]), float(numbers[1])
+        perf_arr = []
+        for i in range(10):
+            # mean_perf, std_perf = measure_end_to_end_user_defined(self.mod["main"], self.params,
+            #                                                       self.shape_dict, self.target_str)
 
-        #mean_perf, std_perf = measure_end_to_end_user_defined(self.mod["main"], self.params,
-        #                                                      self.target_str, self.shape_dict)
-        printe(f"\t> individual {individual} perf: {mean_perf} ")
+            # Warning(@Sung): USE this function to PREVENT MEMORY LEAK!
+            mean_perf, std_perf = self.measure_subprocess()
+            # printe(f"\t> individual {individual} perf: {mean_perf} ")
+            perf_arr.append(mean_perf)
+        print(f"[Total perf] (mean, std) = ({np.mean(perf_arr)}, {np.std(perf_arr)}")
 
+        self.n_test += 1
+        if self.n_test == 2:
+            import sys
+            sys.exit(0)
         # self._memo_state[individual_hash] = -mean_perf
 
         # Deallocate opt_match

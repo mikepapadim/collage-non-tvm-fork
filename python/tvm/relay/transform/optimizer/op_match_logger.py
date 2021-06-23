@@ -45,8 +45,7 @@ class OpMatchLogger(ExprVisitor):
         df.index.name = "post_dfs_order"
         df.to_csv(log_path)
 
-
-        printe(df)
+        # printe(df)
 
     # Visit Relay expressions in post-order
     def visit(self, expr):

@@ -8,8 +8,6 @@ from .pattern import Pattern
 
 import sys
 
-def eprint(*args, **kwargs):
-    print(*args, file=sys.stderr, **kwargs)
 
 # an example of a diamond pattern that occurs in resnet-18
 def get_diamond():
