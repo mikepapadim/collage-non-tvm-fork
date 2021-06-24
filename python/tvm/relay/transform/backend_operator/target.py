@@ -19,8 +19,8 @@ from ..utility.debug_helper import printe
 MAX_STANDARD_DEVIATION = 5E-04
 # MAX_STANDARD_DEVIATION = 5E-03
 NUM_REPEATS = 3
-NUM_MEASUREMENTS_PER_REPEAT = 100
-# NUM_MEASUREMENTS_PER_REPEAT = 20
+NUM_MEASUREMENTS_PER_REPEAT = 10
+#NUM_MEASUREMENTS_PER_REPEAT = 20
 OPT_LEVEL = OptLevel(3)
 EXTERNAL_COMPILERS = ['tensorrt']
 
@@ -53,8 +53,8 @@ def measure(ftimer, is_net, *args):
     # Warm-up Phase: Run without measurement
     # TimeEvaluator itself come with the warmup,
     # so we don't need this part technically.
-    # for i in range(5):
-    #     ftimer(*args)
+    for i in range(3):
+         ftimer(*args)
 
     mean_perf, std_perf = None, None
     # Measure performance. Continue until we get results within the max standard deviation
