@@ -123,7 +123,7 @@ def run_op_level_opt(relay_expr):
     # targets = [Target.TVM_GPU_AUTOTVM]
 
     # Sanity check: Enable all backends except for TensorRT
-    targets = [Target.TVM_GPU_AUTOTVM, Target.CUDNN, Target.CUBLAS]
+    targets = [Target.TVM_GPU_AUTOTVM, Target.CUDNN, Target.CUBLAS, Target.TENSORRT]
 
     batch_size = 1
     backendop_lib = setup_backend_op_lib(relay_expr, targets, batch_size)
@@ -206,14 +206,13 @@ def run_two_level_opt(relay_expr):
     if net_name == "nasneta":
         OPT_LEVEL.set(2)
 
-
     # n_ops for each network (it may vary depending on trials)
     # Search space size: 2^n_ops
-    # ResNet: 65 / 169
-    # ResNext: 79 / 169
-    # Nasrnn: 97 / 311
-    # NasNet: 312 / 683
-    # BERT: 96 / 169
+    # ResNet: 169 -> 65 -> 19
+    # ResNext: 169 -> 79
+    # Nasrnn: 311 -> 97
+    # NasNet: 683 -> 312
+    # BERT: 169 -> 96
 
     # Evolutionary search hyperparameter info
     # Example: pop_size * max_iter (=1) roughly takes 2~4 secs
@@ -223,9 +222,11 @@ def run_two_level_opt(relay_expr):
 
     # 100 * 200 (20000) leads to out of memory issues. We attribute this to large population issue of deap lib
     # Note that some of individuals may not be measured in each generation if they are measured anytime earlier
+
+    # cx_prob = 0.8, mut_prob = 0.5, resnet50: 2.512
+
     ev_searcher = EvolutionarySearcher(op_state_to_match_translator, relay_expr, net_name, n_ops=n_ops,
                                        pop_size=2, max_iter=1)
-
     second_opt_match = ev_searcher.search(rnd_seed=64)
     OpMatchLogger().save(relay_expr, second_opt_match, log_path=USER_DEFINED_MATCH_LOG)
     #second_opt_match = ev_searcher.search_test(rnd_seed=64)

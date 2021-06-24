@@ -68,6 +68,10 @@ class EvolutionarySearcher:
         self.mut_prob = mut_prob
         self.max_iter = max_iter
 
+
+        self.visited = dict()
+        self.numDup = 0
+
         # Prepare creators
         creator.create("FitnessMax", base.Fitness, weights=(1.0,))
         creator.create("Individual", list, fitness=creator.FitnessMax)
@@ -150,7 +154,7 @@ class EvolutionarySearcher:
 
         return mean_perf, std_perf
 
-    @lru_cache(maxsize=300)
+    #@lru_cache(maxsize=300)
     def measure_with_lru_cache(self, individual_hash):
         individual = self.get_individual_from_hash(individual_hash)
         opt_match = self.op_state_to_match_translator.translate(individual)
@@ -162,29 +166,35 @@ class EvolutionarySearcher:
         #printe(f"[Evaluation] Match log saved")
         # Measure entire computation graph with opt_match
 
-        # Debug code
-        # perf_arr = []
-        # for i in range(1):
-        #     # mean_perf, std_perf = measure_end_to_end_user_defined(self.mod["main"], self.params,
-        #     #                                                       self.shape_dict, self.target_str)
-        #
-        #     # Warning(@Sung): USE this function to PREVENT MEMORY LEAK!
-        #     mean_perf, std_perf = self.measure_subprocess()
-        #     # printe(f"\t> individual {individual} perf: {mean_perf} ")
-        #     perf_arr.append(mean_perf)
-        #
-        # print(f"[Total perf] (mean, std) = ({np.mean(perf_arr)}, {np.std(perf_arr)}")
-        #
-        # self.n_test += 1
-        # if self.n_test == 2:
-        #     import sys
-        #     sys.exit(0)
+        # Debugging code
+        """
+        perf_arr = []
+        for i in range(10):
+            # mean_perf, std_perf = measure_end_to_end_user_defined(self.mod["main"], self.params,
+            #                                                       self.shape_dict, self.target_str)
+
+            # Warning(@Sung): USE this function to PREVENT MEMORY LEAK!
+            mean_perf, std_perf = self.measure_subprocess()
+            printe(f"\t> individual {individual} perf: {mean_perf} ")
+            perf_arr.append(mean_perf)
+        print(f"[Total perf] (mean, std) = ({np.mean(perf_arr)}, {np.std(perf_arr)}")
 
 
-        # Warning(@Soo): This is just for debugging
-        # self.mod, self.params, self.shape_dict, _ = get_network_from_torch(self.net_name, 1)
-        mean_perf, std_perf = measure_end_to_end_user_defined(self.mod["main"], self.params, self.shape_dict, self.target_str)
-        # mean_perf, std_perf = self.measure_subprocess()
+
+        self.n_test += 1
+        if self.n_test == 2:
+            import sys
+            sys.exit(0)
+        """
+
+        if individual_hash in self.visited:
+            mean_perf = self.visited[individual_hash]
+        else:
+            self.numDup += 1
+            # mean_perf, std_perf = self.measure_subprocess()
+            mean_perf, std_perf = measure_end_to_end_user_defined(self.mod["main"], self.params, self.shape_dict,
+                                                                  self.target_str)
+        # self._memo_state[individual_hash] = -mean_perf
 
         # Deallocate opt_match
         del opt_match
@@ -193,7 +203,7 @@ class EvolutionarySearcher:
         # return sum(individual),
 
     def measure_comp_graph(self, individual):
-        printe("measure_comp_graph" + "-"*30)
+        #printe("measure_comp_graph" + "-"*30)
         # Note that the type of individual is (defined as) list
 
         # If this individual was measured before, we can skip
@@ -204,7 +214,8 @@ class EvolutionarySearcher:
         #     return self._memo_state[individual_hash],
 
         # Translate individual into match
-        printe(f"[Evaluation] Individual: {individual}")
+        #printe(f"[Evaluation] Individual: {individual}")
+
         return self.measure_with_lru_cache(self.get_hash_of_individual(individual))
 
     def log_best_match_and_perf(self, best_ind, cur_pop_best_ind):
@@ -232,7 +243,7 @@ class EvolutionarySearcher:
         while g < self.max_iter:
             start_time = time.time()
             g += 1
-            printe(f"Generation {g} "+ "-" * 30)
+            printe(f"\nGeneration {g} "+ "-" * 30)
             pop = [np.random.randint(2, size=self.n_ops).tolist() for i in range(self.pop_size)]
             if g == 1:
                 pop[0] = [0 for i in range(self.n_ops)]
@@ -255,6 +266,7 @@ class EvolutionarySearcher:
         #printe("-" * 30)
 
         return best_opt_match
+
 
     def search(self, rnd_seed = 64):
         # Initialize
@@ -301,10 +313,10 @@ class EvolutionarySearcher:
 
         # Begin the evolution
         while g < self.max_iter:
-            start_time = time.time()
             # A new generation
             g = g + 1
-            printe("-- Generation %i --" % g)
+            printe("\n-- Generation %i --" % g)
+            self.numDup = 0
 
             if g > 1:
                 # Select the next generation individuals
@@ -335,10 +347,12 @@ class EvolutionarySearcher:
 
                 # Evaluate the individuals with an invalid fitness
                 invalid_ind = [ind for ind in offspring if not ind.fitness.valid]
+                eval_start_time = time.time()
                 fitnesses = map(self.toolbox.evaluate, invalid_ind)
                 for ind, fit in zip(invalid_ind, fitnesses):
                     ind.fitness.values = fit
-
+                eval_end_time = time.time()
+                printe(f" Evaluation Elapsed time: {eval_end_time - eval_start_time:.2f}s")
                 printe("  Evaluated %i individuals" % len(invalid_ind))
 
                 # The population is entirely replaced by the offspring
@@ -351,12 +365,13 @@ class EvolutionarySearcher:
             mean = sum(fits) / length
             sum2 = sum(x * x for x in fits)
             std = abs(sum2 / length - mean ** 2) ** 0.5
-            printe(pop)
-            printe("Current generation statistics")
-            printe("  Min %s" % min(fits))
-            printe("  Max %s" % max(fits))
-            printe("  Avg %s" % mean)
-            printe("  Std %s" % std)
+
+            printe("### Current generation statistics")
+            printe("  Duplication Rate: %.2f" % (self.numDup/self.pop_size))
+            printe("  Min: %s" % min(fits))
+            printe("  Max: %s" % max(fits))
+            printe("  Avg: %s" % mean)
+            printe("  Std: %s" % std)
             printe("")
 
             # Best will choose individual with the biggest negative inference time
@@ -373,7 +388,6 @@ class EvolutionarySearcher:
                 gc.collect()
 
             printe(f"Best individual up to this generation is {best_ind}")
-            printe(f"Elapsed time: {time.time()-start_time:.2f}s")
 
         printe("-- End of (successful) evolution --")
 

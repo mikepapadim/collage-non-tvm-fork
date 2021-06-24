@@ -1,115 +1,471 @@
 {
+    "op_type: add+sigmoid, data_shape: (1, 512), attrs: frozenset({('sigmoid', '', 'add', '')}), op_name: tvmgpu-autotvm_add+sigmoid": [
+        0.0024045833333333332,
+        1.8199487782780066e-05
+    ],
+    "op_type: add+tanh, data_shape: (1, 512), attrs: frozenset({('tanh', '', 'add', '')}), op_name: tvmgpu-autotvm_add+tanh": [
+        0.002428583333333333,
+        2.4779691057171856e-05
+    ],
+    "op_type: add, data_shape: (1, 1024, 14, 14), attrs: frozenset({('add', '')}), op_name: tensorrt_add": [
+        0.013814366666666666,
+        0.0003731097455470997
+    ],
     "op_type: add, data_shape: (1, 1024, 14, 14), attrs: frozenset({('add', '')}), op_name: tvmgpu-autotvm_add": [
         0.005358383333333334,
         6.645500148387765e-05
+    ],
+    "op_type: add, data_shape: (1, 128, 28, 28), attrs: frozenset({('add', '')}), op_name: tvmgpu-autotvm_add": [
+        0.00346954,
+        1.8852428667592578e-05
+    ],
+    "op_type: add, data_shape: (1, 2048, 7, 7), attrs: frozenset({('add', '')}), op_name: tensorrt_add": [
+        0.009966866666666666,
+        9.207766045874261e-05
     ],
     "op_type: add, data_shape: (1, 2048, 7, 7), attrs: frozenset({('add', '')}), op_name: tvmgpu-autotvm_add": [
         0.0036218499999999994,
         7.000508314877319e-05
     ],
+    "op_type: add, data_shape: (1, 256, 14, 14), attrs: frozenset({('add', '')}), op_name: tvmgpu-autotvm_add": [
+        0.00268554,
+        1.5518855198327837e-05
+    ],
+    "op_type: add, data_shape: (1, 256, 56, 56), attrs: frozenset({('add', '')}), op_name: tensorrt_add": [
+        0.03517223333333334,
+        7.58032687656379e-05
+    ],
     "op_type: add, data_shape: (1, 256, 56, 56), attrs: frozenset({('add', '')}), op_name: tvmgpu-autotvm_add": [
         0.026995166666666667,
         9.979819915988212e-05
+    ],
+    "op_type: add, data_shape: (1, 512), attrs: frozenset({('add', '')}), op_name: tvmgpu-autotvm_add": [
+        0.002479673333333333,
+        3.1805777602330065e-05
+    ],
+    "op_type: add, data_shape: (1, 512, 28, 28), attrs: frozenset({('add', '')}), op_name: tensorrt_add": [
+        0.022085333333333332,
+        4.676332846247066e-05
     ],
     "op_type: add, data_shape: (1, 512, 28, 28), attrs: frozenset({('add', '')}), op_name: tvmgpu-autotvm_add": [
         0.014311983333333334,
         7.034202552923481e-05
     ],
+    "op_type: add, data_shape: (1, 64, 56, 56), attrs: frozenset({('add', '')}), op_name: tvmgpu-autotvm_add": [
+        0.005222716666666666,
+        1.847093632951186e-05
+    ],
+    "op_type: avgpool2d+add, data_shape: (1, 128, 28, 28), attrs: frozenset({('add', '', 'nn.avg_pool2d', (('pool_size', (3, 3)), ('strides', (1, 1)), ('padding', (1, 1, 1, 1)), ('layout', ('N', 'C', 'H', 'W')), ('ceil_mode', 0), ('count_include_pad', 0)))}), op_name: tvmgpu-autotvm_avgpool2d+add": [
+        0.005822396666666667,
+        2.51800136792829e-05
+    ],
+    "op_type: avgpool2d+add, data_shape: (1, 128, 56, 56), attrs: frozenset({('add', '', 'nn.avg_pool2d', (('pool_size', (3, 3)), ('strides', (2, 2)), ('padding', (1, 1, 1, 1)), ('layout', ('N', 'C', 'H', 'W')), ('ceil_mode', 0), ('count_include_pad', 0)))}), op_name: tvmgpu-autotvm_avgpool2d+add": [
+        0.00805653,
+        2.0041788010720522e-05
+    ],
+    "op_type: avgpool2d+add, data_shape: (1, 256, 14, 14), attrs: frozenset({('add', '', 'nn.avg_pool2d', (('pool_size', (3, 3)), ('strides', (1, 1)), ('padding', (1, 1, 1, 1)), ('layout', ('N', 'C', 'H', 'W')), ('ceil_mode', 0), ('count_include_pad', 0)))}), op_name: tvmgpu-autotvm_avgpool2d+add": [
+        0.004288846666666666,
+        1.2520959317170122e-05
+    ],
+    "op_type: avgpool2d+add, data_shape: (1, 256, 28, 28), attrs: frozenset({('add', '', 'nn.avg_pool2d', (('pool_size', (3, 3)), ('strides', (2, 2)), ('padding', (1, 1, 1, 1)), ('layout', ('N', 'C', 'H', 'W')), ('ceil_mode', 0), ('count_include_pad', 0)))}), op_name: tvmgpu-autotvm_avgpool2d+add": [
+        0.006156586666666666,
+        1.7145816464146962e-05
+    ],
+    "op_type: avgpool2d+add, data_shape: (1, 64, 56, 56), attrs: frozenset({('add', '', 'nn.avg_pool2d', (('pool_size', (3, 3)), ('strides', (1, 1)), ('padding', (1, 1, 1, 1)), ('layout', ('N', 'C', 'H', 'W')), ('ceil_mode', 0), ('count_include_pad', 0)))}), op_name: tvmgpu-autotvm_avgpool2d+add": [
+        0.010086183333333333,
+        1.6734157350228732e-05
+    ],
+    "op_type: avgpool2d, data_shape: (1, 128, 28, 28), attrs: frozenset({('nn.avg_pool2d', (('pool_size', (3, 3)), ('strides', (1, 1)), ('padding', (1, 1, 1, 1)), ('layout', ('N', 'C', 'H', 'W')), ('ceil_mode', 0), ('count_include_pad', 0)))}), op_name: tvmgpu-autotvm_avgpool2d": [
+        0.0052847933333333335,
+        1.865281450314948e-05
+    ],
+    "op_type: avgpool2d, data_shape: (1, 128, 56, 56), attrs: frozenset({('nn.avg_pool2d', (('pool_size', (3, 3)), ('strides', (2, 2)), ('padding', (1, 1, 1, 1)), ('layout', ('N', 'C', 'H', 'W')), ('ceil_mode', 0), ('count_include_pad', 0)))}), op_name: tvmgpu-autotvm_avgpool2d": [
+        0.007555726666666668,
+        1.7775789402692524e-05
+    ],
+    "op_type: avgpool2d, data_shape: (1, 256, 14, 14), attrs: frozenset({('nn.avg_pool2d', (('pool_size', (3, 3)), ('strides', (1, 1)), ('padding', (1, 1, 1, 1)), ('layout', ('N', 'C', 'H', 'W')), ('ceil_mode', 0), ('count_include_pad', 0)))}), op_name: tvmgpu-autotvm_avgpool2d": [
+        0.00391605,
+        2.345880218596021e-05
+    ],
+    "op_type: avgpool2d, data_shape: (1, 256, 28, 28), attrs: frozenset({('nn.avg_pool2d', (('pool_size', (3, 3)), ('strides', (2, 2)), ('padding', (1, 1, 1, 1)), ('layout', ('N', 'C', 'H', 'W')), ('ceil_mode', 0), ('count_include_pad', 0)))}), op_name: tvmgpu-autotvm_avgpool2d": [
+        0.005813326666666667,
+        3.2247807505144746e-05
+    ],
+    "op_type: avgpool2d, data_shape: (1, 64, 56, 56), attrs: frozenset({('nn.avg_pool2d', (('pool_size', (3, 3)), ('strides', (1, 1)), ('padding', (1, 1, 1, 1)), ('layout', ('N', 'C', 'H', 'W')), ('ceil_mode', 0), ('count_include_pad', 0)))}), op_name: tvmgpu-autotvm_avgpool2d": [
+        0.008970983333333333,
+        1.7778789485101562e-05
+    ],
+    "op_type: batch_matmul, data_shape: (16, 64, 64), attrs: frozenset({('nn.batch_matmul', '')}), op_name: cublas_batch_matmul": [
+        0.006446176666666667,
+        2.1887209862281703e-05
+    ],
+    "op_type: batch_matmul, data_shape: (16, 64, 64), attrs: frozenset({('nn.batch_matmul', '')}), op_name: tvmgpu-autotvm_batch_matmul": [
+        0.008750396666666667,
+        2.5393752950064804e-05
+    ],
+    "op_type: biasadd, data_shape: (1, 128, 28, 28), attrs: frozenset({('nn.bias_add', (('axis', 1),))}), op_name: tvmgpu-autotvm_biasadd": [
+        0.003139303333333333,
+        2.4248403842085673e-05
+    ],
+    "op_type: biasadd, data_shape: (1, 128, 56, 56), attrs: frozenset({('nn.bias_add', (('axis', 1),))}), op_name: tvmgpu-autotvm_biasadd": [
+        0.007319776666666666,
+        2.394993296209521e-05
+    ],
+    "op_type: biasadd, data_shape: (1, 256, 14, 14), attrs: frozenset({('nn.bias_add', (('axis', 1),))}), op_name: tvmgpu-autotvm_biasadd": [
+        0.002543033333333333,
+        1.5357569975603457e-05
+    ],
+    "op_type: biasadd, data_shape: (1, 256, 28, 28), attrs: frozenset({('nn.bias_add', (('axis', 1),))}), op_name: tvmgpu-autotvm_biasadd": [
+        0.004800313333333333,
+        2.1231323295755456e-05
+    ],
+    "op_type: biasadd, data_shape: (1, 64, 56, 56), attrs: frozenset({('nn.bias_add', (('axis', 1),))}), op_name: tvmgpu-autotvm_biasadd": [
+        0.00479466,
+        2.4391838799073454e-05
+    ],
+    "op_type: concat, data_shape: (1, 128, 28, 28), attrs: frozenset({('concatenate', (('axis', 1),))}), op_name: tvmgpu-autotvm_concat": [
+        0.008486176666666666,
+        2.3189637532502807e-05
+    ],
+    "op_type: concat, data_shape: (1, 256, 14, 14), attrs: frozenset({('concatenate', (('axis', 1),))}), op_name: tvmgpu-autotvm_concat": [
+        0.005464846666666666,
+        2.543123582438674e-05
+    ],
+    "op_type: concat, data_shape: (1, 64, 56, 56), attrs: frozenset({('concatenate', (('axis', 1),))}), op_name: tvmgpu-autotvm_concat": [
+        0.02486815666666667,
+        2.7065629290465446e-05
+    ],
+    "op_type: conv2d+add+relu, data_shape: (1, 1024, 7, 7), attrs: frozenset({('nn.relu', '', 'add', '', 'nn.conv2d', (('strides', (1, 1)), ('padding', (0, 0, 0, 0)), ('dilation', (1, 1)), ('groups', 1), ('channels', 2048), ('kernel_size', (1, 1)), ('data_layout', ('N', 'C', 'H', 'W')), ('kernel_layout', ('O', 'I', 'H', 'W')), ('out_layout', ()), ('out_dtype', '')))}), op_name: tvmgpu-autotvm_conv2d+add+relu": [
+        0.13666741000000002,
+        6.4147070600752635e-06
+    ],
+    "op_type: conv2d+add+relu, data_shape: (1, 128, 28, 28), attrs: frozenset({('nn.relu', '', 'add', '', 'nn.conv2d', (('strides', (1, 1)), ('padding', (0, 0, 0, 0)), ('dilation', (1, 1)), ('groups', 1), ('channels', 512), ('kernel_size', (1, 1)), ('data_layout', ('N', 'C', 'H', 'W')), ('kernel_layout', ('O', 'I', 'H', 'W')), ('out_layout', ()), ('out_dtype', '')))}), op_name: tensorrt_conv2d+add+relu": [
+        0.0397034,
+        3.0309844385392052e-05
+    ],
     "op_type: conv2d+add+relu, data_shape: (1, 128, 28, 28), attrs: frozenset({('nn.relu', '', 'add', '', 'nn.conv2d', (('strides', (1, 1)), ('padding', (0, 0, 0, 0)), ('dilation', (1, 1)), ('groups', 1), ('channels', 512), ('kernel_size', (1, 1)), ('data_layout', ('N', 'C', 'H', 'W')), ('kernel_layout', ('O', 'I', 'H', 'W')), ('out_layout', ()), ('out_dtype', '')))}), op_name: tvmgpu-autotvm_conv2d+add+relu": [
         0.04253116666666667,
         2.605328940630885e-05
+    ],
+    "op_type: conv2d+add+relu, data_shape: (1, 128, 56, 56), attrs: frozenset({('nn.relu', '', 'add', '', 'nn.conv2d', (('strides', (1, 1)), ('padding', (0, 0, 0, 0)), ('dilation', (1, 1)), ('groups', 1), ('channels', 256), ('kernel_size', (1, 1)), ('data_layout', ('N', 'C', 'H', 'W')), ('kernel_layout', ('O', 'I', 'H', 'W')), ('out_layout', ()), ('out_dtype', '')))}), op_name: tvmgpu-autotvm_conv2d+add+relu": [
+        0.06299626333333333,
+        2.7186310689183274e-05
+    ],
+    "op_type: conv2d+add+relu, data_shape: (1, 256, 14, 14), attrs: frozenset({('nn.relu', '', 'add', '', 'nn.conv2d', (('strides', (1, 1)), ('padding', (0, 0, 0, 0)), ('dilation', (1, 1)), ('groups', 1), ('channels', 1024), ('kernel_size', (1, 1)), ('data_layout', ('N', 'C', 'H', 'W')), ('kernel_layout', ('O', 'I', 'H', 'W')), ('out_layout', ()), ('out_dtype', '')))}), op_name: tensorrt_conv2d+add+relu": [
+        0.045244766666666665,
+        5.0997538066939636e-05
     ],
     "op_type: conv2d+add+relu, data_shape: (1, 256, 14, 14), attrs: frozenset({('nn.relu', '', 'add', '', 'nn.conv2d', (('strides', (1, 1)), ('padding', (0, 0, 0, 0)), ('dilation', (1, 1)), ('groups', 1), ('channels', 1024), ('kernel_size', (1, 1)), ('data_layout', ('N', 'C', 'H', 'W')), ('kernel_layout', ('O', 'I', 'H', 'W')), ('out_layout', ()), ('out_dtype', '')))}), op_name: tvmgpu-autotvm_conv2d+add+relu": [
         0.04783141666666666,
         1.596440485023587e-05
     ],
+    "op_type: conv2d+add+relu, data_shape: (1, 256, 28, 28), attrs: frozenset({('nn.relu', '', 'add', '', 'nn.conv2d', (('strides', (1, 1)), ('padding', (0, 0, 0, 0)), ('dilation', (1, 1)), ('groups', 1), ('channels', 512), ('kernel_size', (1, 1)), ('data_layout', ('N', 'C', 'H', 'W')), ('kernel_layout', ('O', 'I', 'H', 'W')), ('out_layout', ()), ('out_dtype', '')))}), op_name: tvmgpu-autotvm_conv2d+add+relu": [
+        0.07699860666666668,
+        4.407307895857447e-05
+    ],
+    "op_type: conv2d+add+relu, data_shape: (1, 512, 14, 14), attrs: frozenset({('nn.relu', '', 'add', '', 'nn.conv2d', (('strides', (1, 1)), ('padding', (0, 0, 0, 0)), ('dilation', (1, 1)), ('groups', 1), ('channels', 1024), ('kernel_size', (1, 1)), ('data_layout', ('N', 'C', 'H', 'W')), ('kernel_layout', ('O', 'I', 'H', 'W')), ('out_layout', ()), ('out_dtype', '')))}), op_name: tvmgpu-autotvm_conv2d+add+relu": [
+        0.06612383666666666,
+        3.842027271579602e-05
+    ],
+    "op_type: conv2d+add+relu, data_shape: (1, 512, 7, 7), attrs: frozenset({('nn.relu', '', 'add', '', 'nn.conv2d', (('strides', (1, 1)), ('padding', (0, 0, 0, 0)), ('dilation', (1, 1)), ('groups', 1), ('channels', 2048), ('kernel_size', (1, 1)), ('data_layout', ('N', 'C', 'H', 'W')), ('kernel_layout', ('O', 'I', 'H', 'W')), ('out_layout', ()), ('out_dtype', '')))}), op_name: tensorrt_conv2d+add+relu": [
+        0.07292153333333333,
+        0.00013679532967986042
+    ],
     "op_type: conv2d+add+relu, data_shape: (1, 512, 7, 7), attrs: frozenset({('nn.relu', '', 'add', '', 'nn.conv2d', (('strides', (1, 1)), ('padding', (0, 0, 0, 0)), ('dilation', (1, 1)), ('groups', 1), ('channels', 2048), ('kernel_size', (1, 1)), ('data_layout', ('N', 'C', 'H', 'W')), ('kernel_layout', ('O', 'I', 'H', 'W')), ('out_layout', ()), ('out_dtype', '')))}), op_name: tvmgpu-autotvm_conv2d+add+relu": [
         0.0787776,
         0.00016208244815525292
+    ],
+    "op_type: conv2d+add+relu, data_shape: (1, 64, 56, 56), attrs: frozenset({('nn.relu', '', 'add', '', 'nn.conv2d', (('strides', (1, 1)), ('padding', (0, 0, 0, 0)), ('dilation', (1, 1)), ('groups', 1), ('channels', 256), ('kernel_size', (1, 1)), ('data_layout', ('N', 'C', 'H', 'W')), ('kernel_layout', ('O', 'I', 'H', 'W')), ('out_layout', ()), ('out_dtype', '')))}), op_name: tensorrt_conv2d+add+relu": [
+        0.042465,
+        0.00017821056833607315
     ],
     "op_type: conv2d+add+relu, data_shape: (1, 64, 56, 56), attrs: frozenset({('nn.relu', '', 'add', '', 'nn.conv2d', (('strides', (1, 1)), ('padding', (0, 0, 0, 0)), ('dilation', (1, 1)), ('groups', 1), ('channels', 256), ('kernel_size', (1, 1)), ('data_layout', ('N', 'C', 'H', 'W')), ('kernel_layout', ('O', 'I', 'H', 'W')), ('out_layout', ()), ('out_dtype', '')))}), op_name: tvmgpu-autotvm_conv2d+add+relu": [
         0.06007994999999999,
         0.00013447616889248327
     ],
+    "op_type: conv2d+add, data_shape: (1, 1024, 7, 7), attrs: frozenset({('add', '', 'nn.conv2d', (('strides', (1, 1)), ('padding', (0, 0, 0, 0)), ('dilation', (1, 1)), ('groups', 1), ('channels', 2048), ('kernel_size', (1, 1)), ('data_layout', ('N', 'C', 'H', 'W')), ('kernel_layout', ('O', 'I', 'H', 'W')), ('out_layout', ()), ('out_dtype', '')))}), op_name: tvmgpu-autotvm_conv2d+add": [
+        0.13671711333333333,
+        2.5899210198154493e-05
+    ],
+    "op_type: conv2d+add, data_shape: (1, 128, 28, 28), attrs: frozenset({('add', '', 'nn.conv2d', (('strides', (1, 1)), ('padding', (0, 0, 0, 0)), ('dilation', (1, 1)), ('groups', 1), ('channels', 128), ('kernel_size', (1, 1)), ('data_layout', ('N', 'C', 'H', 'W')), ('kernel_layout', ('O', 'I', 'H', 'W')), ('out_layout', ()), ('out_dtype', '')))}), op_name: tvmgpu-autotvm_conv2d+add": [
+        0.017508153333333335,
+        3.645174374734654e-05
+    ],
+    "op_type: conv2d+add, data_shape: (1, 128, 28, 28), attrs: frozenset({('add', '', 'nn.conv2d', (('strides', (1, 1)), ('padding', (0, 0, 0, 0)), ('dilation', (1, 1)), ('groups', 1), ('channels', 512), ('kernel_size', (1, 1)), ('data_layout', ('N', 'C', 'H', 'W')), ('kernel_layout', ('O', 'I', 'H', 'W')), ('out_layout', ()), ('out_dtype', '')))}), op_name: tensorrt_conv2d+add": [
+        0.043681033333333334,
+        9.925590942384942e-05
+    ],
     "op_type: conv2d+add, data_shape: (1, 128, 28, 28), attrs: frozenset({('add', '', 'nn.conv2d', (('strides', (1, 1)), ('padding', (0, 0, 0, 0)), ('dilation', (1, 1)), ('groups', 1), ('channels', 512), ('kernel_size', (1, 1)), ('data_layout', ('N', 'C', 'H', 'W')), ('kernel_layout', ('O', 'I', 'H', 'W')), ('out_layout', ()), ('out_dtype', '')))}), op_name: tvmgpu-autotvm_conv2d+add": [
         0.04233119999999999,
         0.00011832069416068417
+    ],
+    "op_type: conv2d+add, data_shape: (1, 128, 56, 56), attrs: frozenset({('add', '', 'nn.avg_pool2d', (('pool_size', (3, 3)), ('strides', (2, 2)), ('padding', (1, 1, 1, 1)), ('layout', ('N', 'C', 'H', 'W')), ('ceil_mode', 0), ('count_include_pad', 0)))}), op_name: tvmgpu-autotvm_conv2d+add": [
+        0.008047569999999999,
+        1.709976023223759e-05
+    ],
+    "op_type: conv2d+add, data_shape: (1, 128, 56, 56), attrs: frozenset({('add', '', 'nn.conv2d', (('strides', (1, 1)), ('padding', (0, 0, 0, 0)), ('dilation', (1, 1)), ('groups', 1), ('channels', 256), ('kernel_size', (1, 1)), ('data_layout', ('N', 'C', 'H', 'W')), ('kernel_layout', ('O', 'I', 'H', 'W')), ('out_layout', ()), ('out_dtype', '')))}), op_name: tvmgpu-autotvm_conv2d+add": [
+        0.07894345666666668,
+        5.274750252117819e-05
+    ],
+    "op_type: conv2d+add, data_shape: (1, 128, 56, 56), attrs: frozenset({('add', '', 'nn.max_pool2d', (('pool_size', (3, 3)), ('strides', (2, 2)), ('padding', (1, 1, 1, 1)), ('layout', ('N', 'C', 'H', 'W')), ('ceil_mode', 0)))}), op_name: tvmgpu-autotvm_conv2d+add": [
+        0.007584526666666667,
+        1.2615420017669638e-05
+    ],
+    "op_type: conv2d+add, data_shape: (1, 256, 14, 14), attrs: frozenset({('add', '', 'nn.conv2d', (('strides', (1, 1)), ('padding', (0, 0, 0, 0)), ('dilation', (1, 1)), ('groups', 1), ('channels', 1024), ('kernel_size', (1, 1)), ('data_layout', ('N', 'C', 'H', 'W')), ('kernel_layout', ('O', 'I', 'H', 'W')), ('out_layout', ()), ('out_dtype', '')))}), op_name: tensorrt_conv2d+add": [
+        0.0452522,
+        0.00015119036565424906
     ],
     "op_type: conv2d+add, data_shape: (1, 256, 14, 14), attrs: frozenset({('add', '', 'nn.conv2d', (('strides', (1, 1)), ('padding', (0, 0, 0, 0)), ('dilation', (1, 1)), ('groups', 1), ('channels', 1024), ('kernel_size', (1, 1)), ('data_layout', ('N', 'C', 'H', 'W')), ('kernel_layout', ('O', 'I', 'H', 'W')), ('out_layout', ()), ('out_dtype', '')))}), op_name: tvmgpu-autotvm_conv2d+add": [
         0.04791945,
         7.543097286040637e-05
     ],
+    "op_type: conv2d+add, data_shape: (1, 256, 14, 14), attrs: frozenset({('add', '', 'nn.conv2d', (('strides', (1, 1)), ('padding', (0, 0, 0, 0)), ('dilation', (1, 1)), ('groups', 1), ('channels', 256), ('kernel_size', (1, 1)), ('data_layout', ('N', 'C', 'H', 'W')), ('kernel_layout', ('O', 'I', 'H', 'W')), ('out_layout', ()), ('out_dtype', '')))}), op_name: tvmgpu-autotvm_conv2d+add": [
+        0.024287886666666664,
+        2.8375238422885613e-05
+    ],
+    "op_type: conv2d+add, data_shape: (1, 256, 28, 28), attrs: frozenset({('add', '', 'nn.avg_pool2d', (('pool_size', (3, 3)), ('strides', (2, 2)), ('padding', (1, 1, 1, 1)), ('layout', ('N', 'C', 'H', 'W')), ('ceil_mode', 0), ('count_include_pad', 0)))}), op_name: tvmgpu-autotvm_conv2d+add": [
+        0.0061613833333333335,
+        1.4949943886925343e-05
+    ],
+    "op_type: conv2d+add, data_shape: (1, 256, 28, 28), attrs: frozenset({('add', '', 'nn.conv2d', (('strides', (1, 1)), ('padding', (0, 0, 0, 0)), ('dilation', (1, 1)), ('groups', 1), ('channels', 512), ('kernel_size', (1, 1)), ('data_layout', ('N', 'C', 'H', 'W')), ('kernel_layout', ('O', 'I', 'H', 'W')), ('out_layout', ()), ('out_dtype', '')))}), op_name: tvmgpu-autotvm_conv2d+add": [
+        0.07682495333333333,
+        8.307246649093862e-05
+    ],
+    "op_type: conv2d+add, data_shape: (1, 256, 28, 28), attrs: frozenset({('add', '', 'nn.max_pool2d', (('pool_size', (3, 3)), ('strides', (2, 2)), ('padding', (1, 1, 1, 1)), ('layout', ('N', 'C', 'H', 'W')), ('ceil_mode', 0)))}), op_name: tvmgpu-autotvm_conv2d+add": [
+        0.00584309,
+        2.4518590225921128e-05
+    ],
+    "op_type: conv2d+add, data_shape: (1, 512, 14, 14), attrs: frozenset({('add', '', 'nn.conv2d', (('strides', (1, 1)), ('padding', (0, 0, 0, 0)), ('dilation', (1, 1)), ('groups', 1), ('channels', 1024), ('kernel_size', (1, 1)), ('data_layout', ('N', 'C', 'H', 'W')), ('kernel_layout', ('O', 'I', 'H', 'W')), ('out_layout', ()), ('out_dtype', '')))}), op_name: tvmgpu-autotvm_conv2d+add": [
+        0.06616372999999999,
+        1.84079022886044e-05
+    ],
+    "op_type: conv2d+add, data_shape: (1, 512, 7, 7), attrs: frozenset({('add', '', 'nn.conv2d', (('strides', (1, 1)), ('padding', (0, 0, 0, 0)), ('dilation', (1, 1)), ('groups', 1), ('channels', 2048), ('kernel_size', (1, 1)), ('data_layout', ('N', 'C', 'H', 'W')), ('kernel_layout', ('O', 'I', 'H', 'W')), ('out_layout', ()), ('out_dtype', '')))}), op_name: tensorrt_conv2d+add": [
+        0.07295886666666666,
+        0.00013409092271871698
+    ],
     "op_type: conv2d+add, data_shape: (1, 512, 7, 7), attrs: frozenset({('add', '', 'nn.conv2d', (('strides', (1, 1)), ('padding', (0, 0, 0, 0)), ('dilation', (1, 1)), ('groups', 1), ('channels', 2048), ('kernel_size', (1, 1)), ('data_layout', ('N', 'C', 'H', 'W')), ('kernel_layout', ('O', 'I', 'H', 'W')), ('out_layout', ()), ('out_dtype', '')))}), op_name: tvmgpu-autotvm_conv2d+add": [
         0.07869383333333334,
         4.179123379636274e-05
+    ],
+    "op_type: conv2d+add, data_shape: (1, 64, 56, 56), attrs: frozenset({('add', '', 'nn.conv2d', (('strides', (1, 1)), ('padding', (0, 0, 0, 0)), ('dilation', (1, 1)), ('groups', 1), ('channels', 256), ('kernel_size', (1, 1)), ('data_layout', ('N', 'C', 'H', 'W')), ('kernel_layout', ('O', 'I', 'H', 'W')), ('out_layout', ()), ('out_dtype', '')))}), op_name: tensorrt_conv2d+add": [
+        0.04215463333333333,
+        0.00013591449109233837
     ],
     "op_type: conv2d+add, data_shape: (1, 64, 56, 56), attrs: frozenset({('add', '', 'nn.conv2d', (('strides', (1, 1)), ('padding', (0, 0, 0, 0)), ('dilation', (1, 1)), ('groups', 1), ('channels', 256), ('kernel_size', (1, 1)), ('data_layout', ('N', 'C', 'H', 'W')), ('kernel_layout', ('O', 'I', 'H', 'W')), ('out_layout', ()), ('out_dtype', '')))}), op_name: tvmgpu-autotvm_conv2d+add": [
         0.0603669,
         0.00016007320721053665
     ],
+    "op_type: conv2d+add, data_shape: (1, 64, 56, 56), attrs: frozenset({('add', '', 'nn.conv2d', (('strides', (1, 1)), ('padding', (0, 0, 0, 0)), ('dilation', (1, 1)), ('groups', 1), ('channels', 64), ('kernel_size', (1, 1)), ('data_layout', ('N', 'C', 'H', 'W')), ('kernel_layout', ('O', 'I', 'H', 'W')), ('out_layout', ()), ('out_dtype', '')))}), op_name: tvmgpu-autotvm_conv2d+add": [
+        0.015748476666666667,
+        2.8741904754015968e-05
+    ],
+    "op_type: conv2d+biasadd+relu, data_shape: (1, 1280, 14, 14), attrs: frozenset({('nn.relu', '', 'nn.bias_add', (('axis', 1),), 'nn.conv2d', (('strides', (1, 1)), ('padding', (0, 0, 0, 0)), ('dilation', (1, 1)), ('groups', 1), ('channels', 256), ('kernel_size', (1, 1)), ('data_layout', ('N', 'C', 'H', 'W')), ('kernel_layout', ('O', 'I', 'H', 'W')), ('out_layout', ()), ('out_dtype', '')))}), op_name: tvmgpu-autotvm_conv2d+biasadd+relu": [
+        0.11026858333333334,
+        3.1893189799010326e-06
+    ],
+    "op_type: conv2d+biasadd+relu, data_shape: (1, 320, 56, 56), attrs: frozenset({('nn.relu', '', 'nn.bias_add', (('axis', 1),), 'nn.conv2d', (('strides', (1, 1)), ('padding', (0, 0, 0, 0)), ('dilation', (1, 1)), ('groups', 1), ('channels', 128), ('kernel_size', (1, 1)), ('data_layout', ('N', 'C', 'H', 'W')), ('kernel_layout', ('O', 'I', 'H', 'W')), ('out_layout', ()), ('out_dtype', '')))}), op_name: tvmgpu-autotvm_conv2d+biasadd+relu": [
+        0.08772448000000001,
+        0.00010505264204198563
+    ],
+    "op_type: conv2d+biasadd+relu, data_shape: (1, 320, 56, 56), attrs: frozenset({('nn.relu', '', 'nn.bias_add', (('axis', 1),), 'nn.conv2d', (('strides', (1, 1)), ('padding', (0, 0, 0, 0)), ('dilation', (1, 1)), ('groups', 1), ('channels', 64), ('kernel_size', (1, 1)), ('data_layout', ('N', 'C', 'H', 'W')), ('kernel_layout', ('O', 'I', 'H', 'W')), ('out_layout', ()), ('out_dtype', '')))}), op_name: tvmgpu-autotvm_conv2d+biasadd+relu": [
+        0.06400682,
+        1.7936203611690482e-05
+    ],
+    "op_type: conv2d+biasadd+relu, data_shape: (1, 64, 56, 56), attrs: frozenset({('nn.relu', '', 'nn.bias_add', (('axis', 1),), 'nn.conv2d', (('strides', (1, 1)), ('padding', (0, 0, 0, 0)), ('dilation', (1, 1)), ('groups', 1), ('channels', 64), ('kernel_size', (1, 1)), ('data_layout', ('N', 'C', 'H', 'W')), ('kernel_layout', ('O', 'I', 'H', 'W')), ('out_layout', ()), ('out_dtype', '')))}), op_name: tvmgpu-autotvm_conv2d+biasadd+relu": [
+        0.015107836666666668,
+        3.1161104316475205e-05
+    ],
+    "op_type: conv2d+biasadd+relu, data_shape: (1, 640, 28, 28), attrs: frozenset({('nn.relu', '', 'nn.bias_add', (('axis', 1),), 'nn.conv2d', (('strides', (1, 1)), ('padding', (0, 0, 0, 0)), ('dilation', (1, 1)), ('groups', 1), ('channels', 128), ('kernel_size', (1, 1)), ('data_layout', ('N', 'C', 'H', 'W')), ('kernel_layout', ('O', 'I', 'H', 'W')), ('out_layout', ()), ('out_dtype', '')))}), op_name: tvmgpu-autotvm_conv2d+biasadd+relu": [
+        0.07456053333333333,
+        3.493752646590611e-05
+    ],
+    "op_type: conv2d+biasadd+relu, data_shape: (1, 640, 28, 28), attrs: frozenset({('nn.relu', '', 'nn.bias_add', (('axis', 1),), 'nn.conv2d', (('strides', (1, 1)), ('padding', (0, 0, 0, 0)), ('dilation', (1, 1)), ('groups', 1), ('channels', 256), ('kernel_size', (1, 1)), ('data_layout', ('N', 'C', 'H', 'W')), ('kernel_layout', ('O', 'I', 'H', 'W')), ('out_layout', ()), ('out_dtype', '')))}), op_name: tvmgpu-autotvm_conv2d+biasadd+relu": [
+        0.11287711666666667,
+        2.902008538159913e-05
+    ],
+    "op_type: conv2d+relu, data_shape: (1, 1024, 14, 14), attrs: frozenset({('nn.relu', '', 'nn.conv2d', (('strides', (1, 1)), ('padding', (0, 0, 0, 0)), ('dilation', (1, 1)), ('groups', 1), ('channels', 1024), ('kernel_size', (1, 1)), ('data_layout', ('N', 'C', 'H', 'W')), ('kernel_layout', ('O', 'I', 'H', 'W')), ('out_layout', ()), ('out_dtype', '')))}), op_name: tvmgpu-autotvm_conv2d+relu": [
+        0.17460628666666667,
+        2.512730299007601e-05
+    ],
+    "op_type: conv2d+relu, data_shape: (1, 1024, 14, 14), attrs: frozenset({('nn.relu', '', 'nn.conv2d', (('strides', (1, 1)), ('padding', (0, 0, 0, 0)), ('dilation', (1, 1)), ('groups', 1), ('channels', 256), ('kernel_size', (1, 1)), ('data_layout', ('N', 'C', 'H', 'W')), ('kernel_layout', ('O', 'I', 'H', 'W')), ('out_layout', ()), ('out_dtype', '')))}), op_name: tensorrt_conv2d+relu": [
+        0.05599353333333334,
+        0.00039210284648573943
+    ],
     "op_type: conv2d+relu, data_shape: (1, 1024, 14, 14), attrs: frozenset({('nn.relu', '', 'nn.conv2d', (('strides', (1, 1)), ('padding', (0, 0, 0, 0)), ('dilation', (1, 1)), ('groups', 1), ('channels', 256), ('kernel_size', (1, 1)), ('data_layout', ('N', 'C', 'H', 'W')), ('kernel_layout', ('O', 'I', 'H', 'W')), ('out_layout', ()), ('out_dtype', '')))}), op_name: tvmgpu-autotvm_conv2d+relu": [
         0.0818869,
         5.939218523229334e-05
+    ],
+    "op_type: conv2d+relu, data_shape: (1, 1024, 14, 14), attrs: frozenset({('nn.relu', '', 'nn.conv2d', (('strides', (1, 1)), ('padding', (0, 0, 0, 0)), ('dilation', (1, 1)), ('groups', 1), ('channels', 512), ('kernel_size', (1, 1)), ('data_layout', ('N', 'C', 'H', 'W')), ('kernel_layout', ('O', 'I', 'H', 'W')), ('out_layout', ()), ('out_dtype', '')))}), op_name: tensorrt_conv2d+relu": [
+        0.06374289999999999,
+        0.00012737207961977743
     ],
     "op_type: conv2d+relu, data_shape: (1, 1024, 14, 14), attrs: frozenset({('nn.relu', '', 'nn.conv2d', (('strides', (1, 1)), ('padding', (0, 0, 0, 0)), ('dilation', (1, 1)), ('groups', 1), ('channels', 512), ('kernel_size', (1, 1)), ('data_layout', ('N', 'C', 'H', 'W')), ('kernel_layout', ('O', 'I', 'H', 'W')), ('out_layout', ()), ('out_dtype', '')))}), op_name: tvmgpu-autotvm_conv2d+relu": [
         0.12730878333333331,
         3.850126260556624e-05
     ],
+    "op_type: conv2d+relu, data_shape: (1, 1024, 14, 14), attrs: frozenset({('nn.relu', '', 'nn.conv2d', (('strides', (2, 2)), ('padding', (1, 1, 1, 1)), ('dilation', (1, 1)), ('groups', 32), ('channels', 1024), ('kernel_size', (3, 3)), ('data_layout', ('N', 'C', 'H', 'W')), ('kernel_layout', ('O', 'I', 'H', 'W')), ('out_layout', ()), ('out_dtype', '')))}), op_name: tvmgpu-autotvm_conv2d+relu": [
+        0.01763018666666667,
+        3.457316621633378e-05
+    ],
+    "op_type: conv2d+relu, data_shape: (1, 1024, 7, 7), attrs: frozenset({('nn.relu', '', 'nn.conv2d', (('strides', (1, 1)), ('padding', (1, 1, 1, 1)), ('dilation', (1, 1)), ('groups', 32), ('channels', 1024), ('kernel_size', (3, 3)), ('data_layout', ('N', 'C', 'H', 'W')), ('kernel_layout', ('O', 'I', 'H', 'W')), ('out_layout', ()), ('out_dtype', '')))}), op_name: tvmgpu-autotvm_conv2d+relu": [
+        0.017936949999999997,
+        2.9385456720403387e-05
+    ],
+    "op_type: conv2d+relu, data_shape: (1, 128, 28, 28), attrs: frozenset({('nn.relu', '', 'nn.conv2d', (('strides', (1, 1)), ('padding', (1, 1, 1, 1)), ('dilation', (1, 1)), ('groups', 1), ('channels', 128), ('kernel_size', (3, 3)), ('data_layout', ('N', 'C', 'H', 'W')), ('kernel_layout', ('O', 'I', 'H', 'W')), ('out_layout', ()), ('out_dtype', '')))}), op_name: tensorrt_conv2d+relu": [
+        0.04670183333333333,
+        0.00010851728996902659
+    ],
     "op_type: conv2d+relu, data_shape: (1, 128, 28, 28), attrs: frozenset({('nn.relu', '', 'nn.conv2d', (('strides', (1, 1)), ('padding', (1, 1, 1, 1)), ('dilation', (1, 1)), ('groups', 1), ('channels', 128), ('kernel_size', (3, 3)), ('data_layout', ('N', 'C', 'H', 'W')), ('kernel_layout', ('O', 'I', 'H', 'W')), ('out_layout', ()), ('out_dtype', '')))}), op_name: tvmgpu-autotvm_conv2d+relu": [
         0.05335678333333333,
         0.000142911816244225
+    ],
+    "op_type: conv2d+relu, data_shape: (1, 128, 56, 56), attrs: frozenset({('nn.relu', '', 'nn.conv2d', (('strides', (1, 1)), ('padding', (1, 1, 1, 1)), ('dilation', (1, 1)), ('groups', 32), ('channels', 128), ('kernel_size', (3, 3)), ('data_layout', ('N', 'C', 'H', 'W')), ('kernel_layout', ('O', 'I', 'H', 'W')), ('out_layout', ()), ('out_dtype', '')))}), op_name: tvmgpu-autotvm_conv2d+relu": [
+        0.01323753666666667,
+        1.0786526575110599e-05
+    ],
+    "op_type: conv2d+relu, data_shape: (1, 128, 56, 56), attrs: frozenset({('nn.relu', '', 'nn.conv2d', (('strides', (2, 2)), ('padding', (1, 1, 1, 1)), ('dilation', (1, 1)), ('groups', 1), ('channels', 128), ('kernel_size', (3, 3)), ('data_layout', ('N', 'C', 'H', 'W')), ('kernel_layout', ('O', 'I', 'H', 'W')), ('out_layout', ()), ('out_dtype', '')))}), op_name: tensorrt_conv2d+relu": [
+        0.09435943333333334,
+        0.00011970275221936214
     ],
     "op_type: conv2d+relu, data_shape: (1, 128, 56, 56), attrs: frozenset({('nn.relu', '', 'nn.conv2d', (('strides', (2, 2)), ('padding', (1, 1, 1, 1)), ('dilation', (1, 1)), ('groups', 1), ('channels', 128), ('kernel_size', (3, 3)), ('data_layout', ('N', 'C', 'H', 'W')), ('kernel_layout', ('O', 'I', 'H', 'W')), ('out_layout', ()), ('out_dtype', '')))}), op_name: tvmgpu-autotvm_conv2d+relu": [
         0.12611036666666667,
         0.00025819031847760057
     ],
+    "op_type: conv2d+relu, data_shape: (1, 2048, 7, 7), attrs: frozenset({('nn.relu', '', 'nn.conv2d', (('strides', (1, 1)), ('padding', (0, 0, 0, 0)), ('dilation', (1, 1)), ('groups', 1), ('channels', 1024), ('kernel_size', (1, 1)), ('data_layout', ('N', 'C', 'H', 'W')), ('kernel_layout', ('O', 'I', 'H', 'W')), ('out_layout', ()), ('out_dtype', '')))}), op_name: tvmgpu-autotvm_conv2d+relu": [
+        0.20288212666666663,
+        4.219070461070214e-06
+    ],
+    "op_type: conv2d+relu, data_shape: (1, 2048, 7, 7), attrs: frozenset({('nn.relu', '', 'nn.conv2d', (('strides', (1, 1)), ('padding', (0, 0, 0, 0)), ('dilation', (1, 1)), ('groups', 1), ('channels', 512), ('kernel_size', (1, 1)), ('data_layout', ('N', 'C', 'H', 'W')), ('kernel_layout', ('O', 'I', 'H', 'W')), ('out_layout', ()), ('out_dtype', '')))}), op_name: tensorrt_conv2d+relu": [
+        0.056510899999999996,
+        6.730680995758644e-05
+    ],
     "op_type: conv2d+relu, data_shape: (1, 2048, 7, 7), attrs: frozenset({('nn.relu', '', 'nn.conv2d', (('strides', (1, 1)), ('padding', (0, 0, 0, 0)), ('dilation', (1, 1)), ('groups', 1), ('channels', 512), ('kernel_size', (1, 1)), ('data_layout', ('N', 'C', 'H', 'W')), ('kernel_layout', ('O', 'I', 'H', 'W')), ('out_layout', ()), ('out_dtype', '')))}), op_name: tvmgpu-autotvm_conv2d+relu": [
         0.13504423333333335,
         3.837221940705165e-05
+    ],
+    "op_type: conv2d+relu, data_shape: (1, 256, 14, 14), attrs: frozenset({('nn.relu', '', 'nn.conv2d', (('strides', (1, 1)), ('padding', (1, 1, 1, 1)), ('dilation', (1, 1)), ('groups', 1), ('channels', 256), ('kernel_size', (3, 3)), ('data_layout', ('N', 'C', 'H', 'W')), ('kernel_layout', ('O', 'I', 'H', 'W')), ('out_layout', ()), ('out_dtype', '')))}), op_name: tensorrt_conv2d+relu": [
+        0.06316576666666666,
+        0.0001893566182864636
     ],
     "op_type: conv2d+relu, data_shape: (1, 256, 14, 14), attrs: frozenset({('nn.relu', '', 'nn.conv2d', (('strides', (1, 1)), ('padding', (1, 1, 1, 1)), ('dilation', (1, 1)), ('groups', 1), ('channels', 256), ('kernel_size', (3, 3)), ('data_layout', ('N', 'C', 'H', 'W')), ('kernel_layout', ('O', 'I', 'H', 'W')), ('out_layout', ()), ('out_dtype', '')))}), op_name: tvmgpu-autotvm_conv2d+relu": [
         0.08271731666666667,
         0.00011160502029727387
     ],
+    "op_type: conv2d+relu, data_shape: (1, 256, 28, 28), attrs: frozenset({('nn.relu', '', 'nn.conv2d', (('strides', (1, 1)), ('padding', (1, 1, 1, 1)), ('dilation', (1, 1)), ('groups', 32), ('channels', 256), ('kernel_size', (3, 3)), ('data_layout', ('N', 'C', 'H', 'W')), ('kernel_layout', ('O', 'I', 'H', 'W')), ('out_layout', ()), ('out_dtype', '')))}), op_name: tvmgpu-autotvm_conv2d+relu": [
+        0.01289461,
+        2.9946239608115942e-05
+    ],
+    "op_type: conv2d+relu, data_shape: (1, 256, 28, 28), attrs: frozenset({('nn.relu', '', 'nn.conv2d', (('strides', (2, 2)), ('padding', (1, 1, 1, 1)), ('dilation', (1, 1)), ('groups', 1), ('channels', 256), ('kernel_size', (3, 3)), ('data_layout', ('N', 'C', 'H', 'W')), ('kernel_layout', ('O', 'I', 'H', 'W')), ('out_layout', ()), ('out_dtype', '')))}), op_name: tensorrt_conv2d+relu": [
+        0.14342713333333332,
+        9.728255524787084e-05
+    ],
     "op_type: conv2d+relu, data_shape: (1, 256, 28, 28), attrs: frozenset({('nn.relu', '', 'nn.conv2d', (('strides', (2, 2)), ('padding', (1, 1, 1, 1)), ('dilation', (1, 1)), ('groups', 1), ('channels', 256), ('kernel_size', (3, 3)), ('data_layout', ('N', 'C', 'H', 'W')), ('kernel_layout', ('O', 'I', 'H', 'W')), ('out_layout', ()), ('out_dtype', '')))}), op_name: tvmgpu-autotvm_conv2d+relu": [
         0.17952905,
         0.00010911922378756432
+    ],
+    "op_type: conv2d+relu, data_shape: (1, 256, 56, 56), attrs: frozenset({('nn.relu', '', 'nn.conv2d', (('strides', (1, 1)), ('padding', (0, 0, 0, 0)), ('dilation', (1, 1)), ('groups', 1), ('channels', 128), ('kernel_size', (1, 1)), ('data_layout', ('N', 'C', 'H', 'W')), ('kernel_layout', ('O', 'I', 'H', 'W')), ('out_layout', ()), ('out_dtype', '')))}), op_name: tensorrt_conv2d+relu": [
+        0.06396576666666666,
+        9.654364585800563e-05
     ],
     "op_type: conv2d+relu, data_shape: (1, 256, 56, 56), attrs: frozenset({('nn.relu', '', 'nn.conv2d', (('strides', (1, 1)), ('padding', (0, 0, 0, 0)), ('dilation', (1, 1)), ('groups', 1), ('channels', 128), ('kernel_size', (1, 1)), ('data_layout', ('N', 'C', 'H', 'W')), ('kernel_layout', ('O', 'I', 'H', 'W')), ('out_layout', ()), ('out_dtype', '')))}), op_name: tvmgpu-autotvm_conv2d+relu": [
         0.08481224999999999,
         0.00022523295717989588
     ],
+    "op_type: conv2d+relu, data_shape: (1, 256, 56, 56), attrs: frozenset({('nn.relu', '', 'nn.conv2d', (('strides', (1, 1)), ('padding', (0, 0, 0, 0)), ('dilation', (1, 1)), ('groups', 1), ('channels', 256), ('kernel_size', (1, 1)), ('data_layout', ('N', 'C', 'H', 'W')), ('kernel_layout', ('O', 'I', 'H', 'W')), ('out_layout', ()), ('out_dtype', '')))}), op_name: tvmgpu-autotvm_conv2d+relu": [
+        0.13116426333333334,
+        0.00010266362950052403
+    ],
+    "op_type: conv2d+relu, data_shape: (1, 256, 56, 56), attrs: frozenset({('nn.relu', '', 'nn.conv2d', (('strides', (1, 1)), ('padding', (0, 0, 0, 0)), ('dilation', (1, 1)), ('groups', 1), ('channels', 64), ('kernel_size', (1, 1)), ('data_layout', ('N', 'C', 'H', 'W')), ('kernel_layout', ('O', 'I', 'H', 'W')), ('out_layout', ()), ('out_dtype', '')))}), op_name: tensorrt_conv2d+relu": [
+        0.04579306666666667,
+        0.00011380888463658166
+    ],
     "op_type: conv2d+relu, data_shape: (1, 256, 56, 56), attrs: frozenset({('nn.relu', '', 'nn.conv2d', (('strides', (1, 1)), ('padding', (0, 0, 0, 0)), ('dilation', (1, 1)), ('groups', 1), ('channels', 64), ('kernel_size', (1, 1)), ('data_layout', ('N', 'C', 'H', 'W')), ('kernel_layout', ('O', 'I', 'H', 'W')), ('out_layout', ()), ('out_dtype', '')))}), op_name: tvmgpu-autotvm_conv2d+relu": [
         0.05349971666666667,
         0.00010950141805271406
+    ],
+    "op_type: conv2d+relu, data_shape: (1, 256, 56, 56), attrs: frozenset({('nn.relu', '', 'nn.conv2d', (('strides', (2, 2)), ('padding', (1, 1, 1, 1)), ('dilation', (1, 1)), ('groups', 32), ('channels', 256), ('kernel_size', (3, 3)), ('data_layout', ('N', 'C', 'H', 'W')), ('kernel_layout', ('O', 'I', 'H', 'W')), ('out_layout', ()), ('out_dtype', '')))}), op_name: tvmgpu-autotvm_conv2d+relu": [
+        0.015677323333333337,
+        3.8207815372715684e-05
+    ],
+    "op_type: conv2d+relu, data_shape: (1, 512, 14, 14), attrs: frozenset({('nn.relu', '', 'nn.conv2d', (('strides', (1, 1)), ('padding', (1, 1, 1, 1)), ('dilation', (1, 1)), ('groups', 32), ('channels', 512), ('kernel_size', (3, 3)), ('data_layout', ('N', 'C', 'H', 'W')), ('kernel_layout', ('O', 'I', 'H', 'W')), ('out_layout', ()), ('out_dtype', '')))}), op_name: tvmgpu-autotvm_conv2d+relu": [
+        0.01283978,
+        2.9568824799102835e-05
+    ],
+    "op_type: conv2d+relu, data_shape: (1, 512, 14, 14), attrs: frozenset({('nn.relu', '', 'nn.conv2d', (('strides', (2, 2)), ('padding', (1, 1, 1, 1)), ('dilation', (1, 1)), ('groups', 1), ('channels', 512), ('kernel_size', (3, 3)), ('data_layout', ('N', 'C', 'H', 'W')), ('kernel_layout', ('O', 'I', 'H', 'W')), ('out_layout', ()), ('out_dtype', '')))}), op_name: tensorrt_conv2d+relu": [
+        0.2582282333333334,
+        0.0004144929137579253
     ],
     "op_type: conv2d+relu, data_shape: (1, 512, 14, 14), attrs: frozenset({('nn.relu', '', 'nn.conv2d', (('strides', (2, 2)), ('padding', (1, 1, 1, 1)), ('dilation', (1, 1)), ('groups', 1), ('channels', 512), ('kernel_size', (3, 3)), ('data_layout', ('N', 'C', 'H', 'W')), ('kernel_layout', ('O', 'I', 'H', 'W')), ('out_layout', ()), ('out_dtype', '')))}), op_name: tvmgpu-autotvm_conv2d+relu": [
         0.2694687833333333,
         3.900222928103129e-05
     ],
+    "op_type: conv2d+relu, data_shape: (1, 512, 28, 28), attrs: frozenset({('nn.relu', '', 'nn.conv2d', (('strides', (1, 1)), ('padding', (0, 0, 0, 0)), ('dilation', (1, 1)), ('groups', 1), ('channels', 128), ('kernel_size', (1, 1)), ('data_layout', ('N', 'C', 'H', 'W')), ('kernel_layout', ('O', 'I', 'H', 'W')), ('out_layout', ()), ('out_dtype', '')))}), op_name: tensorrt_conv2d+relu": [
+        0.050446899999999996,
+        9.803982184126528e-05
+    ],
     "op_type: conv2d+relu, data_shape: (1, 512, 28, 28), attrs: frozenset({('nn.relu', '', 'nn.conv2d', (('strides', (1, 1)), ('padding', (0, 0, 0, 0)), ('dilation', (1, 1)), ('groups', 1), ('channels', 128), ('kernel_size', (1, 1)), ('data_layout', ('N', 'C', 'H', 'W')), ('kernel_layout', ('O', 'I', 'H', 'W')), ('out_layout', ()), ('out_dtype', '')))}), op_name: tvmgpu-autotvm_conv2d+relu": [
         0.060901283333333334,
         0.00013012458987020413
+    ],
+    "op_type: conv2d+relu, data_shape: (1, 512, 28, 28), attrs: frozenset({('nn.relu', '', 'nn.conv2d', (('strides', (1, 1)), ('padding', (0, 0, 0, 0)), ('dilation', (1, 1)), ('groups', 1), ('channels', 256), ('kernel_size', (1, 1)), ('data_layout', ('N', 'C', 'H', 'W')), ('kernel_layout', ('O', 'I', 'H', 'W')), ('out_layout', ()), ('out_dtype', '')))}), op_name: tensorrt_conv2d+relu": [
+        0.0650271,
+        0.00034241495294452145
     ],
     "op_type: conv2d+relu, data_shape: (1, 512, 28, 28), attrs: frozenset({('nn.relu', '', 'nn.conv2d', (('strides', (1, 1)), ('padding', (0, 0, 0, 0)), ('dilation', (1, 1)), ('groups', 1), ('channels', 256), ('kernel_size', (1, 1)), ('data_layout', ('N', 'C', 'H', 'W')), ('kernel_layout', ('O', 'I', 'H', 'W')), ('out_layout', ()), ('out_dtype', '')))}), op_name: tvmgpu-autotvm_conv2d+relu": [
         0.09285544999999999,
         0.000127919004321751
     ],
+    "op_type: conv2d+relu, data_shape: (1, 512, 28, 28), attrs: frozenset({('nn.relu', '', 'nn.conv2d', (('strides', (1, 1)), ('padding', (0, 0, 0, 0)), ('dilation', (1, 1)), ('groups', 1), ('channels', 512), ('kernel_size', (1, 1)), ('data_layout', ('N', 'C', 'H', 'W')), ('kernel_layout', ('O', 'I', 'H', 'W')), ('out_layout', ()), ('out_dtype', '')))}), op_name: tvmgpu-autotvm_conv2d+relu": [
+        0.14181631666666666,
+        5.7997002412956696e-05
+    ],
+    "op_type: conv2d+relu, data_shape: (1, 512, 28, 28), attrs: frozenset({('nn.relu', '', 'nn.conv2d', (('strides', (2, 2)), ('padding', (1, 1, 1, 1)), ('dilation', (1, 1)), ('groups', 32), ('channels', 512), ('kernel_size', (3, 3)), ('data_layout', ('N', 'C', 'H', 'W')), ('kernel_layout', ('O', 'I', 'H', 'W')), ('out_layout', ()), ('out_dtype', '')))}), op_name: tvmgpu-autotvm_conv2d+relu": [
+        0.020468793333333332,
+        3.4917716929312674e-05
+    ],
+    "op_type: conv2d+relu, data_shape: (1, 512, 7, 7), attrs: frozenset({('nn.relu', '', 'nn.conv2d', (('strides', (1, 1)), ('padding', (1, 1, 1, 1)), ('dilation', (1, 1)), ('groups', 1), ('channels', 512), ('kernel_size', (3, 3)), ('data_layout', ('N', 'C', 'H', 'W')), ('kernel_layout', ('O', 'I', 'H', 'W')), ('out_layout', ()), ('out_dtype', '')))}), op_name: tensorrt_conv2d+relu": [
+        0.0986357,
+        0.00026172895649253136
+    ],
     "op_type: conv2d+relu, data_shape: (1, 512, 7, 7), attrs: frozenset({('nn.relu', '', 'nn.conv2d', (('strides', (1, 1)), ('padding', (1, 1, 1, 1)), ('dilation', (1, 1)), ('groups', 1), ('channels', 512), ('kernel_size', (3, 3)), ('data_layout', ('N', 'C', 'H', 'W')), ('kernel_layout', ('O', 'I', 'H', 'W')), ('out_layout', ()), ('out_dtype', '')))}), op_name: tvmgpu-autotvm_conv2d+relu": [
         0.17689544999999998,
         0.00025825241851077047
+    ],
+    "op_type: conv2d+relu, data_shape: (1, 64, 56, 56), attrs: frozenset({('nn.relu', '', 'nn.conv2d', (('strides', (1, 1)), ('padding', (0, 0, 0, 0)), ('dilation', (1, 1)), ('groups', 1), ('channels', 128), ('kernel_size', (1, 1)), ('data_layout', ('N', 'C', 'H', 'W')), ('kernel_layout', ('O', 'I', 'H', 'W')), ('out_layout', ()), ('out_dtype', '')))}), op_name: tvmgpu-autotvm_conv2d+relu": [
+        0.026290553333333338,
+        3.445453074544683e-05
+    ],
+    "op_type: conv2d+relu, data_shape: (1, 64, 56, 56), attrs: frozenset({('nn.relu', '', 'nn.conv2d', (('strides', (1, 1)), ('padding', (0, 0, 0, 0)), ('dilation', (1, 1)), ('groups', 1), ('channels', 64), ('kernel_size', (1, 1)), ('data_layout', ('N', 'C', 'H', 'W')), ('kernel_layout', ('O', 'I', 'H', 'W')), ('out_layout', ()), ('out_dtype', '')))}), op_name: tensorrt_conv2d+relu": [
+        0.02170446666666667,
+        0.00013661118385972567
     ],
     "op_type: conv2d+relu, data_shape: (1, 64, 56, 56), attrs: frozenset({('nn.relu', '', 'nn.conv2d', (('strides', (1, 1)), ('padding', (0, 0, 0, 0)), ('dilation', (1, 1)), ('groups', 1), ('channels', 64), ('kernel_size', (1, 1)), ('data_layout', ('N', 'C', 'H', 'W')), ('kernel_layout', ('O', 'I', 'H', 'W')), ('out_layout', ()), ('out_dtype', '')))}), op_name: tvmgpu-autotvm_conv2d+relu": [
         0.015178633333333332,
         0.00013977925652812814
     ],
+    "op_type: conv2d+relu, data_shape: (1, 64, 56, 56), attrs: frozenset({('nn.relu', '', 'nn.conv2d', (('strides', (1, 1)), ('padding', (1, 1, 1, 1)), ('dilation', (1, 1)), ('groups', 1), ('channels', 64), ('kernel_size', (3, 3)), ('data_layout', ('N', 'C', 'H', 'W')), ('kernel_layout', ('O', 'I', 'H', 'W')), ('out_layout', ()), ('out_dtype', '')))}), op_name: tensorrt_conv2d+relu": [
+        0.05078606666666668,
+        5.986837414044894e-06
+    ],
     "op_type: conv2d+relu, data_shape: (1, 64, 56, 56), attrs: frozenset({('nn.relu', '', 'nn.conv2d', (('strides', (1, 1)), ('padding', (1, 1, 1, 1)), ('dilation', (1, 1)), ('groups', 1), ('channels', 64), ('kernel_size', (3, 3)), ('data_layout', ('N', 'C', 'H', 'W')), ('kernel_layout', ('O', 'I', 'H', 'W')), ('out_layout', ()), ('out_dtype', '')))}), op_name: tvmgpu-autotvm_conv2d+relu": [
         0.04246025,
         0.00014001073173153353
     ],
+    "op_type: conv2d, data_shape: (1, 1024, 14, 14), attrs: frozenset({('nn.conv2d', (('strides', (1, 1)), ('padding', (0, 0, 0, 0)), ('dilation', (1, 1)), ('groups', 1), ('channels', 1024), ('kernel_size', (1, 1)), ('data_layout', ('N', 'C', 'H', 'W')), ('kernel_layout', ('O', 'I', 'H', 'W')), ('out_layout', ()), ('out_dtype', '')))}), op_name: cudnn_conv2d": [
+        0.12078794333333333,
+        8.908663698274679e-06
+    ],
+    "op_type: conv2d, data_shape: (1, 1024, 14, 14), attrs: frozenset({('nn.conv2d', (('strides', (1, 1)), ('padding', (0, 0, 0, 0)), ('dilation', (1, 1)), ('groups', 1), ('channels', 1024), ('kernel_size', (1, 1)), ('data_layout', ('N', 'C', 'H', 'W')), ('kernel_layout', ('O', 'I', 'H', 'W')), ('out_layout', ()), ('out_dtype', '')))}), op_name: tvmgpu-autotvm_conv2d": [
+        0.12804042333333335,
+        4.781923764436939e-05
+    ],
     "op_type: conv2d, data_shape: (1, 1024, 14, 14), attrs: frozenset({('nn.conv2d', (('strides', (1, 1)), ('padding', (0, 0, 0, 0)), ('dilation', (1, 1)), ('groups', 1), ('channels', 256), ('kernel_size', (1, 1)), ('data_layout', ('N', 'C', 'H', 'W')), ('kernel_layout', ('O', 'I', 'H', 'W')), ('out_layout', ()), ('out_dtype', '')))}), op_name: cudnn_conv2d": [
         0.08476745000000001,
         0.00014534672912269478
+    ],
+    "op_type: conv2d, data_shape: (1, 1024, 14, 14), attrs: frozenset({('nn.conv2d', (('strides', (1, 1)), ('padding', (0, 0, 0, 0)), ('dilation', (1, 1)), ('groups', 1), ('channels', 256), ('kernel_size', (1, 1)), ('data_layout', ('N', 'C', 'H', 'W')), ('kernel_layout', ('O', 'I', 'H', 'W')), ('out_layout', ()), ('out_dtype', '')))}), op_name: tensorrt_conv2d": [
+        0.05613973333333333,
+        0.000344891454744179
     ],
     "op_type: conv2d, data_shape: (1, 1024, 14, 14), attrs: frozenset({('nn.conv2d', (('strides', (1, 1)), ('padding', (0, 0, 0, 0)), ('dilation', (1, 1)), ('groups', 1), ('channels', 256), ('kernel_size', (1, 1)), ('data_layout', ('N', 'C', 'H', 'W')), ('kernel_layout', ('O', 'I', 'H', 'W')), ('out_layout', ()), ('out_dtype', '')))}), op_name: tvmgpu-autotvm_conv2d": [
         0.0821285,
@@ -119,6 +475,10 @@
         0.07267891666666666,
         3.257484544177839e-05
     ],
+    "op_type: conv2d, data_shape: (1, 1024, 14, 14), attrs: frozenset({('nn.conv2d', (('strides', (1, 1)), ('padding', (0, 0, 0, 0)), ('dilation', (1, 1)), ('groups', 1), ('channels', 512), ('kernel_size', (1, 1)), ('data_layout', ('N', 'C', 'H', 'W')), ('kernel_layout', ('O', 'I', 'H', 'W')), ('out_layout', ()), ('out_dtype', '')))}), op_name: tensorrt_conv2d": [
+        0.09548050000000001,
+        7.1618759181283e-05
+    ],
     "op_type: conv2d, data_shape: (1, 1024, 14, 14), attrs: frozenset({('nn.conv2d', (('strides', (1, 1)), ('padding', (0, 0, 0, 0)), ('dilation', (1, 1)), ('groups', 1), ('channels', 512), ('kernel_size', (1, 1)), ('data_layout', ('N', 'C', 'H', 'W')), ('kernel_layout', ('O', 'I', 'H', 'W')), ('out_layout', ()), ('out_dtype', '')))}), op_name: tvmgpu-autotvm_conv2d": [
         0.12735838333333332,
         4.88497071525454e-05
@@ -127,13 +487,53 @@
         0.1107845,
         9.339931298820094e-05
     ],
+    "op_type: conv2d, data_shape: (1, 1024, 14, 14), attrs: frozenset({('nn.conv2d', (('strides', (2, 2)), ('padding', (0, 0, 0, 0)), ('dilation', (1, 1)), ('groups', 1), ('channels', 2048), ('kernel_size', (1, 1)), ('data_layout', ('N', 'C', 'H', 'W')), ('kernel_layout', ('O', 'I', 'H', 'W')), ('out_layout', ()), ('out_dtype', '')))}), op_name: tensorrt_conv2d": [
+        0.13912633333333335,
+        0.00013996190751613315
+    ],
     "op_type: conv2d, data_shape: (1, 1024, 14, 14), attrs: frozenset({('nn.conv2d', (('strides', (2, 2)), ('padding', (0, 0, 0, 0)), ('dilation', (1, 1)), ('groups', 1), ('channels', 2048), ('kernel_size', (1, 1)), ('data_layout', ('N', 'C', 'H', 'W')), ('kernel_layout', ('O', 'I', 'H', 'W')), ('out_layout', ()), ('out_dtype', '')))}), op_name: tvmgpu-autotvm_conv2d": [
         0.18561333333333332,
         0.00016431687544361643
     ],
+    "op_type: conv2d, data_shape: (1, 1024, 14, 14), attrs: frozenset({('nn.conv2d', (('strides', (2, 2)), ('padding', (1, 1, 1, 1)), ('dilation', (1, 1)), ('groups', 32), ('channels', 1024), ('kernel_size', (3, 3)), ('data_layout', ('N', 'C', 'H', 'W')), ('kernel_layout', ('O', 'I', 'H', 'W')), ('out_layout', ()), ('out_dtype', '')))}), op_name: cudnn_conv2d": [
+        0.09724661000000001,
+        0.0002579909883439112
+    ],
+    "op_type: conv2d, data_shape: (1, 1024, 14, 14), attrs: frozenset({('nn.conv2d', (('strides', (2, 2)), ('padding', (1, 1, 1, 1)), ('dilation', (1, 1)), ('groups', 32), ('channels', 1024), ('kernel_size', (3, 3)), ('data_layout', ('N', 'C', 'H', 'W')), ('kernel_layout', ('O', 'I', 'H', 'W')), ('out_layout', ()), ('out_dtype', '')))}), op_name: tvmgpu-autotvm_conv2d": [
+        0.017607786666666667,
+        3.730375971519468e-05
+    ],
+    "op_type: conv2d, data_shape: (1, 1024, 7, 7), attrs: frozenset({('nn.conv2d', (('strides', (1, 1)), ('padding', (0, 0, 0, 0)), ('dilation', (1, 1)), ('groups', 1), ('channels', 2048), ('kernel_size', (1, 1)), ('data_layout', ('N', 'C', 'H', 'W')), ('kernel_layout', ('O', 'I', 'H', 'W')), ('out_layout', ()), ('out_dtype', '')))}), op_name: cudnn_conv2d": [
+        0.12862484666666665,
+        2.1822899797131083e-05
+    ],
+    "op_type: conv2d, data_shape: (1, 1024, 7, 7), attrs: frozenset({('nn.conv2d', (('strides', (1, 1)), ('padding', (0, 0, 0, 0)), ('dilation', (1, 1)), ('groups', 1), ('channels', 2048), ('kernel_size', (1, 1)), ('data_layout', ('N', 'C', 'H', 'W')), ('kernel_layout', ('O', 'I', 'H', 'W')), ('out_layout', ()), ('out_dtype', '')))}), op_name: tvmgpu-autotvm_conv2d": [
+        0.11197344,
+        0.00010768653769157918
+    ],
+    "op_type: conv2d, data_shape: (1, 1024, 7, 7), attrs: frozenset({('nn.conv2d', (('strides', (1, 1)), ('padding', (1, 1, 1, 1)), ('dilation', (1, 1)), ('groups', 32), ('channels', 1024), ('kernel_size', (3, 3)), ('data_layout', ('N', 'C', 'H', 'W')), ('kernel_layout', ('O', 'I', 'H', 'W')), ('out_layout', ()), ('out_dtype', '')))}), op_name: cudnn_conv2d": [
+        0.09773524666666666,
+        3.0982558892965215e-05
+    ],
+    "op_type: conv2d, data_shape: (1, 1024, 7, 7), attrs: frozenset({('nn.conv2d', (('strides', (1, 1)), ('padding', (1, 1, 1, 1)), ('dilation', (1, 1)), ('groups', 32), ('channels', 1024), ('kernel_size', (3, 3)), ('data_layout', ('N', 'C', 'H', 'W')), ('kernel_layout', ('O', 'I', 'H', 'W')), ('out_layout', ()), ('out_dtype', '')))}), op_name: tvmgpu-autotvm_conv2d": [
+        0.017874983333333334,
+        3.0185665840300345e-05
+    ],
+    "op_type: conv2d, data_shape: (1, 128, 28, 28), attrs: frozenset({('nn.conv2d', (('strides', (1, 1)), ('padding', (0, 0, 0, 0)), ('dilation', (1, 1)), ('groups', 1), ('channels', 128), ('kernel_size', (1, 1)), ('data_layout', ('N', 'C', 'H', 'W')), ('kernel_layout', ('O', 'I', 'H', 'W')), ('out_layout', ()), ('out_dtype', '')))}), op_name: cudnn_conv2d": [
+        0.016536953333333333,
+        1.9260903982477865e-05
+    ],
+    "op_type: conv2d, data_shape: (1, 128, 28, 28), attrs: frozenset({('nn.conv2d', (('strides', (1, 1)), ('padding', (0, 0, 0, 0)), ('dilation', (1, 1)), ('groups', 1), ('channels', 128), ('kernel_size', (1, 1)), ('data_layout', ('N', 'C', 'H', 'W')), ('kernel_layout', ('O', 'I', 'H', 'W')), ('out_layout', ()), ('out_dtype', '')))}), op_name: tvmgpu-autotvm_conv2d": [
+        0.017039676666666666,
+        2.8774878318113897e-05
+    ],
     "op_type: conv2d, data_shape: (1, 128, 28, 28), attrs: frozenset({('nn.conv2d', (('strides', (1, 1)), ('padding', (0, 0, 0, 0)), ('dilation', (1, 1)), ('groups', 1), ('channels', 512), ('kernel_size', (1, 1)), ('data_layout', ('N', 'C', 'H', 'W')), ('kernel_layout', ('O', 'I', 'H', 'W')), ('out_layout', ()), ('out_dtype', '')))}), op_name: cudnn_conv2d": [
         0.05109598333333334,
         7.645269052746857e-05
+    ],
+    "op_type: conv2d, data_shape: (1, 128, 28, 28), attrs: frozenset({('nn.conv2d', (('strides', (1, 1)), ('padding', (0, 0, 0, 0)), ('dilation', (1, 1)), ('groups', 1), ('channels', 512), ('kernel_size', (1, 1)), ('data_layout', ('N', 'C', 'H', 'W')), ('kernel_layout', ('O', 'I', 'H', 'W')), ('out_layout', ()), ('out_dtype', '')))}), op_name: tensorrt_conv2d": [
+        0.03951459999999999,
+        6.717831991548263e-05
     ],
     "op_type: conv2d, data_shape: (1, 128, 28, 28), attrs: frozenset({('nn.conv2d', (('strides', (1, 1)), ('padding', (0, 0, 0, 0)), ('dilation', (1, 1)), ('groups', 1), ('channels', 512), ('kernel_size', (1, 1)), ('data_layout', ('N', 'C', 'H', 'W')), ('kernel_layout', ('O', 'I', 'H', 'W')), ('out_layout', ()), ('out_dtype', '')))}), op_name: tvmgpu-autotvm_conv2d": [
         0.04090771666666667,
@@ -143,21 +543,89 @@
         0.04637225,
         8.097253649643568e-05
     ],
+    "op_type: conv2d, data_shape: (1, 128, 28, 28), attrs: frozenset({('nn.conv2d', (('strides', (1, 1)), ('padding', (1, 1, 1, 1)), ('dilation', (1, 1)), ('groups', 1), ('channels', 128), ('kernel_size', (3, 3)), ('data_layout', ('N', 'C', 'H', 'W')), ('kernel_layout', ('O', 'I', 'H', 'W')), ('out_layout', ()), ('out_dtype', '')))}), op_name: tensorrt_conv2d": [
+        0.04670613333333332,
+        0.00010614271315335615
+    ],
     "op_type: conv2d, data_shape: (1, 128, 28, 28), attrs: frozenset({('nn.conv2d', (('strides', (1, 1)), ('padding', (1, 1, 1, 1)), ('dilation', (1, 1)), ('groups', 1), ('channels', 128), ('kernel_size', (3, 3)), ('data_layout', ('N', 'C', 'H', 'W')), ('kernel_layout', ('O', 'I', 'H', 'W')), ('out_layout', ()), ('out_dtype', '')))}), op_name: tvmgpu-autotvm_conv2d": [
         0.053282666666666666,
         0.00011449661809657897
+    ],
+    "op_type: conv2d, data_shape: (1, 128, 28, 28), attrs: frozenset({('nn.conv2d', (('strides', (1, 1)), ('padding', (1, 1, 1, 1)), ('dilation', (1, 1)), ('groups', 128), ('channels', 128), ('kernel_size', (3, 3)), ('data_layout', ('N', 'C', 'H', 'W')), ('kernel_layout', ('O', 'I', 'H', 'W')), ('out_layout', ()), ('out_dtype', '')))}), op_name: cudnn_conv2d": [
+        0.011383353333333332,
+        2.1851718976369544e-05
+    ],
+    "op_type: conv2d, data_shape: (1, 128, 28, 28), attrs: frozenset({('nn.conv2d', (('strides', (1, 1)), ('padding', (1, 1, 1, 1)), ('dilation', (1, 1)), ('groups', 128), ('channels', 128), ('kernel_size', (3, 3)), ('data_layout', ('N', 'C', 'H', 'W')), ('kernel_layout', ('O', 'I', 'H', 'W')), ('out_layout', ()), ('out_dtype', '')))}), op_name: tvmgpu-autotvm_conv2d": [
+        0.004351036666666666,
+        3.126659594874718e-05
+    ],
+    "op_type: conv2d, data_shape: (1, 128, 56, 56), attrs: frozenset({('nn.conv2d', (('strides', (1, 1)), ('padding', (0, 0, 0, 0)), ('dilation', (1, 1)), ('groups', 1), ('channels', 256), ('kernel_size', (1, 1)), ('data_layout', ('N', 'C', 'H', 'W')), ('kernel_layout', ('O', 'I', 'H', 'W')), ('out_layout', ()), ('out_dtype', '')))}), op_name: cudnn_conv2d": [
+        0.08166687333333333,
+        4.3718274084059956e-05
+    ],
+    "op_type: conv2d, data_shape: (1, 128, 56, 56), attrs: frozenset({('nn.conv2d', (('strides', (1, 1)), ('padding', (0, 0, 0, 0)), ('dilation', (1, 1)), ('groups', 1), ('channels', 256), ('kernel_size', (1, 1)), ('data_layout', ('N', 'C', 'H', 'W')), ('kernel_layout', ('O', 'I', 'H', 'W')), ('out_layout', ()), ('out_dtype', '')))}), op_name: tvmgpu-autotvm_conv2d": [
+        0.06671797333333333,
+        3.6687441387420825e-05
+    ],
+    "op_type: conv2d, data_shape: (1, 128, 56, 56), attrs: frozenset({('nn.conv2d', (('strides', (1, 1)), ('padding', (1, 1, 1, 1)), ('dilation', (1, 1)), ('groups', 32), ('channels', 128), ('kernel_size', (3, 3)), ('data_layout', ('N', 'C', 'H', 'W')), ('kernel_layout', ('O', 'I', 'H', 'W')), ('out_layout', ()), ('out_dtype', '')))}), op_name: cudnn_conv2d": [
+        0.052789216666666666,
+        9.134802801496529e-06
+    ],
+    "op_type: conv2d, data_shape: (1, 128, 56, 56), attrs: frozenset({('nn.conv2d', (('strides', (1, 1)), ('padding', (1, 1, 1, 1)), ('dilation', (1, 1)), ('groups', 32), ('channels', 128), ('kernel_size', (3, 3)), ('data_layout', ('N', 'C', 'H', 'W')), ('kernel_layout', ('O', 'I', 'H', 'W')), ('out_layout', ()), ('out_dtype', '')))}), op_name: tvmgpu-autotvm_conv2d": [
+        0.014064523333333334,
+        2.6269035426186482e-05
     ],
     "op_type: conv2d, data_shape: (1, 128, 56, 56), attrs: frozenset({('nn.conv2d', (('strides', (2, 2)), ('padding', (1, 1, 1, 1)), ('dilation', (1, 1)), ('groups', 1), ('channels', 128), ('kernel_size', (3, 3)), ('data_layout', ('N', 'C', 'H', 'W')), ('kernel_layout', ('O', 'I', 'H', 'W')), ('out_layout', ()), ('out_dtype', '')))}), op_name: cudnn_conv2d": [
         0.1234325,
         8.746910883276593e-05
     ],
+    "op_type: conv2d, data_shape: (1, 128, 56, 56), attrs: frozenset({('nn.conv2d', (('strides', (2, 2)), ('padding', (1, 1, 1, 1)), ('dilation', (1, 1)), ('groups', 1), ('channels', 128), ('kernel_size', (3, 3)), ('data_layout', ('N', 'C', 'H', 'W')), ('kernel_layout', ('O', 'I', 'H', 'W')), ('out_layout', ()), ('out_dtype', '')))}), op_name: tensorrt_conv2d": [
+        0.09412903333333333,
+        7.107105990172911e-05
+    ],
     "op_type: conv2d, data_shape: (1, 128, 56, 56), attrs: frozenset({('nn.conv2d', (('strides', (2, 2)), ('padding', (1, 1, 1, 1)), ('dilation', (1, 1)), ('groups', 1), ('channels', 128), ('kernel_size', (3, 3)), ('data_layout', ('N', 'C', 'H', 'W')), ('kernel_layout', ('O', 'I', 'H', 'W')), ('out_layout', ()), ('out_dtype', '')))}), op_name: tvmgpu-autotvm_conv2d": [
         0.12583836666666667,
         0.00015696131335105705
     ],
+    "op_type: conv2d, data_shape: (1, 128, 56, 56), attrs: frozenset({('nn.conv2d', (('strides', (2, 2)), ('padding', (2, 2, 2, 2)), ('dilation', (1, 1)), ('groups', 128), ('channels', 128), ('kernel_size', (5, 5)), ('data_layout', ('N', 'C', 'H', 'W')), ('kernel_layout', ('O', 'I', 'H', 'W')), ('out_layout', ()), ('out_dtype', '')))}), op_name: cudnn_conv2d": [
+        0.019394023333333333,
+        1.4866302686126083e-05
+    ],
+    "op_type: conv2d, data_shape: (1, 128, 56, 56), attrs: frozenset({('nn.conv2d', (('strides', (2, 2)), ('padding', (2, 2, 2, 2)), ('dilation', (1, 1)), ('groups', 128), ('channels', 128), ('kernel_size', (5, 5)), ('data_layout', ('N', 'C', 'H', 'W')), ('kernel_layout', ('O', 'I', 'H', 'W')), ('out_layout', ()), ('out_dtype', '')))}), op_name: tvmgpu-autotvm_conv2d": [
+        0.007906976666666668,
+        3.505943651699041e-05
+    ],
+    "op_type: conv2d, data_shape: (1, 128, 56, 56), attrs: frozenset({('nn.conv2d', (('strides', (2, 2)), ('padding', (3, 3, 3, 3)), ('dilation', (1, 1)), ('groups', 128), ('channels', 128), ('kernel_size', (7, 7)), ('data_layout', ('N', 'C', 'H', 'W')), ('kernel_layout', ('O', 'I', 'H', 'W')), ('out_layout', ()), ('out_dtype', '')))}), op_name: cudnn_conv2d": [
+        0.032411829999999996,
+        5.658362542880732e-06
+    ],
+    "op_type: conv2d, data_shape: (1, 128, 56, 56), attrs: frozenset({('nn.conv2d', (('strides', (2, 2)), ('padding', (3, 3, 3, 3)), ('dilation', (1, 1)), ('groups', 128), ('channels', 128), ('kernel_size', (7, 7)), ('data_layout', ('N', 'C', 'H', 'W')), ('kernel_layout', ('O', 'I', 'H', 'W')), ('out_layout', ()), ('out_dtype', '')))}), op_name: tvmgpu-autotvm_conv2d": [
+        0.008901973333333334,
+        3.474747504815647e-05
+    ],
+    "op_type: conv2d, data_shape: (1, 1280, 14, 14), attrs: frozenset({('nn.conv2d', (('strides', (1, 1)), ('padding', (0, 0, 0, 0)), ('dilation', (1, 1)), ('groups', 1), ('channels', 256), ('kernel_size', (1, 1)), ('data_layout', ('N', 'C', 'H', 'W')), ('kernel_layout', ('O', 'I', 'H', 'W')), ('out_layout', ()), ('out_dtype', '')))}), op_name: cudnn_conv2d": [
+        0.08187968,
+        1.4303677848731344e-05
+    ],
+    "op_type: conv2d, data_shape: (1, 1280, 14, 14), attrs: frozenset({('nn.conv2d', (('strides', (1, 1)), ('padding', (0, 0, 0, 0)), ('dilation', (1, 1)), ('groups', 1), ('channels', 256), ('kernel_size', (1, 1)), ('data_layout', ('N', 'C', 'H', 'W')), ('kernel_layout', ('O', 'I', 'H', 'W')), ('out_layout', ()), ('out_dtype', '')))}), op_name: tvmgpu-autotvm_conv2d": [
+        0.11028073666666666,
+        3.01212010974847e-05
+    ],
+    "op_type: conv2d, data_shape: (1, 2048, 7, 7), attrs: frozenset({('nn.conv2d', (('strides', (1, 1)), ('padding', (0, 0, 0, 0)), ('dilation', (1, 1)), ('groups', 1), ('channels', 1024), ('kernel_size', (1, 1)), ('data_layout', ('N', 'C', 'H', 'W')), ('kernel_layout', ('O', 'I', 'H', 'W')), ('out_layout', ()), ('out_dtype', '')))}), op_name: cudnn_conv2d": [
+        0.12158751999999999,
+        4.2235959402701785e-05
+    ],
+    "op_type: conv2d, data_shape: (1, 2048, 7, 7), attrs: frozenset({('nn.conv2d', (('strides', (1, 1)), ('padding', (0, 0, 0, 0)), ('dilation', (1, 1)), ('groups', 1), ('channels', 1024), ('kernel_size', (1, 1)), ('data_layout', ('N', 'C', 'H', 'W')), ('kernel_layout', ('O', 'I', 'H', 'W')), ('out_layout', ()), ('out_dtype', '')))}), op_name: tvmgpu-autotvm_conv2d": [
+        0.14853706,
+        2.2074122104094572e-05
+    ],
     "op_type: conv2d, data_shape: (1, 2048, 7, 7), attrs: frozenset({('nn.conv2d', (('strides', (1, 1)), ('padding', (0, 0, 0, 0)), ('dilation', (1, 1)), ('groups', 1), ('channels', 512), ('kernel_size', (1, 1)), ('data_layout', ('N', 'C', 'H', 'W')), ('kernel_layout', ('O', 'I', 'H', 'W')), ('out_layout', ()), ('out_dtype', '')))}), op_name: cudnn_conv2d": [
         0.14946025,
         0.00010397521339242388
+    ],
+    "op_type: conv2d, data_shape: (1, 2048, 7, 7), attrs: frozenset({('nn.conv2d', (('strides', (1, 1)), ('padding', (0, 0, 0, 0)), ('dilation', (1, 1)), ('groups', 1), ('channels', 512), ('kernel_size', (1, 1)), ('data_layout', ('N', 'C', 'H', 'W')), ('kernel_layout', ('O', 'I', 'H', 'W')), ('out_layout', ()), ('out_dtype', '')))}), op_name: tensorrt_conv2d": [
+        0.06073276666666668,
+        4.765209567503025e-05
     ],
     "op_type: conv2d, data_shape: (1, 2048, 7, 7), attrs: frozenset({('nn.conv2d', (('strides', (1, 1)), ('padding', (0, 0, 0, 0)), ('dilation', (1, 1)), ('groups', 1), ('channels', 512), ('kernel_size', (1, 1)), ('data_layout', ('N', 'C', 'H', 'W')), ('kernel_layout', ('O', 'I', 'H', 'W')), ('out_layout', ()), ('out_dtype', '')))}), op_name: tvmgpu-autotvm_conv2d": [
         0.12672476666666666,
@@ -167,37 +635,113 @@
         0.03934235,
         0.00016978606146167077
     ],
+    "op_type: conv2d, data_shape: (1, 256, 14, 14), attrs: frozenset({('nn.conv2d', (('strides', (1, 1)), ('padding', (0, 0, 0, 0)), ('dilation', (1, 1)), ('groups', 1), ('channels', 1024), ('kernel_size', (1, 1)), ('data_layout', ('N', 'C', 'H', 'W')), ('kernel_layout', ('O', 'I', 'H', 'W')), ('out_layout', ()), ('out_dtype', '')))}), op_name: tensorrt_conv2d": [
+        0.04157859999999999,
+        0.00012182465541370109
+    ],
     "op_type: conv2d, data_shape: (1, 256, 14, 14), attrs: frozenset({('nn.conv2d', (('strides', (1, 1)), ('padding', (0, 0, 0, 0)), ('dilation', (1, 1)), ('groups', 1), ('channels', 1024), ('kernel_size', (1, 1)), ('data_layout', ('N', 'C', 'H', 'W')), ('kernel_layout', ('O', 'I', 'H', 'W')), ('out_layout', ()), ('out_dtype', '')))}), op_name: tvmgpu-autotvm_conv2d": [
         0.04699626666666667,
         7.899457084016886e-05
+    ],
+    "op_type: conv2d, data_shape: (1, 256, 14, 14), attrs: frozenset({('nn.conv2d', (('strides', (1, 1)), ('padding', (0, 0, 0, 0)), ('dilation', (1, 1)), ('groups', 1), ('channels', 256), ('kernel_size', (1, 1)), ('data_layout', ('N', 'C', 'H', 'W')), ('kernel_layout', ('O', 'I', 'H', 'W')), ('out_layout', ()), ('out_dtype', '')))}), op_name: cudnn_conv2d": [
+        0.024161276666666672,
+        7.245487484560104e-06
+    ],
+    "op_type: conv2d, data_shape: (1, 256, 14, 14), attrs: frozenset({('nn.conv2d', (('strides', (1, 1)), ('padding', (0, 0, 0, 0)), ('dilation', (1, 1)), ('groups', 1), ('channels', 256), ('kernel_size', (1, 1)), ('data_layout', ('N', 'C', 'H', 'W')), ('kernel_layout', ('O', 'I', 'H', 'W')), ('out_layout', ()), ('out_dtype', '')))}), op_name: tvmgpu-autotvm_conv2d": [
+        0.02429418333333333,
+        2.3990932083233972e-05
     ],
     "op_type: conv2d, data_shape: (1, 256, 14, 14), attrs: frozenset({('nn.conv2d', (('strides', (1, 1)), ('padding', (1, 1, 1, 1)), ('dilation', (1, 1)), ('groups', 1), ('channels', 256), ('kernel_size', (3, 3)), ('data_layout', ('N', 'C', 'H', 'W')), ('kernel_layout', ('O', 'I', 'H', 'W')), ('out_layout', ()), ('out_dtype', '')))}), op_name: cudnn_conv2d": [
         0.08094451666666666,
         0.0001704921519862119
     ],
+    "op_type: conv2d, data_shape: (1, 256, 14, 14), attrs: frozenset({('nn.conv2d', (('strides', (1, 1)), ('padding', (1, 1, 1, 1)), ('dilation', (1, 1)), ('groups', 1), ('channels', 256), ('kernel_size', (3, 3)), ('data_layout', ('N', 'C', 'H', 'W')), ('kernel_layout', ('O', 'I', 'H', 'W')), ('out_layout', ()), ('out_dtype', '')))}), op_name: tensorrt_conv2d": [
+        0.06281273333333333,
+        0.00038812259517952786
+    ],
     "op_type: conv2d, data_shape: (1, 256, 14, 14), attrs: frozenset({('nn.conv2d', (('strides', (1, 1)), ('padding', (1, 1, 1, 1)), ('dilation', (1, 1)), ('groups', 1), ('channels', 256), ('kernel_size', (3, 3)), ('data_layout', ('N', 'C', 'H', 'W')), ('kernel_layout', ('O', 'I', 'H', 'W')), ('out_layout', ()), ('out_dtype', '')))}), op_name: tvmgpu-autotvm_conv2d": [
         0.08245861666666666,
         0.00018853012727119314
+    ],
+    "op_type: conv2d, data_shape: (1, 256, 14, 14), attrs: frozenset({('nn.conv2d', (('strides', (1, 1)), ('padding', (1, 1, 1, 1)), ('dilation', (1, 1)), ('groups', 256), ('channels', 256), ('kernel_size', (3, 3)), ('data_layout', ('N', 'C', 'H', 'W')), ('kernel_layout', ('O', 'I', 'H', 'W')), ('out_layout', ()), ('out_dtype', '')))}), op_name: cudnn_conv2d": [
+        0.010806713333333334,
+        5.3708308688900174e-05
+    ],
+    "op_type: conv2d, data_shape: (1, 256, 14, 14), attrs: frozenset({('nn.conv2d', (('strides', (1, 1)), ('padding', (1, 1, 1, 1)), ('dilation', (1, 1)), ('groups', 256), ('channels', 256), ('kernel_size', (3, 3)), ('data_layout', ('N', 'C', 'H', 'W')), ('kernel_layout', ('O', 'I', 'H', 'W')), ('out_layout', ()), ('out_dtype', '')))}), op_name: tvmgpu-autotvm_conv2d": [
+        0.0038185566666666666,
+        2.4170550032816664e-05
+    ],
+    "op_type: conv2d, data_shape: (1, 256, 28, 28), attrs: frozenset({('nn.conv2d', (('strides', (1, 1)), ('padding', (0, 0, 0, 0)), ('dilation', (1, 1)), ('groups', 1), ('channels', 512), ('kernel_size', (1, 1)), ('data_layout', ('N', 'C', 'H', 'W')), ('kernel_layout', ('O', 'I', 'H', 'W')), ('out_layout', ()), ('out_dtype', '')))}), op_name: cudnn_conv2d": [
+        0.05918495666666667,
+        1.3812072818931026e-05
+    ],
+    "op_type: conv2d, data_shape: (1, 256, 28, 28), attrs: frozenset({('nn.conv2d', (('strides', (1, 1)), ('padding', (0, 0, 0, 0)), ('dilation', (1, 1)), ('groups', 1), ('channels', 512), ('kernel_size', (1, 1)), ('data_layout', ('N', 'C', 'H', 'W')), ('kernel_layout', ('O', 'I', 'H', 'W')), ('out_layout', ()), ('out_dtype', '')))}), op_name: tvmgpu-autotvm_conv2d": [
+        0.07368607666666667,
+        4.9649115690902826e-05
+    ],
+    "op_type: conv2d, data_shape: (1, 256, 28, 28), attrs: frozenset({('nn.conv2d', (('strides', (1, 1)), ('padding', (1, 1, 1, 1)), ('dilation', (1, 1)), ('groups', 32), ('channels', 256), ('kernel_size', (3, 3)), ('data_layout', ('N', 'C', 'H', 'W')), ('kernel_layout', ('O', 'I', 'H', 'W')), ('out_layout', ()), ('out_dtype', '')))}), op_name: cudnn_conv2d": [
+        0.08380405,
+        3.1276294537555685e-05
+    ],
+    "op_type: conv2d, data_shape: (1, 256, 28, 28), attrs: frozenset({('nn.conv2d', (('strides', (1, 1)), ('padding', (1, 1, 1, 1)), ('dilation', (1, 1)), ('groups', 32), ('channels', 256), ('kernel_size', (3, 3)), ('data_layout', ('N', 'C', 'H', 'W')), ('kernel_layout', ('O', 'I', 'H', 'W')), ('out_layout', ()), ('out_dtype', '')))}), op_name: tvmgpu-autotvm_conv2d": [
+        0.012874236666666665,
+        1.9477878620516993e-05
     ],
     "op_type: conv2d, data_shape: (1, 256, 28, 28), attrs: frozenset({('nn.conv2d', (('strides', (2, 2)), ('padding', (1, 1, 1, 1)), ('dilation', (1, 1)), ('groups', 1), ('channels', 256), ('kernel_size', (3, 3)), ('data_layout', ('N', 'C', 'H', 'W')), ('kernel_layout', ('O', 'I', 'H', 'W')), ('out_layout', ()), ('out_dtype', '')))}), op_name: cudnn_conv2d": [
         0.19065118333333334,
         4.4910584003726714e-05
     ],
+    "op_type: conv2d, data_shape: (1, 256, 28, 28), attrs: frozenset({('nn.conv2d', (('strides', (2, 2)), ('padding', (1, 1, 1, 1)), ('dilation', (1, 1)), ('groups', 1), ('channels', 256), ('kernel_size', (3, 3)), ('data_layout', ('N', 'C', 'H', 'W')), ('kernel_layout', ('O', 'I', 'H', 'W')), ('out_layout', ()), ('out_dtype', '')))}), op_name: tensorrt_conv2d": [
+        0.12606393333333335,
+        8.150584164477774e-05
+    ],
     "op_type: conv2d, data_shape: (1, 256, 28, 28), attrs: frozenset({('nn.conv2d', (('strides', (2, 2)), ('padding', (1, 1, 1, 1)), ('dilation', (1, 1)), ('groups', 1), ('channels', 256), ('kernel_size', (3, 3)), ('data_layout', ('N', 'C', 'H', 'W')), ('kernel_layout', ('O', 'I', 'H', 'W')), ('out_layout', ()), ('out_dtype', '')))}), op_name: tvmgpu-autotvm_conv2d": [
         0.17951623333333333,
         0.00028697688737753147
+    ],
+    "op_type: conv2d, data_shape: (1, 256, 28, 28), attrs: frozenset({('nn.conv2d', (('strides', (2, 2)), ('padding', (2, 2, 2, 2)), ('dilation', (1, 1)), ('groups', 256), ('channels', 256), ('kernel_size', (5, 5)), ('data_layout', ('N', 'C', 'H', 'W')), ('kernel_layout', ('O', 'I', 'H', 'W')), ('out_layout', ()), ('out_dtype', '')))}), op_name: cudnn_conv2d": [
+        0.014377593333333332,
+        2.656116630639478e-06
+    ],
+    "op_type: conv2d, data_shape: (1, 256, 28, 28), attrs: frozenset({('nn.conv2d', (('strides', (2, 2)), ('padding', (2, 2, 2, 2)), ('dilation', (1, 1)), ('groups', 256), ('channels', 256), ('kernel_size', (5, 5)), ('data_layout', ('N', 'C', 'H', 'W')), ('kernel_layout', ('O', 'I', 'H', 'W')), ('out_layout', ()), ('out_dtype', '')))}), op_name: tvmgpu-autotvm_conv2d": [
+        0.0057960466666666655,
+        2.8811109354243894e-05
+    ],
+    "op_type: conv2d, data_shape: (1, 256, 28, 28), attrs: frozenset({('nn.conv2d', (('strides', (2, 2)), ('padding', (3, 3, 3, 3)), ('dilation', (1, 1)), ('groups', 256), ('channels', 256), ('kernel_size', (7, 7)), ('data_layout', ('N', 'C', 'H', 'W')), ('kernel_layout', ('O', 'I', 'H', 'W')), ('out_layout', ()), ('out_dtype', '')))}), op_name: cudnn_conv2d": [
+        0.023215676666666667,
+        8.660470862232187e-06
+    ],
+    "op_type: conv2d, data_shape: (1, 256, 28, 28), attrs: frozenset({('nn.conv2d', (('strides', (2, 2)), ('padding', (3, 3, 3, 3)), ('dilation', (1, 1)), ('groups', 256), ('channels', 256), ('kernel_size', (7, 7)), ('data_layout', ('N', 'C', 'H', 'W')), ('kernel_layout', ('O', 'I', 'H', 'W')), ('out_layout', ()), ('out_dtype', '')))}), op_name: tvmgpu-autotvm_conv2d": [
+        0.006326823333333333,
+        2.8216118718838e-05
     ],
     "op_type: conv2d, data_shape: (1, 256, 56, 56), attrs: frozenset({('nn.conv2d', (('strides', (1, 1)), ('padding', (0, 0, 0, 0)), ('dilation', (1, 1)), ('groups', 1), ('channels', 128), ('kernel_size', (1, 1)), ('data_layout', ('N', 'C', 'H', 'W')), ('kernel_layout', ('O', 'I', 'H', 'W')), ('out_layout', ()), ('out_dtype', '')))}), op_name: cudnn_conv2d": [
         0.09065328333333333,
         5.3805906325938463e-05
     ],
+    "op_type: conv2d, data_shape: (1, 256, 56, 56), attrs: frozenset({('nn.conv2d', (('strides', (1, 1)), ('padding', (0, 0, 0, 0)), ('dilation', (1, 1)), ('groups', 1), ('channels', 128), ('kernel_size', (1, 1)), ('data_layout', ('N', 'C', 'H', 'W')), ('kernel_layout', ('O', 'I', 'H', 'W')), ('out_layout', ()), ('out_dtype', '')))}), op_name: tensorrt_conv2d": [
+        0.06361599999999999,
+        7.357680794018546e-05
+    ],
     "op_type: conv2d, data_shape: (1, 256, 56, 56), attrs: frozenset({('nn.conv2d', (('strides', (1, 1)), ('padding', (0, 0, 0, 0)), ('dilation', (1, 1)), ('groups', 1), ('channels', 128), ('kernel_size', (1, 1)), ('data_layout', ('N', 'C', 'H', 'W')), ('kernel_layout', ('O', 'I', 'H', 'W')), ('out_layout', ()), ('out_dtype', '')))}), op_name: tvmgpu-autotvm_conv2d": [
         0.08480693333333333,
         0.0001549734887721812
     ],
+    "op_type: conv2d, data_shape: (1, 256, 56, 56), attrs: frozenset({('nn.conv2d', (('strides', (1, 1)), ('padding', (0, 0, 0, 0)), ('dilation', (1, 1)), ('groups', 1), ('channels', 256), ('kernel_size', (1, 1)), ('data_layout', ('N', 'C', 'H', 'W')), ('kernel_layout', ('O', 'I', 'H', 'W')), ('out_layout', ()), ('out_dtype', '')))}), op_name: cudnn_conv2d": [
+        0.10620809999999999,
+        0.00020817230987813412
+    ],
+    "op_type: conv2d, data_shape: (1, 256, 56, 56), attrs: frozenset({('nn.conv2d', (('strides', (1, 1)), ('padding', (0, 0, 0, 0)), ('dilation', (1, 1)), ('groups', 1), ('channels', 256), ('kernel_size', (1, 1)), ('data_layout', ('N', 'C', 'H', 'W')), ('kernel_layout', ('O', 'I', 'H', 'W')), ('out_layout', ()), ('out_dtype', '')))}), op_name: tvmgpu-autotvm_conv2d": [
+        0.09626016,
+        4.88060324140391e-05
+    ],
     "op_type: conv2d, data_shape: (1, 256, 56, 56), attrs: frozenset({('nn.conv2d', (('strides', (1, 1)), ('padding', (0, 0, 0, 0)), ('dilation', (1, 1)), ('groups', 1), ('channels', 64), ('kernel_size', (1, 1)), ('data_layout', ('N', 'C', 'H', 'W')), ('kernel_layout', ('O', 'I', 'H', 'W')), ('out_layout', ()), ('out_dtype', '')))}), op_name: cudnn_conv2d": [
         0.05352958333333333,
         1.2849924340461989e-05
+    ],
+    "op_type: conv2d, data_shape: (1, 256, 56, 56), attrs: frozenset({('nn.conv2d', (('strides', (1, 1)), ('padding', (0, 0, 0, 0)), ('dilation', (1, 1)), ('groups', 1), ('channels', 64), ('kernel_size', (1, 1)), ('data_layout', ('N', 'C', 'H', 'W')), ('kernel_layout', ('O', 'I', 'H', 'W')), ('out_layout', ()), ('out_dtype', '')))}), op_name: tensorrt_conv2d": [
+        0.045691633333333335,
+        6.79994771221771e-05
     ],
     "op_type: conv2d, data_shape: (1, 256, 56, 56), attrs: frozenset({('nn.conv2d', (('strides', (1, 1)), ('padding', (0, 0, 0, 0)), ('dilation', (1, 1)), ('groups', 1), ('channels', 64), ('kernel_size', (1, 1)), ('data_layout', ('N', 'C', 'H', 'W')), ('kernel_layout', ('O', 'I', 'H', 'W')), ('out_layout', ()), ('out_dtype', '')))}), op_name: tvmgpu-autotvm_conv2d": [
         0.05356158333333333,
@@ -207,13 +751,61 @@
         0.06260423333333333,
         0.00010854259020720623
     ],
+    "op_type: conv2d, data_shape: (1, 256, 56, 56), attrs: frozenset({('nn.conv2d', (('strides', (2, 2)), ('padding', (0, 0, 0, 0)), ('dilation', (1, 1)), ('groups', 1), ('channels', 512), ('kernel_size', (1, 1)), ('data_layout', ('N', 'C', 'H', 'W')), ('kernel_layout', ('O', 'I', 'H', 'W')), ('out_layout', ()), ('out_dtype', '')))}), op_name: tensorrt_conv2d": [
+        0.06652043333333334,
+        0.00012460383443360404
+    ],
     "op_type: conv2d, data_shape: (1, 256, 56, 56), attrs: frozenset({('nn.conv2d', (('strides', (2, 2)), ('padding', (0, 0, 0, 0)), ('dilation', (1, 1)), ('groups', 1), ('channels', 512), ('kernel_size', (1, 1)), ('data_layout', ('N', 'C', 'H', 'W')), ('kernel_layout', ('O', 'I', 'H', 'W')), ('out_layout', ()), ('out_dtype', '')))}), op_name: tvmgpu-autotvm_conv2d": [
         0.11055356666666667,
         0.00015107314085863148
     ],
+    "op_type: conv2d, data_shape: (1, 256, 56, 56), attrs: frozenset({('nn.conv2d', (('strides', (2, 2)), ('padding', (1, 1, 1, 1)), ('dilation', (1, 1)), ('groups', 32), ('channels', 256), ('kernel_size', (3, 3)), ('data_layout', ('N', 'C', 'H', 'W')), ('kernel_layout', ('O', 'I', 'H', 'W')), ('out_layout', ()), ('out_dtype', '')))}), op_name: cudnn_conv2d": [
+        0.09493716666666667,
+        0.00010707609765436973
+    ],
+    "op_type: conv2d, data_shape: (1, 256, 56, 56), attrs: frozenset({('nn.conv2d', (('strides', (2, 2)), ('padding', (1, 1, 1, 1)), ('dilation', (1, 1)), ('groups', 32), ('channels', 256), ('kernel_size', (3, 3)), ('data_layout', ('N', 'C', 'H', 'W')), ('kernel_layout', ('O', 'I', 'H', 'W')), ('out_layout', ()), ('out_dtype', '')))}), op_name: tvmgpu-autotvm_conv2d": [
+        0.015659513333333337,
+        3.634155044696005e-05
+    ],
+    "op_type: conv2d, data_shape: (1, 320, 56, 56), attrs: frozenset({('nn.conv2d', (('strides', (1, 1)), ('padding', (0, 0, 0, 0)), ('dilation', (1, 1)), ('groups', 1), ('channels', 128), ('kernel_size', (1, 1)), ('data_layout', ('N', 'C', 'H', 'W')), ('kernel_layout', ('O', 'I', 'H', 'W')), ('out_layout', ()), ('out_dtype', '')))}), op_name: cudnn_conv2d": [
+        0.11091977666666668,
+        4.482538963089878e-06
+    ],
+    "op_type: conv2d, data_shape: (1, 320, 56, 56), attrs: frozenset({('nn.conv2d', (('strides', (1, 1)), ('padding', (0, 0, 0, 0)), ('dilation', (1, 1)), ('groups', 1), ('channels', 128), ('kernel_size', (1, 1)), ('data_layout', ('N', 'C', 'H', 'W')), ('kernel_layout', ('O', 'I', 'H', 'W')), ('out_layout', ()), ('out_dtype', '')))}), op_name: tvmgpu-autotvm_conv2d": [
+        0.08720522333333335,
+        7.759342941827443e-05
+    ],
+    "op_type: conv2d, data_shape: (1, 320, 56, 56), attrs: frozenset({('nn.conv2d', (('strides', (1, 1)), ('padding', (0, 0, 0, 0)), ('dilation', (1, 1)), ('groups', 1), ('channels', 64), ('kernel_size', (1, 1)), ('data_layout', ('N', 'C', 'H', 'W')), ('kernel_layout', ('O', 'I', 'H', 'W')), ('out_layout', ()), ('out_dtype', '')))}), op_name: cudnn_conv2d": [
+        0.06490921666666667,
+        1.4627730134537486e-05
+    ],
+    "op_type: conv2d, data_shape: (1, 320, 56, 56), attrs: frozenset({('nn.conv2d', (('strides', (1, 1)), ('padding', (0, 0, 0, 0)), ('dilation', (1, 1)), ('groups', 1), ('channels', 64), ('kernel_size', (1, 1)), ('data_layout', ('N', 'C', 'H', 'W')), ('kernel_layout', ('O', 'I', 'H', 'W')), ('out_layout', ()), ('out_dtype', '')))}), op_name: tvmgpu-autotvm_conv2d": [
+        0.06354933,
+        7.450937301210291e-06
+    ],
+    "op_type: conv2d, data_shape: (1, 512, 14, 14), attrs: frozenset({('nn.conv2d', (('strides', (1, 1)), ('padding', (0, 0, 0, 0)), ('dilation', (1, 1)), ('groups', 1), ('channels', 1024), ('kernel_size', (1, 1)), ('data_layout', ('N', 'C', 'H', 'W')), ('kernel_layout', ('O', 'I', 'H', 'W')), ('out_layout', ()), ('out_dtype', '')))}), op_name: cudnn_conv2d": [
+        0.04602516666666667,
+        1.4120397381886471e-05
+    ],
+    "op_type: conv2d, data_shape: (1, 512, 14, 14), attrs: frozenset({('nn.conv2d', (('strides', (1, 1)), ('padding', (0, 0, 0, 0)), ('dilation', (1, 1)), ('groups', 1), ('channels', 1024), ('kernel_size', (1, 1)), ('data_layout', ('N', 'C', 'H', 'W')), ('kernel_layout', ('O', 'I', 'H', 'W')), ('out_layout', ()), ('out_dtype', '')))}), op_name: tvmgpu-autotvm_conv2d": [
+        0.08889535666666666,
+        9.356125741401901e-06
+    ],
+    "op_type: conv2d, data_shape: (1, 512, 14, 14), attrs: frozenset({('nn.conv2d', (('strides', (1, 1)), ('padding', (1, 1, 1, 1)), ('dilation', (1, 1)), ('groups', 32), ('channels', 512), ('kernel_size', (3, 3)), ('data_layout', ('N', 'C', 'H', 'W')), ('kernel_layout', ('O', 'I', 'H', 'W')), ('out_layout', ()), ('out_dtype', '')))}), op_name: cudnn_conv2d": [
+        0.08175252666666667,
+        2.1318962347069754e-05
+    ],
+    "op_type: conv2d, data_shape: (1, 512, 14, 14), attrs: frozenset({('nn.conv2d', (('strides', (1, 1)), ('padding', (1, 1, 1, 1)), ('dilation', (1, 1)), ('groups', 32), ('channels', 512), ('kernel_size', (3, 3)), ('data_layout', ('N', 'C', 'H', 'W')), ('kernel_layout', ('O', 'I', 'H', 'W')), ('out_layout', ()), ('out_dtype', '')))}), op_name: tvmgpu-autotvm_conv2d": [
+        0.0126912,
+        2.3762020116144103e-05
+    ],
     "op_type: conv2d, data_shape: (1, 512, 14, 14), attrs: frozenset({('nn.conv2d', (('strides', (2, 2)), ('padding', (1, 1, 1, 1)), ('dilation', (1, 1)), ('groups', 1), ('channels', 512), ('kernel_size', (3, 3)), ('data_layout', ('N', 'C', 'H', 'W')), ('kernel_layout', ('O', 'I', 'H', 'W')), ('out_layout', ()), ('out_dtype', '')))}), op_name: cudnn_conv2d": [
         0.30342448333333333,
         6.550670873190208e-05
+    ],
+    "op_type: conv2d, data_shape: (1, 512, 14, 14), attrs: frozenset({('nn.conv2d', (('strides', (2, 2)), ('padding', (1, 1, 1, 1)), ('dilation', (1, 1)), ('groups', 1), ('channels', 512), ('kernel_size', (3, 3)), ('data_layout', ('N', 'C', 'H', 'W')), ('kernel_layout', ('O', 'I', 'H', 'W')), ('out_layout', ()), ('out_dtype', '')))}), op_name: tensorrt_conv2d": [
+        0.2063135666666667,
+        8.375584888366532e-05
     ],
     "op_type: conv2d, data_shape: (1, 512, 14, 14), attrs: frozenset({('nn.conv2d', (('strides', (2, 2)), ('padding', (1, 1, 1, 1)), ('dilation', (1, 1)), ('groups', 1), ('channels', 512), ('kernel_size', (3, 3)), ('data_layout', ('N', 'C', 'H', 'W')), ('kernel_layout', ('O', 'I', 'H', 'W')), ('out_layout', ()), ('out_dtype', '')))}), op_name: tvmgpu-autotvm_conv2d": [
         0.26966395,
@@ -223,6 +815,10 @@
         0.05407571666666666,
         0.00015721170616578032
     ],
+    "op_type: conv2d, data_shape: (1, 512, 28, 28), attrs: frozenset({('nn.conv2d', (('strides', (1, 1)), ('padding', (0, 0, 0, 0)), ('dilation', (1, 1)), ('groups', 1), ('channels', 128), ('kernel_size', (1, 1)), ('data_layout', ('N', 'C', 'H', 'W')), ('kernel_layout', ('O', 'I', 'H', 'W')), ('out_layout', ()), ('out_dtype', '')))}), op_name: tensorrt_conv2d": [
+        0.05058666666666667,
+        0.0001337465596650028
+    ],
     "op_type: conv2d, data_shape: (1, 512, 28, 28), attrs: frozenset({('nn.conv2d', (('strides', (1, 1)), ('padding', (0, 0, 0, 0)), ('dilation', (1, 1)), ('groups', 1), ('channels', 128), ('kernel_size', (1, 1)), ('data_layout', ('N', 'C', 'H', 'W')), ('kernel_layout', ('O', 'I', 'H', 'W')), ('out_layout', ()), ('out_dtype', '')))}), op_name: tvmgpu-autotvm_conv2d": [
         0.0610293,
         2.484763570241582e-05
@@ -231,21 +827,49 @@
         0.12895036666666668,
         0.0011823928283593254
     ],
+    "op_type: conv2d, data_shape: (1, 512, 28, 28), attrs: frozenset({('nn.conv2d', (('strides', (1, 1)), ('padding', (0, 0, 0, 0)), ('dilation', (1, 1)), ('groups', 1), ('channels', 256), ('kernel_size', (1, 1)), ('data_layout', ('N', 'C', 'H', 'W')), ('kernel_layout', ('O', 'I', 'H', 'W')), ('out_layout', ()), ('out_dtype', '')))}), op_name: tensorrt_conv2d": [
+        0.06475083333333333,
+        0.00012771523880187585
+    ],
     "op_type: conv2d, data_shape: (1, 512, 28, 28), attrs: frozenset({('nn.conv2d', (('strides', (1, 1)), ('padding', (0, 0, 0, 0)), ('dilation', (1, 1)), ('groups', 1), ('channels', 256), ('kernel_size', (1, 1)), ('data_layout', ('N', 'C', 'H', 'W')), ('kernel_layout', ('O', 'I', 'H', 'W')), ('out_layout', ()), ('out_dtype', '')))}), op_name: tvmgpu-autotvm_conv2d": [
         0.09284371666666667,
         0.0001531719748808126
+    ],
+    "op_type: conv2d, data_shape: (1, 512, 28, 28), attrs: frozenset({('nn.conv2d', (('strides', (1, 1)), ('padding', (0, 0, 0, 0)), ('dilation', (1, 1)), ('groups', 1), ('channels', 512), ('kernel_size', (1, 1)), ('data_layout', ('N', 'C', 'H', 'W')), ('kernel_layout', ('O', 'I', 'H', 'W')), ('out_layout', ()), ('out_dtype', '')))}), op_name: cudnn_conv2d": [
+        0.10799029,
+        0.00024867251329141064
+    ],
+    "op_type: conv2d, data_shape: (1, 512, 28, 28), attrs: frozenset({('nn.conv2d', (('strides', (1, 1)), ('padding', (0, 0, 0, 0)), ('dilation', (1, 1)), ('groups', 1), ('channels', 512), ('kernel_size', (1, 1)), ('data_layout', ('N', 'C', 'H', 'W')), ('kernel_layout', ('O', 'I', 'H', 'W')), ('out_layout', ()), ('out_dtype', '')))}), op_name: tvmgpu-autotvm_conv2d": [
+        0.14172244666666667,
+        7.345718042203756e-05
     ],
     "op_type: conv2d, data_shape: (1, 512, 28, 28), attrs: frozenset({('nn.conv2d', (('strides', (2, 2)), ('padding', (0, 0, 0, 0)), ('dilation', (1, 1)), ('groups', 1), ('channels', 1024), ('kernel_size', (1, 1)), ('data_layout', ('N', 'C', 'H', 'W')), ('kernel_layout', ('O', 'I', 'H', 'W')), ('out_layout', ()), ('out_dtype', '')))}), op_name: cudnn_conv2d": [
         0.07299461666666666,
         9.075760145697369e-05
     ],
+    "op_type: conv2d, data_shape: (1, 512, 28, 28), attrs: frozenset({('nn.conv2d', (('strides', (2, 2)), ('padding', (0, 0, 0, 0)), ('dilation', (1, 1)), ('groups', 1), ('channels', 1024), ('kernel_size', (1, 1)), ('data_layout', ('N', 'C', 'H', 'W')), ('kernel_layout', ('O', 'I', 'H', 'W')), ('out_layout', ()), ('out_dtype', '')))}), op_name: tensorrt_conv2d": [
+        0.0756362,
+        0.0002511228517412673
+    ],
     "op_type: conv2d, data_shape: (1, 512, 28, 28), attrs: frozenset({('nn.conv2d', (('strides', (2, 2)), ('padding', (0, 0, 0, 0)), ('dilation', (1, 1)), ('groups', 1), ('channels', 1024), ('kernel_size', (1, 1)), ('data_layout', ('N', 'C', 'H', 'W')), ('kernel_layout', ('O', 'I', 'H', 'W')), ('out_layout', ()), ('out_dtype', '')))}), op_name: tvmgpu-autotvm_conv2d": [
         0.15132956666666667,
         0.00012874802479606308
     ],
+    "op_type: conv2d, data_shape: (1, 512, 28, 28), attrs: frozenset({('nn.conv2d', (('strides', (2, 2)), ('padding', (1, 1, 1, 1)), ('dilation', (1, 1)), ('groups', 32), ('channels', 512), ('kernel_size', (3, 3)), ('data_layout', ('N', 'C', 'H', 'W')), ('kernel_layout', ('O', 'I', 'H', 'W')), ('out_layout', ()), ('out_dtype', '')))}), op_name: cudnn_conv2d": [
+        0.09498431,
+        7.209214843980129e-05
+    ],
+    "op_type: conv2d, data_shape: (1, 512, 28, 28), attrs: frozenset({('nn.conv2d', (('strides', (2, 2)), ('padding', (1, 1, 1, 1)), ('dilation', (1, 1)), ('groups', 32), ('channels', 512), ('kernel_size', (3, 3)), ('data_layout', ('N', 'C', 'H', 'W')), ('kernel_layout', ('O', 'I', 'H', 'W')), ('out_layout', ()), ('out_dtype', '')))}), op_name: tvmgpu-autotvm_conv2d": [
+        0.02035808,
+        3.213518113636052e-05
+    ],
     "op_type: conv2d, data_shape: (1, 512, 7, 7), attrs: frozenset({('nn.conv2d', (('strides', (1, 1)), ('padding', (0, 0, 0, 0)), ('dilation', (1, 1)), ('groups', 1), ('channels', 2048), ('kernel_size', (1, 1)), ('data_layout', ('N', 'C', 'H', 'W')), ('kernel_layout', ('O', 'I', 'H', 'W')), ('out_layout', ()), ('out_dtype', '')))}), op_name: cudnn_conv2d": [
         0.0678389,
         4.682127365489806e-05
+    ],
+    "op_type: conv2d, data_shape: (1, 512, 7, 7), attrs: frozenset({('nn.conv2d', (('strides', (1, 1)), ('padding', (0, 0, 0, 0)), ('dilation', (1, 1)), ('groups', 1), ('channels', 2048), ('kernel_size', (1, 1)), ('data_layout', ('N', 'C', 'H', 'W')), ('kernel_layout', ('O', 'I', 'H', 'W')), ('out_layout', ()), ('out_dtype', '')))}), op_name: tensorrt_conv2d": [
+        0.050585500000000005,
+        0.0
     ],
     "op_type: conv2d, data_shape: (1, 512, 7, 7), attrs: frozenset({('nn.conv2d', (('strides', (1, 1)), ('padding', (0, 0, 0, 0)), ('dilation', (1, 1)), ('groups', 1), ('channels', 2048), ('kernel_size', (1, 1)), ('data_layout', ('N', 'C', 'H', 'W')), ('kernel_layout', ('O', 'I', 'H', 'W')), ('out_layout', ()), ('out_dtype', '')))}), op_name: tvmgpu-autotvm_conv2d": [
         0.07737598333333333,
@@ -255,13 +879,29 @@
         0.20065386666666665,
         0.00012065126973591514
     ],
+    "op_type: conv2d, data_shape: (1, 512, 7, 7), attrs: frozenset({('nn.conv2d', (('strides', (1, 1)), ('padding', (1, 1, 1, 1)), ('dilation', (1, 1)), ('groups', 1), ('channels', 512), ('kernel_size', (3, 3)), ('data_layout', ('N', 'C', 'H', 'W')), ('kernel_layout', ('O', 'I', 'H', 'W')), ('out_layout', ()), ('out_dtype', '')))}), op_name: tensorrt_conv2d": [
+        0.08724690000000002,
+        0.0003056643365959824
+    ],
     "op_type: conv2d, data_shape: (1, 512, 7, 7), attrs: frozenset({('nn.conv2d', (('strides', (1, 1)), ('padding', (1, 1, 1, 1)), ('dilation', (1, 1)), ('groups', 1), ('channels', 512), ('kernel_size', (3, 3)), ('data_layout', ('N', 'C', 'H', 'W')), ('kernel_layout', ('O', 'I', 'H', 'W')), ('out_layout', ()), ('out_dtype', '')))}), op_name: tvmgpu-autotvm_conv2d": [
         0.17673915000000004,
         8.128041994643127e-05
     ],
+    "op_type: conv2d, data_shape: (1, 64, 56, 56), attrs: frozenset({('nn.conv2d', (('strides', (1, 1)), ('padding', (0, 0, 0, 0)), ('dilation', (1, 1)), ('groups', 1), ('channels', 128), ('kernel_size', (1, 1)), ('data_layout', ('N', 'C', 'H', 'W')), ('kernel_layout', ('O', 'I', 'H', 'W')), ('out_layout', ()), ('out_dtype', '')))}), op_name: cudnn_conv2d": [
+        0.028151996666666665,
+        1.697345443790198e-05
+    ],
+    "op_type: conv2d, data_shape: (1, 64, 56, 56), attrs: frozenset({('nn.conv2d', (('strides', (1, 1)), ('padding', (0, 0, 0, 0)), ('dilation', (1, 1)), ('groups', 1), ('channels', 128), ('kernel_size', (1, 1)), ('data_layout', ('N', 'C', 'H', 'W')), ('kernel_layout', ('O', 'I', 'H', 'W')), ('out_layout', ()), ('out_dtype', '')))}), op_name: tvmgpu-autotvm_conv2d": [
+        0.026306766666666665,
+        3.135690496348069e-05
+    ],
     "op_type: conv2d, data_shape: (1, 64, 56, 56), attrs: frozenset({('nn.conv2d', (('strides', (1, 1)), ('padding', (0, 0, 0, 0)), ('dilation', (1, 1)), ('groups', 1), ('channels', 256), ('kernel_size', (1, 1)), ('data_layout', ('N', 'C', 'H', 'W')), ('kernel_layout', ('O', 'I', 'H', 'W')), ('out_layout', ()), ('out_dtype', '')))}), op_name: cudnn_conv2d": [
         0.0398821,
         0.0003270878653613852
+    ],
+    "op_type: conv2d, data_shape: (1, 64, 56, 56), attrs: frozenset({('nn.conv2d', (('strides', (1, 1)), ('padding', (0, 0, 0, 0)), ('dilation', (1, 1)), ('groups', 1), ('channels', 256), ('kernel_size', (1, 1)), ('data_layout', ('N', 'C', 'H', 'W')), ('kernel_layout', ('O', 'I', 'H', 'W')), ('out_layout', ()), ('out_dtype', '')))}), op_name: tensorrt_conv2d": [
+        0.03706023333333333,
+        0.0001294855547498998
     ],
     "op_type: conv2d, data_shape: (1, 64, 56, 56), attrs: frozenset({('nn.conv2d', (('strides', (1, 1)), ('padding', (0, 0, 0, 0)), ('dilation', (1, 1)), ('groups', 1), ('channels', 256), ('kernel_size', (1, 1)), ('data_layout', ('N', 'C', 'H', 'W')), ('kernel_layout', ('O', 'I', 'H', 'W')), ('out_layout', ()), ('out_dtype', '')))}), op_name: tvmgpu-autotvm_conv2d": [
         0.04445223333333334,
@@ -271,6 +911,10 @@
         0.0188213,
         0.00010072095942090128
     ],
+    "op_type: conv2d, data_shape: (1, 64, 56, 56), attrs: frozenset({('nn.conv2d', (('strides', (1, 1)), ('padding', (0, 0, 0, 0)), ('dilation', (1, 1)), ('groups', 1), ('channels', 64), ('kernel_size', (1, 1)), ('data_layout', ('N', 'C', 'H', 'W')), ('kernel_layout', ('O', 'I', 'H', 'W')), ('out_layout', ()), ('out_dtype', '')))}), op_name: tensorrt_conv2d": [
+        0.0216586,
+        8.717228152725336e-05
+    ],
     "op_type: conv2d, data_shape: (1, 64, 56, 56), attrs: frozenset({('nn.conv2d', (('strides', (1, 1)), ('padding', (0, 0, 0, 0)), ('dilation', (1, 1)), ('groups', 1), ('channels', 64), ('kernel_size', (1, 1)), ('data_layout', ('N', 'C', 'H', 'W')), ('kernel_layout', ('O', 'I', 'H', 'W')), ('out_layout', ()), ('out_dtype', '')))}), op_name: tvmgpu-autotvm_conv2d": [
         0.015031983333333334,
         0.00016914483110307845
@@ -279,52 +923,252 @@
         0.048583999999999995,
         9.286434550820188e-05
     ],
+    "op_type: conv2d, data_shape: (1, 64, 56, 56), attrs: frozenset({('nn.conv2d', (('strides', (1, 1)), ('padding', (1, 1, 1, 1)), ('dilation', (1, 1)), ('groups', 1), ('channels', 64), ('kernel_size', (3, 3)), ('data_layout', ('N', 'C', 'H', 'W')), ('kernel_layout', ('O', 'I', 'H', 'W')), ('out_layout', ()), ('out_dtype', '')))}), op_name: tensorrt_conv2d": [
+        0.05096426666666667,
+        3.117149695189494e-05
+    ],
     "op_type: conv2d, data_shape: (1, 64, 56, 56), attrs: frozenset({('nn.conv2d', (('strides', (1, 1)), ('padding', (1, 1, 1, 1)), ('dilation', (1, 1)), ('groups', 1), ('channels', 64), ('kernel_size', (3, 3)), ('data_layout', ('N', 'C', 'H', 'W')), ('kernel_layout', ('O', 'I', 'H', 'W')), ('out_layout', ()), ('out_dtype', '')))}), op_name: tvmgpu-autotvm_conv2d": [
         0.04216746666666666,
         9.250835397711889e-05
+    ],
+    "op_type: conv2d, data_shape: (1, 64, 56, 56), attrs: frozenset({('nn.conv2d', (('strides', (1, 1)), ('padding', (1, 1, 1, 1)), ('dilation', (1, 1)), ('groups', 64), ('channels', 64), ('kernel_size', (3, 3)), ('data_layout', ('N', 'C', 'H', 'W')), ('kernel_layout', ('O', 'I', 'H', 'W')), ('out_layout', ()), ('out_dtype', '')))}), op_name: cudnn_conv2d": [
+        0.012590396666666668,
+        4.0125270784825036e-05
+    ],
+    "op_type: conv2d, data_shape: (1, 64, 56, 56), attrs: frozenset({('nn.conv2d', (('strides', (1, 1)), ('padding', (1, 1, 1, 1)), ('dilation', (1, 1)), ('groups', 64), ('channels', 64), ('kernel_size', (3, 3)), ('data_layout', ('N', 'C', 'H', 'W')), ('kernel_layout', ('O', 'I', 'H', 'W')), ('out_layout', ()), ('out_dtype', '')))}), op_name: tvmgpu-autotvm_conv2d": [
+        0.0054693300000000005,
+        2.791432010038342e-05
+    ],
+    "op_type: conv2d, data_shape: (1, 640, 28, 28), attrs: frozenset({('nn.conv2d', (('strides', (1, 1)), ('padding', (0, 0, 0, 0)), ('dilation', (1, 1)), ('groups', 1), ('channels', 128), ('kernel_size', (1, 1)), ('data_layout', ('N', 'C', 'H', 'W')), ('kernel_layout', ('O', 'I', 'H', 'W')), ('out_layout', ()), ('out_dtype', '')))}), op_name: cudnn_conv2d": [
+        0.06489652666666668,
+        2.6081636366523245e-05
+    ],
+    "op_type: conv2d, data_shape: (1, 640, 28, 28), attrs: frozenset({('nn.conv2d', (('strides', (1, 1)), ('padding', (0, 0, 0, 0)), ('dilation', (1, 1)), ('groups', 1), ('channels', 128), ('kernel_size', (1, 1)), ('data_layout', ('N', 'C', 'H', 'W')), ('kernel_layout', ('O', 'I', 'H', 'W')), ('out_layout', ()), ('out_dtype', '')))}), op_name: tvmgpu-autotvm_conv2d": [
+        0.07472693,
+        1.0573763127030777e-05
+    ],
+    "op_type: conv2d, data_shape: (1, 640, 28, 28), attrs: frozenset({('nn.conv2d', (('strides', (1, 1)), ('padding', (0, 0, 0, 0)), ('dilation', (1, 1)), ('groups', 1), ('channels', 256), ('kernel_size', (1, 1)), ('data_layout', ('N', 'C', 'H', 'W')), ('kernel_layout', ('O', 'I', 'H', 'W')), ('out_layout', ()), ('out_dtype', '')))}), op_name: cudnn_conv2d": [
+        0.12678677333333332,
+        0.0004665320765916215
+    ],
+    "op_type: conv2d, data_shape: (1, 640, 28, 28), attrs: frozenset({('nn.conv2d', (('strides', (1, 1)), ('padding', (0, 0, 0, 0)), ('dilation', (1, 1)), ('groups', 1), ('channels', 256), ('kernel_size', (1, 1)), ('data_layout', ('N', 'C', 'H', 'W')), ('kernel_layout', ('O', 'I', 'H', 'W')), ('out_layout', ()), ('out_dtype', '')))}), op_name: tvmgpu-autotvm_conv2d": [
+        0.11266772666666665,
+        9.279081611642356e-06
+    ],
+    "op_type: dense+relu+add+relu, data_shape: (1, 512), attrs: frozenset({('nn.relu', '', 'add', '', 'nn.relu', '', 'nn.dense', (('units', None), ('out_dtype', '')))}), op_name: tvmgpu-autotvm_dense+relu+add+relu": [
+        0.003877116666666666,
+        2.4432896312599427e-05
+    ],
+    "op_type: dense+relu+add+sigmoid, data_shape: (1, 512), attrs: frozenset({('sigmoid', '', 'add', '', 'nn.relu', '', 'nn.dense', (('units', None), ('out_dtype', '')))}), op_name: tvmgpu-autotvm_dense+relu+add+sigmoid": [
+        0.003966286666666666,
+        1.9313443216808357e-05
+    ],
+    "op_type: dense+relu+add+tanh, data_shape: (1, 512), attrs: frozenset({('tanh', '', 'add', '', 'nn.relu', '', 'nn.dense', (('units', None), ('out_dtype', '')))}), op_name: tvmgpu-autotvm_dense+relu+add+tanh": [
+        0.003938763333333334,
+        1.4278200944874738e-05
+    ],
+    "op_type: dense+relu, data_shape: (1, 512), attrs: frozenset({('nn.relu', '', 'nn.dense', (('units', None), ('out_dtype', '')))}), op_name: tvmgpu-autotvm_dense+relu": [
+        0.0037042066666666666,
+        1.8860894876849403e-05
+    ],
+    "op_type: dense+relu, data_shape: (64, 1024), attrs: frozenset({('nn.relu', '', 'nn.dense', (('units', None), ('out_dtype', '')))}), op_name: tvmgpu-autotvm_dense+relu": [
+        0.8060666866666666,
+        0.0004020670926875136
+    ],
+    "op_type: dense, data_shape: (1, 512), attrs: frozenset({('nn.dense', (('units', None), ('out_dtype', '')))}), op_name: cublas_dense": [
+        0.0037020766666666666,
+        2.1944269310130666e-05
+    ],
+    "op_type: dense, data_shape: (1, 512), attrs: frozenset({('nn.dense', (('units', None), ('out_dtype', '')))}), op_name: tvmgpu-autotvm_dense": [
+        0.0036998366666666665,
+        2.1617524269803944e-05
+    ],
+    "op_type: dense, data_shape: (64, 1024), attrs: frozenset({('nn.dense', (('units', None), ('out_dtype', '')))}), op_name: cublas_dense": [
+        0.8044648666666666,
+        0.00024589914956245123
+    ],
+    "op_type: dense, data_shape: (64, 1024), attrs: frozenset({('nn.dense', (('units', None), ('out_dtype', '')))}), op_name: tvmgpu-autotvm_dense": [
+        0.8062035066666667,
+        0.00045749515351410744
+    ],
+    "op_type: dense, data_shape: (64, 4096), attrs: frozenset({('nn.dense', (('units', None), ('out_dtype', '')))}), op_name: cublas_dense": [
+        1.1923617033333336,
+        0.00017243241774360892
+    ],
+    "op_type: dense, data_shape: (64, 4096), attrs: frozenset({('nn.dense', (('units', None), ('out_dtype', '')))}), op_name: tvmgpu-autotvm_dense": [
+        1.19328501,
+        0.0003651956382543836
+    ],
+    "op_type: maxpool2d, data_shape: (1, 128, 56, 56), attrs: frozenset({('nn.max_pool2d', (('pool_size', (3, 3)), ('strides', (2, 2)), ('padding', (1, 1, 1, 1)), ('layout', ('N', 'C', 'H', 'W')), ('ceil_mode', 0)))}), op_name: tvmgpu-autotvm_maxpool2d": [
+        0.007102076666666668,
+        1.7653736777867485e-05
+    ],
+    "op_type: maxpool2d, data_shape: (1, 256, 28, 28), attrs: frozenset({('nn.max_pool2d', (('pool_size', (3, 3)), ('strides', (2, 2)), ('padding', (1, 1, 1, 1)), ('layout', ('N', 'C', 'H', 'W')), ('ceil_mode', 0)))}), op_name: tvmgpu-autotvm_maxpool2d": [
+        0.005620366666666665,
+        1.2525218117417743e-05
+    ],
+    "op_type: multiply+tanh, data_shape: (1, 512), attrs: frozenset({('tanh', '', 'multiply', '')}), op_name: tvmgpu-autotvm_multiply+tanh": [
+        0.0025466599999999996,
+        4.059977914554053e-05
+    ],
+    "op_type: multiply, data_shape: (1, 512), attrs: frozenset({('multiply', '')}), op_name: tvmgpu-autotvm_multiply": [
+        0.0024356166666666666,
+        5.08282056430177e-05
+    ],
+    "op_type: relu+add+relu, data_shape: (1, 512), attrs: frozenset({('nn.relu', '', 'add', '', 'nn.relu', '')}), op_name: tvmgpu-autotvm_relu+add+relu": [
+        0.00240917,
+        2.415635044179193e-05
+    ],
+    "op_type: relu, data_shape: (1, 1024, 14, 14), attrs: frozenset({('nn.relu', '')}), op_name: tensorrt_relu": [
+        0.010854299999999999,
+        0.0
     ],
     "op_type: relu, data_shape: (1, 1024, 14, 14), attrs: frozenset({('nn.relu', '')}), op_name: tvmgpu-autotvm_relu": [
         0.004507183333333334,
         7.71025327441043e-05
     ],
+    "op_type: relu, data_shape: (1, 1024, 7, 7), attrs: frozenset({('nn.relu', '')}), op_name: tvmgpu-autotvm_relu": [
+        0.0025043166666666667,
+        2.8919935838256557e-05
+    ],
+    "op_type: relu, data_shape: (1, 128, 28, 28), attrs: frozenset({('nn.relu', '')}), op_name: tensorrt_relu": [
+        0.0118954,
+        9.845134161944004e-06
+    ],
     "op_type: relu, data_shape: (1, 128, 28, 28), attrs: frozenset({('nn.relu', '')}), op_name: tvmgpu-autotvm_relu": [
         0.0031829000000000002,
         6.718307078423856e-05
+    ],
+    "op_type: relu, data_shape: (1, 128, 56, 56), attrs: frozenset({('nn.relu', '')}), op_name: tensorrt_relu": [
+        0.012838333333333334,
+        6.342241104075383e-05
     ],
     "op_type: relu, data_shape: (1, 128, 56, 56), attrs: frozenset({('nn.relu', '')}), op_name: tvmgpu-autotvm_relu": [
         0.006785016666666667,
         5.533831302893983e-05
     ],
+    "op_type: relu, data_shape: (1, 2048, 7, 7), attrs: frozenset({('nn.relu', '')}), op_name: tensorrt_relu": [
+        0.009940200000000001,
+        1.735184908494298e-05
+    ],
     "op_type: relu, data_shape: (1, 2048, 7, 7), attrs: frozenset({('nn.relu', '')}), op_name: tvmgpu-autotvm_relu": [
         0.003139683333333334,
         9.692297056024543e-05
+    ],
+    "op_type: relu, data_shape: (1, 256, 14, 14), attrs: frozenset({('nn.relu', '')}), op_name: tensorrt_relu": [
+        0.012283666666666667,
+        0.0001097371506018916
     ],
     "op_type: relu, data_shape: (1, 256, 14, 14), attrs: frozenset({('nn.relu', '')}), op_name: tvmgpu-autotvm_relu": [
         0.002611183333333333,
         0.00010865431678288515
     ],
+    "op_type: relu, data_shape: (1, 256, 28, 28), attrs: frozenset({('nn.relu', '')}), op_name: tensorrt_relu": [
+        0.0102431,
+        4.525483399594014e-06
+    ],
     "op_type: relu, data_shape: (1, 256, 28, 28), attrs: frozenset({('nn.relu', '')}), op_name: tvmgpu-autotvm_relu": [
         0.004548249999999999,
         7.196419248487425e-05
+    ],
+    "op_type: relu, data_shape: (1, 256, 56, 56), attrs: frozenset({('nn.relu', '')}), op_name: tensorrt_relu": [
+        0.0274858,
+        4.5399192356985704e-05
     ],
     "op_type: relu, data_shape: (1, 256, 56, 56), attrs: frozenset({('nn.relu', '')}), op_name: tvmgpu-autotvm_relu": [
         0.018016516666666666,
         9.013027916423232e-05
     ],
+    "op_type: relu, data_shape: (1, 512), attrs: frozenset({('nn.relu', '')}), op_name: tvmgpu-autotvm_relu": [
+        0.002507193333333333,
+        1.7882401653270352e-05
+    ],
+    "op_type: relu, data_shape: (1, 512, 14, 14), attrs: frozenset({('nn.relu', '')}), op_name: tensorrt_relu": [
+        0.0091893,
+        3.6699409622862196e-05
+    ],
     "op_type: relu, data_shape: (1, 512, 14, 14), attrs: frozenset({('nn.relu', '')}), op_name: tvmgpu-autotvm_relu": [
         0.003231416666666667,
         0.0002346618181317299
+    ],
+    "op_type: relu, data_shape: (1, 512, 28, 28), attrs: frozenset({('nn.relu', '')}), op_name: tensorrt_relu": [
+        0.012039433333333334,
+        7.130331143938812e-05
     ],
     "op_type: relu, data_shape: (1, 512, 28, 28), attrs: frozenset({('nn.relu', '')}), op_name: tvmgpu-autotvm_relu": [
         0.006750366666666667,
         8.005498457657443e-05
     ],
+    "op_type: relu, data_shape: (1, 512, 7, 7), attrs: frozenset({('nn.relu', '')}), op_name: tensorrt_relu": [
+        0.009154066666666667,
+        6.619890902088727e-05
+    ],
     "op_type: relu, data_shape: (1, 512, 7, 7), attrs: frozenset({('nn.relu', '')}), op_name: tvmgpu-autotvm_relu": [
         0.0025807666666666663,
         0.00011738779275925148
     ],
+    "op_type: relu, data_shape: (1, 64, 56, 56), attrs: frozenset({('nn.relu', '')}), op_name: tensorrt_relu": [
+        0.010838366666666667,
+        3.9525209957977746e-05
+    ],
     "op_type: relu, data_shape: (1, 64, 56, 56), attrs: frozenset({('nn.relu', '')}), op_name: tvmgpu-autotvm_relu": [
         0.004511966666666666,
         7.23001191024072e-05
+    ],
+    "op_type: relu, data_shape: (64, 4096), attrs: frozenset({('nn.relu', '')}), op_name: tvmgpu-autotvm_relu": [
+        0.0037524233333333327,
+        5.235776499771414e-06
+    ],
+    "op_type: reshape+transpose, data_shape: (64, 1024), attrs: frozenset({('transpose', (('axes', (1, 0, 2)),), 'reshape', (('newshape', (64, 16, 64)),))}), op_name: tvmgpu-autotvm_reshape+transpose": [
+        0.00260064,
+        1.501615130451223e-05
+    ],
+    "op_type: reshape+transpose, data_shape: (64, 1024), attrs: frozenset({('transpose', (('axes', (1, 2, 0)),), 'reshape', (('newshape', (64, 16, 64)),))}), op_name: tvmgpu-autotvm_reshape+transpose": [
+        0.005127886666666667,
+        8.913332086761021e-06
+    ],
+    "op_type: reshape, data_shape: (64, 1024), attrs: frozenset({('reshape', (('newshape', (64, 16, 64)),))}), op_name: tvmgpu-autotvm_reshape": [
+        0.00248415,
+        3.156936912050466e-05
+    ],
+    "op_type: reshape, data_shape: (64, 16, 64), attrs: frozenset({('reshape', (('newshape', (64, 1024)),))}), op_name: tvmgpu-autotvm_reshape": [
+        0.0024343433333333334,
+        2.4374632076995098e-05
+    ],
+    "op_type: sigmoid, data_shape: (1, 512), attrs: frozenset({('sigmoid', '')}), op_name: tvmgpu-autotvm_sigmoid": [
+        0.0024712466666666666,
+        3.481388260769308e-05
+    ],
+    "op_type: tanh, data_shape: (1, 512), attrs: frozenset({('tanh', '')}), op_name: tvmgpu-autotvm_tanh": [
+        0.002511143333333333,
+        1.2805582983821962e-05
+    ],
+    "op_type: transpose+reshape, data_shape: (16, 64, 64), attrs: frozenset({('reshape', (('newshape', (64, 1024)),), 'transpose', (('axes', (1, 0, 2)),))}), op_name: tvmgpu-autotvm_transpose+reshape": [
+        0.00239978,
+        3.3033844261100714e-05
+    ],
+    "op_type: transpose, data_shape: (16, 64, 64), attrs: frozenset({('transpose', (('axes', (1, 0, 2)),))}), op_name: tvmgpu-autotvm_transpose": [
+        0.002542823333333333,
+        3.200456668803516e-05
+    ],
+    "op_type: transpose, data_shape: (64, 16, 64), attrs: frozenset({('transpose', (('axes', (1, 0, 2)),))}), op_name: tvmgpu-autotvm_transpose": [
+        0.002597216666666667,
+        1.588080042763037e-05
+    ],
+    "op_type: transpose, data_shape: (64, 16, 64), attrs: frozenset({('transpose', (('axes', (1, 2, 0)),))}), op_name: tvmgpu-autotvm_transpose": [
+        0.005137913333333333,
+        1.2640085266941407e-05
+    ],
+    "op_type: tuple_five_idx+concat, data_shape: (1, 128, 28, 28), attrs: frozenset({('concatenate', (('axis', 1),))}), op_name: tvmgpu-autotvm_tuple_five_idx+concat": [
+        0.008485536666666666,
+        2.4589847950368214e-05
+    ],
+    "op_type: tuple_five_idx+concat, data_shape: (1, 256, 14, 14), attrs: frozenset({('concatenate', (('axis', 1),))}), op_name: tvmgpu-autotvm_tuple_five_idx+concat": [
+        0.005472103333333333,
+        1.9816599663469798e-05
+    ],
+    "op_type: tuple_five_idx+concat, data_shape: (1, 64, 56, 56), attrs: frozenset({('concatenate', (('axis', 1),))}), op_name: tvmgpu-autotvm_tuple_five_idx+concat": [
+        0.02487136,
+        3.686811088189773e-05
     ]
 }
