@@ -301,13 +301,13 @@ class EvolutionarySearcher:
             g = g + 1
             printe("-- Generation %i --" % g)
 
-            # Select the next generation individuals
-            offspring = self.toolbox.select(pop, len(pop))
-
-            # Clone the selected individuals
-            offspring = list(map(self.toolbox.clone, offspring))
-
             if g > 1:
+                # Select the next generation individuals
+                offspring = self.toolbox.select(pop, len(pop))
+
+                # Clone the selected individuals
+                offspring = list(map(self.toolbox.clone, offspring))
+
                 # Apply crossover and mutation on the offspring
                 for child1, child2 in zip(offspring[::2], offspring[1::2]):
 
@@ -328,16 +328,16 @@ class EvolutionarySearcher:
                         self.toolbox.mutate(mutant)
                         del mutant.fitness.values
 
-            # Evaluate the individuals with an invalid fitness
-            invalid_ind = [ind for ind in offspring if not ind.fitness.valid]
-            fitnesses = map(self.toolbox.evaluate, invalid_ind)
-            for ind, fit in zip(invalid_ind, fitnesses):
-                ind.fitness.values = fit
+                # Evaluate the individuals with an invalid fitness
+                invalid_ind = [ind for ind in offspring if not ind.fitness.valid]
+                fitnesses = map(self.toolbox.evaluate, invalid_ind)
+                for ind, fit in zip(invalid_ind, fitnesses):
+                    ind.fitness.values = fit
 
-            printe("  Evaluated %i individuals" % len(invalid_ind))
+                printe("  Evaluated %i individuals" % len(invalid_ind))
 
-            # The population is entirely replaced by the offspring
-            pop[:] = offspring
+                # The population is entirely replaced by the offspring
+                pop[:] = offspring
 
             # Gather all the fitnesses in one list and printe the stats
             fits = [ind.fitness.values[0] for ind in pop]
