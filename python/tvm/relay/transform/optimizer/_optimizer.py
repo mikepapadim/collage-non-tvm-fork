@@ -42,6 +42,7 @@ def apply_external_compiler_op(mod):
     # Annotating expression
     target_str = "tensorrt"
     mod["main"] = ExtCompilerOpAnnotator(opt_match).annotate(mod["main"], target_str)
+    printe("[Error] After annotator")
 
     # Do merge and partition pass
     use_implicit_batch = True
@@ -87,8 +88,9 @@ def apply_external_compiler_op(mod):
             # transform.FoldConstant(),
             # transform.AnnotateTarget("tensorrt"),
             transform.MergeCompilerRegions(),
+            tvm.ir.transform.PrintIR("After merging graph"),
             transform.PartitionGraph(),
-            # tvm.ir.transform.PrintIR("After partitioning graph"),
+            tvm.ir.transform.PrintIR("After partitioning graph"),
             transform.InferType(),
         ]
     )
@@ -96,6 +98,7 @@ def apply_external_compiler_op(mod):
     # Do prune_tensorrt_subgraphs
     with tvm.transform.PassContext(opt_level=OPT_LEVEL.get(), config={"relay.ext.tensorrt.options": config}):
         mod = seq(mod)
+        printe("After sequential")
         # Warning(@Soo): Would it be problematic?
         # mod = prune_tensorrt_subgraphs(mod)
 
@@ -221,7 +224,7 @@ def run_two_level_opt(relay_expr):
     # 100 * 200 (20000) leads to out of memory issues. We attribute this to large population issue of deap lib
     # Note that some of individuals may not be measured in each generation if they are measured anytime earlier
     ev_searcher = EvolutionarySearcher(op_state_to_match_translator, relay_expr, net_name, n_ops=n_ops,
-                                       pop_size=2, max_iter=2)
+                                       pop_size=2, max_iter=1)
 
     second_opt_match = ev_searcher.search(rnd_seed=64)
     OpMatchLogger().save(relay_expr, second_opt_match, log_path=USER_DEFINED_MATCH_LOG)

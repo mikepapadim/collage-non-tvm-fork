@@ -492,6 +492,7 @@ Pass PartitionGraph() {
     // this would lead to creation of tuples of tuples.
     // Thus, we flatten the tuples by transfering the compiler_end to
     // the tuple inputs.
+    std::cerr << "Flatten tuple output" << std::endl;
     return partitioning::FlattenTupleOutputs(m);
   };
 
@@ -500,11 +501,14 @@ Pass PartitionGraph() {
     // TODO(@comaniac, @zhiics): We should also handle the annotation with "default" attribute
     // by treating them as un-annotated, but we don't have it yet. This workaround pass removes
     // all "default" annotations and should be deleted in the future.
+    std::cerr << "Revove Annotation" << std::endl;
     return partitioning::RemoveDefaultAnnotations(m);
   };
 
   runtime::TypedPackedFunc<IRModule(IRModule, PassContext)> part_func =
-      [=](IRModule m, PassContext pc) { return partitioning::Partitioner(m).Partition(); };
+      [=](IRModule m, PassContext pc) {
+        std::cerr << "Partitioning" << std::endl;
+        return partitioning::Partitioner(m).Partition(); };
 
   auto flatten_tuples_pass = CreateModulePass(flatten_tuples, 0, "FlattenNestedTuples", {});
   auto remove_default_pass = CreateModulePass(remove_defaults, 0, "RemoveDefaultAnnotations", {});

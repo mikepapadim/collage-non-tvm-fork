@@ -1402,7 +1402,10 @@ namespace tvm {
         auto fdp_call = tvm::runtime::Registry::Get(custom_fusion_pass_str);
         // Note that we don't need this match
         // because we dump this into the file and will load it for backend operator decision
-        Map<Expr, String> backend_op_match = (*fdp_call)(expr);
+        // This is to prevent segmentation fault; still, we don't know whether this helps
+        if (custom_fusion_pass_type != kUserDefinedFusion) {
+          Map<Expr, String> backend_op_match = (*fdp_call)(expr);
+        }
 
         // Apply external compiler ops first before we fuse operators
         // just like what original TensorRT pipeline does.

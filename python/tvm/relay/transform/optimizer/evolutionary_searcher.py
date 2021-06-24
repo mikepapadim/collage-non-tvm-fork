@@ -182,8 +182,9 @@ class EvolutionarySearcher:
 
 
         # Warning(@Soo): This is just for debugging
-        # mean_perf, std_perf = measure_end_to_end_user_defined(self.mod["main"], self.params, self.shape_dict, self.target_str)
-        mean_perf, std_perf = self.measure_subprocess()
+        # self.mod, self.params, self.shape_dict, _ = get_network_from_torch(self.net_name, 1)
+        mean_perf, std_perf = measure_end_to_end_user_defined(self.mod["main"], self.params, self.shape_dict, self.target_str)
+        # mean_perf, std_perf = self.measure_subprocess()
 
         # Deallocate opt_match
         del opt_match
@@ -270,7 +271,11 @@ class EvolutionarySearcher:
 
         # Warning(@Soo): Force initial population to have best results from first level and TensorRT
         assert self.pop_size >= 2
-        pop[0] = creator.Individual([0 for i in range(self.n_ops)])
+        # pop[0] = creator.Individual([0 for i in range(self.n_ops)])
+        temp_arr = np.ones(self.n_ops, dtype=np.int).tolist()
+        temp_arr[4] = 0
+        temp_arr[10] = 0
+        pop[0] = creator.Individual(temp_arr)
         pop[1] = creator.Individual([1 for i in range(self.n_ops)])
 
         # CXPB  is the probability with which two individuals

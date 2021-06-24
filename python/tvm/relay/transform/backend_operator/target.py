@@ -18,8 +18,10 @@ from ..utility.debug_helper import printe
 # only collect results whose standard deviation is below this
 MAX_STANDARD_DEVIATION = 5E-04
 # MAX_STANDARD_DEVIATION = 5E-03
-NUM_REPEATS = 3
-NUM_MEASUREMENTS_PER_REPEAT = 100
+NUM_REPEATS = 1
+# NUM_REPEATS = 3
+NUM_MEASUREMENTS_PER_REPEAT = 1
+#NUM_MEASUREMENTS_PER_REPEAT = 100
 # NUM_MEASUREMENTS_PER_REPEAT = 20
 OPT_LEVEL = OptLevel(3)
 EXTERNAL_COMPILERS = ['tensorrt']

@@ -9,6 +9,7 @@ from baselines.pytorch.resnets import resnet50, resnext50_32x4d, resnet_block
 from baselines.pytorch.nasnet_a import NASNetA
 from baselines.pytorch.nasrnn import NASRNN
 from baselines.pytorch.bert import BERT
+from tvm.relay.transform.utility.debug_helper import printe
 
 NETWORK_TO_TORCH_MODEL = {
     "resnet_block": resnet_block,
@@ -71,7 +72,7 @@ def get_network_from_torch(name, batch_size):
     shape_arr_tmp = copy.deepcopy(shape_arr)
     mod, params = relay.frontend.from_pytorch(torch_model, shape_arr_tmp)#, freeze_params=True)
 
-    print(f"(Loaded network, Shape array) = ({name}, {shape_arr})")
+    printe(f"(Loaded network, Shape array) = ({name}, {shape_arr})")
     return mod, params, shape_dict, None # we don't need output shape
 
 def crop_network_from_torch(name, batch_size, post_dfs_order):
