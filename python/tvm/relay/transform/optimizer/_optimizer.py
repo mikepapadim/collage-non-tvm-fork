@@ -5,7 +5,7 @@ import tvm.driver
 
 # from ..backend_operator.record import backendop_lib
 from ..backend_operator.op_config import MeasuredConfigs
-from ..backend_operator.target import Target
+from ..backend_operator.target import Target, USER_DEFINED_MATCH_LOG
 from ..backend_operator.op_type import OpType
 from ..backend_operator.backend_op_lib import BackendOpLib
 from ..backend_operator.utils import *
@@ -20,6 +20,10 @@ from .ext_compiler_op_merger import *
 from .backend_op_state import *
 from .evolutionary_searcher import EvolutionarySearcher
 from .op_match_logger import *
+from ..utility.debug_helper import printe
+from .ext_compiler_op_annotator import ExtCompilerOpAnnotator
+from tvm.relay.op.contrib.tensorrt import prune_tensorrt_subgraphs
+from tvm.relay import transform
 
 def setup_backend_op_lib(network_expr, targets, batch_size):
     backendop_lib = BackendOpLib.get()
@@ -27,9 +31,80 @@ def setup_backend_op_lib(network_expr, targets, batch_size):
 
     return backendop_lib
 
+@tvm._ffi.register_func("relay.transform.optimizer.apply_external_compiler_op")
+def apply_external_compiler_op(mod):
+    printe("External compiler op pass")
+
+    # Get best op match info
+    fn_body = mod["main"].body
+    opt_match = OpMatchReader().read(fn_body)
+
+    # Annotating expression
+    target_str = "tensorrt"
+    mod["main"] = ExtCompilerOpAnnotator(opt_match).annotate(mod["main"], target_str)
+
+    # Do merge and partition pass
+    use_implicit_batch = True
+    remove_no_mac_subgraphs = False
+    max_workspace_size = 1 << 30
+    version = None
+
+    config = {
+        "use_implicit_batch": use_implicit_batch,
+        "max_workspace_size": max_workspace_size,
+        "remove_no_mac_subgraphs": remove_no_mac_subgraphs,
+    }
+
+    if version:
+        assert isinstance(version, tuple) and len(version) == 3
+        config["tensorrt_version"] = version
+    else:
+        linked_version = tuple(tvm.get_global_func("relay.op.get_tensorrt_version")())
+        if not linked_version:
+            logger.warning(
+                "TVM was not built against TensorRT and no version was provided to "
+                "partition_for_tensorrt. Defaulting to 6.0.1"
+            )
+            linked_version = (6, 0, 1)
+        config["tensorrt_version"] = linked_version
+
+    # Warning(@Soo): I assume this is only useful when folding constant
+    # if params:
+    #     mod["main"] = bind_params_by_name(mod["main"], params)
+
+    seq = tvm.transform.Sequential(
+        [
+            transform.InferType(),
+            # RemoveDropoutPass(),
+            # transform.RemoveUnusedFunctions(),
+            # transform.ConvertLayout(
+            #     {
+            #         "nn.conv2d": ["NCHW", "default"],
+            #         "nn.conv3d": ["NCDHW", "default"],
+            #         "nn.conv2d_transpose": ["NCHW", "default"],
+            #     }
+            # ),
+            # transform.FoldConstant(),
+            # transform.AnnotateTarget("tensorrt"),
+            transform.MergeCompilerRegions(),
+            transform.PartitionGraph(),
+            # tvm.ir.transform.PrintIR("After partitioning graph"),
+            transform.InferType(),
+        ]
+    )
+
+    # Do prune_tensorrt_subgraphs
+    with tvm.transform.PassContext(opt_level=OPT_LEVEL.get(), config={"relay.ext.tensorrt.options": config}):
+        mod = seq(mod)
+        # Warning(@Soo): Would it be problematic?
+        # mod = prune_tensorrt_subgraphs(mod)
+
+    return mod
+    # return mod, config
+
 @tvm._ffi.register_func("relay.transform.optimizer.get_user_fusion")
 def get_user_fusion(relay_expr):
-    #print("User-defined fusion", file=sys.stderr)
+    printe("User-defined fusion")
     relay_expr = get_function_body(relay_expr)
     opt_match = OpMatchReader().read(relay_expr)
     return opt_match
@@ -97,6 +172,7 @@ def run_two_level_opt(relay_expr):
     print("[Python side] Run two-level optimization")
 
     # op-level optimization: DP with all backends but external compilers, e.g., TensorRT
+    func_expr = relay_expr
     optimized_match, relay_expr, backendop_lib, n_relay_nodes = run_op_level_opt(relay_expr)
     print("[Python side] Op-level optimization is done")
 
@@ -117,11 +193,16 @@ def run_two_level_opt(relay_expr):
     print(f"# of matched operators after first level : {n_ops}")
 
     # Warning(@soo): Network name is hardcoded for now. We can fix it later
-    net_name = "resnet50"
-    #net_name = "resnext50_32x4d"
+    net_name = func_expr.attrs["NetworkName"]
+    printe(f"Network name: {net_name}")
+    # net_name = "resnet50"
+    # net_name = "resnext50_32x4d"
     # net_name = "nasrnn"
     # net_name = "nasneta"
     # net_name = "bert"
+    if net_name == "nasneta":
+        OPT_LEVEL.set(2)
+
 
     # n_ops for each network (it may vary depending on trials)
     # Search space size: 2^n_ops
@@ -140,9 +221,10 @@ def run_two_level_opt(relay_expr):
     # 100 * 200 (20000) leads to out of memory issues. We attribute this to large population issue of deap lib
     # Note that some of individuals may not be measured in each generation if they are measured anytime earlier
     ev_searcher = EvolutionarySearcher(op_state_to_match_translator, relay_expr, net_name, n_ops=n_ops,
-                                       pop_size=10, max_iter=1)
+                                       pop_size=2, max_iter=2)
 
     second_opt_match = ev_searcher.search(rnd_seed=64)
+    OpMatchLogger().save(relay_expr, second_opt_match, log_path=USER_DEFINED_MATCH_LOG)
     #second_opt_match = ev_searcher.search_test(rnd_seed=64)
 
     # print(f"fusion dic (before merge): {optimized_match}")

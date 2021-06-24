@@ -162,22 +162,28 @@ class EvolutionarySearcher:
         #printe(f"[Evaluation] Match log saved")
         # Measure entire computation graph with opt_match
 
-        perf_arr = []
-        for i in range(10):
-            # mean_perf, std_perf = measure_end_to_end_user_defined(self.mod["main"], self.params,
-            #                                                       self.shape_dict, self.target_str)
+        # Debug code
+        # perf_arr = []
+        # for i in range(1):
+        #     # mean_perf, std_perf = measure_end_to_end_user_defined(self.mod["main"], self.params,
+        #     #                                                       self.shape_dict, self.target_str)
+        #
+        #     # Warning(@Sung): USE this function to PREVENT MEMORY LEAK!
+        #     mean_perf, std_perf = self.measure_subprocess()
+        #     # printe(f"\t> individual {individual} perf: {mean_perf} ")
+        #     perf_arr.append(mean_perf)
+        #
+        # print(f"[Total perf] (mean, std) = ({np.mean(perf_arr)}, {np.std(perf_arr)}")
+        #
+        # self.n_test += 1
+        # if self.n_test == 2:
+        #     import sys
+        #     sys.exit(0)
 
-            # Warning(@Sung): USE this function to PREVENT MEMORY LEAK!
-            mean_perf, std_perf = self.measure_subprocess()
-            # printe(f"\t> individual {individual} perf: {mean_perf} ")
-            perf_arr.append(mean_perf)
-        print(f"[Total perf] (mean, std) = ({np.mean(perf_arr)}, {np.std(perf_arr)}")
 
-        self.n_test += 1
-        if self.n_test == 2:
-            import sys
-            sys.exit(0)
-        # self._memo_state[individual_hash] = -mean_perf
+        # Warning(@Soo): This is just for debugging
+        # mean_perf, std_perf = measure_end_to_end_user_defined(self.mod["main"], self.params, self.shape_dict, self.target_str)
+        mean_perf, std_perf = self.measure_subprocess()
 
         # Deallocate opt_match
         del opt_match
@@ -263,6 +269,7 @@ class EvolutionarySearcher:
         pop = self.toolbox.population(n=self.pop_size)
 
         # Warning(@Soo): Force initial population to have best results from first level and TensorRT
+        assert self.pop_size >= 2
         pop[0] = creator.Individual([0 for i in range(self.n_ops)])
         pop[1] = creator.Individual([1 for i in range(self.n_ops)])
 
@@ -339,7 +346,7 @@ class EvolutionarySearcher:
             mean = sum(fits) / length
             sum2 = sum(x * x for x in fits)
             std = abs(sum2 / length - mean ** 2) ** 0.5
-
+            printe(pop)
             printe("Current generation statistics")
             printe("  Min %s" % min(fits))
             printe("  Max %s" % max(fits))

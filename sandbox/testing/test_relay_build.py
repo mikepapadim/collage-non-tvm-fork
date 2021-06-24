@@ -18,11 +18,12 @@ import argparse
 
 from workloads.workloads import WORKLOADS_DIC
 
-def build_network(net, params, mode):
+def build_network(net, params, mode, net_name):
     assert is_function_node(net)
     assert CustomFusionPass.has_value(mode)
 
     net = net.with_attr("CustomFusionPass", mode)
+    net = net.with_attr("NetworkName", net_name)
 
     with autotvm.apply_history_best(AUTOTVM_LOG):
         with tvm.transform.PassContext(opt_level=OPT_LEVEL.get()):
@@ -98,7 +99,7 @@ if __name__ == "__main__":
     # print(repr(mod["main"]))
 
     # build_network_tensorrt(mod, params)
-    lib = build_network(mod["main"], params, CustomFusionPass.TWO_LEVEL_OPT)
+    lib = build_network(mod["main"], params, CustomFusionPass.TWO_LEVEL_OPT, args.network)
     # lib = build_network(mod["main"], params, CustomFusionPass.DP)
     # lib = build_network(mod["main"], params, CustomFusionPass.USER_DEFINED_FUSION)
     print(f"We successfully built the {args.network}")

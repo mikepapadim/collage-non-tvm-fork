@@ -1335,37 +1335,16 @@ namespace tvm {
     };
 
     // For op measurements, execute original fusion pass
-    // For end-to-end measure, execute DP fusion pass
+    // For end-to-end measure, execute user-defined pass by using best match
+    // from PlanFusionWithExtCompiler
     Expr FuseOps(const Expr& expr, int fuse_opt_level, size_t max_fuse_depth, const IRModule& module) {
       // WARNING(@Soo): Assume that all exprs are function!
       Expr fused_expr;
       const FunctionNode* fn_node = static_cast<const FunctionNode*>(expr.get());
 
-      // PATCH(@Soo): New custom fusion pass type
-      constexpr int kUserDefinedFusion = 0;
-      constexpr int kDP = 1;
-      constexpr int kExhaustiveSearch = 2;
-      constexpr int kTwoLevelOpt = 3;
-
+      // Warning(@Soo) - every fusion should be done by saved match log regardless of algorithms!
       if (fn_node->GetAttr<IntImm>(attr::kCustomFusionPass).defined()) {
-        int64_t custom_fusion_pass_type = fn_node->GetAttr<IntImm>(attr::kCustomFusionPass).as<IntImmNode>()->value;
-        std::string custom_fusion_pass_str;
-        // PATCH(@Soo): Custom (DP) fusion pass for user defined fusion
-        if (custom_fusion_pass_type == kUserDefinedFusion) {
-          custom_fusion_pass_str = "relay.transform.optimizer.get_user_fusion";
-        // PATCH(@Soo): Custom (DP) fusion pass for end-to-end measurements
-        // Note that if fuse_opt_level == 0, no fusion applied no matter whether it's original or DP.
-        } else if (custom_fusion_pass_type == kDP) {
-          custom_fusion_pass_str = "relay.transform.optimizer.run_dp";
-        } else if (custom_fusion_pass_type == kTwoLevelOpt) {
-          custom_fusion_pass_str = "relay.transform.optimizer.run_two_level_opt";
-        } else if (custom_fusion_pass_type == kExhaustiveSearch) {
-          custom_fusion_pass_str = "relay.transform.optimizer.run_exhaustive_search";
-        } else {
-          ICHECK(false) << "Fusion pass type " << fn_node->GetAttr<IntImm>(attr::kCustomFusionPass)
-              << "is not expected\n\n";
-        }
-
+        std::string custom_fusion_pass_str = "relay.transform.optimizer.get_user_fusion";
         //std::cerr << "\t[Start] Custom fusion - " << custom_fusion_pass_str << "\n\n";
         auto fdp_call = tvm::runtime::Registry::Get(custom_fusion_pass_str);
         Map<Expr, String> backend_op_match = (*fdp_call)(expr);
@@ -1374,14 +1353,6 @@ namespace tvm {
         fused_expr = FuseMutator().Transform(expr, fuse_opt_level, max_fuse_depth, backend_op_match);
         //std::cerr << "\t[Done] Relay IR reflected fusion pairs accordingly" << "\n\n";
 
-        // Debug
-//        std::cerr << "\tFused expressions (before extcompiler): " << fused_expr << "\n\n";
-//        std::cerr << "\t======================" << std::endl;
-//        auto glob_funcs = module->functions;
-//        for (const auto& pair : glob_funcs) {
-//          std::cerr << "Func : " << pair.second << std::endl;
-//          std::cerr << "GlobalVar: " << pair.first << std::endl;
-//        }
       } else {
         // PATCH(@Soo): Original fusion pass for op measurements
         fused_expr = FuseMutator().Transform(expr, fuse_opt_level, max_fuse_depth);
@@ -1389,7 +1360,62 @@ namespace tvm {
       return fused_expr;
     }
 
-    namespace transform {
+    /*
+     * Goal
+     * - Calculate best opeartor match depending on which algorithm we pick.
+     * - Dump best match into the log and let FuseOps pass read and apply it on IR.
+     */
+    IRModule PlanFusionWithExtCompiler(IRModule module) {
+//      std::cerr << "Plan Fusion With ExtCompiler" << std::endl;
+
+      Expr expr = module->Lookup("main");
+      const FunctionNode* fn_node = expr.as<FunctionNode>();
+
+      // PATCH(@Soo): New custom fusion pass type
+      constexpr int kUserDefinedFusion = 0;
+      constexpr int kDP = 1;
+      constexpr int kExhaustiveSearch = 2;
+      constexpr int kTwoLevelOpt = 3;
+
+      // Do nothing when it's not custom fusion pass
+      if (fn_node->GetAttr<IntImm>(attr::kCustomFusionPass).defined()) {
+        int64_t custom_fusion_pass_type =
+            fn_node->GetAttr<IntImm>(attr::kCustomFusionPass).as<IntImmNode>()->value;
+        std::string custom_fusion_pass_str;
+        // PATCH(@Soo): Custom (DP) fusion pass for user defined fusion
+        if (custom_fusion_pass_type == kUserDefinedFusion) {
+          custom_fusion_pass_str = "relay.transform.optimizer.get_user_fusion";
+          // PATCH(@Soo): Custom (DP) fusion pass for end-to-end measurements
+          // Note that if fuse_opt_level == 0, no fusion applied no matter whether it's original or DP.
+        } else if (custom_fusion_pass_type == kDP) {
+          custom_fusion_pass_str = "relay.transform.optimizer.run_dp";
+        } else if (custom_fusion_pass_type == kTwoLevelOpt) {
+          custom_fusion_pass_str = "relay.transform.optimizer.run_two_level_opt";
+        } else if (custom_fusion_pass_type == kExhaustiveSearch) {
+          custom_fusion_pass_str = "relay.transform.optimizer.run_exhaustive_search";
+        } else {
+          ICHECK(false) << "Fusion pass type " << fn_node->GetAttr<IntImm>(attr::kCustomFusionPass)
+                        << "is not expected\n\n";
+        }
+
+        // std::cerr << "\t[Start] Custom fusion - " << custom_fusion_pass_str << "\n\n";
+        auto fdp_call = tvm::runtime::Registry::Get(custom_fusion_pass_str);
+        // Note that we don't need this match
+        // because we dump this into the file and will load it for backend operator decision
+        Map<Expr, String> backend_op_match = (*fdp_call)(expr);
+
+        // Apply external compiler ops first before we fuse operators
+        // just like what original TensorRT pipeline does.
+        auto ex_op_call = tvm::runtime::Registry::Get("relay.transform.optimizer.apply_external_compiler_op");
+        // Warning(@Soo): Doublecheck if module is updated.
+        module = (*ex_op_call)(module);
+      }
+
+      return module;
+    }
+
+
+namespace transform {
 
       Pass FuseOps(int fuse_opt_level) {
         runtime::TypedPackedFunc<Function(Function, IRModule, PassContext)> pass_func =
@@ -1401,13 +1427,16 @@ namespace tvm {
 
         // Custom Module pass to deal with external compiler, e.g., tensorrt
         runtime::TypedPackedFunc<IRModule(IRModule, PassContext)> ext_compiler_func =
-            [=](IRModule m, PassContext pc) { return ExtCompilerMutator(m).Transform(); };
+            [=](IRModule m, PassContext pc) { return PlanFusionWithExtCompiler(m); };
+//        runtime::TypedPackedFunc<IRModule(IRModule, PassContext)> ext_compiler_func =
+//            [=](IRModule m, PassContext pc) { return ExtCompilerMutator(m).Transform(); };
 
         auto fuse_pass = CreateFunctionPass(pass_func, 1, "FuseOps", {"InferType"});
         auto ext_compiler_pass = CreateModulePass(ext_compiler_func, 0,
                                                   "ExternalCompilerMutator", {});
 
-        return Sequential({fuse_pass, ext_compiler_pass});
+        return Sequential({ext_compiler_pass, fuse_pass});
+//        return Sequential({fuse_pass, ext_compiler_pass});
 //        return CreateFunctionPass(pass_func, 1, "FuseOps", {"InferType"});
       }
 
