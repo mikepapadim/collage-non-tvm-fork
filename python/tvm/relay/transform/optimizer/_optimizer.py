@@ -25,6 +25,20 @@ from .ext_compiler_op_annotator import ExtCompilerOpAnnotator
 from tvm.relay.op.contrib.tensorrt import prune_tensorrt_subgraphs
 from tvm.relay import transform
 
+# visualize
+from tvm.relay.transform.utility.visualize import visualize_network
+def print_ir(mod, info, is_before):
+    """Print the name of the pass, the IR, only before passes execute."""
+    if info.name == "AnnotateTargetFunc" or info.name == "MergeCompilerRegions" or info.name == "PartitionGraph":
+        if is_before:
+            print("Running pass: {}", info.name)
+            visualize_network(mod["main"], info.name+"_before")
+        #print(mod)
+        else:
+            print("Done pass: {}", info.name)
+            visualize_network(mod["main"], info.name+"_after")
+
+
 def setup_backend_op_lib(network_expr, targets, batch_size):
     backendop_lib = BackendOpLib.get()
     # backendop_lib.measure_backend_ops(network_expr, targets, batch_size)
@@ -42,7 +56,6 @@ def apply_external_compiler_op(mod):
     # Annotating expression
     target_str = "tensorrt"
     mod["main"] = ExtCompilerOpAnnotator(opt_match).annotate(mod["main"], target_str)
-    printe("[Error] After annotator")
 
     # Do merge and partition pass
     use_implicit_batch = True
@@ -88,15 +101,15 @@ def apply_external_compiler_op(mod):
             # transform.FoldConstant(),
             # transform.AnnotateTarget("tensorrt"),
             transform.MergeCompilerRegions(),
-            tvm.ir.transform.PrintIR("After merging graph"),
+            #tvm.ir.transform.PrintIR("After merging graph"),
             transform.PartitionGraph(),
-            tvm.ir.transform.PrintIR("After partitioning graph"),
+            #tvm.ir.transform.PrintIR("After partitioning graph"),
             transform.InferType(),
         ]
     )
 
     # Do prune_tensorrt_subgraphs
-    with tvm.transform.PassContext(opt_level=OPT_LEVEL.get(), config={"relay.ext.tensorrt.options": config}):
+    with tvm.transform.PassContext(opt_level=OPT_LEVEL.get(), config={"relay.ext.tensorrt.options": config},trace=print_ir):
         mod = seq(mod)
         printe("After sequential")
         # Warning(@Soo): Would it be problematic?
@@ -123,7 +136,8 @@ def run_op_level_opt(relay_expr):
     # targets = [Target.TVM_GPU_AUTOTVM]
 
     # Sanity check: Enable all backends except for TensorRT
-    targets = [Target.TVM_GPU_AUTOTVM, Target.CUDNN, Target.CUBLAS, Target.TENSORRT]
+    targets = [Target.TVM_GPU_AUTOTVM, Target.CUDNN, Target.CUBLAS]
+    #targets = [Target.TVM_GPU_AUTOTVM, Target.CUDNN, Target.CUBLAS, Target.TENSORRT]
 
     batch_size = 1
     backendop_lib = setup_backend_op_lib(relay_expr, targets, batch_size)
