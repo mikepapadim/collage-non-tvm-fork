@@ -260,8 +260,6 @@ class CallNode : public ExprNode {
    */
   tvm::Array<Type> type_args;
 
-  String backend;
-
   void VisitAttrs(tvm::AttrVisitor* v) {
     v->Visit("op", &op);
     v->Visit("args", &args);
@@ -269,7 +267,6 @@ class CallNode : public ExprNode {
     v->Visit("type_args", &type_args);
     v->Visit("span", &span);
     v->Visit("_checked_type_", &checked_type_);
-    v->Visit("backend", &backend);
   }
 
   bool SEqualReduce(const CallNode* other, SEqualReducer equal) const {
