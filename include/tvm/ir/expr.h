@@ -167,6 +167,13 @@ class RelayExprNode : public BaseExprNode {
 
   static constexpr const char* _type_key = "RelayExpr";
   static constexpr const uint32_t _type_child_slots = 22;
+
+  // @Sung: Custom attribute for debugging
+  String backend;
+  void VisitAttrs(tvm::AttrVisitor* v) {
+    v->Visit("backend", &backend);
+  }
+
   TVM_DECLARE_BASE_OBJECT_INFO(RelayExprNode, BaseExprNode);
 };
 
