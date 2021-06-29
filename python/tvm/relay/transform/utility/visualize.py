@@ -27,11 +27,8 @@ def visualize_network(expr, file_name):
     relay.analysis.post_order_visit(expr, lambda node: _traverse_expr(node, node_dict))
 
     for node, node_idx in node_dict.items():
-
         if isinstance(node, relay.Function):
             # elif isinstance(node, relay.expr.Function):
-
-            print(node.kBackendOp)
             dot.node(str(node_idx), f'Function ({node_idx})', shape='doubleoctagon')
             dot.edge(str(node_dict[node.body]), str(node_idx))
 
