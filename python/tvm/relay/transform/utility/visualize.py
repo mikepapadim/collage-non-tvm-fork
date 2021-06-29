@@ -27,6 +27,7 @@ def visualize_network(expr, file_name):
     relay.analysis.post_order_visit(expr, lambda node: _traverse_expr(node, node_dict))
 
     for node, node_idx in node_dict.items():
+        node_idx_backend_str = f"[{node_idx}, {node.backend}]"
         if isinstance(node, relay.Function):
             # elif isinstance(node, relay.expr.Function):
             dot.node(str(node_idx), f'Function ({node_idx})', shape='doubleoctagon')
@@ -34,18 +35,18 @@ def visualize_network(expr, file_name):
 
         elif isinstance(node, relay.expr.Var):
             dot.node(str(node_idx), \
-                     f'{node.name_hint} ({node_idx}):\nTensor[{tuple(node.type_annotation.shape)}, {node.type_annotation.dtype}]', \
+                     f'{node.name_hint} {node_idx_backend_str}:\nTensor[{tuple(node.type_annotation.shape)}, {node.type_annotation.dtype}]', \
                      shape='rectangle'
                      )
         elif isinstance(node, relay.expr.GlobalVar):
             dot.node(str(node_idx), \
-                     f'{node.name_hint} ({node_idx})', \
+                     f'{node.name_hint} {node_idx_backend_str}', \
                      shape='rectangle'
                      )
 
         elif isinstance(node, relay.Constant):
             dot.node(str(node_idx), \
-                     f'Constant ({node_idx}):\nTensor[{tuple(node.data.shape)}, {node.data.dtype}]', \
+                     f'Constant {node_idx_backend_str}:\nTensor[{tuple(node.data.shape)}, {node.data.dtype}]', \
                      shape='rectangle'
                      )
 
@@ -53,24 +54,24 @@ def visualize_network(expr, file_name):
             args = [node_dict[arg] for arg in node.args]
             # dot.node(str(node_idx), f'Call(op={node.op.name})')
             if isinstance(node.op, tvm.relay.Function):
-                dot.node(str(node_idx), f'Call ({node_idx})(Function({node_dict[node.op.body]}))', shape='ellipse',
+                dot.node(str(node_idx), f'Call {node_idx_backend_str}(Function({node_dict[node.op.body]}))', shape='ellipse',
                          style='filled', color=node_color)
             else:
                 if isinstance(node.op, relay.expr.GlobalVar):
-                    dot.node(str(node_idx), f'Call ({node_idx})(op={node.op.name_hint})', shape='ellipse', style='filled', color=node_color)
+                    dot.node(str(node_idx), f'Call {node_idx_backend_str}(op={node.op.name_hint})', shape='ellipse', style='filled', color=node_color)
 
                 else:
-                    dot.node(str(node_idx), f'Call ({node_idx})(op={node.op.name})', shape='ellipse', style='filled', color=node_color)
+                    dot.node(str(node_idx), f'Call {node_idx_backend_str}(op={node.op.name})', shape='ellipse', style='filled', color=node_color)
 
 
             for arg in args:
                 dot.edge(str(arg), str(node_idx))
         elif isinstance(node, relay.expr.TupleGetItem):
-            dot.node(str(node_idx), f'TupleGetItem ({node_idx})(idx={node.index})', shape='ellipse', style='filled', color=node_color)
+            dot.node(str(node_idx), f'TupleGetItem {node_idx_backend_str}(idx={node.index})', shape='ellipse', style='filled', color=node_color)
             dot.edge(str(node_dict[node.tuple_value]), str(node_idx))
         elif isinstance(node, relay.expr.Tuple):
             args = [node_dict[field] for field in node.fields]
-            dot.node(str(node_idx), f'Tuple ({node_idx})(fileds=none)', shape='ellipse', style='filled', color=node_color)
+            dot.node(str(node_idx), f'Tuple {node_idx_backend_str}(fileds=none)', shape='ellipse', style='filled', color=node_color)
             for arg in args:
                 dot.edge(str(arg), str(node_idx))
         else:

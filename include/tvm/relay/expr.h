@@ -67,10 +67,13 @@ class ConstantNode : public ExprNode {
   /*! \return Whether it is scalar(rank-0 tensor) */
   bool is_scalar() const { return data->ndim == 0; }
 
+  String backend = "default";
+  
   void VisitAttrs(tvm::AttrVisitor* v) {
     v->Visit("data", &data);
     v->Visit("span", &span);
     v->Visit("_checked_type_", &checked_type_);
+    v->Visit("backend", &backend);
   }
 
   bool SEqualReduce(const ConstantNode* other, SEqualReducer equal) const {
@@ -102,11 +105,13 @@ class TupleNode : public ExprNode {
  public:
   /*! \brief the fields of the tuple */
   tvm::Array<relay::Expr> fields;
+  String backend = "default";
 
   void VisitAttrs(tvm::AttrVisitor* v) {
     v->Visit("fields", &fields);
     v->Visit("span", &span);
     v->Visit("_checked_type_", &checked_type_);
+    v->Visit("backend", &backend);
   }
 
   bool SEqualReduce(const TupleNode* other, SEqualReducer equal) const {
@@ -174,11 +179,14 @@ class VarNode : public ExprNode {
   /*! \return The name hint of the variable */
   const String& name_hint() const { return vid->name_hint; }
 
+  String backend = "default";
+
   void VisitAttrs(tvm::AttrVisitor* v) {
     v->Visit("vid", &vid);
     v->Visit("type_annotation", &type_annotation);
     v->Visit("span", &span);
     v->Visit("_checked_type_", &checked_type_);
+    v->Visit("backend", &backend);
   }
 
   bool SEqualReduce(const VarNode* other, SEqualReducer equal) const {
@@ -260,7 +268,7 @@ class CallNode : public ExprNode {
    */
   tvm::Array<Type> type_args;
 
-  String backend;
+  String backend = "default";
 
   void VisitAttrs(tvm::AttrVisitor* v) {
     v->Visit("op", &op);
@@ -439,12 +447,14 @@ class TupleGetItemNode : public ExprNode {
   Expr tuple;
   /*! \brief which value to get */
   int index;
+  String backend = "default";
 
   void VisitAttrs(tvm::AttrVisitor* v) {
     v->Visit("tuple_value", &tuple);
     v->Visit("index", &index);
     v->Visit("span", &span);
     v->Visit("_checked_type_", &checked_type_);
+    v->Visit("backend", &backend);
   }
 
   bool SEqualReduce(const TupleGetItemNode* other, SEqualReducer equal) const {

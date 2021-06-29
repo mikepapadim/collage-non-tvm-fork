@@ -51,7 +51,9 @@ def apply_external_compiler_op(mod):
 
     # Get best op match info
     fn_body = mod["main"].body
+    print(f"backend body (before): {fn_body.backend}")
     opt_match = OpMatchReader().read(fn_body)
+    print(f"backend body (after): {fn_body.backend}")
 
     # Annotating expression
     target_str = "tensorrt"
@@ -99,7 +101,7 @@ def apply_external_compiler_op(mod):
             #     }
             # ),
             # transform.FoldConstant(),
-            # transform.AnnotateTarget("tensorrt"),
+            transform.AnnotateTarget("tensorrt"),
             transform.MergeCompilerRegions(),
             #tvm.ir.transform.PrintIR("After merging graph"),
             transform.PartitionGraph(),

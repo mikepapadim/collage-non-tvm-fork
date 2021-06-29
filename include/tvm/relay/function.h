@@ -57,6 +57,7 @@ class FunctionNode : public BaseFuncNode {
    * \note This can be usually empty for non-polymorphic functions.
    */
   tvm::Array<TypeVar> type_params;
+  String backend = "default";
 
   void VisitAttrs(tvm::AttrVisitor* v) {
     v->Visit("params", &params);
@@ -66,6 +67,7 @@ class FunctionNode : public BaseFuncNode {
     v->Visit("attrs", &attrs);
     v->Visit("span", &span);
     v->Visit("_checked_type_", &checked_type_);
+    v->Visit("backend", &backend);
   }
 
   bool SEqualReduce(const FunctionNode* other, SEqualReducer equal) const {

@@ -9,6 +9,9 @@ DUMMY_VAL = 0
 COL_NAME = 'annotation'
 
 """
+** Use this when you need match information in different build call;
+Within the same build call, pass annotation through expr.backend instead of logging
+
 Opretaor match logger
 - dump and optimized_match (Key: expression / Value: annotation (group_id + op_name))
 - Log file is located in the f"transform/logs/{USER_DEFINED_MATCH_LOG}"
@@ -66,6 +69,9 @@ class OpMatchLogger(ExprVisitor):
         self._memo_map_for_log[expr] = DUMMY_VAL
 
 """
+** Use this when you need match information in different build call;
+Within the same build call, pass annotation through expr.backend instead of logging
+
 Opretaor match logger
 - dump and optimized_match (Key: expression / Value: annotation (group_id + op_name))
 - Log file is located in the f"transform/logs/{USER_DEFINED_MATCH_LOG}"
@@ -114,6 +120,9 @@ class OpMatchReader(ExprVisitor):
 
                 anno = self._post_dfs_order_to_anno[self._post_dfs_order]
                 self.opt_match_from_log[expr] = anno
+
+                # [FIXME-Sung] Change backend
+                expr.backend = anno
                 self._post_dfs_order += 1
 
         self._memo_map_for_log[expr] = DUMMY_VAL
