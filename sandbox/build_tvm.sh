@@ -2,10 +2,6 @@
 TVM_PATH=~/tvm
 
 # Re-build TVM
-rm -rf $TVM_PATH/build 
-mkdir $TVM_PATH/build
-cd $TVM_PATH
-cp cmake/config.cmake build/
-cd build
+cd $TVM_PATH/build
 cmake ..
-make clean && make -j64
+make -j64

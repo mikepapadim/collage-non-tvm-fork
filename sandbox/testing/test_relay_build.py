@@ -58,6 +58,7 @@ def build_network_tensorrt(mod, params):
     target = "cuda"
     with tvm.transform.PassContext(opt_level=OPT_LEVEL.get(), config={'relay.ext.tensorrt.options': config}):
         lib = relay.build(mod, target=target, params=params)
+        printe("Built done")
 
     lib.export_library('compiled.so')
 
@@ -93,15 +94,15 @@ if __name__ == "__main__":
     if args.network == "nasneta":
         OPT_LEVEL.set(2)
 
-    mod, params, shape_dict, _ = get_network_from_torch(args.network, 1)
+    # mod, params, shape_dict, _ = get_network_from_torch(args.network, 1)
     # mod, params, shape_dict, _ = crop_network_from_torch(args.network, 1, 43)
-    # mod, params = get_network_from_relay(args.network, 1)
+    mod, params = get_network_from_relay(args.network, 1)
     # print(repr(mod["main"]))
 
     # build_network_tensorrt(mod, params)
-    lib = build_network(mod["main"], params, CustomFusionPass.TWO_LEVEL_OPT, args.network)
+    # lib = build_network(mod["main"], params, CustomFusionPass.TWO_LEVEL_OPT, args.network)
     # lib = build_network(mod["main"], params, CustomFusionPass.DP)
-    # lib = build_network(mod["main"], params, CustomFusionPass.USER_DEFINED_FUSION)
+    lib = build_network(mod["main"], params, CustomFusionPass.USER_DEFINED_FUSION, args.network)
     print(f"We successfully built the {args.network}")
 
     # Verify if the network output is same after our optimization

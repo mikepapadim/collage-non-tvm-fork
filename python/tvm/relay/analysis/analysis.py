@@ -42,6 +42,8 @@ def context_analysis(mod, default_device):
     """
     return _ffi_api.ContextAnalysis(mod, default_device)
 
+def update_backend(expr, backend):
+    return _ffi_api.update_backend(expr, backend)
 
 def post_order_visit(expr, fvisit):
     """Recursively visit the ir in post DFS order node,

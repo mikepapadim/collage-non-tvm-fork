@@ -27,7 +27,7 @@ def visualize_network(expr, file_name):
     relay.analysis.post_order_visit(expr, lambda node: _traverse_expr(node, node_dict))
 
     for node, node_idx in node_dict.items():
-        node_idx_backend_str = f"[{node_idx}, {node.backend}]"
+        node_idx_backend_str = f"[{node_idx}]"#, {node.backend}]"
         if isinstance(node, relay.Function):
             # elif isinstance(node, relay.expr.Function):
             dot.node(str(node_idx), f'Function ({node_idx})', shape='doubleoctagon')

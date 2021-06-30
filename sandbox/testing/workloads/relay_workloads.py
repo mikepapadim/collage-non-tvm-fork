@@ -68,6 +68,18 @@ def get_conv2d_relu_x2(batch_size):
 
     return mod, params
 
+def get_annotate_test(batch_size):
+    data = relay.var("data", shape=(10, 10))
+    O_1 = relay.nn.relu(data)
+    O_2 = relay.nn.relu(O_1)
+    X = relay.tanh(O_1)
+    O_3 = relay.add(O_2, X)
+    # diamond = relay.Function([data], O_3)
+
+    mod, params = create_relay_workload(O_3)
+    mod = relay.transform.InferType()(mod)
+    return mod, params
+
 # def get_conv2d_relu_x2(batch_size):
 #     # Chain graph
 #     # batch_size = 1
@@ -179,6 +191,7 @@ NAME_TO_WORKLOAD = {
     "conv2d+relu":get_conv2d_relu,
     "conv2d":get_conv2d,
     "conv2d+relu_x2":get_conv2d_relu_x2,
+    "annotate_test":get_annotate_test,
 }
 
 def get_network_from_relay(name, batch_size):

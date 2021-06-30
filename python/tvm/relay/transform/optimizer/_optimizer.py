@@ -51,13 +51,16 @@ def apply_external_compiler_op(mod):
 
     # Get best op match info
     fn_body = mod["main"].body
-    print(f"backend body (before): {fn_body.backend}")
-    opt_match = OpMatchReader().read(fn_body)
-    print(f"backend body (after): {fn_body.backend}")
+    # print(f"backend body (before): {fn_body.backend}")
+    # opt_match = OpMatchReader().read(fn_body)
+    # print(f"backend body (after): {fn_body.backend}")
+    opt_match = get_temp_opt_match(fn_body)
 
     # Annotating expression
     target_str = "tensorrt"
-    mod["main"] = ExtCompilerOpAnnotator(opt_match).annotate(mod["main"], target_str)
+    # visualize_network(mod["main"], "AnnotateTargetFunc_before")
+    # mod["main"] = ExtCompilerOpAnnotator(opt_match).annotate(mod["main"], target_str)
+    # visualize_network(mod["main"], "AnnotateTargetFunc_after")
 
     # Do merge and partition pass
     use_implicit_batch = True
@@ -120,11 +123,21 @@ def apply_external_compiler_op(mod):
     return mod
     # return mod, config
 
+def get_temp_opt_match(relay_expr):
+    opt_match = {}
+    opt_match[relay_expr] = "0-tvmgpu-autotvm_add"
+    opt_match[relay_expr.args[0]] = "1-tvmgpu-autotvm_relu"
+    opt_match[relay_expr.args[1]] = "2-tensorrt_tanh"
+    opt_match[relay_expr.args[0].args[0]] = "3-tvmgpu-autotvm_relu"
+    return opt_match
+
 @tvm._ffi.register_func("relay.transform.optimizer.get_user_fusion")
 def get_user_fusion(relay_expr):
     printe("User-defined fusion")
     relay_expr = get_function_body(relay_expr)
-    opt_match = OpMatchReader().read(relay_expr)
+    # printe(repr(relay_expr))
+    opt_match = get_temp_opt_match(relay_expr)
+    # opt_match = OpMatchReader().read(relay_expr)
     return opt_match
 
 def run_op_level_opt(relay_expr):

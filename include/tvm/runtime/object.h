@@ -555,6 +555,14 @@ class ObjectRef {
   template <typename ObjectType>
   inline const ObjectType* as() const;
 
+  /*
+ * Warning(@Soo): Custom non-constant pointers
+ * Given this gives non-constant pointer, make sure you don't modify anything else than backend.
+ * Otherwise, this will cause troubles.
+ */
+  template <typename ObjectType>
+  inline ObjectType* as_non_const();
+
   /*! \brief type indicate the container type. */
   using ContainerType = Object;
   // Default type properties for the reference class.
@@ -854,6 +862,20 @@ inline bool Object::unique() const { return use_count() == 1; }
 
 template <typename ObjectType>
 inline const ObjectType* ObjectRef::as() const {
+  if (data_ != nullptr && data_->IsInstance<ObjectType>()) {
+    return static_cast<ObjectType*>(data_.get());
+  } else {
+    return nullptr;
+  }
+}
+
+/*
+ * Warning(@Soo): Custom non-constant pointers
+ * Given this gives non-constant pointer, make sure you don't modify anything else than backend.
+ * Otherwise, this will cause troubles.
+ */
+template <typename ObjectType>
+inline ObjectType* ObjectRef::as_non_const() {
   if (data_ != nullptr && data_->IsInstance<ObjectType>()) {
     return static_cast<ObjectType*>(data_.get());
   } else {

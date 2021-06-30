@@ -153,6 +153,8 @@ def partition_for_tensorrt(
             transform.InferType(),
         ]
     )
+    # from tvm.relay.transform.optimizer._optimizer import print_ir
+    # with tvm.transform.PassContext(opt_level=3, config={"relay.ext.tensorrt.options": config},trace=print_ir):
     with tvm.transform.PassContext(opt_level=3, config={"relay.ext.tensorrt.options": config}):
         mod = seq(mod)
         mod = prune_tensorrt_subgraphs(mod)

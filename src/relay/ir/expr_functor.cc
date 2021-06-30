@@ -478,6 +478,25 @@ TVM_REGISTER_GLOBAL("relay.analysis.post_order_visit").set_body_typed([](Expr ex
   PostOrderVisit(expr, [f](const Expr& n) { f(n); });
 });
 
+/*
+ * Helper function to update backend
+ *
+ */
+
+// visitor to implement apply
+void MutateBackend(Expr op, String backend) {
+  if (op.as<CallNode>()) {
+    op.as_non_const<CallNode>()->backend = std::move(backend);
+  } else {
+    op.as_non_const<VarNode>()->backend = std::move(backend);
+  }
+}
+
+TVM_REGISTER_GLOBAL("relay.analysis.update_backend").set_body_typed([](Expr expr, String backend) {
+  MutateBackend(expr, backend);
+});
+
+
 // Implement bind.
 class ExprBinder : public MixedModeMutator, PatternMutator {
  public:

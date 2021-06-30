@@ -44,13 +44,18 @@ static const char default_target[] = "default";
 // region that will be handled by a specific compiler.
 class AnnotateTargetRewriter : public ExprRewriter {
  public:
-  explicit AnnotateTargetRewriter(Array<runtime::String> targets) : targets_(std::move(targets)) {}
+  explicit AnnotateTargetRewriter(Array<runtime::String> targets, bool is_custom_annotation)
+      : targets_(std::move(targets)), is_custom_annotation_(is_custom_annotation)  {}
 
  protected:
   /*! \brief The target backends for annotation. */
   Array<runtime::String> targets_;
   /*! \brief Maintain the decision of the target for each op expr. */
   std::unordered_map<Expr, std::string, ObjectPtrHash, ObjectPtrEqual> op_expr_to_target_;
+
+  /*! \brief The target backends for annotation. */
+  bool is_custom_annotation_ = false;
+
 
   /*!
    * \brief This function annotates a compiler end and a compiler begin to all arguments.
@@ -168,6 +173,7 @@ class AnnotateTargetRewriter : public ExprRewriter {
   }
 
  public:
+
   Expr Rewrite_(const CallNode* pre, const Expr& post) override {
     // Supported targets for this node. The order implies the priority.
     std::vector<std::string> supported_targets;
@@ -358,8 +364,8 @@ class AnnotateTargetRewriter : public ExprRewriter {
 // in a program region that will be handled by a specific compiler.
 class CallOpsTargetRewriter : public AnnotateTargetRewriter {
  public:
-  explicit CallOpsTargetRewriter(Array<runtime::String> targets)
-      : AnnotateTargetRewriter(std::move(targets)) {}
+  explicit CallOpsTargetRewriter(Array<runtime::String> targets, bool is_custom_annotation)
+      : AnnotateTargetRewriter(std::move(targets), is_custom_annotation){}
 
   std::unique_ptr<Call> RewriteVarCall(const Call& post_call) override {
     Array<Expr> ends;
@@ -415,10 +421,22 @@ class CallOpsTargetRewriter : public AnnotateTargetRewriter {
   }
 };
 
+bool IsCustomAnnotation(const Expr& expr) {
+  const FunctionNode* fn_node = static_cast<const FunctionNode*>(expr.get());
+  return fn_node->GetAttr<IntImm>(attr::kCustomFusionPass).defined();
+}
+
 Expr AnnotateTarget(const Expr& expr, const Array<runtime::String>& targets,
                     bool include_non_call_ops) {
-  auto r = include_non_call_ops ? std::make_unique<AnnotateTargetRewriter>(targets)
-                                : std::make_unique<CallOpsTargetRewriter>(targets);
+  /*
+   * Warning(@Soo): Assume that we only use AnnotateTargetRewriter
+   * Default parameter is using AnnotateTargetRewriter
+   * And I don't see any cases using CallOpsTargetRewriter in TVM examples
+  */
+  bool is_custom_annotation = IsCustomAnnotation(expr);
+  std::cerr << "Custom annotation: " << is_custom_annotation << std::endl;
+  auto r = include_non_call_ops ? std::make_unique<AnnotateTargetRewriter>(targets, is_custom_annotation)
+                                : std::make_unique<CallOpsTargetRewriter>(targets, is_custom_annotation);
   return PostOrderRewrite(expr, r.get());
 }
 
