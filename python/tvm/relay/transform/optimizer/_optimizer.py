@@ -29,14 +29,17 @@ from tvm.relay import transform
 from tvm.relay.transform.utility.visualize import visualize_network
 def print_ir(mod, info, is_before):
     """Print the name of the pass, the IR, only before passes execute."""
-    if info.name == "AnnotateTargetFunc" or info.name == "MergeCompilerRegions" or info.name == "PartitionGraph":
-        if is_before:
-            print("Running pass: {}", info.name)
-            visualize_network(mod["main"], info.name+"_before")
-        #print(mod)
-        else:
-            print("Done pass: {}", info.name)
-            visualize_network(mod["main"], info.name+"_after")
+    printe(f"Pass: {info.name}")
+    # if info.name == "AnnotateTargetFunc" or info.name == "MergeCompilerRegions" or info.name == "PartitionGraph":
+    if is_before:
+        printe("Running pass: {}", info.name)
+        printe(repr(mod["main"]))
+        # visualize_network(mod["main"], info.name+"_before")
+    #print(mod)
+    else:
+        printe("Done pass: {}", info.name)
+        printe(repr(mod["main"]))
+        # visualize_network(mod["main"], info.name+"_after")
 
 
 def setup_backend_op_lib(network_expr, targets, batch_size):
@@ -54,8 +57,7 @@ def apply_external_compiler_op(mod):
     # print(f"backend body (before): {fn_body.backend}")
     # opt_match = OpMatchReader().read(fn_body)
     # print(f"backend body (after): {fn_body.backend}")
-    opt_match = get_temp_opt_match(fn_body)
-
+    # visualize_network(mod["main"], "notepad")
     # Annotating expression
     target_str = "tensorrt"
     # visualize_network(mod["main"], "AnnotateTargetFunc_before")
@@ -90,10 +92,15 @@ def apply_external_compiler_op(mod):
     # Warning(@Soo): I assume this is only useful when folding constant
     # if params:
     #     mod["main"] = bind_params_by_name(mod["main"], params)
+    printe("*" * 30)
+    printe("*" * 30)
+    printe("*" * 30)
 
+    # backend exists
+    printe(f"Rerp(Python): {repr(fn_body)}")
     seq = tvm.transform.Sequential(
         [
-            transform.InferType(),
+            # transform.InferType(),
             # RemoveDropoutPass(),
             # transform.RemoveUnusedFunctions(),
             # transform.ConvertLayout(
@@ -115,6 +122,8 @@ def apply_external_compiler_op(mod):
 
     # Do prune_tensorrt_subgraphs
     with tvm.transform.PassContext(opt_level=OPT_LEVEL.get(), config={"relay.ext.tensorrt.options": config},trace=print_ir):
+        printe("Before sequential")
+        # printe(repr(mod["main"]))
         mod = seq(mod)
         printe("After sequential")
         # Warning(@Soo): Would it be problematic?
@@ -124,12 +133,13 @@ def apply_external_compiler_op(mod):
     # return mod, config
 
 def get_temp_opt_match(relay_expr):
-    opt_match = {}
-    opt_match[relay_expr] = "0-tvmgpu-autotvm_add"
-    opt_match[relay_expr.args[0]] = "1-tvmgpu-autotvm_relu"
-    opt_match[relay_expr.args[1]] = "2-tensorrt_tanh"
-    opt_match[relay_expr.args[0].args[0]] = "3-tvmgpu-autotvm_relu"
-    return opt_match
+    printe("update backend from Python side")
+    relay.analysis.update_backend(relay_expr, "0-tvmgpu-autotvm_add")
+    relay.analysis.update_backend(relay_expr.args[0], "1-tvmgpu-autotvm_relu")
+    relay.analysis.update_backend(relay_expr.args[1], "2-tensorrt_tanh")
+    relay.analysis.update_backend(relay_expr.args[0].args[0],"3-tvmgpu-autotvm_relu")
+    relay.analysis.update_backend(relay_expr.args[0].args[0].args[0], "3-tvmgpu-autotvm_relu")
+    return relay_expr
 
 @tvm._ffi.register_func("relay.transform.optimizer.get_user_fusion")
 def get_user_fusion(relay_expr):
@@ -138,6 +148,7 @@ def get_user_fusion(relay_expr):
     # printe(repr(relay_expr))
     opt_match = get_temp_opt_match(relay_expr)
     # opt_match = OpMatchReader().read(relay_expr)
+    # visualize_network(relay_expr, "notepad")
     return opt_match
 
 def run_op_level_opt(relay_expr):

@@ -161,7 +161,9 @@ Expr ExprMutator::VisitExpr_(const VarNode* op) {
   if (op->type_annotation.defined()) {
     auto type = this->VisitType(op->type_annotation);
     if (!op->type_annotation.same_as(type)) {
-      return Var(op->vid, type, op->span);
+      auto new_op = Var(op->vid, type, op->span);
+      new_op.as_non_const<VarNode>()->backend = op->backend;
+      return new_op;
     }
   }
   // default case return self.
@@ -186,7 +188,9 @@ Expr ExprMutator::VisitExpr_(const TupleNode* op) {
   if (all_fields_unchanged) {
     return GetRef<Expr>(op);
   } else {
-    return Tuple(fields, op->span);
+    auto new_op = Tuple(fields, op->span);
+    new_op.as_non_const<TupleNode>()->backend = op->backend;
+    return new_op;
   }
 }
 
@@ -215,7 +219,9 @@ Expr ExprMutator::VisitExpr_(const FunctionNode* op) {
       body.same_as(op->body)) {
     return GetRef<Expr>(op);
   } else {
-    return Function(params, body, ret_type, ty_params, op->attrs, op->span);
+    auto new_op = Function(params, body, ret_type, ty_params, op->attrs, op->span);
+    new_op.as_non_const<FunctionNode>()->backend = op->backend;
+    return new_op;
   }
 }
 
@@ -240,7 +246,9 @@ Expr ExprMutator::VisitExpr_(const CallNode* call_node) {
   if (unchanged) {
     return GetRef<Expr>(call_node);
   } else {
-    return Call(new_op, call_args, call_node->attrs, ty_args, call_node->span);
+    auto new_call = Call(new_op, call_args, call_node->attrs, ty_args, call_node->span);
+    new_call.as_non_const<CallNode>()->backend = call_node->backend;
+    return new_call;
   }
 }
 
@@ -273,7 +281,9 @@ Expr ExprMutator::VisitExpr_(const TupleGetItemNode* get_item) {
   if (get_item->tuple == t) {
     return GetRef<Expr>(get_item);
   } else {
-    return TupleGetItem(t, get_item->index, get_item->span);
+    auto new_get_item = TupleGetItem(t, get_item->index, get_item->span);
+    new_get_item.as_non_const<TupleGetItemNode>()->backend = get_item->backend;
+    return new_get_item;
   }
 }
 

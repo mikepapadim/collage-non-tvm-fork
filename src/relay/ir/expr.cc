@@ -101,7 +101,7 @@ TVM_REGISTER_GLOBAL("relay.ir.Var").set_body_typed([](String str, Type type_anno
 TVM_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
     .set_dispatch<VarNode>([](const ObjectRef& ref, ReprPrinter* p) {
       auto* node = static_cast<const VarNode*>(ref.get());
-      p->stream << "Var(" << node->name_hint();
+      p->stream << "Var(" << node->name_hint() << ", " << node->backend;
       if (node->type_annotation.defined()) {
         p->stream << ", ty=";
         p->Print(node->type_annotation);
@@ -129,8 +129,10 @@ TVM_REGISTER_GLOBAL("relay.ir.Call")
 TVM_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
     .set_dispatch<CallNode>([](const ObjectRef& ref, ReprPrinter* p) {
       auto* node = static_cast<const CallNode*>(ref.get());
-      p->stream << "CallNode(" << node->op << ", " << node->args << ", " << node->attrs << ", "
-                << node->type_args << ")";
+      p->stream << "CallNode(" << node->op << ", " << node->backend << ", " << node->args << ", "
+                << node->attrs << ", " << node->type_args << ")";
+//      p->stream << "CallNode(" << node->op << ", " << node->args << ", " << node->attrs << ", "
+//                << node->type_args << ")";
     });
 
 Let::Let(Var var, Expr value, Expr body, Span span) {

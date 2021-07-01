@@ -175,6 +175,10 @@ class AnnotateTargetRewriter : public ExprRewriter {
  public:
 
   Expr Rewrite_(const CallNode* pre, const Expr& post) override {
+//    std::cerr << "pre : " << GetRef<Expr>(pre) << std::endl;
+//    std::cerr << "post: " << post << std::endl;
+//    std::cerr << "====================================" << std::endl << std::endl;
+//    std::cerr << "backend: " << post.as<CallNode>()->backend << " / repr: " << post << std::endl;
     // Supported targets for this node. The order implies the priority.
     std::vector<std::string> supported_targets;
 
@@ -268,6 +272,10 @@ class AnnotateTargetRewriter : public ExprRewriter {
 
     // Update the target map.
     op_expr_to_target_[new_call] = target;
+
+    // Update the backend attribute
+    new_call.as_non_const<CallNode>()->backend = pre->backend;
+
     return std::move(new_call);
   }
 
@@ -279,6 +287,9 @@ class AnnotateTargetRewriter : public ExprRewriter {
     auto target_n_args = AnnotateArgs(expr->fields);
     auto new_expr = Tuple(std::get<1>(target_n_args));
     op_expr_to_target_[new_expr] = std::get<0>(target_n_args);
+
+    // Update the backend attribute
+    new_expr.as_non_const<TupleNode>()->backend = op->backend;
     return std::move(new_expr);
   }
 
@@ -288,6 +299,9 @@ class AnnotateTargetRewriter : public ExprRewriter {
     auto target_n_args = AnnotateArgs(Array<Expr>({expr->tuple}));
     auto new_expr = TupleGetItem(std::get<1>(target_n_args)[0], expr->index);
     op_expr_to_target_[new_expr] = std::get<0>(target_n_args);
+
+    // Update the backend attribute
+    new_expr.as_non_const<TupleGetItemNode>()->backend = op->backend;
     return std::move(new_expr);
   }
 
@@ -302,7 +316,10 @@ class AnnotateTargetRewriter : public ExprRewriter {
       func = Downcast<Function>(post);
       new_body = InsertCompilerEndAndPropogateTarget(func->body);
     }
-    return Function(func->params, new_body, func->ret_type, func->type_params, func->attrs);
+
+    auto new_func = Function(func->params, new_body, func->ret_type, func->type_params, func->attrs);
+    new_func.as_non_const<FunctionNode>()->backend = fn->backend;
+    return std::move(new_func);
   }
 
   Expr Rewrite_(const LetNode* op, const Expr& post) override {
@@ -435,6 +452,7 @@ Expr AnnotateTarget(const Expr& expr, const Array<runtime::String>& targets,
   */
   bool is_custom_annotation = IsCustomAnnotation(expr);
   std::cerr << "Custom annotation: " << is_custom_annotation << std::endl;
+  std::cerr << "Expr : " << expr << std::endl;
   auto r = include_non_call_ops ? std::make_unique<AnnotateTargetRewriter>(targets, is_custom_annotation)
                                 : std::make_unique<CallOpsTargetRewriter>(targets, is_custom_annotation);
   return PostOrderRewrite(expr, r.get());
@@ -447,6 +465,8 @@ namespace transform {
 Pass AnnotateTarget(const Array<runtime::String>& targets, bool include_non_call_ops) {
   runtime::TypedPackedFunc<Function(Function, IRModule, PassContext)> pass_func =
       [=](Function f, IRModule m, PassContext pc) {
+//        std::cerr << "Function before target" << std::endl;
+//        std::cerr << m->Lookup("main") << std::endl;
         return Downcast<Function>(
             relay::annotate_target::AnnotateTarget(f, targets, include_non_call_ops));
       };

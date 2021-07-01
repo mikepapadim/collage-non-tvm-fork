@@ -140,6 +140,12 @@ class MergeAnnotations : public ExprRewriter {
   explicit MergeAnnotations(AnnotatedRegionSet regions) : regions_(regions) {}
 
   Expr Rewrite_(const CallNode* call, const Expr& post) final {
+//    std::cerr << "&&&&&&&&&&&&&&&&&&&&&&&&&&&&" << std::endl;
+//    std::cerr << GetRef<Expr>(call) << std::endl << std::endl;
+//    std::cerr << post << std::endl;
+
+//    post.as_non_const<CallNode>()->backend = call->backend;
+
     // Merge annotations which are now internal to a region.
     // This happens if we see a compiler begin next to a
     // compiler end and they're both in the same region.
@@ -169,6 +175,7 @@ Expr MergeCompilerRegions(const Expr& expr) {
   RegionMerger merger(regions);
   merger.VisitExpr(expr);
 
+//  std::cerr << "Expr before merge: " << expr << std::endl;
   // Remove annotations that are not in the region boundaries.
   MergeAnnotations merge_anno(regions);
   return PostOrderRewrite(expr, &merge_anno);

@@ -1403,10 +1403,11 @@ namespace tvm {
         // Note that we don't need this match
         // because we dump this into the file and will load it for backend operator decision
         // This is to prevent segmentation fault; still, we don't know whether this helps
-        if (custom_fusion_pass_type != kUserDefinedFusion) {
-          Map<Expr, String> backend_op_match = (*fdp_call)(expr);
-        }
-
+        (*fdp_call)(expr);
+//        if (custom_fusion_pass_type != kUserDefinedFusion) {
+//          Map<Expr, String> backend_op_match = (*fdp_call)(expr);
+//        }
+//        std::cerr << "Before extenral pass: " << expr << std::endl;
         // Apply external compiler ops first before we fuse operators
         // just like what original TensorRT pipeline does.
         auto ex_op_call = tvm::runtime::Registry::Get("relay.transform.optimizer.apply_external_compiler_op");

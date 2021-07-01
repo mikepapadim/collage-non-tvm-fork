@@ -711,15 +711,24 @@ class TypeInferencer::Resolver : public MixedModeMutator, PatternMutator {
     }
 
     if (need_update_call) {
+      // Update the backend attribute
+      new_call->backend = static_cast<const T*>(op)->backend;
+
       new_call->type_args = it->second.type_args;
       for (size_t i = 0; i < new_call->type_args.size(); i++) {
         new_call->type_args.Set(i, solver_->Resolve(new_call->type_args[i]));
       }
     }
     if (need_update_var) {
+      // Update the backend attribute
+      new_var->backend = static_cast<const T*>(op)->backend;
+
       new_var->type_annotation = checked_type;
     }
     if (need_update_fn) {
+      // Update the backend attribute
+      new_fn->backend = static_cast<const T*>(op)->backend;
+
       auto* fn_type = checked_type.as<FuncTypeNode>();
       ICHECK(fn_type != nullptr);
       new_fn->ret_type = fn_type->ret_type;
@@ -815,6 +824,7 @@ Pass InferType() {
   auto pass_info = PassInfo(0, "InferType", {});
   return tvm::transform::CreateModulePass(
       [=](IRModule mod, const PassContext& pass_ctx) {
+//        std::cerr << "InferType repr: " << mod->Lookup("main") << std::endl;
         DLOG(INFO) << "tvm::relay::transform::InferType";
         // Execute the pass function and return a new module.
         IRModule updated_mod =

@@ -74,7 +74,7 @@ def get_data_shape(expr):
 
 """
 Helper functions for parsing backend op name annotation
-e.g., 0-tensorrt_conv2d+relu
+e.g., 0-tensorrt_conv2d+relu -> 1, 0-tvm_conv2d_+relu -> 0
 """
 def create_backend_op_annotation(group_id, annotation):
   return f"{group_id}-{annotation}"
