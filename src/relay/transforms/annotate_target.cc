@@ -174,6 +174,34 @@ class AnnotateTargetRewriter : public ExprRewriter {
 
  public:
 
+  std::string GetBackendFromAnnotation(std::string backend_annotation) {
+    // e.g., backend_annotation: 0-tensorrt_conv2d
+    std::string delimiter = "-";
+    int delim_pos = backend_annotation.find(delimiter);
+
+    // This gives us "tensorrt_conv2d"
+    std::string backend = backend_annotation.substr(delim_pos+1);
+    delimiter = "_";
+    delim_pos = backend.find(delimiter);
+
+    return backend.substr(0, delim_pos);
+  }
+
+  bool IsValidTarget(const CallNode* pre, std::string target) {
+    std::string backend_name = GetBackendFromAnnotation(pre->backend);
+//    std::cerr << "&&&&&&&&&&&&&&&" << std::endl;
+//    std::cerr << GetRef<Expr>(pre) << std::endl;
+//    std::cerr << (backend_name == target) << std::endl;
+    // If it is not custom pass, it is always valid as long as target supports this op.
+    if (!is_custom_annotation_) return true;
+
+    // If this is custom pass, it is valid
+    // only if backend (decision made by optimizer) is same as target
+    if (is_custom_annotation_ && backend_name == target) return true;
+
+    return false;
+  }
+
   Expr Rewrite_(const CallNode* pre, const Expr& post) override {
 //    std::cerr << "pre : " << GetRef<Expr>(pre) << std::endl;
 //    std::cerr << "post: " << post << std::endl;
@@ -230,7 +258,7 @@ class AnnotateTargetRewriter : public ExprRewriter {
         auto fannotate = Op::GetAttrMap<FTVMAnnotateTarget>("target." + std::string(target));
         const Expr& ex = GetRef<Expr>(pre);
         if (fannotate.count(op) && fannotate[op](ex)) {
-          supported_targets.push_back(target);
+          if (IsValidTarget(pre, std::string(target))) supported_targets.push_back(target);
         }
       }
     } else if (pre->op->IsInstance<FunctionNode>()) {
@@ -245,7 +273,7 @@ class AnnotateTargetRewriter : public ExprRewriter {
           std::string comp_target = comp_name_str.substr(0, i);
           for (const auto& target : this->targets_) {
             if (std::string(target) == comp_target) {
-              supported_targets.push_back(comp_target);
+              if (IsValidTarget(pre, std::string(target))) supported_targets.push_back(target);
               break;
             }
           }

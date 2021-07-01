@@ -28,6 +28,7 @@ def visualize_network(expr, file_name):
 
     for node, node_idx in node_dict.items():
         node_idx_backend_str = f"[{node_idx}, {node.backend}]"
+
         if isinstance(node, relay.Function):
             # elif isinstance(node, relay.expr.Function):
             dot.node(str(node_idx), f'Function ({node_idx})', shape='doubleoctagon')
@@ -58,8 +59,7 @@ def visualize_network(expr, file_name):
                          style='filled', color=node_color)
             else:
                 if isinstance(node.op, relay.expr.GlobalVar):
-                    dot.node(str(node_idx), f'Call {node_idx_backend_str}(op={node.op.name_hint})', shape='ellipse', style='filled', color=node_color)
-
+                    dot.node(str(node_idx), f'Call{node_idx_backend_str}(GlobalVar={node.op.name_hint})', shape='ellipse', style='filled', color=node_color)
                 else:
                     dot.node(str(node_idx), f'Call {node_idx_backend_str}(op={node.op.name})', shape='ellipse', style='filled', color=node_color)
 

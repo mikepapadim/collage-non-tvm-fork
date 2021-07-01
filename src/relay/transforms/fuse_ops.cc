@@ -1344,13 +1344,17 @@ namespace tvm {
 
       // Warning(@Soo) - every fusion should be done by saved match log regardless of algorithms!
       if (fn_node->GetAttr<IntImm>(attr::kCustomFusionPass).defined()) {
-        std::string custom_fusion_pass_str = "relay.transform.optimizer.get_user_fusion";
-        //std::cerr << "\t[Start] Custom fusion - " << custom_fusion_pass_str << "\n\n";
-        auto fdp_call = tvm::runtime::Registry::Get(custom_fusion_pass_str);
-        Map<Expr, String> backend_op_match = (*fdp_call)(expr);
+//        std::string custom_fusion_pass_str = "relay.transform.optimizer.get_user_fusion";
+//        //std::cerr << "\t[Start] Custom fusion - " << custom_fusion_pass_str << "\n\n";
+//        auto fdp_call = tvm::runtime::Registry::Get(custom_fusion_pass_str);
+//
+//        std::cerr << "\t[Start] Custom fusion - " << expr << "\n\n";
+//        Map<Expr, String> backend_op_match = (*fdp_call)(expr);
+//        (*fdp_call)(expr);
         //std::cerr << "\t[Done] Custom fusion pairs are ready - " << custom_fusion_pass_str << "\n\n";
 
-        fused_expr = FuseMutator().Transform(expr, fuse_opt_level, max_fuse_depth, backend_op_match);
+//        fused_expr = FuseMutator().Transform(expr, fuse_opt_level, max_fuse_depth, backend_op_match);
+        fused_expr = FuseMutator().Transform(expr, fuse_opt_level, max_fuse_depth);
         //std::cerr << "\t[Done] Relay IR reflected fusion pairs accordingly" << "\n\n";
 
       } else {

@@ -200,10 +200,13 @@ class GlobalVarNode : public RelayExprNode {
   /*! \brief The name of the variable, this only acts as a hint. */
   String name_hint;
 
+  String backend;
+
   void VisitAttrs(AttrVisitor* v) {
     v->Visit("name_hint", &name_hint);
     v->Visit("span", &span);
     v->Visit("_checked_type_", &checked_type_);
+    v->Visit("backend", &backend);
   }
 
   bool SEqualReduce(const GlobalVarNode* other, SEqualReducer equal) const {

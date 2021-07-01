@@ -34,12 +34,12 @@ def print_ir(mod, info, is_before):
     if is_before:
         printe("Running pass: {}", info.name)
         printe(repr(mod["main"]))
-        # visualize_network(mod["main"], info.name+"_before")
+        visualize_network(mod["main"], info.name+"_before")
     #print(mod)
     else:
         printe("Done pass: {}", info.name)
         printe(repr(mod["main"]))
-        # visualize_network(mod["main"], info.name+"_after")
+        visualize_network(mod["main"], info.name+"_after")
 
 
 def setup_backend_op_lib(network_expr, targets, batch_size):
@@ -92,12 +92,13 @@ def apply_external_compiler_op(mod):
     # Warning(@Soo): I assume this is only useful when folding constant
     # if params:
     #     mod["main"] = bind_params_by_name(mod["main"], params)
-    printe("*" * 30)
-    printe("*" * 30)
-    printe("*" * 30)
+    # printe("*" * 30)
+    # printe("*" * 30)
+    # printe("*" * 30)
+    #
+    # # backend exists
+    # printe(f"Rerp(Python): {repr(fn_body)}")
 
-    # backend exists
-    printe(f"Rerp(Python): {repr(fn_body)}")
     seq = tvm.transform.Sequential(
         [
             # transform.InferType(),
@@ -121,7 +122,8 @@ def apply_external_compiler_op(mod):
     )
 
     # Do prune_tensorrt_subgraphs
-    with tvm.transform.PassContext(opt_level=OPT_LEVEL.get(), config={"relay.ext.tensorrt.options": config},trace=print_ir):
+    # with tvm.transform.PassContext(opt_level=OPT_LEVEL.get(), config={"relay.ext.tensorrt.options": config},trace=print_ir):
+    with tvm.transform.PassContext(opt_level=OPT_LEVEL.get(), config={"relay.ext.tensorrt.options": config}):
         printe("Before sequential")
         # printe(repr(mod["main"]))
         mod = seq(mod)
@@ -146,10 +148,11 @@ def get_user_fusion(relay_expr):
     printe("User-defined fusion")
     relay_expr = get_function_body(relay_expr)
     # printe(repr(relay_expr))
-    opt_match = get_temp_opt_match(relay_expr)
+    if relay_expr.backend == 'default':
+        opt_match = get_temp_opt_match(relay_expr)
     # opt_match = OpMatchReader().read(relay_expr)
     # visualize_network(relay_expr, "notepad")
-    return opt_match
+    return relay_expr
 
 def run_op_level_opt(relay_expr):
     relay_expr = get_function_body(relay_expr)
