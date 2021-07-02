@@ -479,8 +479,8 @@ Expr AnnotateTarget(const Expr& expr, const Array<runtime::String>& targets,
    * And I don't see any cases using CallOpsTargetRewriter in TVM examples
   */
   bool is_custom_annotation = IsCustomAnnotation(expr);
-  std::cerr << "Custom annotation: " << is_custom_annotation << std::endl;
-  std::cerr << "Expr : " << expr << std::endl;
+//  std::cerr << "Custom annotation: " << is_custom_annotation << std::endl;
+//  std::cerr << "Expr : " << expr << std::endl;
   auto r = include_non_call_ops ? std::make_unique<AnnotateTargetRewriter>(targets, is_custom_annotation)
                                 : std::make_unique<CallOpsTargetRewriter>(targets, is_custom_annotation);
   return PostOrderRewrite(expr, r.get());

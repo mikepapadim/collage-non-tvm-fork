@@ -75,7 +75,14 @@ class ExprMatcher:
             # Relu1 : 0, tensrort_fused_conv
             # Conv2 : 1, tensrort_fused_conv
             # Relu2 : 1, tensrort_fused_conv
-            self._optimized_match[expr] = create_backend_op_annotation(annotation[0], annotation[1])
+
+            # Update backend in the representation
+            backend_annotation = create_backend_op_annotation(annotation[0], annotation[1])
+            # printe(f"Pair of type and annotation: {backend_annotation}")
+            # printe(repr(expr), backend_annotation)
+            relay.analysis.update_backend(expr, backend_annotation)
+
+            self._optimized_match[expr] = backend_annotation
             self._topo_order_to_op.append((node_type, self._optimized_match[expr]))
         else:
             raise Exception("Expression should not be visited more than once")

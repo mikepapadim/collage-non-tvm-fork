@@ -169,7 +169,7 @@ class RelayExprNode : public BaseExprNode {
   static constexpr const uint32_t _type_child_slots = 22;
 
   // @Sung: Custom attribute for debugging
-  String backend;
+  String backend = "default";
   void VisitAttrs(tvm::AttrVisitor* v) {
     v->Visit("backend", &backend);
   }
@@ -200,7 +200,7 @@ class GlobalVarNode : public RelayExprNode {
   /*! \brief The name of the variable, this only acts as a hint. */
   String name_hint;
 
-  String backend;
+  String backend = "default";
 
   void VisitAttrs(AttrVisitor* v) {
     v->Visit("name_hint", &name_hint);

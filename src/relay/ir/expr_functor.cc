@@ -497,9 +497,41 @@ TVM_REGISTER_GLOBAL("relay.analysis.post_order_visit").set_body_typed([](Expr ex
 void MutateBackend(Expr op, String backend) {
   if (op.as<CallNode>()) {
     op.as_non_const<CallNode>()->backend = std::move(backend);
-  } else {
+  } else if (op.as<VarNode>()) {
     op.as_non_const<VarNode>()->backend = std::move(backend);
+  } else if (op.as<ConstantNode>()) {
+    op.as_non_const<ConstantNode>()->backend = std::move(backend);
+  } else if (op.as<TupleNode>()) {
+    op.as_non_const<TupleNode>()->backend = std::move(backend);
+  } else if (op.as<TupleGetItemNode>()) {
+    op.as_non_const<TupleGetItemNode>()->backend = std::move(backend);
+  } else if (op.as<FunctionNode>()) {
+    op.as_non_const<FunctionNode>()->backend = std::move(backend);
+  } else {
+    LOG(FATAL) << "Unexpected type for mutating backends";
   }
+}
+
+// Warning(@Soo): Is it dangerous to return String instead of std::string?
+String GetBackend(Expr op) {
+  String backend;
+  if (op.as<CallNode>()) {
+    backend = op.as<CallNode>()->backend;
+  } else if (op.as<VarNode>()) {
+    backend = op.as<VarNode>()->backend;
+  } else if (op.as<ConstantNode>()) {
+    backend = op.as<ConstantNode>()->backend;
+  } else if (op.as<TupleNode>()) {
+    backend = op.as<TupleNode>()->backend;
+  } else if (op.as<TupleGetItemNode>()) {
+    backend = op.as<TupleGetItemNode>()->backend;
+  } else if (op.as<FunctionNode>()) {
+    backend = op.as<FunctionNode>()->backend;
+  } else {
+    LOG(FATAL) << "Unexpected type for mutating backends";
+  }
+
+  return backend;
 }
 
 TVM_REGISTER_GLOBAL("relay.analysis.update_backend").set_body_typed([](Expr expr, String backend) {

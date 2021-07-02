@@ -1,6 +1,6 @@
 from tvm import relay
 import tvm.relay.testing as testing
-#from ..backend_operator.target import *
+from tvm.relay.transform.backend_operator.utils import *
 
 # Value is shape dict
 WORKLOADS_DIC = {

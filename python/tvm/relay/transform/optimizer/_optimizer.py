@@ -33,12 +33,12 @@ def print_ir(mod, info, is_before):
     # if info.name == "AnnotateTargetFunc" or info.name == "MergeCompilerRegions" or info.name == "PartitionGraph":
     if is_before:
         printe("Running pass: {}", info.name)
-        printe(repr(mod["main"]))
+        # printe(repr(mod["main"]))
         visualize_network(mod["main"], info.name+"_before")
     #print(mod)
     else:
         printe("Done pass: {}", info.name)
-        printe(repr(mod["main"]))
+        # printe(repr(mod["main"]))
         visualize_network(mod["main"], info.name+"_after")
 
 
@@ -122,8 +122,8 @@ def apply_external_compiler_op(mod):
     )
 
     # Do prune_tensorrt_subgraphs
-    # with tvm.transform.PassContext(opt_level=OPT_LEVEL.get(), config={"relay.ext.tensorrt.options": config},trace=print_ir):
-    with tvm.transform.PassContext(opt_level=OPT_LEVEL.get(), config={"relay.ext.tensorrt.options": config}):
+    with tvm.transform.PassContext(opt_level=OPT_LEVEL.get(), config={"relay.ext.tensorrt.options": config},trace=print_ir):
+    # with tvm.transform.PassContext(opt_level=OPT_LEVEL.get(), config={"relay.ext.tensorrt.options": config}):
         printe("Before sequential")
         # printe(repr(mod["main"]))
         mod = seq(mod)
@@ -134,6 +134,7 @@ def apply_external_compiler_op(mod):
     return mod
     # return mod, config
 
+# For annotate_test
 def get_temp_opt_match(relay_expr):
     printe("update backend from Python side")
     relay.analysis.update_backend(relay_expr, "0-tvmgpu-autotvm_add")
@@ -152,7 +153,7 @@ def get_user_fusion(relay_expr):
         opt_match = get_temp_opt_match(relay_expr)
     # opt_match = OpMatchReader().read(relay_expr)
     # visualize_network(relay_expr, "notepad")
-    return relay_expr
+    # return relay_expr
 
 def run_op_level_opt(relay_expr):
     relay_expr = get_function_body(relay_expr)
@@ -313,7 +314,7 @@ def run_dp(relay_expr):
     # target_backend = None # Consider all targets
 
     # Sanity check: AutoTVM
-    targets = [Target.TVM_GPU_AUTOTVM]
+    # targets = [Target.TVM_GPU_AUTOTVM]
 
     # Sanity check: Only CuDNN
     # targets = [Target.TVM_GPU_AUTOTVM, Target.CUDNN]
@@ -322,7 +323,7 @@ def run_dp(relay_expr):
     # targets = [Target.TVM_GPU_AUTOTVM, Target.CUBLAS, Target.TENSORRT]
 
     # Enable all backends
-    # targets = [Target.TVM_GPU_AUTOTVM, Target.CUBLAS, Target.CUDNN, Target.TENSORRT]
+    targets = [Target.TVM_GPU_AUTOTVM, Target.CUBLAS, Target.CUDNN, Target.TENSORRT]
 
     batch_size = 1
     backendop_lib = setup_backend_op_lib(relay_expr, targets, batch_size)
@@ -352,7 +353,7 @@ def run_dp(relay_expr):
 
     backendop_lib.save_to_log()
 
-    return optimized_match
+    # return optimized_match
 
 """
 This is still work in progress.

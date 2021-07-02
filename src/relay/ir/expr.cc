@@ -81,7 +81,7 @@ TVM_REGISTER_GLOBAL("relay.ir.Tuple").set_body_typed([](tvm::Array<relay::Expr> 
 TVM_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
     .set_dispatch<TupleNode>([](const ObjectRef& ref, ReprPrinter* p) {
       auto* node = static_cast<const TupleNode*>(ref.get());
-      p->stream << "Tuple(" << node->fields << ")";
+      p->stream << "Tuple(" << node->backend << "," << node->fields << ")";
     });
 
 Var::Var(Id vid, Type type_annotation, Span span) {
@@ -196,7 +196,7 @@ TVM_REGISTER_GLOBAL("relay.ir.TupleGetItem").set_body_typed([](Expr tuple, int i
 TVM_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
     .set_dispatch<TupleGetItemNode>([](const ObjectRef& ref, ReprPrinter* p) {
       auto* node = static_cast<const TupleGetItemNode*>(ref.get());
-      p->stream << "TupleGetItemNode(" << node->tuple << ", " << node->index << ")";
+      p->stream << "TupleGetItemNode(" << node->backend << ", " << node->tuple << ", " << node->index << ")";
     });
 
 RefCreate::RefCreate(Expr value, Span span) {

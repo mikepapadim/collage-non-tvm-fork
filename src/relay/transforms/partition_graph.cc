@@ -279,6 +279,12 @@ class Partitioner : public MixedModeMutator {
    */
   Call CreateRegionCall(AnnotatedRegion region, const Array<Expr>& fields,
                         const CallNode* end_node) {
+
+    // Warning(@Soo)
+    // This is kind of hacky; we exploit the fact that field[0] is always like
+    // e.g., CallNode(Op(nn.relu), 3-tvmgpu-autotvm_relu, ...
+    String region_backend = GetBackend(fields[0]);
+
     Array<Var> params;
     Array<Expr> param_expr;
     Map<Var, Expr> params_bind;
@@ -298,6 +304,13 @@ class Partitioner : public MixedModeMutator {
           Function(params, fields[0], end_node->args[0]->checked_type_, {}, DictAttrs());
     } else {
       auto tuple = Tuple(fields);
+
+      // Warning(@Soo): Is it ok to have one backend op for two or more tuple items
+      // from different backends?
+      // Note that Tuple won't be fused unless it's followed by Injective ops
+      // For now, let's assign random backend to Tuple and
+      // Let's not allow Tuple to be fused on the fusion pass.
+      tuple.as_non_const<TupleNode>()->backend = region_backend;
       global_region_func = Function(params, tuple, tuple->checked_type_, {}, DictAttrs());
     }
 
@@ -337,6 +350,16 @@ class Partitioner : public MixedModeMutator {
 
     // Create a call node for the function.
     auto call = Call(glob_func, param_expr);
+
+    // Update the backend attribute
+    // I think it doesn't matter to assign any backend because
+    // 1) It's only applied to TensorRT operators
+    // 2) Tuple and TupleGetItem doesn't take time
+//    std::cerr << "Func body: " << global_region_func->body << std::endl;
+//    std::cerr << "Expression  : " << fields[0] << std::endl;
+//    std::cerr << "Backend  : " << region_backend << std::endl;
+    call.as_non_const<CallNode>()->backend = region_backend;
+
     region_func_meta_[region].func_call = call;
 
     return call;
@@ -374,6 +397,14 @@ class Partitioner : public MixedModeMutator {
         Expr region_out_expr = pair.first;  // The arg of a compiler end node of this region.
         int idx = pair.second;              // Corresponding function output tuple index.
         auto tuple_get_item = TupleGetItem(call, idx);
+
+        // Update backend with TupleGetItem
+        // I think it doesn't matter to assign any backend because
+        // 1) It's only applied to TensorRT operators
+        // 2) Tuple and TupleGetItem doesn't take time
+        String tuple_get_item_backend = GetBackend(fields[idx]);
+        tuple_get_item.as_non_const<TupleGetItemNode>()->backend = tuple_get_item_backend;
+
         tuple_get_item->checked_type_ = region_out_expr->checked_type_;
         region_func_meta_[region].region_func_out[region_out_expr] = tuple_get_item;
       }

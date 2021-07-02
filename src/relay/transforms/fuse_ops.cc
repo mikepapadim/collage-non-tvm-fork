@@ -130,9 +130,9 @@ namespace tvm {
     class IndexedForwardGraph {
     public:
       // PATCH(@Soo): We should create a map with keys of exprnode instead of expr
-      std::unordered_map<const tvm::Object*, Expr> expr_node_to_expr;
-      std::unordered_map<const tvm::Object*, GroupIdOpNamePair> exprnode_to_backend_op;
-      const MapNode* expr_to_backend_op;
+//      std::unordered_map<const tvm::Object*, Expr> expr_node_to_expr;
+//      std::unordered_map<const tvm::Object*, GroupIdOpNamePair> exprnode_to_backend_op;
+//      const MapNode* expr_to_backend_op;
 
       struct Node;
       /*!
@@ -156,6 +156,8 @@ namespace tvm {
         OpPatternKind pattern{kOpaque};
         /*! \brief The outputs of the node. */
         LinkedList<Edge> outputs;
+        /*! \brief backend library to use. */
+        std::string backend;
       };
       /*! \brief The node map that maps node to graph */
       std::unordered_map<const tvm::Object*, Node*> node_map;
@@ -180,8 +182,7 @@ namespace tvm {
        * \param arena The arena used for data allocation.
        * \param body The body of the expression to create a graph.
        */
-      static IndexedForwardGraph Create(support::Arena* arena, const Expr& body,
-                                        const ObjectRef& backend_op_match = ObjectRef(nullptr));
+      static IndexedForwardGraph Create(support::Arena* arena, const Expr& body);
 
     private:
       class Creator;
@@ -192,34 +193,34 @@ namespace tvm {
     public:
       explicit Creator(support::Arena* arena) : arena_(arena) {}
 
-      IndexedForwardGraph Prepare(const Expr& body, const ObjectRef& backend_op_match) {
-        if (backend_op_match.get() != nullptr) {
-          graph_.expr_to_backend_op = static_cast<const MapNode*>(backend_op_match.get());
-          PrepareNewMap();
-        } else{
-          graph_.expr_to_backend_op = nullptr;
-        }
+      IndexedForwardGraph Prepare(const Expr& body) {
+//        if (backend_op_match.get() != nullptr) {
+//          graph_.expr_to_backend_op = static_cast<const MapNode*>(backend_op_match.get());
+//          PrepareNewMap();
+//        } else{
+//          graph_.expr_to_backend_op = nullptr;
+//        }
         this->Update(body, nullptr, kOpaque);
         this->VisitExpr(body);
         return std::move(graph_);
       }
 
     private:
-      // PATCH(@Soo): Prepare a new map with expr NODE and backend op name
-      void PrepareNewMap() {
-        //          expr_node_to_expr
-        auto it = graph_.expr_to_backend_op->begin();
-        while (it != graph_.expr_to_backend_op->end()) {
-          Expr expr = Downcast<Expr>(it->first);
-          std::string group_id_op_name_str = Downcast<String>(it->second).operator std::string();
-
-          // Expr Node
-          const tvm::Object* key =  static_cast<const tvm::Object*>(expr.get());
-          graph_.exprnode_to_backend_op[key] = GroupIdOpNamePair(group_id_op_name_str);
-//          graph_.exprnode_to_backend_op[key].debug_print();
-          it++;
-        }
-      }
+//      // PATCH(@Soo): Prepare a new map with expr NODE and backend op name
+//      void PrepareNewMap() {
+//        //          expr_node_to_expr
+//        auto it = graph_.expr_to_backend_op->begin();
+//        while (it != graph_.expr_to_backend_op->end()) {
+//          Expr expr = Downcast<Expr>(it->first);
+//          std::string group_id_op_name_str = Downcast<String>(it->second).operator std::string();
+//
+//          // Expr Node
+//          const tvm::Object* key =  static_cast<const tvm::Object*>(expr.get());
+//          graph_.exprnode_to_backend_op[key] = GroupIdOpNamePair(group_id_op_name_str);
+////          graph_.exprnode_to_backend_op[key].debug_print();
+//          it++;
+//        }
+//      }
 
 //      void VisitExpr(const Expr& expr) {
 //        if (graph_.expr_to_backend_op != nullptr) {
@@ -302,6 +303,10 @@ namespace tvm {
 //        std::cerr << "Constant visit: " << op << std::endl;
         this->AddNode(op);
         Node* node = graph_.node_map.at(op);
+
+        // Add backend to node
+        node->backend = op->backend;
+
         DataType dtype = DataType(op->data->dtype);
         // This rule must be consistent with code generator.
         bool is_simple_const =
@@ -319,6 +324,10 @@ namespace tvm {
       void VisitExpr_(const CallNode* call) final {
         ICHECK(graph_.node_map.count(call));
         Node* node = graph_.node_map.at(call);
+
+        // Add backend to node
+        node->backend = call->backend;
+
         static auto fpattern = Op::GetAttrMap<TOpPattern>("TOpPattern");
         // Now we set the pattern of this call.
         //
@@ -373,6 +382,10 @@ namespace tvm {
           }
         }
         ExprVisitor::VisitExpr_(op);
+
+        // Add backend to node
+        tuple_node->backend = op->backend;
+
         this->AddNode(op);
       }
 
@@ -400,11 +413,16 @@ namespace tvm {
           this->Update(op->tuple, node, kInjective);
         }
         ExprVisitor::VisitExpr_(op);
+
+        // Add backend to node
+        graph_.node_map.at(op)->backend = op->backend;
+
         this->AddNode(op);
       }
 
       void VisitExpr_(const VarNode* op) final {
 //        std::cerr << "Var visit: " << op << std::endl;
+        graph_.node_map.at(op)->backend = op->backend;
         this->AddNode(op);
       }
 
@@ -464,9 +482,8 @@ namespace tvm {
       }
     };
 
-    IndexedForwardGraph IndexedForwardGraph::Create(support::Arena* arena, const Expr& body,
-                                                    const ObjectRef& backend_op_match) {
-      return Creator(arena).Prepare(body, backend_op_match);
+    IndexedForwardGraph IndexedForwardGraph::Create(support::Arena* arena, const Expr& body) {
+      return Creator(arena).Prepare(body);
     }
 
 /*!
@@ -603,8 +620,10 @@ namespace tvm {
  */
     class GraphPartitioner {
     public:
-      explicit GraphPartitioner(support::Arena* arena, int opt_level, size_t max_fuse_depth)
-          : arena_(arena), opt_level_(opt_level), max_fuse_depth_(max_fuse_depth) {}
+      explicit GraphPartitioner(support::Arena* arena, int opt_level,
+                               size_t max_fuse_depth, bool is_custom_pass)
+          : arena_(arena), opt_level_(opt_level),
+           max_fuse_depth_(max_fuse_depth), is_custom_fusion_pass_(is_custom_pass) {}
       /*!
        * \brief Group as a union find data structure.
        */
@@ -825,6 +844,8 @@ namespace tvm {
 
         return is_tensorrt;
       }
+
+
       // Fused based on backend operator matches from DP
       void RunFuseWithMap(const IndexedForwardGraph& graph, const DominatorTree& post_dom_tree) {
 
@@ -842,9 +863,11 @@ namespace tvm {
 
           // Assign backend op name
           // WARNING(@Soo): We should assume that fused ops are not always opaque.
-          const tvm::Object* cur_key = graph_node->ref;
-          assert (graph.exprnode_to_backend_op.find(cur_key) != graph.exprnode_to_backend_op.end());
-          GroupIdOpNamePair pair_info = graph.exprnode_to_backend_op.at(cur_key);
+//          const tvm::Object* cur_key = graph_node->ref;
+//          assert (graph.exprnode_to_backend_op.find(cur_key) != graph.exprnode_to_backend_op.end());
+//          std::cerr << "Expr: " << GetRef<ObjectRef>(graph_node->ref) << std::endl;
+//          std::cerr << "backend: " << graph_node->backend << std::endl;
+          GroupIdOpNamePair pair_info = GroupIdOpNamePair(graph_node->backend);
           group_node->backend_op_name = pair_info.backend_op_name;
 
           // Note that Var or Constant will be filtered out by this.
@@ -974,7 +997,7 @@ namespace tvm {
       auto post_dom_tree = DominatorTree::PostDom(arena_, graph);
 
       // If we don't use DP, execute original TVM fusion
-      if (graph.expr_to_backend_op == nullptr) {
+      if (!is_custom_fusion_pass_) {
         //std::cerr << "original fusion pass" << std::endl;
         // run fusion algorithm.
         for (int phase = 0; phase < 3; ++phase) {
@@ -982,7 +1005,6 @@ namespace tvm {
         }
       } else {
         //std::cerr << "Custom fusion pass" << std::endl;
-        is_custom_fusion_pass_ = true;
         this->RunFuseWithMap(graph, post_dom_tree);
       }
 
@@ -993,16 +1015,17 @@ namespace tvm {
     public:
       // Run the transform
       Expr Transform(const Expr& body, int fuse_opt_level, size_t max_fuse_depth,
-                     const ObjectRef& backend_op_match = ObjectRef(nullptr)) {
+                    bool is_custom_pass = false) {
         // setup the group map.
-        auto graph = IndexedForwardGraph::Create(&arena_, body, backend_op_match);
-        auto groups = GraphPartitioner(&arena_, fuse_opt_level, max_fuse_depth).Partition(graph);
+        auto graph = IndexedForwardGraph::Create(&arena_, body);
+        auto groups = GraphPartitioner(&arena_, fuse_opt_level,
+                                       max_fuse_depth, is_custom_pass).Partition(graph);
         for (size_t nid = 0; nid < graph.post_dfs_order.size(); ++nid) {
           ICHECK(graph.post_dfs_order[nid]->ref != nullptr);
           gmap_[graph.post_dfs_order[nid]->ref] = groups[nid];
         }
         // The following line can be used for debug.
-        //this->DebugDumpGroup(body);
+        this->DebugDumpGroup(body);
         return this->Mutate(body);
       }
 
@@ -1339,29 +1362,12 @@ namespace tvm {
     // from PlanFusionWithExtCompiler
     Expr FuseOps(const Expr& expr, int fuse_opt_level, size_t max_fuse_depth, const IRModule& module) {
       // WARNING(@Soo): Assume that all exprs are function!
-      Expr fused_expr;
       const FunctionNode* fn_node = static_cast<const FunctionNode*>(expr.get());
-
+      bool is_custom_pass = false;
       // Warning(@Soo) - every fusion should be done by saved match log regardless of algorithms!
-      if (fn_node->GetAttr<IntImm>(attr::kCustomFusionPass).defined()) {
-//        std::string custom_fusion_pass_str = "relay.transform.optimizer.get_user_fusion";
-//        //std::cerr << "\t[Start] Custom fusion - " << custom_fusion_pass_str << "\n\n";
-//        auto fdp_call = tvm::runtime::Registry::Get(custom_fusion_pass_str);
-//
-//        std::cerr << "\t[Start] Custom fusion - " << expr << "\n\n";
-//        Map<Expr, String> backend_op_match = (*fdp_call)(expr);
-//        (*fdp_call)(expr);
-        //std::cerr << "\t[Done] Custom fusion pairs are ready - " << custom_fusion_pass_str << "\n\n";
+      if (fn_node->GetAttr<IntImm>(attr::kCustomFusionPass).defined()) is_custom_pass = true;
 
-//        fused_expr = FuseMutator().Transform(expr, fuse_opt_level, max_fuse_depth, backend_op_match);
-        fused_expr = FuseMutator().Transform(expr, fuse_opt_level, max_fuse_depth);
-        //std::cerr << "\t[Done] Relay IR reflected fusion pairs accordingly" << "\n\n";
-
-      } else {
-        // PATCH(@Soo): Original fusion pass for op measurements
-        fused_expr = FuseMutator().Transform(expr, fuse_opt_level, max_fuse_depth);
-      }
-      return fused_expr;
+      return FuseMutator().Transform(expr, fuse_opt_level, max_fuse_depth, is_custom_pass);
     }
 
     /*
