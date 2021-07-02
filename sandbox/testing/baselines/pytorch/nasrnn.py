@@ -26,8 +26,8 @@ from torch.nn.parameter import Parameter
 
 torch.backends.cudnn.benchmark = True
 
-HIDDEN_SIZE = 512
-# HIDDEN_SIZE = 4096
+# HIDDEN_SIZE = 512
+HIDDEN_SIZE = 4096
 LENGTH = 5
 NAME = "nasrnn"
 
