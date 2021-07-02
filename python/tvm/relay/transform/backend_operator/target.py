@@ -18,12 +18,18 @@ from ..utility.debug_helper import printe
 # only collect results whose standard deviation is below this
 MAX_STANDARD_DEVIATION = 5E-04
 # MAX_STANDARD_DEVIATION = 5E-03
-# NUM_REPEATS = 1 # Debug
+
+# This is for operator measurement
+# NUM_REPEATS = 1 # Debug / This lead to the best end-to-end perf of DP on ResNet-50
 NUM_REPEATS = 3 # Finalized one by Sung
 # NUM_MEASUREMENTS_PER_REPEAT = 1 # Debug
 # NUM_MEASUREMENTS_PER_REPEAT = 10 # Finalized one by Sung
 NUM_MEASUREMENTS_PER_REPEAT = 20
 # NUM_MEASUREMENTS_PER_REPEAT = 100
+
+# This is for network measurement
+NUM_REPEATS_E2E = 3
+NUM_MEASUREMENTS_PER_REPEAT_E2E = 20
 OPT_LEVEL = OptLevel(3)
 EXTERNAL_COMPILERS = ['tensorrt']
 
@@ -44,6 +50,7 @@ measure
 - 2) operator
     > Keep as is
 """
+
 def measure(ftimer, is_net, *args):
     # Dummy run to check whether it runs correctly e.g., segfault due to large workspace
     import sys

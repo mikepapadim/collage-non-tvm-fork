@@ -1,8 +1,7 @@
 from tvm import relay
 import tvm
 from tvm.relay.transform.backend_operator.utils import is_function_node
-from tvm.relay.transform.backend_operator.target import measure, NUM_MEASUREMENTS_PER_REPEAT, NUM_REPEATS, AUTOTVM_LOG, AUTOSCH_LOG
-from tvm.relay.transform.backend_operator.target import OPT_LEVEL
+from tvm.relay.transform.backend_operator.target import *
 from tvm.relay.transform.optimizer.custom_fusion_pass import CustomFusionPass
 from workloads.torch_workloads import get_network_from_torch
 from tvm.contrib import graph_executor as runtime
@@ -29,7 +28,7 @@ def measure_end_to_end_perf_tensorrt(mod, params, target_str, shape_dict, is_our
         input_data = np.random.uniform(-1, 1, size=input_shape).astype("float32")
         module.set_input(input_name, input_data)
 
-    ftimer = module.module.time_evaluator("run", dev, number=NUM_MEASUREMENTS_PER_REPEAT, repeat=NUM_REPEATS)
+    ftimer = module.module.time_evaluator("run", dev, number=NUM_MEASUREMENTS_PER_REPEAT_E2E, repeat=NUM_REPEATS_E2E)
 
     return measure(ftimer, is_net=False)
 
@@ -52,7 +51,7 @@ def measure_end_to_end_perf_autotvm(net, params, target_str, shape_dict, is_ours
             module.set_input(input_name, input_data)
 
 
-        ftimer = module.module.time_evaluator("run", dev, number=NUM_MEASUREMENTS_PER_REPEAT, repeat=NUM_REPEATS)
+        ftimer = module.module.time_evaluator("run", dev, number=NUM_MEASUREMENTS_PER_REPEAT_E2E, repeat=NUM_REPEATS_E2E)
 
     return measure(ftimer, is_net=False)
 
@@ -74,7 +73,7 @@ def measure_end_to_end_perf_autosch(net, params, target_str, shape_dict, is_ours
         input_data = np.random.uniform(-1, 1, size=input_shape).astype("float32")
         module.set_input(input_name, input_data)
 
-    ftimer = module.module.time_evaluator("run", dev, number=NUM_MEASUREMENTS_PER_REPEAT, repeat=NUM_REPEATS)
+    ftimer = module.module.time_evaluator("run", dev, number=NUM_MEASUREMENTS_PER_REPEAT_E2E, repeat=NUM_REPEATS_E2E)
 
     return measure(ftimer, is_net=False)
 
@@ -164,19 +163,20 @@ if __name__ == "__main__":
 
     # Warning(@soo): Note that the opt_level of AutoTVM and AutoSch is 2 to make an apple-to-apple comparison
 
+    mean_perf, std_perf = measure_end_to_end_perf_autotvm(mod["main"], params, 'cuda', shape_dict, True)
+    print(f"[Ours] Performance of {args.network} (mean, std) = ({mean_perf:.4f}+-{std_perf:.4f})")
+
     # mean_perf, std_perf = measure_end_to_end_perf_autotvm(mod["main"], params, 'cuda -libs=cudnn', shape_dict, False)
     # print(f"[AutoTVM+CuDNN] Performance of {args.network} (mean, std) = ({mean_perf:.4f}+-{std_perf:.4f})")
+    #
+    # mean_perf, std_perf = measure_end_to_end_perf_autotvm(mod["main"], params, 'cuda', shape_dict, False)
+    # print(f"[AutoTVM] Performance of {args.network} (mean, std) = ({mean_perf:.4f}+-{std_perf:.4f})")
+    #
+    # mean_perf, std_perf = measure_end_to_end_perf_tensorrt(mod, params, 'cuda', shape_dict, False)
+    # print(f"[TensorRT] Performance of {args.network} (mean, std) = ({mean_perf:.4f}+-{std_perf:.4f})")
 
     # mean_perf, std_perf = measure_end_to_end_perf_autosch(mod["main"], params, 'cuda', shape_dict, False)
     # print(f"[AutoSCH] Performance of {args.network} (mean, std) = ({mean_perf:.4f}+-{std_perf:.4f})")
 
-    mean_perf, std_perf = measure_end_to_end_perf_autotvm(mod["main"], params, 'cuda', shape_dict, False)
-    print(f"[AutoTVM] Performance of {args.network} (mean, std) = ({mean_perf:.4f}+-{std_perf:.4f})")
-
-    # mean_perf, std_perf = measure_end_to_end_perf_autotvm(mod["main"], params, 'cuda', shape_dict, True)
-    # print(f"[Ours] Performance of {args.network} (mean, std) = ({mean_perf:.4f}+-{std_perf:.4f})")
-
-    mean_perf, std_perf = measure_end_to_end_perf_tensorrt(mod, params, 'cuda', shape_dict, False)
-    print(f"[TensorRT] Performance of {args.network} (mean, std) = ({mean_perf:.4f}+-{std_perf:.4f})")
 
     # verify_network_output(mod["main"], params, 'cuda', shape_dict)
