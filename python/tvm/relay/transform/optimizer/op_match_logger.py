@@ -47,7 +47,7 @@ class OpMatchLogger(ExprVisitor):
         df.columns = [COL_NAME]
         df.index.name = "post_dfs_order"
         df.to_csv(log_path)
-
+        printe(f"Log is saved to {log_path}")
         # printe(df)
 
     # Visit Relay expressions in post-order

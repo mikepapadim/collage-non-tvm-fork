@@ -22,14 +22,14 @@ import random
 from deap import base
 from deap import creator
 from deap import tools
-
+import pandas as pd
 from .custom_fusion_pass import measure_end_to_end_user_defined
 from ..backend_operator.utils import *
 from workloads.relay_workloads import get_network_from_relay
 from workloads.torch_workloads import *
 
 from .op_match_logger import OpMatchLogger
-from ..backend_operator.target import BEST_MATCH_LOG
+from ..backend_operator.target import BEST_MATCH_LOG, LOG_PATH
 import time
 from functools import lru_cache
 
@@ -228,12 +228,15 @@ class EvolutionarySearcher:
 
         # Dump the best performance with best match
         best_perf_log_path = f"{BEST_MATCH_LOG}_{self.net_name}_perf.log"
+
+        # This is inference time in ms
+        best_perf = -self.get_ind_perf_from_pair(best_ind)
         with open(best_perf_log_path, "w") as best_output:
-            best_output.write(f"Best perf: {self.get_ind_perf_from_pair(best_ind)}\n")
+            best_output.write(f"Best perf: {best_perf}\n")
             best_output.write(f"Best match: {best_ind[0]}\n")
             best_output.write(f"-> 0 means optimal from first pass and 1 means TensorRT")
 
-        return best_ind, best_opt_match
+        return best_ind, best_opt_match, best_perf
 
     # Random search; without evolutioinary method for debugging
     def search_test(self, rnd_seed=64):
@@ -257,7 +260,7 @@ class EvolutionarySearcher:
             cur_pop_best_ind = (pop[max_idx], pop_eval[max_idx])
             # printe(f"Best individual before this generation is {best_ind}")
             # printe(f"Best individual for this generation is {cur_pop_best_ind}")
-            best_ind, best_opt_match = self.log_best_match_and_perf(best_ind, cur_pop_best_ind)
+            best_ind, best_opt_match, best_perf = self.log_best_match_and_perf(best_ind, cur_pop_best_ind)
             #printe(f"Best individual up to this generation is {best_ind}")
             #printe(f"Elapsed time: {time.time() - start_time:.2f}s")
 
@@ -267,6 +270,15 @@ class EvolutionarySearcher:
 
         return best_opt_match
 
+    def save_time_perf_log(self, time_perf_dic, total_search_time, best_perf):
+        time_perf_dic[total_search_time] = best_perf
+        df = pd.DataFrame.from_dict(time_perf_dic, orient="index")
+
+        # For better printing
+        time_perf_log_path = f"{LOG_PATH}/time_perf_{self.net_name}.log"
+        df.columns = ["best performance (ms)"]
+        df.index.name = "search time (secs)"
+        df.to_csv(time_perf_log_path)
 
     def search(self, rnd_seed = 64):
         # Initialize
@@ -307,6 +319,8 @@ class EvolutionarySearcher:
         # Variable keeping track of the number of generations
         g = 0
 
+        # For logging search time and best perf
+        time_perf_dic = {}
         # Begin the evolution
         while g < self.max_iter:
             # A new generation
@@ -375,20 +389,30 @@ class EvolutionarySearcher:
             cur_pop_best_ind = tools.selBest(pop, 1)[0]
             # cur_pop_best_ind = tools.selWorst(pop, 1)[0]
             cur_pop_best_ind = (cur_pop_best_ind, cur_pop_best_ind.fitness.values)
-            best_ind, best_opt_match = self.log_best_match_and_perf(best_ind, cur_pop_best_ind)
+            best_ind, best_opt_match, best_perf = self.log_best_match_and_perf(best_ind, cur_pop_best_ind)
 
 
             # Deallocate memory for useless space
-            if g < self.max_iter:
-                del best_opt_match
-                gc.collect()
+            # if g < self.max_iter:
+            #     del best_opt_match
+            #     gc.collect()
 
             printe(f"Best individual up to this generation is {best_ind}")
+
+            # Logging search time and best perf so far
+            total_search_time = time.time() - search_start_time
+            self.save_time_perf_log(time_perf_dic, total_search_time, best_perf)
+
+            # End the program if the time passes;
+            n_hours = 1
+            if total_search_time > n_hours * 3600:
+                printe(f"It exceeds search time limit ({n_hours} hrs), so it stops.")
+                break
 
         printe("-- End of (successful) evolution --")
 
         printe(f"Final best individual is {best_ind}")
-        printe(f"Total search time: {time.time() - search_start_time:.2f}s")
+        printe(f"Total search time: {total_search_time:.2f}s")
         # printe(self.op_state_to_match_translator.optimized_match)
 
         # printe("-"*30)
