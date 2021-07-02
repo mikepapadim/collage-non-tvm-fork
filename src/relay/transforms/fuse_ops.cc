@@ -1025,7 +1025,7 @@ namespace tvm {
           gmap_[graph.post_dfs_order[nid]->ref] = groups[nid];
         }
         // The following line can be used for debug.
-        this->DebugDumpGroup(body);
+//        this->DebugDumpGroup(body);
         return this->Mutate(body);
       }
 

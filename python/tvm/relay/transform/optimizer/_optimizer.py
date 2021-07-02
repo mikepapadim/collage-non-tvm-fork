@@ -122,8 +122,8 @@ def apply_external_compiler_op(mod):
     )
 
     # Do prune_tensorrt_subgraphs
-    with tvm.transform.PassContext(opt_level=OPT_LEVEL.get(), config={"relay.ext.tensorrt.options": config},trace=print_ir):
-    # with tvm.transform.PassContext(opt_level=OPT_LEVEL.get(), config={"relay.ext.tensorrt.options": config}):
+    # with tvm.transform.PassContext(opt_level=OPT_LEVEL.get(), config={"relay.ext.tensorrt.options": config},trace=print_ir):
+    with tvm.transform.PassContext(opt_level=OPT_LEVEL.get(), config={"relay.ext.tensorrt.options": config}):
         printe("Before sequential")
         # printe(repr(mod["main"]))
         mod = seq(mod)
