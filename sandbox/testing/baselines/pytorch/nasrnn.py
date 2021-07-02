@@ -28,7 +28,7 @@ torch.backends.cudnn.benchmark = True
 
 # HIDDEN_SIZE = 512
 # HIDDEN_SIZE = 2048
-HIDDEN_SIZE = 3000
+HIDDEN_SIZE = 2560
 
 # 4096 causes error for end-to-end TensorRT measurement
 # HIDDEN_SIZE = 4096

@@ -63,6 +63,8 @@ class OpMatchLogger(ExprVisitor):
 
                 anno = self._optimized_match[expr]
                 self._log_dic[self._post_dfs_order] = anno
+                relay.analysis.update_backend(expr, anno)
+
                 # print(self._post_dfs_order, anno)
                 self._post_dfs_order += 1
 
@@ -120,9 +122,7 @@ class OpMatchReader(ExprVisitor):
 
                 anno = self._post_dfs_order_to_anno[self._post_dfs_order]
                 self.opt_match_from_log[expr] = anno
-
-                # [FIXME-Sung] Change backend
-                expr.backend = anno
+                relay.analysis.update_backend(expr, anno)
                 self._post_dfs_order += 1
 
         self._memo_map_for_log[expr] = DUMMY_VAL

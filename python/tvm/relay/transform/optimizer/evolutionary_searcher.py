@@ -214,7 +214,7 @@ class EvolutionarySearcher:
         #     return self._memo_state[individual_hash],
 
         # Translate individual into match
-        #printe(f"[Evaluation] Individual: {individual}")
+        printe(f"[Evaluation] Individual: {individual}")
 
         return self.measure_with_lru_cache(self.get_hash_of_individual(individual))
 
@@ -283,11 +283,7 @@ class EvolutionarySearcher:
 
         # Warning(@Soo): Force initial population to have best results from first level and TensorRT
         assert self.pop_size >= 2
-        # pop[0] = creator.Individual([0 for i in range(self.n_ops)])
-        temp_arr = np.ones(self.n_ops, dtype=np.int).tolist()
-        temp_arr[4] = 0
-        temp_arr[10] = 0
-        pop[0] = creator.Individual(temp_arr)
+        pop[0] = creator.Individual([0 for i in range(self.n_ops)])
         pop[1] = creator.Individual([1 for i in range(self.n_ops)])
 
         # CXPB  is the probability with which two individuals

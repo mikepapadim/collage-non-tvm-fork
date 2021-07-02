@@ -148,10 +148,11 @@ def get_temp_opt_match(relay_expr):
 def get_user_fusion(relay_expr):
     printe("User-defined fusion")
     relay_expr = get_function_body(relay_expr)
-    # printe(repr(relay_expr))
-    if relay_expr.backend == 'default':
-        opt_match = get_temp_opt_match(relay_expr)
-    # opt_match = OpMatchReader().read(relay_expr)
+    opt_match = OpMatchReader().read(relay_expr)
+
+    # # printe(repr(relay_expr))
+    # if relay_expr.backend == 'default':
+    #     opt_match = get_temp_opt_match(relay_expr)
     # visualize_network(relay_expr, "notepad")
     # return relay_expr
 
@@ -166,8 +167,8 @@ def run_op_level_opt(relay_expr):
     # targets = [Target.TVM_GPU_AUTOTVM]
 
     # Sanity check: Enable all backends except for TensorRT
-    targets = [Target.TVM_GPU_AUTOTVM, Target.CUDNN, Target.CUBLAS]
-    #targets = [Target.TVM_GPU_AUTOTVM, Target.CUDNN, Target.CUBLAS, Target.TENSORRT]
+    # targets = [Target.TVM_GPU_AUTOTVM, Target.CUDNN, Target.CUBLAS]
+    targets = [Target.TVM_GPU_AUTOTVM, Target.CUDNN, Target.CUBLAS, Target.TENSORRT]
 
     batch_size = 1
     backendop_lib = setup_backend_op_lib(relay_expr, targets, batch_size)
@@ -188,6 +189,8 @@ def run_op_level_opt(relay_expr):
     # Debug (@soo)
     print_matching_final(comp_graph, optimizer.loc2match)
     print("-"*40)
+
+    backendop_lib.save_to_log()
 
     return optimized_match, relay_expr, backendop_lib, n_relay_nodes
 
@@ -278,8 +281,6 @@ def run_two_level_opt(relay_expr):
     # print(f"fusion dic (before merge): {optimized_match}")
     # optimized_match = ExtCompilerOpMerger(optimized_match).merge(relay_expr)
     # print(f"fusion dic (after  merge): {optimized_match}")
-
-    backendop_lib.save_to_log()
 
     return second_opt_match
 

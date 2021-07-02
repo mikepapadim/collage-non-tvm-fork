@@ -142,7 +142,7 @@ class ScheduleGetter : public backend::MemoizedExprTranslator<Array<te::Tensor>>
     if(dp_info!=nullptr) dp_target = std::string(dp_info.value());
 
     //NOTE: update target --> Target("llvm")
-//    std::cerr << "DP_TARGET: " << dp_target << "\n";
+    std::cerr << "DP_TARGET: " << dp_target << "\n";
     bool doCustomLowering = dp_target.size()>0 
                             && ((int)dp_target.find("INVALID_BACKEND_OP")==-1)
                             && ((int)dp_target.find("tvmgpu")==-1);

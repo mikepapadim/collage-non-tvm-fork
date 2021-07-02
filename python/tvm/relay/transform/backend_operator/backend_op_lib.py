@@ -121,7 +121,9 @@ class BackendOpLib(object):
     # self._add_backendop("cudnn_conv2d+biasadd+relu", Target.CUDNN, OpType.CONV2D_BIAS_ADD_RELU, 3)
 
     # TENSORRT
-    add_all_backend_ops_to_lib(self, Target.TENSORRT, [OpType.DIAMOND, OpType.TRANSPOSE, OpType.BATCH_MATMUL])
+    add_all_backend_ops_to_lib(self, Target.TENSORRT, [OpType.DIAMOND, OpType.TRANSPOSE,
+                                                       OpType.BATCH_MATMUL, OpType.RESHAPE_TRANSPOSE,
+                                                       OpType.TRANSPOSE_RESHAPE])
 
     # CUBLAS
     # TODO: Add patterns. matmul, batch matmul
