@@ -36,6 +36,7 @@ def measure_end_to_end_perf_autotvm(net, params, target_str, shape_dict, is_ours
     assert is_function_node(net)
     if is_ours:
         net = net.with_attr("CustomFusionPass", CustomFusionPass.DP)
+        # net = net.with_attr("CustomFusionPass", CustomFusionPass.USER_DEFINED_FUSION)
 
     with autotvm.apply_history_best(AUTOTVM_LOG):
         with tvm.transform.PassContext(opt_level=OPT_LEVEL.get()):

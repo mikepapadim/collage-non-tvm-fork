@@ -1,7 +1,30 @@
 import tvm
 from ..backend_operator.utils import *
+from ..utility.debug_helper import printe
+# visualize
+from tvm.relay.transform.utility.visualize import visualize_network
 
 DATA_NAME_HINTS = ['data', 'input', 'x']
+
+@tvm._ffi.register_func("relay.transform.optimizer.visualize_expr")
+def visualize_expr(expr, file_name):
+    visualize_network(expr, file_name)
+
+def print_ir(mod, info, is_before):
+    """Print the name of the pass, the IR, only before passes execute."""
+    printe(f"Pass: {info.name}")
+    # if info.name == "AnnotateTargetFunc" or info.name == "MergeCompilerRegions" or info.name == "PartitionGraph":
+    if is_before:
+        printe("Running pass: {}", info.name)
+        # printe(repr(mod["main"]))
+        visualize_network(mod["main"], info.name+"_before")
+    #print(mod)
+    else:
+        printe("Done pass: {}", info.name)
+        # If this is FuseOps, the module doesn't have "main" somehow.
+        if info.name != "FuseOps":
+            visualize_network(mod["main"], info.name + "_after")
+
 
 def is_data_var_node(expr):
     is_data_var = False

@@ -12,7 +12,7 @@ from ..backend_operator.utils import *
 
 #from ..utility.visualize import visualize_network
 from ..utility.profile_ops_in_net import profile_ops_in_net
-from .optimizer_utils import print_matching_final
+from .optimizer_utils import *
 
 from .comp_graph import ComputationGraph
 from .comp_graph_optimizer import *
@@ -24,23 +24,6 @@ from ..utility.debug_helper import printe
 from .ext_compiler_op_annotator import ExtCompilerOpAnnotator
 from tvm.relay.op.contrib.tensorrt import prune_tensorrt_subgraphs
 from tvm.relay import transform
-
-# visualize
-from tvm.relay.transform.utility.visualize import visualize_network
-def print_ir(mod, info, is_before):
-    """Print the name of the pass, the IR, only before passes execute."""
-    printe(f"Pass: {info.name}")
-    # if info.name == "AnnotateTargetFunc" or info.name == "MergeCompilerRegions" or info.name == "PartitionGraph":
-    if is_before:
-        printe("Running pass: {}", info.name)
-        # printe(repr(mod["main"]))
-        visualize_network(mod["main"], info.name+"_before")
-    #print(mod)
-    else:
-        printe("Done pass: {}", info.name)
-        # printe(repr(mod["main"]))
-        visualize_network(mod["main"], info.name+"_after")
-
 
 def setup_backend_op_lib(network_expr, targets, batch_size):
     backendop_lib = BackendOpLib.get()

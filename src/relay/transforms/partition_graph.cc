@@ -50,6 +50,15 @@ namespace tvm {
 namespace relay {
 namespace partitioning {
 
+int NEW_BACKEND_GROUP_ID = 10000000;
+
+template <typename T>
+void UpdateBackendWithNewGroup(Expr op) {
+  std::string new_backend = std::to_string(NEW_BACKEND_GROUP_ID++) + "-tvmgpu-autotvm";
+  op.as_non_const<T>()->backend = new_backend;
+}
+
+
 /*! \brief This struct maintains the required metadata for a region to generate a corresponding
  * global function and function call. Global function will be passed to the target specific codegen
  * and function call will be used in the transform Relay graph to invoke the function in runtime.
@@ -306,11 +315,12 @@ class Partitioner : public MixedModeMutator {
       auto tuple = Tuple(fields);
 
       // Warning(@Soo): Is it ok to have one backend op for two or more tuple items
-      // from different backends?
-      // Note that Tuple won't be fused unless it's followed by Injective ops
-      // For now, let's assign random backend to Tuple and
-      // Let's not allow Tuple to be fused on the fusion pass.
-      tuple.as_non_const<TupleNode>()->backend = region_backend;
+      // from different backends? No - It causes error when fusing.
+      // Note that Tuple won't be fused by origianl fusion pass unless it's followed by Injective ops
+      // For now, let's not allow Tuple to be fused on our custom fusion pass not to cause trouble.
+      UpdateBackendWithNewGroup<TupleNode>(tuple);
+//      tuple.as_non_const<TupleNode>()->backend = region_backend;
+
       global_region_func = Function(params, tuple, tuple->checked_type_, {}, DictAttrs());
     }
 
@@ -403,7 +413,8 @@ class Partitioner : public MixedModeMutator {
         // 1) It's only applied to TensorRT operators
         // 2) Tuple and TupleGetItem doesn't take time
         String tuple_get_item_backend = GetBackend(fields[idx]);
-        tuple_get_item.as_non_const<TupleGetItemNode>()->backend = tuple_get_item_backend;
+//        tuple_get_item.as_non_const<TupleGetItemNode>()->backend = tuple_get_item_backend;
+        UpdateBackendWithNewGroup<TupleGetItemNode>(tuple_get_item);
 
         tuple_get_item->checked_type_ = region_out_expr->checked_type_;
         region_func_meta_[region].region_func_out[region_out_expr] = tuple_get_item;
@@ -488,6 +499,9 @@ IRModule FlattenTupleOutputs(IRModule module) {
           // Return a tuple of compiler_ends in the place of the tuple that was
           // annotated with a compiler_end.
           auto out = Tuple(new_fields);
+
+          UpdateBackendWithNewGroup<TupleNode>(out);
+
           return std::move(out);
         }
       }

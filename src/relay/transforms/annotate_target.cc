@@ -55,8 +55,6 @@ class AnnotateTargetRewriter : public ExprRewriter {
 
   /*! \brief The target backends for annotation. */
   bool is_custom_annotation_ = false;
-
-
   /*!
    * \brief This function annotates a compiler end and a compiler begin to all arguments.
    *
@@ -317,7 +315,10 @@ class AnnotateTargetRewriter : public ExprRewriter {
     op_expr_to_target_[new_expr] = std::get<0>(target_n_args);
 
     // Update the backend attribute
+    // Let's assign a new group id and TVM backend to this new Tuple
+    // so that it can't be grouped into another operators
     new_expr.as_non_const<TupleNode>()->backend = op->backend;
+
     return std::move(new_expr);
   }
 
@@ -330,6 +331,7 @@ class AnnotateTargetRewriter : public ExprRewriter {
 
     // Update the backend attribute
     new_expr.as_non_const<TupleGetItemNode>()->backend = op->backend;
+
     return std::move(new_expr);
   }
 

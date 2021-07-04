@@ -1204,158 +1204,158 @@ namespace tvm {
       }
     };
 
-    class ExtCompilerMutator : private MixedModeMutator {
-     public:
-      explicit ExtCompilerMutator(const IRModule& module) : module_(module) {}
-      // Run the transform
-      IRModule Transform() {
-        //std::cerr << "\tExternal compiler mutation begins!" << "\n\n";
-        // Update expression and module accorindlgy.
-        // other functions in a module than main don't need to be updated.
-        auto fn_node = module_->Lookup("main").as<FunctionNode>();
-        if (fn_node->GetAttr<IntImm>(attr::kCustomFusionPass).defined()) {
-          //std::cerr << "Custom fusion pass [ExtCompiler] " << std::endl;
-          auto new_main = this->Mutate(module_->Lookup("main"));
-          module_->Update(module_->GetGlobalVar("main"),
-                          Downcast<Function>(new_main));
-          module_ = transform::InferType()(module_);
-
-          //std::cerr << "\tExternal compiler mutation is done!" << "\n\n";
-//          std::cerr << "\tFused expressions (after extcompiler): " << new_main << "\n\n";
-
-//          std::cerr << "\txxxxxxxxxxxxxxxxxxxxxxxx" << std::endl;
-//          auto glob_funcs = module_->functions;
-//          for (const auto& pair : glob_funcs) {
-//            std::cerr << "Func : " << pair.second << std::endl;
-//            std::cerr << "GlobalVar: " << pair.first << std::endl;
-//          }
-        }
-
-        return module_;
-      }
-
-     private:
-      /*!\brief The IRModule used for partitioning. */
-      IRModule module_;
-      int region_id_ = 0;
-      using MixedModeMutator::VisitExpr_;
-
-//      Expr VisitExpr_(const FunctionNode* fn_node) {
-//        std::cerr << "FUNCTION NODE VISITED" << std::endl;
-//        // Keep it going if this is the top-level function
+//    class ExtCompilerMutator : private MixedModeMutator {
+//     public:
+//      explicit ExtCompilerMutator(const IRModule& module) : module_(module) {}
+//      // Run the transform
+//      IRModule Transform() {
+//        //std::cerr << "\tExternal compiler mutation begins!" << "\n\n";
+//        // Update expression and module accorindlgy.
+//        // other functions in a module than main don't need to be updated.
+//        auto fn_node = module_->Lookup("main").as<FunctionNode>();
 //        if (fn_node->GetAttr<IntImm>(attr::kCustomFusionPass).defined()) {
-//          std::cerr << "Top level function" << std::endl;
-//          return ExprMutator::VisitExpr_(fn_node);
-//        } else {
-//        }
-//      }
-
-      bool IsTensorRTFunc(const FunctionNode* fn_node) {
-        assert (fn_node->GetAttr<String>(attr::kBackendOp).defined());
-
-        // Get backend_name from backend_op_name
-        std::string backend_op_name = std::string(fn_node->GetAttr<String>(attr::kBackendOp).value());
-        int delim_pos = backend_op_name.find("_");
-        std::string backend_name = backend_op_name.substr(0, delim_pos);
-
-//        std::cerr << "Check if it is TensorRT op ("
-//                  << backend_op_name << ")" << std::endl;
-        // Check backend op name
-        bool is_tensorrt = false;
-        if (backend_name == "tensorrt") is_tensorrt = true;
-
-        return is_tensorrt;
-      }
-
-      Expr Rewrite_(const CallNode* call, const Expr& post) {
-//        std::cerr << "Rewrite (Call)" << call->op << std::endl;
-        if (call->op.as<FunctionNode>() && IsTensorRTFunc(call->op.as<FunctionNode>())) {
-//          std::cerr << "This is TensorRT op: " << call->op << std::endl;
-          Function global_region_func = Downcast<Function>(call->op);
-          const FunctionNode* global_region_func_node = call->op.as<FunctionNode>();
-
-          std::string target = "tensorrt";
-          std::string name = target + "_" + std::to_string(region_id_++);
-//          std::cerr << "Found TensorRT op " << name << std::endl;
-
-          // Create parameters for a tensorrt global function
-          Array<Expr> param_expr;
-          Map<Var, Expr> params_bind;
-          int idx_param = 0;
-          for (const auto& arg : call->args) {
-            // Warning(@Soo): Assume that all constants are folded by previous passes
-            if (arg.as<ConstantNode>()) {
-              params_bind.Set(global_region_func_node->params[idx_param], arg);
-            } else {
-              Expr new_arg = this->Mutate(arg);
-              param_expr.push_back(new_arg);
-            }
-            ++idx_param;
-          }
-
-          // Constant propagation
-          if (!params_bind.empty()) {
-            global_region_func = Downcast<Function>(relay::Bind(global_region_func, params_bind));
-          }
-
-          // HELPME(@Soo): I don't get what this does.
-//          std::string ext_opt = "relay.ext." + target + ".optimize";
-//          auto pf = tvm::runtime::Registry::Get(ext_opt);
-
-//          if (pf != nullptr) {
-//            std::cerr << "null pointer" << std::endl;
-//            auto mod = IRModule::FromExpr(global_region_func);
-//            mod = transform::InferType()(mod);
-//            mod = (*pf)(mod);
-//            global_region_func = Downcast<Function>(mod->Lookup("main"));
-//          }
-
-          global_region_func =
-              WithAttr(std::move(global_region_func), tvm::attr::kGlobalSymbol, runtime::String(name));
-          global_region_func = WithAttr(std::move(global_region_func), attr::kPrimitive, tvm::Integer(1));
-          global_region_func =
-              WithAttr(std::move(global_region_func), attr::kCompiler, tvm::runtime::String(target));
-          global_region_func = WithAttr(std::move(global_region_func), attr::kInline, tvm::Integer(1));
-
-          std::string fname = name;
-          ICHECK(!module_->ContainGlobalVar(fname)) << "Global function " << fname << " already exists";
-
-          GlobalVar glob_func(fname);
-          module_->Add(glob_func, global_region_func);
-          module_ = relay::transform::InferType()(module_);
-//          std::cerr << "global call: " << Call(glob_func, param_expr) << std::endl;
-
-//          std::cerr << "\t+++++++++++++++++++++++++" << std::endl;
-//          auto glob_funcs = module_->functions;
-//          for (const auto& pair : glob_funcs) {
-//            std::cerr << "Func : " << pair.second << std::endl;
-//            std::cerr << "GlobalVar: " << pair.first << std::endl;
-//          }
-          return Call(glob_func, param_expr);
-        }
-
-        return ExprMutator::VisitExpr_(call);
-
-      }
-
-//      Expr MakeNewFunction(GraphPartitioner::Group* group, Type ret_type, Expr body) {
-//        // If the function has no call, it is not a primitive function.
-//        struct HasCallVisitor : ExprVisitor {
-//          bool has_call = false;
-//          void VisitExpr_(const CallNode* op) final { has_call = true; }
-//        } visitor;
-//        visitor(body);
-//        const GroupInfo& ginfo = ginfo_[group];
-//        auto func = Function(ginfo.params, body, ret_type, {});
-//        func = WithAttr(std::move(func), attr::kPrimitive, tvm::Integer(visitor.has_call));
+//          //std::cerr << "Custom fusion pass [ExtCompiler] " << std::endl;
+//          auto new_main = this->Mutate(module_->Lookup("main"));
+//          module_->Update(module_->GetGlobalVar("main"),
+//                          Downcast<Function>(new_main));
+//          module_ = transform::InferType()(module_);
 //
-//        // PATCH(@Soo): Add backend op attribute.
-//        func = WithAttr(std::move(func), attr::kBackendOp, String(group->backend_op_name));
-//    //        std::cerr << "Func: " << func << std::endl;
-//    //        std::cerr << "Backend op name: " << group->backend_op_name << std::endl;
-//        return Call(func, ginfo.arguments, Attrs());
+//          //std::cerr << "\tExternal compiler mutation is done!" << "\n\n";
+////          std::cerr << "\tFused expressions (after extcompiler): " << new_main << "\n\n";
+//
+////          std::cerr << "\txxxxxxxxxxxxxxxxxxxxxxxx" << std::endl;
+////          auto glob_funcs = module_->functions;
+////          for (const auto& pair : glob_funcs) {
+////            std::cerr << "Func : " << pair.second << std::endl;
+////            std::cerr << "GlobalVar: " << pair.first << std::endl;
+////          }
+//        }
+//
+//        return module_;
 //      }
-    };
+//
+//     private:
+//      /*!\brief The IRModule used for partitioning. */
+//      IRModule module_;
+//      int region_id_ = 0;
+//      using MixedModeMutator::VisitExpr_;
+//
+////      Expr VisitExpr_(const FunctionNode* fn_node) {
+////        std::cerr << "FUNCTION NODE VISITED" << std::endl;
+////        // Keep it going if this is the top-level function
+////        if (fn_node->GetAttr<IntImm>(attr::kCustomFusionPass).defined()) {
+////          std::cerr << "Top level function" << std::endl;
+////          return ExprMutator::VisitExpr_(fn_node);
+////        } else {
+////        }
+////      }
+//
+//      bool IsTensorRTFunc(const FunctionNode* fn_node) {
+//        assert (fn_node->GetAttr<String>(attr::kBackendOp).defined());
+//
+//        // Get backend_name from backend_op_name
+//        std::string backend_op_name = std::string(fn_node->GetAttr<String>(attr::kBackendOp).value());
+//        int delim_pos = backend_op_name.find("_");
+//        std::string backend_name = backend_op_name.substr(0, delim_pos);
+//
+////        std::cerr << "Check if it is TensorRT op ("
+////                  << backend_op_name << ")" << std::endl;
+//        // Check backend op name
+//        bool is_tensorrt = false;
+//        if (backend_name == "tensorrt") is_tensorrt = true;
+//
+//        return is_tensorrt;
+//      }
+//
+//      Expr Rewrite_(const CallNode* call, const Expr& post) {
+////        std::cerr << "Rewrite (Call)" << call->op << std::endl;
+//        if (call->op.as<FunctionNode>() && IsTensorRTFunc(call->op.as<FunctionNode>())) {
+////          std::cerr << "This is TensorRT op: " << call->op << std::endl;
+//          Function global_region_func = Downcast<Function>(call->op);
+//          const FunctionNode* global_region_func_node = call->op.as<FunctionNode>();
+//
+//          std::string target = "tensorrt";
+//          std::string name = target + "_" + std::to_string(region_id_++);
+////          std::cerr << "Found TensorRT op " << name << std::endl;
+//
+//          // Create parameters for a tensorrt global function
+//          Array<Expr> param_expr;
+//          Map<Var, Expr> params_bind;
+//          int idx_param = 0;
+//          for (const auto& arg : call->args) {
+//            // Warning(@Soo): Assume that all constants are folded by previous passes
+//            if (arg.as<ConstantNode>()) {
+//              params_bind.Set(global_region_func_node->params[idx_param], arg);
+//            } else {
+//              Expr new_arg = this->Mutate(arg);
+//              param_expr.push_back(new_arg);
+//            }
+//            ++idx_param;
+//          }
+//
+//          // Constant propagation
+//          if (!params_bind.empty()) {
+//            global_region_func = Downcast<Function>(relay::Bind(global_region_func, params_bind));
+//          }
+//
+//          // HELPME(@Soo): I don't get what this does.
+////          std::string ext_opt = "relay.ext." + target + ".optimize";
+////          auto pf = tvm::runtime::Registry::Get(ext_opt);
+//
+////          if (pf != nullptr) {
+////            std::cerr << "null pointer" << std::endl;
+////            auto mod = IRModule::FromExpr(global_region_func);
+////            mod = transform::InferType()(mod);
+////            mod = (*pf)(mod);
+////            global_region_func = Downcast<Function>(mod->Lookup("main"));
+////          }
+//
+//          global_region_func =
+//              WithAttr(std::move(global_region_func), tvm::attr::kGlobalSymbol, runtime::String(name));
+//          global_region_func = WithAttr(std::move(global_region_func), attr::kPrimitive, tvm::Integer(1));
+//          global_region_func =
+//              WithAttr(std::move(global_region_func), attr::kCompiler, tvm::runtime::String(target));
+//          global_region_func = WithAttr(std::move(global_region_func), attr::kInline, tvm::Integer(1));
+//
+//          std::string fname = name;
+//          ICHECK(!module_->ContainGlobalVar(fname)) << "Global function " << fname << " already exists";
+//
+//          GlobalVar glob_func(fname);
+//          module_->Add(glob_func, global_region_func);
+//          module_ = relay::transform::InferType()(module_);
+////          std::cerr << "global call: " << Call(glob_func, param_expr) << std::endl;
+//
+////          std::cerr << "\t+++++++++++++++++++++++++" << std::endl;
+////          auto glob_funcs = module_->functions;
+////          for (const auto& pair : glob_funcs) {
+////            std::cerr << "Func : " << pair.second << std::endl;
+////            std::cerr << "GlobalVar: " << pair.first << std::endl;
+////          }
+//          return Call(glob_func, param_expr);
+//        }
+//
+//        return ExprMutator::VisitExpr_(call);
+//
+//      }
+//
+////      Expr MakeNewFunction(GraphPartitioner::Group* group, Type ret_type, Expr body) {
+////        // If the function has no call, it is not a primitive function.
+////        struct HasCallVisitor : ExprVisitor {
+////          bool has_call = false;
+////          void VisitExpr_(const CallNode* op) final { has_call = true; }
+////        } visitor;
+////        visitor(body);
+////        const GroupInfo& ginfo = ginfo_[group];
+////        auto func = Function(ginfo.params, body, ret_type, {});
+////        func = WithAttr(std::move(func), attr::kPrimitive, tvm::Integer(visitor.has_call));
+////
+////        // PATCH(@Soo): Add backend op attribute.
+////        func = WithAttr(std::move(func), attr::kBackendOp, String(group->backend_op_name));
+////    //        std::cerr << "Func: " << func << std::endl;
+////    //        std::cerr << "Backend op name: " << group->backend_op_name << std::endl;
+////        return Call(func, ginfo.arguments, Attrs());
+////      }
+//    };
 
     // For op measurements, execute original fusion pass
     // For end-to-end measure, execute user-defined pass by using best match
@@ -1365,9 +1365,15 @@ namespace tvm {
       const FunctionNode* fn_node = static_cast<const FunctionNode*>(expr.get());
       bool is_custom_pass = false;
       // Warning(@Soo) - every fusion should be done by saved match log regardless of algorithms!
-      if (fn_node->GetAttr<IntImm>(attr::kCustomFusionPass).defined()) is_custom_pass = true;
+      // If you comment this line, we can try original fusion pass.
+//      if (fn_node->GetAttr<IntImm>(attr::kCustomFusionPass).defined()) is_custom_pass = true;
+      auto fused_expr = FuseMutator().Transform(expr, fuse_opt_level, max_fuse_depth, is_custom_pass);
+      std::cerr << "[Done] FuseOps" << std::endl;
 
-      return FuseMutator().Transform(expr, fuse_opt_level, max_fuse_depth, is_custom_pass);
+      auto vis_call = tvm::runtime::Registry::Get("relay.transform.optimizer.visualize_expr");
+      (*vis_call)(fused_expr, "FuseOps_after");
+
+      return fused_expr;
     }
 
     /*
@@ -1423,8 +1429,8 @@ namespace tvm {
         auto ex_op_call = tvm::runtime::Registry::Get("relay.transform.optimizer.apply_external_compiler_op");
         // Warning(@Soo): Doublecheck if module is updated.
         module = (*ex_op_call)(module);
+        std::cerr << "[Done] PlanFusionWithExtCompiler" << std::endl;
       }
-
       return module;
     }
 

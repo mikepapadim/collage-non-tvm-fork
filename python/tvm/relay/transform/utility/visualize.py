@@ -2,6 +2,7 @@ import tvm
 import tvm.relay as relay
 import tvm.relay.testing as testing
 from tvm.relay.transform.utility.debug_helper import printe
+from tvm.relay.transform.backend_operator.utils import *
 
 from graphviz import Digraph
 
@@ -16,8 +17,24 @@ def _traverse_expr(node, node_dict):
     # print("{} : {}".format(node, type(node)))
     node_dict[node] = len(node_dict)
 
+def get_node_color(node):
+    backend_name = get_backend_from_backend_op_annotation(node.backend)
+
+    # If this is default (no backend op assignment)
+    color = "ivory"
+
+    if backend_name == "tensorrt":
+        color = "orange"
+    elif backend_name[:3] == "tvm":
+        color = "greenyellow"
+    elif backend_name[:5] == "cudnn":
+        color = "yellow"
+    elif backend_name[:6] == "cublas":
+        color = "grey60"
+
+    return color
+
 def visualize_network(expr, file_name):
-    node_color = 'greenyellow'
 
     dot = Digraph(format='pdf')
     dot.attr(rankdir='BT')
@@ -28,6 +45,7 @@ def visualize_network(expr, file_name):
 
     for node, node_idx in node_dict.items():
         node_idx_backend_str = f"[{node_idx}, {node.backend}]"
+        node_color = get_node_color(node)
 
         if isinstance(node, relay.Function):
             # elif isinstance(node, relay.expr.Function):
@@ -35,8 +53,15 @@ def visualize_network(expr, file_name):
             dot.edge(str(node_dict[node.body]), str(node_idx))
 
         elif isinstance(node, relay.expr.Var):
+            if isinstance(node.type_annotation, tvm.ir.type.TupleType):
+                type_info = node.type_annotation.fields
+                tensor_info = f'Tensor[TupleType{tuple(type_info)}]'
+            else:
+                type_info = node.type_annotation.shape
+                tensor_info = f'Tensor[{tuple(type_info)}, {node.type_annotation.dtype}]'
+
             dot.node(str(node_idx), \
-                     f'{node.name_hint} {node_idx_backend_str}:\nTensor[{tuple(node.type_annotation.shape)}, {node.type_annotation.dtype}]', \
+                     f'{node.name_hint} {node_idx_backend_str}:\n{tensor_info}', \
                      shape='rectangle'
                      )
         elif isinstance(node, relay.expr.GlobalVar):

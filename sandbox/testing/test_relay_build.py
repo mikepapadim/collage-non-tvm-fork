@@ -6,6 +6,7 @@ from tvm.relay.transform.backend_operator.utils import is_function_node
 from tvm.relay.transform.backend_operator.target import measure, NUM_MEASUREMENTS_PER_REPEAT, NUM_REPEATS, AUTOTVM_LOG, AUTOSCH_LOG
 from tvm.relay.transform.backend_operator.target import OPT_LEVEL
 from tvm.relay.transform.optimizer.custom_fusion_pass import *
+from tvm.relay.transform.optimizer.optimizer_utils import *
 from tvm import autotvm, auto_scheduler
 
 from measure_end_to_end import verify_network_output
@@ -27,6 +28,7 @@ def build_network(net, params, mode, net_name):
 
     with autotvm.apply_history_best(AUTOTVM_LOG):
         with tvm.transform.PassContext(opt_level=OPT_LEVEL.get()):
+        # with tvm.transform.PassContext(opt_level=OPT_LEVEL.get(), trace=print_ir):
             lib = relay.build(net, "cuda", params=params)
 
     return lib

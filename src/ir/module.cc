@@ -191,6 +191,7 @@ void WarnIfMalformed(const IRModule& mod, relay::Function func) {
 void IRModuleNode::Add(const GlobalVar& var, const BaseFunc& f, bool update) {
   BaseFunc checked_func = f;
   if (auto* ptr = f.as<relay::FunctionNode>()) {
+//    std::cerr << "Function : " << GetRef<relay::Function>(ptr) << std::endl;
     WarnIfMalformed(GetRef<IRModule>(this), GetRef<relay::Function>(ptr));
   }
 
