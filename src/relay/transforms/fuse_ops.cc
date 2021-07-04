@@ -1004,7 +1004,7 @@ namespace tvm {
           this->RunFuse(graph, post_dom_tree, phase);
         }
       } else {
-        //std::cerr << "Custom fusion pass" << std::endl;
+        std::cerr << "Custom fusion pass" << std::endl;
         this->RunFuseWithMap(graph, post_dom_tree);
       }
 
@@ -1366,9 +1366,9 @@ namespace tvm {
       bool is_custom_pass = false;
       // Warning(@Soo) - every fusion should be done by saved match log regardless of algorithms!
       // If you comment this line, we can try original fusion pass.
-//      if (fn_node->GetAttr<IntImm>(attr::kCustomFusionPass).defined()) is_custom_pass = true;
+      if (fn_node->GetAttr<IntImm>(attr::kCustomFusionPass).defined()) is_custom_pass = true;
       auto fused_expr = FuseMutator().Transform(expr, fuse_opt_level, max_fuse_depth, is_custom_pass);
-      std::cerr << "[Done] FuseOps" << std::endl;
+//      std::cerr << "[Done] FuseOps" << std::endl;
 
       auto vis_call = tvm::runtime::Registry::Get("relay.transform.optimizer.visualize_expr");
       (*vis_call)(fused_expr, "FuseOps_after");

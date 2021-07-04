@@ -6,13 +6,16 @@ import matplotlib.pyplot as plt
 
 set_plt_font_size()
 
-net_name = "resnet50"
+# net_name = "resnet50"
+# net_name = "resnext50_32x4d"
+net_name = "nasrnn"
 file_name = f"time_perf_{net_name}"
 df = pd.read_csv(f"{LOG_PATH}/{file_name}.log", index_col=0)
 print(df)
 
 fw, fh = 15, 4
-df.plot.bar(figsize=(fw, fh))
+# df.plot.bar(figsize=(fw, fh))
+df.plot(figsize=(fw, fh))
 
 x_label_invisible = False
 

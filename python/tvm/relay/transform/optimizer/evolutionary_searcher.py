@@ -191,9 +191,9 @@ class EvolutionarySearcher:
             mean_perf = self.visited[individual_hash]
         else:
             self.numDup += 1
-            # mean_perf, std_perf = self.measure_subprocess()
-            mean_perf, std_perf = measure_end_to_end_user_defined(self.mod["main"], self.params, self.shape_dict,
-                                                                  self.target_str)
+            mean_perf, std_perf = self.measure_subprocess()
+            # mean_perf, std_perf = measure_end_to_end_user_defined(self.mod["main"], self.params, self.shape_dict,
+            #                                                       self.target_str)
         # self._memo_state[individual_hash] = -mean_perf
 
         # Deallocate opt_match
@@ -404,7 +404,7 @@ class EvolutionarySearcher:
             self.save_time_perf_log(time_perf_dic, total_search_time, best_perf)
 
             # End the program if the time passes;
-            n_hours = 1
+            n_hours = 12
             if total_search_time > n_hours * 3600:
                 printe(f"It exceeds search time limit ({n_hours} hrs), so it stops.")
                 break
