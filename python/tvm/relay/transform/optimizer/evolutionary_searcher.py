@@ -154,7 +154,7 @@ class EvolutionarySearcher:
 
         return mean_perf, std_perf
 
-    #@lru_cache(maxsize=300)
+    @lru_cache(maxsize=300)
     def measure_with_lru_cache(self, individual_hash):
         individual = self.get_individual_from_hash(individual_hash)
         opt_match = self.op_state_to_match_translator.translate(individual)
