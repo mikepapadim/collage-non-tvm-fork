@@ -19,7 +19,7 @@ class ExprMatcher:
         self._optimized_match = {}
         self._dp_result = dp_result
         self._topo_order_to_op = []
-    
+
     def match(self, expr):
         self._memo = {}
         self._optimized_match = {}
@@ -28,7 +28,7 @@ class ExprMatcher:
         self.visit_expr(expr, dummy_annotation)
 
         return self._optimized_match, self._topo_order_to_op
-    
+
     # Visit Relay expressions in post-order
     def visit_expr(self, expr, annotation):
         node_type = "INVALID"
@@ -41,7 +41,7 @@ class ExprMatcher:
 
         if hash(expr) in self._dp_result:
             annotation = self._dp_result[hash(expr)]
-        
+
         # We assume that child class at least have methods for these
         if is_constant_node(expr):
             self.visit_expr_const(expr, annotation)
@@ -63,7 +63,7 @@ class ExprMatcher:
             node_type = "Tuple"
         else:
             raise Exception(f"Unexpected expression type, {type(expr)}")
-        
+
         # Add new group id and backend op id to match
         # is_leaf_node = is_constant_node(expr) or is_var_node(expr)
         # if not is_leaf_node:
@@ -91,10 +91,10 @@ class ExprMatcher:
 
     def visit_expr_const(self, expr, annotation):
         pass
-        
+
     def visit_expr_var(self, expr, annotation):
         pass
-    
+
     def visit_expr_tuple(self, expr, annotation):
         for arg in expr.fields:
             self.visit_expr(arg, annotation)
@@ -104,22 +104,22 @@ class ExprMatcher:
 
     def visit_expr_call(self, expr, annotation):
         op, args, attrs, type_args, span = expr.op, expr.args, expr.attrs, expr.type_args, expr.span
-        
+
         for arg in args:
             self.visit_expr(arg, annotation)
 
     def visit_expr_func(self, expr, annotation):
         params, body, ret_type, type_params = expr.params, expr.body, expr.ret_type, expr.type_params
         self.visit_expr(body, annotation)
-    
+
 class CompGraphOptimizer:
     def __init__(self, backendop_lib, target_backend=None):
         self._backendop_lib = backendop_lib
         self._target_backend = target_backend
-        
+
         # Attribute key to pass to N-to-1 lowering pass
         self._bop_attr_key = "backend-op"
-        
+
         # For printing matched backend ops in ResNet graph
         patterns = self._backendop_lib.get_all_patterns()
         self._pattern_to_name = {}
@@ -129,15 +129,18 @@ class CompGraphOptimizer:
             assert len(backend_ops) > 0
             name = backend_ops[0]._op_type.name()
             self._pattern_to_name[pat] = name
-            
+
         self.loc2match = None
         self._memo = None
-        
+
+        # @Sung: Add driver cost
+        self.C = 0.01
+
         # For Function inputs renaming (recreation)
         # self._local_memo = None
         # self._func_var_id = -1
         # self._has_call = 0
-        
+
     def optimize(self, comp_graph):
         # HACKY: Reset matched_expr
         comp_graph.reset()
@@ -155,7 +158,7 @@ class CompGraphOptimizer:
                 print(f"(topo_order, op_type) : {f._topological_order}, {f_expr.op}")
             else:
                 print(f"(topo_order, op_type) : {f._topological_order}, {type(f_expr)}, Non-call node")
-            
+
             # print(self._backendop_lib.get_all_patterns())
             for pat in self._backendop_lib.get_all_patterns():
                 # print(pat)
@@ -185,7 +188,8 @@ class CompGraphOptimizer:
                         # Flush matchings from second branch if there are more than one branches
                         if t_idx == 0:
                             new_match = self.loc2match[hash(f)]["match"] + [(pat_op, pat_cost, hash(f_expr))]
-                            new_cost = self.loc2match[hash(f)]["cost"] + pat_cost
+                            # @Sung: Add driver cost
+                            new_cost = self.loc2match[hash(f)]["cost"] + pat_cost + self.C
                             new_string = self.loc2match[hash(f)]['string'] + "-" + self._pattern_to_name[pat]
                             # print(f"Assign matched op : {pat_op}")
                         else:
@@ -222,10 +226,10 @@ class CompGraphOptimizer:
                             #     eprint("--" * 10)
                             if hash(new_loc) not in self.loc2match or self.loc2match[hash(new_loc)]["cost"] > new_cost:
                                 self.loc2match[hash(new_loc)] = {"match": new_match, "cost":new_cost, "string":new_string}
-           
+
     def get_optimized_match(self, comp_graph):
         assert self.loc2match is not None
-        
+
         # Get final match (expr, backend_op_name)
         result_idx = -1
         final_match = {}
@@ -244,7 +248,7 @@ class CompGraphOptimizer:
 """
 FrontierGraph and FrontierNode is to allow effective search over matched backend op assignments.
 We use DFS to explore all possible combinations of backend ops.
-Given the maximum width of graph, DFS is more memory-efficient than BFS. 
+Given the maximum width of graph, DFS is more memory-efficient than BFS.
 """
 class FrontierNode:
     def __init__(self, expr, backend_ops):
@@ -265,7 +269,7 @@ class FrontierGraph:
 
 """
 We have two separate passes:
-1) First pass is for generating backend op assignment tree by matching every possible backend op over graph.  
+1) First pass is for generating backend op assignment tree by matching every possible backend op over graph.
 We call this tree as FrontierGraph and it allows exhaustive search over all possible backend op assignments.
 2) Second pass is for evaluating all possible backend op assignments for a graph. Note that we only compile an
 entire graph rather than compiling multiple subgraphs to evaluate entire graph in DP.
@@ -409,10 +413,10 @@ class ExhaustiveSearcher:
         optimized_match, post_order_match_result = ExprMatcher(final_match).match(comp_graph.get_relay_expr())
 
         return optimized_match, post_order_match_result
-        
-        
 
-        
+
+
+
     # # pylint: disable=no-else-return
     # def visit(self, expr):
     #     """Apply the visitor to an expression."""
