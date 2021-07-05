@@ -215,19 +215,23 @@ def run_two_level_opt(relay_expr):
 
     # subgraph-level optimization for external compilers
     # Translate optimized_match into OpState class that can be used for evolutionary search
-    state_id_to_exprs_anno = MatchToOpStateTranslator().translate(relay_expr, optimized_match)
+    group_id_to_exprs_anno = MatchToOpGroupTranslator().translate(relay_expr, optimized_match)
 
     # Prepare OpStateToMatchTranslator
     # This translates Op State to optimized_match with the following two dictionaries
-    op_state_to_match_translator = OpStateToMatchTranslator(optimized_match, state_id_to_exprs_anno)
+    op_state_to_match_translator = OpStateToMatchTranslator(optimized_match, group_id_to_exprs_anno)
 
     # Run evolutionary search
-    n_ops = len(state_id_to_exprs_anno.keys())
-    print(f"# of matched operators after first level : {n_ops}")
+    n_ops_after_first_level = len(group_id_to_exprs_anno.keys())
+    print(f"# of matched operators from first level : {n_ops_after_first_level}")
+
+    # Unnecessary ops include external compiler ops chosen from first level or
+    # Ops that shouldn't be assigned to external compiler such as Tuple or TupleGetItem
+    n_ops = len(op_state_to_match_translator.state_id_to_group_id)
+    print(f"# of matched operators from first level after excluding unnecessary ops: {n_ops}")
 
     # On the second level, Consider only ops that are not assigned to TensorRT
     # Extract ops that are not assigned to TensorRT
-
 
     # Warning(@soo): Network name is hardcoded for now. We can fix it later
     net_name = func_expr.attrs["NetworkName"]

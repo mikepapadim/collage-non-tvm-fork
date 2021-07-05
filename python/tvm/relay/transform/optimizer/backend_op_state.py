@@ -5,6 +5,8 @@ from tvm.ir import Op
 import copy
 from enum import IntEnum
 
+EXT_COMPILERS = ["tensorrt"]
+
 class BackendStateType(IntEnum):
     # This is for measurement
     FIRST_LEVEL_BEST_OP = 0
@@ -16,12 +18,12 @@ class BackendStateType(IntEnum):
 
 """
 This class translates optimized_match (Key: expression / Value: annotation (group_id + op_name))
-into state_id_to_exprs_anno (Key: state id / Value: a list of pairs of expression and its annotation)
+into group_id_to_exprs_anno (Key: state id / Value: a list of pairs of expression and its annotation)
 
-state_id_to_exprs_anno will be used for building state (search space) for evolutionary search 
+group_id_to_exprs_anno will be used for building state (search space) for evolutionary search 
 """
 
-class MatchToOpStateTranslator(ExprVisitor):
+class MatchToOpGroupTranslator(ExprVisitor):
     def __init__(self):
         super().__init__()
 
@@ -30,10 +32,10 @@ class MatchToOpStateTranslator(ExprVisitor):
 
         self.memo_map = {}
         self._optimized_match = optimized_match
-        self.state_id_to_exprs_anno = defaultdict(list)
+        self.group_id_to_exprs_anno = defaultdict(list)
         self.visit(expr)
 
-        return self.state_id_to_exprs_anno
+        return self.group_id_to_exprs_anno
 
     # Visit Relay expressions in post-order
     def visit(self, expr):
@@ -50,7 +52,7 @@ class MatchToOpStateTranslator(ExprVisitor):
                 # backend_op_name = get_backendop_name_from_backend_op_annotation(anno)
 
                 # Group id is same as state id
-                self.state_id_to_exprs_anno[group_id].append((expr, anno))
+                self.group_id_to_exprs_anno[group_id].append((expr, anno))
 
         super().visit(expr)
 
@@ -62,9 +64,54 @@ into optimized_match (Key: expression / Value: annotation (group_id + op_name))
 """
 
 class OpStateToMatchTranslator():
-    def __init__(self, optimized_match, state_id_to_exprs_anno):
+    def __init__(self, optimized_match, group_id_to_exprs_anno):
         self.optimized_match = optimized_match
-        self.state_id_to_exprs_anno = state_id_to_exprs_anno
+        self.group_id_to_exprs_anno = group_id_to_exprs_anno
+        self.state_id_to_group_id = self.get_valid_op_state_by_filtering()
+
+    def is_valid_op_state(self, expr_anno_pairs):
+        assert len(expr_anno_pairs) > 0
+
+        # To check if ops in each group have same backend
+        expr, anno = expr_anno_pairs[0]
+        first_backend = get_backend_from_backend_op_annotation(anno)
+        is_valid_op_state = True
+
+        for expr, anno in expr_anno_pairs:
+            # To check if ops in each group have same backend
+            backend_name = get_backend_from_backend_op_annotation(anno)
+            assert backend_name == first_backend
+
+            # If one of ops is tuple or tuple_get_item, then prevent it from being ext compiler ops
+            if is_tuple_node(expr) or is_tuplegetitem_node(expr):
+                is_valid_op_state = False
+                break
+            # print(type(expr), anno)
+
+        # If this is TensorRT op chosen from the first op optimizing pass,
+        # Then we don't need to consider it on the second subgraph optimizing pass.
+        if first_backend in EXT_COMPILERS:
+            is_valid_op_state = False
+
+        # print(is_valid_op_state)
+        # print("-"*30)
+        return is_valid_op_state
+
+
+    # Valid op states include ops that are not assigned to TensorRT
+    # and that are not Tuple or TupleGetItem (These shouldn't be TensorRT ops)
+    def get_valid_op_state_by_filtering(self):
+        state_id_to_group_id = {}
+        state_id = 0
+        group_ids = self.group_id_to_exprs_anno.keys()
+        for group_id in group_ids:
+            expr_anno_pairs = self.group_id_to_exprs_anno[group_id]
+            if self.is_valid_op_state(expr_anno_pairs):
+                state_id_to_group_id[state_id] = group_id
+                state_id += 1
+        # print(state_id_to_group_id)
+        # sys.exit(0)
+        return state_id_to_group_id
 
     def gen_trt_annotation(self, anno):
         group_id = int(get_group_id_from_backend_op_annotation(anno))
@@ -74,9 +121,10 @@ class OpStateToMatchTranslator():
         return f"{group_id}-{backend_name}_{op_name}"
 
     # It only changes op to TensorRT op now
-    def update_opt_match(self, gid, new_opt_match):
+    def update_opt_match(self, state_id, new_opt_match):
         # print(new_opt_match)
-        for expr, anno in self.state_id_to_exprs_anno[gid]:
+        gid = self.state_id_to_group_id[state_id]
+        for expr, anno in self.group_id_to_exprs_anno[gid]:
             assert expr in new_opt_match
             new_opt_match[expr] = self.gen_trt_annotation(anno)
             # print(f"anno / new anno: {anno} / {new_opt_match[expr]}")
@@ -90,9 +138,13 @@ class OpStateToMatchTranslator():
         # backend_type represents 0 or 1
         # 0 - backend op selected from first level
         # 1 - tensorrt op
-        for gid, backend_type in enumerate(op_state):
+        for state_id, backend_type in enumerate(op_state):
+            # print(backend_type)
             if backend_type == BackendStateType.TENSORRT_OP:
-                self.update_opt_match(gid, new_opt_match)
+                # print("tensorrt")
+                self.update_opt_match(state_id, new_opt_match)
+
+        # sys.exit(0)
 
         return new_opt_match
 #
