@@ -156,6 +156,7 @@ class EvolutionarySearcher:
 
     @lru_cache(maxsize=1000)
     def measure_with_lru_cache(self, individual_hash):
+        measure_start_time = time.time()
         individual = self.get_individual_from_hash(individual_hash)
         opt_match = self.op_state_to_match_translator.translate(individual)
         #printe(f"opt_match: {opt_match}")
@@ -198,7 +199,7 @@ class EvolutionarySearcher:
 
         # Deallocate opt_match
         del opt_match
-
+        printe(f"Measurement time : {time.time()-measure_start_time:.2f}")
         return -mean_perf,
         # return sum(individual),
 
@@ -404,7 +405,7 @@ class EvolutionarySearcher:
             self.save_time_perf_log(time_perf_dic, total_search_time, best_perf)
 
             # End the program if the time passes;
-            n_hours = 12
+            n_hours = 6
             if total_search_time > n_hours * 3600:
                 printe(f"It exceeds search time limit ({n_hours} hrs), so it stops.")
                 break
@@ -412,6 +413,7 @@ class EvolutionarySearcher:
         printe("-- End of (successful) evolution --")
 
         printe(f"Final best individual is {best_ind}")
+        # Note that this search time includes time elapsed in the subprocess
         printe(f"Total search time: {total_search_time:.2f}s")
         # printe(self.op_state_to_match_translator.optimized_match)
 
