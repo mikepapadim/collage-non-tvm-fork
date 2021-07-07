@@ -266,7 +266,7 @@ def run_two_level_opt(relay_expr):
     # cx_prob = 0.8, mut_prob = 0.5, resnet50: 2.512
 
     ev_searcher = EvolutionarySearcher(op_state_to_match_translator, relay_expr, net_name, n_ops=n_ops,
-                                       # pop_size=10, max_iter=100) # For debugging
+                                       # pop_size=10, max_iter=5) # For debugging
                                        pop_size=100, max_iter=10000) # For experiment
     second_opt_match = ev_searcher.search(rnd_seed=64)
     # OpMatchLogger().save(relay_expr, second_opt_match, log_path=USER_DEFINED_MATCH_LOG)
