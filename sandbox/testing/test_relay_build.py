@@ -101,9 +101,9 @@ if __name__ == "__main__":
     # mod, params = get_network_from_relay(args.network, 1)
     # printe(repr(mod["main"]))
     # build_network_tensorrt(mod, params)
-    lib = build_network(mod["main"], params, CustomFusionPass.TWO_LEVEL_OPT, args.network)
+    # lib = build_network(mod["main"], params, CustomFusionPass.TWO_LEVEL_OPT, args.network)
     # lib = build_network(mod["main"], params, CustomFusionPass.DP, args.network)
-    # lib = build_network(mod["main"], params, CustomFusionPass.USER_DEFINED_FUSION, args.network)
+    lib = build_network(mod["main"], params, CustomFusionPass.USER_DEFINED_FUSION, args.network)
     print(f"We successfully built the {args.network}")
 
     # Verify if the network output is same after our optimization

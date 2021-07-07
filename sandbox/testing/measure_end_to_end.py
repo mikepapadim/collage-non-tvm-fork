@@ -171,7 +171,7 @@ if __name__ == "__main__":
 
     # mean_perf, std_perf = measure_end_to_end_perf_tensorrt(mod, params, 'cuda', shape_dict, False)
     # print(f"[TensorRT] Performance of {args.network} (mean, std) = ({mean_perf:.4f}+-{std_perf:.4f})")
-    #
+
     # mean_perf, std_perf = measure_end_to_end_perf_autotvm(mod["main"], params, 'cuda -libs=cudnn', shape_dict, False)
     # print(f"[AutoTVM+CuDNN] Performance of {args.network} (mean, std) = ({mean_perf:.4f}+-{std_perf:.4f})")
     #

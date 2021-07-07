@@ -78,8 +78,8 @@ class OpStateToMatchTranslator():
         transpose_pat = is_op("transpose")(wildcard())
         batch_matmul_pat = is_op("nn.batch_matmul")(wildcard(),wildcard())
 
-        # is_not_valid |= transpose_pat.match(expr)
-        # is_not_valid |= batch_matmul_pat.match(expr)
+        is_not_valid |= transpose_pat.match(expr)
+        is_not_valid |= batch_matmul_pat.match(expr)
 
         return is_not_valid
 
@@ -99,7 +99,7 @@ class OpStateToMatchTranslator():
             # If one of ops is tuple or tuple_get_item, then prevent it from being ext compiler ops
             if self.is_valid_ext_compiler_op(expr):
                 is_valid_op_state = False
-                print(type(expr), anno)
+                # print(type(expr), anno)
                 break
 
         # If this is TensorRT op chosen from the first op optimizing pass,

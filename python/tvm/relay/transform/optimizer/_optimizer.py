@@ -246,6 +246,10 @@ def run_two_level_opt(relay_expr):
     first_layer_best_match_log_path = f"{BEST_MATCH_LOG}_{net_name}_op_level.log"
     OpMatchLogger().save(relay_expr, optimized_match, log_path=first_layer_best_match_log_path)
 
+    # Save it for user-defined fusion pass to measure end-to-end perf
+    match_path = f"{LOG_PATH}/user_defined_match_{net_name}.log"
+    OpMatchLogger().save(relay_expr, optimized_match, log_path=match_path)
+
     # n_ops for each network (it may vary depending on trials)
     # Search space size: 2^n_ops
     # ResNet: 169 -> 65 -> 19
@@ -264,11 +268,15 @@ def run_two_level_opt(relay_expr):
     # Note that some of individuals may not be measured in each generation if they are measured anytime earlier
 
     # cx_prob = 0.8, mut_prob = 0.5, resnet50: 2.512
-
-    ev_searcher = EvolutionarySearcher(op_state_to_match_translator, relay_expr, net_name, n_ops=n_ops,
-                                       pop_size=10, max_iter=5) # For debugging
-                                       # pop_size=50, max_iter=100000) # For experiment
-    second_opt_match = ev_searcher.search(rnd_seed=64)
+    if n_ops > 0:
+        ev_searcher = EvolutionarySearcher(op_state_to_match_translator, relay_expr, net_name, n_ops=n_ops,
+                                           pop_size=10, max_iter=5) # For debugging
+                                           # pop_size=50, max_iter=100000) # For experiment
+        second_opt_match = ev_searcher.search(rnd_seed=64)
+    else:
+        second_opt_match = optimized_match
+        printe("No need for subgraph optimization because either 1) op optimization pass only chose Ext compiler ops"
+               + " or 2) External compiler can't support ops that are not assigned to external compilers")
     # OpMatchLogger().save(relay_expr, second_opt_match, log_path=USER_DEFINED_MATCH_LOG)
     #second_opt_match = ev_searcher.search_test(rnd_seed=64)
 
