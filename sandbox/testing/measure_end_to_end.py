@@ -32,11 +32,13 @@ def measure_end_to_end_perf_tensorrt(mod, params, target_str, shape_dict, is_our
 
     return measure(ftimer, is_net=False)
 
-def measure_end_to_end_perf_autotvm(net, params, target_str, shape_dict, is_ours):
+def measure_end_to_end_perf_autotvm(net, params, target_str, shape_dict, is_ours, net_name):
     assert is_function_node(net)
     if is_ours:
-        net = net.with_attr("CustomFusionPass", CustomFusionPass.DP)
-        # net = net.with_attr("CustomFusionPass", CustomFusionPass.USER_DEFINED_FUSION)
+        # net = net.with_attr("CustomFusionPass", CustomFusionPass.DP)
+        net = net.with_attr("CustomFusionPass", CustomFusionPass.USER_DEFINED_FUSION)
+        net = net.with_attr("NetworkName", net_name)
+
 
     with autotvm.apply_history_best(AUTOTVM_LOG):
         with tvm.transform.PassContext(opt_level=OPT_LEVEL.get()):
@@ -164,7 +166,7 @@ if __name__ == "__main__":
 
     # Warning(@soo): Note that the opt_level of AutoTVM and AutoSch is 2 to make an apple-to-apple comparison
 
-    mean_perf, std_perf = measure_end_to_end_perf_autotvm(mod["main"], params, 'cuda', shape_dict, True)
+    mean_perf, std_perf = measure_end_to_end_perf_autotvm(mod["main"], params, 'cuda', shape_dict, True, args.network)
     print(f"[Ours] Performance of {args.network} (mean, std) = ({mean_perf:.4f}+-{std_perf:.4f})")
 
     # mean_perf, std_perf = measure_end_to_end_perf_tensorrt(mod, params, 'cuda', shape_dict, False)
