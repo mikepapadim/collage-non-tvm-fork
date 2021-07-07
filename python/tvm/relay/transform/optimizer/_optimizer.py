@@ -130,8 +130,10 @@ def get_temp_opt_match(relay_expr):
 @tvm._ffi.register_func("relay.transform.optimizer.get_user_fusion")
 def get_user_fusion(relay_expr):
     printe("User-defined fusion")
+    net_name = relay_expr.attrs["NetworkName"]
     relay_expr = get_function_body(relay_expr)
-    opt_match = OpMatchReader().read(relay_expr)
+    match_path = f"{LOG_PATH}/user_defined_match_{net_name}.log"
+    opt_match = OpMatchReader().read(relay_expr, match_path)
 
     # # printe(repr(relay_expr))
     # if relay_expr.backend == 'default':

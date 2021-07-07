@@ -5,6 +5,7 @@ from tvm.relay.transform.utility.debug_helper import printe
 from tvm.relay.transform.backend_operator.utils import *
 
 from graphviz import Digraph
+import os
 
 def _traverse_expr(node, node_dict):
     if node in node_dict:
@@ -102,5 +103,6 @@ def visualize_network(expr, file_name):
         else:
             raise RuntimeError(f'Unknown node type. node_idx: {node_idx}, node: {type(node)}')
 
+    # this_code_path = os.path.dirname(os.path.abspath(__file__))
     dot.render(f'analysis/results/net_figs/{file_name}.gv')
 

@@ -412,6 +412,7 @@ void PostOrderVisit(const Expr& node, std::function<void(const Expr&)> fvisit);
 
 void MutateBackend(Expr op, String backend);
 String GetBackend(Expr op);
+void PrintOpType(ObjectRef op);
 
 /*!
  * \brief A function to iteratively traverse dataflow regions of a graph

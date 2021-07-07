@@ -51,10 +51,17 @@ namespace relay {
 namespace partitioning {
 
 int NEW_BACKEND_GROUP_ID = 10000000;
+int NEW_BACKEND_GROUP_ID_EXT_COMPILER = 20000000;
 
 template <typename T>
 void UpdateBackendWithNewGroup(Expr op) {
   std::string new_backend = std::to_string(NEW_BACKEND_GROUP_ID++) + "-tvmgpu-autotvm";
+  op.as_non_const<T>()->backend = new_backend;
+}
+
+template <typename T>
+void UpdateBackendWithNewGroupForExtCompiler(Expr op) {
+  std::string new_backend = std::to_string(NEW_BACKEND_GROUP_ID_EXT_COMPILER++) + "-tensorrt";
   op.as_non_const<T>()->backend = new_backend;
 }
 
@@ -368,7 +375,13 @@ class Partitioner : public MixedModeMutator {
 //    std::cerr << "Func body: " << global_region_func->body << std::endl;
 //    std::cerr << "Expression  : " << fields[0] << std::endl;
 //    std::cerr << "Backend  : " << region_backend << std::endl;
-    call.as_non_const<CallNode>()->backend = region_backend;
+    std::string region_backend_str = region_backend;
+    if (!region_backend_str.compare("default")) {
+      UpdateBackendWithNewGroupForExtCompiler<CallNode>(call);
+    } else {
+      call.as_non_const<CallNode>()->backend = region_backend;
+    }
+
 
     region_func_meta_[region].func_call = call;
 

@@ -105,7 +105,7 @@ namespace tvm {
         std::string group_id_str = pair_str.substr(0, delim_pos);
 
         // Initialization
-//        std::cerr << "group id str: " << group_id_str << std::endl;
+//        std::cerr << "pair_str: " << pair_str << std::endl;
         group_id = std::stoi(group_id_str);
         backend_op_name = pair_str.substr(delim_pos+1);
 //        debug_print();
@@ -866,6 +866,7 @@ namespace tvm {
 //          const tvm::Object* cur_key = graph_node->ref;
 //          assert (graph.exprnode_to_backend_op.find(cur_key) != graph.exprnode_to_backend_op.end());
 //          std::cerr << "Expr: " << GetRef<ObjectRef>(graph_node->ref) << std::endl;
+//          PrintOpType(GetRef<ObjectRef>(graph_node->ref));
 //          std::cerr << "backend: " << graph_node->backend << std::endl;
           GroupIdOpNamePair pair_info = GroupIdOpNamePair(graph_node->backend);
           group_node->backend_op_name = pair_info.backend_op_name;
@@ -1370,8 +1371,8 @@ namespace tvm {
       auto fused_expr = FuseMutator().Transform(expr, fuse_opt_level, max_fuse_depth, is_custom_pass);
 //      std::cerr << "[Done] FuseOps" << std::endl;
 
-      auto vis_call = tvm::runtime::Registry::Get("relay.transform.optimizer.visualize_expr");
-      (*vis_call)(fused_expr, "FuseOps_after");
+//      auto vis_call = tvm::runtime::Registry::Get("relay.transform.optimizer.visualize_expr");
+//      (*vis_call)(fused_expr, "FuseOps_after");
 
       return fused_expr;
     }

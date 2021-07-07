@@ -534,6 +534,25 @@ String GetBackend(Expr op) {
   return backend;
 }
 
+// Warning(@Soo): Is it dangerous to return String instead of std::string?
+void PrintOpType(ObjectRef op) {
+  std::string op_str = "unexpected_type";
+  if (op.as<CallNode>()) {
+    op_str = "CallNode";
+  } else if (op.as<VarNode>()) {
+    op_str = "VarNode";
+  } else if (op.as<ConstantNode>()) {
+    op_str = "ConstantNode";
+  } else if (op.as<TupleNode>()) {
+    op_str = "TupleNode";
+  } else if (op.as<TupleGetItemNode>()) {
+    op_str = "TupleGetItem";
+  } else if (op.as<FunctionNode>()) {
+    op_str = "FunctionNode";
+  }
+  std::cerr << "Op type : " << op_str << std::endl;
+}
+
 TVM_REGISTER_GLOBAL("relay.analysis.update_backend").set_body_typed([](Expr expr, String backend) {
   MutateBackend(expr, backend);
 });

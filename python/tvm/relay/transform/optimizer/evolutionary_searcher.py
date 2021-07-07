@@ -163,7 +163,8 @@ class EvolutionarySearcher:
 
         # Dump this opt_match in to files so that build pipeline can read it
         # USER_DEFINED_MATCH_LOG
-        self.op_match_logger.save(self.expr, opt_match)
+        match_path = f"{LOG_PATH}/user_defined_match_{self.net_name}.log"
+        self.op_match_logger.save(self.expr, opt_match, log_path=match_path)
         #printe(f"[Evaluation] Match log saved")
         # Measure entire computation graph with opt_match
 
@@ -194,12 +195,12 @@ class EvolutionarySearcher:
             self.numDup += 1
             mean_perf, std_perf = self.measure_subprocess()
             # mean_perf, std_perf = measure_end_to_end_user_defined(self.mod["main"], self.params, self.shape_dict,
-            #                                                       self.target_str)
+            #                                                       self.target_str, self.net_name)
         # self._memo_state[individual_hash] = -mean_perf
 
         # Deallocate opt_match
         del opt_match
-        printe(f"Measurement time : {time.time()-measure_start_time:.2f}")
+        printe(f"Measurement time : {time.time()-measure_start_time:.2f}s")
         return -mean_perf,
         # return sum(individual),
 

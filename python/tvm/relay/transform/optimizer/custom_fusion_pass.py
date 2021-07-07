@@ -16,11 +16,13 @@ class CustomFusionPass(IntEnum):
     def has_value(cls, value):
         return value in cls._value2member_map_
 
-def measure_end_to_end_user_defined(net, params, shape_dict, target_str):
+def measure_end_to_end_user_defined(net, params, shape_dict, target_str, net_name):
     assert is_function_node(net)
 
     # print(f"[measure_end_to_end_user_defined] User-defined fusion (ID: {CustomFusionPass.USER_DEFINED_FUSION})")
     net = net.with_attr("CustomFusionPass", CustomFusionPass.USER_DEFINED_FUSION)
+    net = net.with_attr("NetworkName", net_name)
+
     # printe(f"End-To-End measure")
     # printe(f"OPT LEVEL : {OPT_LEVEL.get()}")
     with autotvm.apply_history_best(AUTOTVM_LOG):
