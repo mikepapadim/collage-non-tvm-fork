@@ -13,6 +13,9 @@ def visualize_expr(expr, file_name):
 def print_ir(mod, info, is_before):
     """Print the name of the pass, the IR, only before passes execute."""
     printe(f"Pass: {info.name}")
+    if info.name in ["ToANormalForm", "InferType"]:
+        return
+
     # if info.name == "AnnotateTargetFunc" or info.name == "MergeCompilerRegions" or info.name == "PartitionGraph":
     if is_before:
         printe("Running pass: {}", info.name)

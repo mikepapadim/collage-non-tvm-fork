@@ -1,6 +1,7 @@
 from tvm.relay.expr_functor import ExprVisitor
 from collections import defaultdict
 from ..backend_operator.utils import *
+from ..backend_operator.op_type import *
 from tvm.ir import Op
 import copy
 from enum import IntEnum
@@ -69,6 +70,19 @@ class OpStateToMatchTranslator():
         self.group_id_to_exprs_anno = group_id_to_exprs_anno
         self.state_id_to_group_id = self.get_valid_op_state_by_filtering()
 
+    def is_valid_ext_compiler_op(self, expr):
+        is_not_valid = False
+        is_not_valid = is_tuple_node(expr) or is_tuplegetitem_node(expr)
+
+        # Patterns that TensorRT can't afford
+        transpose_pat = is_op("transpose")(wildcard())
+        batch_matmul_pat = is_op("nn.batch_matmul")(wildcard(),wildcard())
+
+        # is_not_valid |= transpose_pat.match(expr)
+        # is_not_valid |= batch_matmul_pat.match(expr)
+
+        return is_not_valid
+
     def is_valid_op_state(self, expr_anno_pairs):
         assert len(expr_anno_pairs) > 0
 
@@ -83,10 +97,10 @@ class OpStateToMatchTranslator():
             assert backend_name == first_backend
 
             # If one of ops is tuple or tuple_get_item, then prevent it from being ext compiler ops
-            if is_tuple_node(expr) or is_tuplegetitem_node(expr):
+            if self.is_valid_ext_compiler_op(expr):
                 is_valid_op_state = False
+                print(type(expr), anno)
                 break
-            # print(type(expr), anno)
 
         # If this is TensorRT op chosen from the first op optimizing pass,
         # Then we don't need to consider it on the second subgraph optimizing pass.

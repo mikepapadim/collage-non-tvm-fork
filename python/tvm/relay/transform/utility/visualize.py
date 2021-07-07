@@ -45,7 +45,11 @@ def visualize_network(expr, file_name):
     relay.analysis.post_order_visit(expr, lambda node: _traverse_expr(node, node_dict))
 
     for node, node_idx in node_dict.items():
-        node_idx_backend_str = f"[{node_idx}, {node.backend}]"
+        if not isinstance(node, relay.Let):
+            node_idx_backend_str = f"[{node_idx}, {node.backend}]"
+        else:
+            node_idx_backend_str = f"[{node_idx}, NO_BACKEND]"
+
         node_color = get_node_color(node)
 
         if isinstance(node, relay.Function):
@@ -57,6 +61,8 @@ def visualize_network(expr, file_name):
             if isinstance(node.type_annotation, tvm.ir.type.TupleType):
                 type_info = node.type_annotation.fields
                 tensor_info = f'Tensor[TupleType{tuple(type_info)}]'
+            elif not hasattr(node.type_annotation, 'shape'):
+                tensor_info = f'NoType'
             else:
                 type_info = node.type_annotation.shape
                 tensor_info = f'Tensor[{tuple(type_info)}, {node.type_annotation.dtype}]'
@@ -86,6 +92,8 @@ def visualize_network(expr, file_name):
             else:
                 if isinstance(node.op, relay.expr.GlobalVar):
                     dot.node(str(node_idx), f'Call{node_idx_backend_str}(GlobalVar={node.op.name_hint})', shape='ellipse', style='filled', color=node_color)
+                elif isinstance(node.op, relay.Var):
+                    dot.node(str(node_idx), f'Call {node_idx_backend_str}(Var={node.op.name_hint})', shape='ellipse', style='filled', color=node_color)
                 else:
                     dot.node(str(node_idx), f'Call {node_idx_backend_str}(op={node.op.name})', shape='ellipse', style='filled', color=node_color)
 
