@@ -9,6 +9,7 @@ set_plt_font_size()
 # net_name = "resnet50"
 net_name = "resnext50_32x4d"
 # net_name = "nasrnn"
+# net_name = "nasneta"
 file_name = f"time_perf_{net_name}"
 df = pd.read_csv(f"{LOG_PATH}/{file_name}.log", index_col=0)
 print(df)

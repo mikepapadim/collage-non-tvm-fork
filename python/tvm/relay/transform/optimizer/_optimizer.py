@@ -133,6 +133,7 @@ def get_user_fusion(relay_expr):
     net_name = relay_expr.attrs["NetworkName"]
     relay_expr = get_function_body(relay_expr)
     match_path = f"{LOG_PATH}/user_defined_match_{net_name}.log"
+    # match_path = f"{LOG_PATH}/best_match_{net_name}.log"
     opt_match = OpMatchReader().read(relay_expr, match_path)
 
     # # printe(repr(relay_expr))
