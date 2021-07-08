@@ -1,5 +1,6 @@
 from enum import IntEnum
 from ..backend_operator.target import *
+from ..optimizer.optimizer_utils import *
 
 #import gc
 
@@ -24,9 +25,18 @@ def measure_end_to_end_user_defined(net, params, shape_dict, target_str, net_nam
     net = net.with_attr("NetworkName", net_name)
 
     # printe(f"End-To-End measure")
-    # printe(f"OPT LEVEL : {OPT_LEVEL.get()}")
+    printe(f"OPT LEVEL : {OPT_LEVEL.get()}")
+
+    # Warning(@Soo): OPT_LEVEL.get() is 3, not 2 even for NasNet-A
+    # If you call this function within subprocess.
+    # Thus, you should make sure this is 2 here again.
+    opt_level = OPT_LEVEL.get()
+    if net_name == 'nasneta':
+        opt_level = 2
+
     with autotvm.apply_history_best(AUTOTVM_LOG):
-        with tvm.transform.PassContext(opt_level=OPT_LEVEL.get()):
+        with tvm.transform.PassContext(opt_level=opt_level):
+        # with tvm.transform.PassContext(opt_level=OPT_LEVEL.get(), trace=print_ir):
             lib = relay.build(net, target_str, params=params)
 
         #print(f"[measure_end_to_end_user_defined] We successfully built the network")

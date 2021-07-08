@@ -145,8 +145,11 @@ class EvolutionarySearcher:
         from subprocess import Popen, PIPE, STDOUT, DEVNULL
         cmd = ['python3',  'testing/tmp_measure_network.py', self.net_name, self.target_str]
         p = Popen(cmd, stdout=DEVNULL, stderr=PIPE)
+        # p = Popen(cmd)
         p.wait()
         out, err = p.communicate()
+        # printe("message from subprocess")
+        # printe(err)
         res = err.decode("utf-8").partition("##result:")
         assert(len(res)==3)
         numbers = res[2].split()
@@ -193,9 +196,9 @@ class EvolutionarySearcher:
             mean_perf = self.visited[individual_hash]
         else:
             self.numDup += 1
-            # mean_perf, std_perf = self.measure_subprocess()
-            mean_perf, std_perf = measure_end_to_end_user_defined(self.mod["main"], self.params, self.shape_dict,
-                                                                  self.target_str, self.net_name)
+            # mean_perf, std_perf = measure_end_to_end_user_defined(self.mod["main"], self.params, self.shape_dict,
+            #                                                       self.target_str, self.net_name)
+            mean_perf, std_perf = self.measure_subprocess()
         # self._memo_state[individual_hash] = -mean_perf
 
         # Deallocate opt_match

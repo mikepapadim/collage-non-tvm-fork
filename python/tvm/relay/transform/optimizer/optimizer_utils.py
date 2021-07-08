@@ -25,8 +25,8 @@ def print_ir(mod, info, is_before):
     else:
         printe("Done pass: {}", info.name)
         # If this is FuseOps, the module doesn't have "main" somehow.
-        if info.name != "FuseOps":
-            visualize_network(mod["main"], info.name + "_after")
+        # if info.name != "FuseOps":
+        visualize_network(mod["main"], info.name + "_after")
 
 
 def is_data_var_node(expr):

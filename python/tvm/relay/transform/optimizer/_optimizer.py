@@ -270,8 +270,8 @@ def run_two_level_opt(relay_expr):
     # cx_prob = 0.8, mut_prob = 0.5, resnet50: 2.512
     if n_ops > 0:
         ev_searcher = EvolutionarySearcher(op_state_to_match_translator, relay_expr, net_name, n_ops=n_ops,
-                                           pop_size=10, max_iter=5) # For debugging
-                                           # pop_size=50, max_iter=100000) # For experiment
+                                           # pop_size=10, max_iter=5) # For debugging
+                                           pop_size=50, max_iter=100000) # For experiment
         second_opt_match = ev_searcher.search(rnd_seed=64)
     else:
         second_opt_match = optimized_match
