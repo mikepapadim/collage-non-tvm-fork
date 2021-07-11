@@ -207,6 +207,7 @@ def run_two_level_opt(relay_expr):
     # It is a function if you get it from last pass of Relay build
     print("[Python side] Run two-level optimization")
 
+    visualize_network(relay_expr, "o3_bert")
     # op-level optimization: DP with all backends but external compilers, e.g., TensorRT
     func_expr = relay_expr
     optimized_match, relay_expr, backendop_lib, n_relay_nodes = run_op_level_opt(relay_expr)
@@ -271,8 +272,8 @@ def run_two_level_opt(relay_expr):
     # cx_prob = 0.8, mut_prob = 0.5, resnet50: 2.512
     if n_ops > 0:
         ev_searcher = EvolutionarySearcher(op_state_to_match_translator, relay_expr, net_name, n_ops=n_ops,
-                                           # pop_size=10, max_iter=5) # For debugging
-                                           pop_size=50, max_iter=100000) # For experiment
+                                           pop_size=10, max_iter=5) # For debugging
+                                           # pop_size=50, max_iter=100000) # For experiment
         second_opt_match = ev_searcher.search(rnd_seed=64)
     else:
         second_opt_match = optimized_match

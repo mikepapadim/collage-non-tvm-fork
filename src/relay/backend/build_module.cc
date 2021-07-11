@@ -312,7 +312,7 @@ class RelayBuildModule : public runtime::ModuleNode {
     // Alter layout transformation is only applied to homogeneous execution yet.
     if (targets.size() == 1) {
       pass_seqs.push_back(transform::InferType());
-//      pass_seqs.push_back(transform::AlterOpLayout());
+      pass_seqs.push_back(transform::AlterOpLayout());
     }
 
     // Fast math optimizations.
