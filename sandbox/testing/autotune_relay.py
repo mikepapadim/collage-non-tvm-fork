@@ -355,9 +355,9 @@ if __name__ == "__main__":
         "log_filename": args.log_file,
         "network": args.network,
         "tuner": "xgb",
-        "n_trial": 10,  # Debug: Note that if this is too small, AutoTVM can't find valid schedules.
+        # "n_trial": 10,  # Debug: Note that if this is too small, AutoTVM can't find valid schedules.
         # "n_trial": 2000, # This is for AutoTVM. AutoScheduler dynamically adjusts before autotuning based on n_tasks
-        # "n_trial": 4000,  # This is for AutoTVM. AutoScheduler dynamically adjusts before autotuning based on n_tasks
+        "n_trial": 4000,  # This is for AutoTVM. AutoScheduler dynamically adjusts before autotuning based on n_tasks
         "early_stopping": 600, # This only applies to AutoTVM now
 
         #"measure_option": autotvm.measure_option(
