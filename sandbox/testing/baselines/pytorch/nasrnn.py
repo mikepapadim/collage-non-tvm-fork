@@ -26,7 +26,9 @@ from torch.nn.parameter import Parameter
 
 torch.backends.cudnn.benchmark = True
 
+# NasRNN always have some errors during autotuning operators with AutoTVM
 # HIDDEN_SIZE = 512
+# HIDDEN_SIZE = 1024
 # HIDDEN_SIZE = 2048
 HIDDEN_SIZE = 2560
 

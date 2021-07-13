@@ -149,7 +149,7 @@ def tune_autotvm_tasks(
 
         # do tuning
         tsk_trial = min(n_trial, len(tsk.config_space))
-        print(f"# of trials: {tsk_trial} ({n_trial} vs. {len(tsk.config_space)})")
+        print(f"Task name: {tsk.name} / # of trials: {tsk_trial} ({n_trial} vs. {len(tsk.config_space)})")
         tuner_obj.tune(
             n_trial=tsk_trial,
             early_stopping=early_stopping,

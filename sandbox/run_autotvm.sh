@@ -12,7 +12,7 @@
 # CUDA_VISIBLE_DEVICES=0 --> RTX3070
 # CUDA_VISIBLE_DEVICES=1 --> RTX2070
 CUDA_VISIBLE_DEVICES=1 python3 testing/autotune_relay.py -tu autotvm -t cuda -th llvm -dt float32 -n nasrnn -l autotvm_ops_new.json -bs 1
-CUDA_VISIBLE_DEVICES=1 python3 testing/autotune_relay.py -tu autotvm -t cuda -th llvm -dt float32 -n bert -l autotvm_ops_new.json -bs 1
+#CUDA_VISIBLE_DEVICES=1 python3 testing/autotune_relay.py -tu autotvm -t cuda -th llvm -dt float32 -n bert -l autotvm_ops_new.json -bs 1
 #CUDA_VISIBLE_DEVICES=1 python3 testing/autotune_relay.py -tu autotvm -t cuda -th llvm -dt float32 -n resnet50 -l autotvm_ops_new.json -bs 1
 #CUDA_VISIBLE_DEVICES=1 python3 testing/autotune_relay.py -tu autotvm -t cuda -th llvm -dt float32 -n resnext50_32x4d -l autotvm_ops_new.json -bs 1
 #CUDA_VISIBLE_DEVICES=1 python3 testing/autotune_relay.py -tu autotvm -t cuda -th llvm -dt float32 -n nasneta -l autotvm_ops_new.json -bs 1

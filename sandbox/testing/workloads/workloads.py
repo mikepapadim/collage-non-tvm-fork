@@ -8,7 +8,9 @@ WORKLOADS_DIC = {
     "resnet50" : {"input0": [1, 64, 56, 56]},
     "resnext50_32x4d" : {"input0": [1, 64, 56, 56]},
     "nasneta" : {"input0": [1, 64, 56, 56]},
+    # NasRNN always have some errors during autotuning operators with AutoTVM
     # "nasrnn": {'x.1': [1, 512]},
+    # "nasrnn": {'x.1': [1, 1024]},
     # "nasrnn": {'x.1': [1, 2048]},
     "nasrnn": {'x.1': [1, 2560]},
     # "nasrnn": {'x.1': [1, 512], 'x.2': [1, 512], 'x.3': [1, 512], 'x.4': [1, 512], 'x': [1, 512]},
