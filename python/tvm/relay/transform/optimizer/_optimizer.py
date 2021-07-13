@@ -164,7 +164,7 @@ def run_op_level_opt(relay_expr):
     optimizer = CompGraphOptimizer(backendop_lib, targets)
     print("Optimizer created")
     optimizer.optimize(comp_graph)
-    print("It's optimized")
+    print("Optimizer finished optimizing comp graph")
     optimized_match, post_order_match_result = optimizer.get_optimized_match(comp_graph)
 
     # print("Match result: ", optimized_match)
@@ -207,7 +207,7 @@ def run_two_level_opt(relay_expr):
     # It is a function if you get it from last pass of Relay build
     print("[Python side] Run two-level optimization")
 
-    visualize_network(relay_expr, "o3_bert")
+    # visualize_network(relay_expr, "o3_resnet")
     # op-level optimization: DP with all backends but external compilers, e.g., TensorRT
     func_expr = relay_expr
     optimized_match, relay_expr, backendop_lib, n_relay_nodes = run_op_level_opt(relay_expr)

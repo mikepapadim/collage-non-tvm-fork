@@ -6,13 +6,16 @@ from .utils import get_diamond
 
 # Warning(@Soo): note that we ignore tuplegetitem nodes in TVM Relay,
 # because they are only used to extract result of Relay's batch_norm operator
+
 class OpType(Enum):
   # ID, name, depth
   # RESNE(X)T
   ADD = ('add', 1)
   CONV2D = ('conv2d', 1)
-  RELU = ('relu', 1,)
+  CONV2D_WINOGRAD_WO_WT = ('conv2d_winograd_without_weight_transform', 1)
+  RELU = ('relu', 1)
   CONV2D_RELU = ('conv2d+relu', 2)
+  CONV2D_WINOGRAD_WO_WT_RELU = ('conv2d_winograd_without_weight_transform+relu', 2)
   CONV2D_ADD_RELU = ('conv2d+add+relu', 3)
   # ADD_RELU = ('add+relu', 2) # This leads to the suboptimal results
 
@@ -72,8 +75,10 @@ optype_to_pattern = {
   # RESNE(X)T
   OpType.ADD : Pattern(is_op('add')(wildcard(), wildcard())),
   OpType.CONV2D : Pattern(is_op("nn.conv2d")(wildcard(), wildcard())),
+  OpType.CONV2D_WINOGRAD_WO_WT : Pattern(is_op("nn.contrib_conv2d_winograd_without_weight_transform")(wildcard(), wildcard())),
   OpType.RELU : Pattern(is_op("nn.relu")(wildcard())),
   OpType.CONV2D_RELU : Pattern(is_op("nn.relu")(is_op("nn.conv2d")(wildcard(), wildcard()))),
+  OpType.CONV2D_WINOGRAD_WO_WT_RELU : Pattern(is_op("nn.relu")(is_op("nn.contrib_conv2d_winograd_without_weight_transform")(wildcard(), wildcard()))),
   OpType.CONV2D_ADD_RELU : Pattern(is_op("nn.relu")(is_op("add")(is_op("nn.conv2d")(wildcard(), wildcard()), wildcard()))),
   # OpType.ADD_RELU : Pattern(is_op("nn.relu")(is_op("add")(wildcard(), wildcard()))),
 
@@ -137,6 +142,7 @@ relayop_to_varnames = {
   # RESNE(X)T
   "add" : ["data", "data"],
   "nn.conv2d" : ["data", "weight"],
+  "nn.contrib_conv2d_winograd_without_weight_transform" : ["data", "weight"],
   "nn.relu": ["data"],
 
   # BERT

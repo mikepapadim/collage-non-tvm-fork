@@ -702,6 +702,11 @@ class TensorRTCostFunc(TargetCostFunc):
         from tvm.relay.op.contrib.tensorrt import partition_for_tensorrt
         mod, config = partition_for_tensorrt(net, params)
 
+        # We confirm that TVM can't pass conv2d to TensorRT if it's winograd without wt
+        # if name == "tensorrt_conv2d_winograd_without_weight_transform":
+        #     print(name, mod["main"])
+        #     sys.exit(0)
+
         target = "cuda"
         with tvm.transform.PassContext(opt_level=OPT_LEVEL.get(), config={'relay.ext.tensorrt.options': config}):
             lib = relay.build(mod, target=target, params=params)

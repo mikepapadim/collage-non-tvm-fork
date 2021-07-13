@@ -56,7 +56,7 @@ def build_network_tensorrt(mod, params):
     # print(repr(mod["main"]))
     # print("config" + "-"*30)
     # print(config)
-
+    # visualize_network(mod["main"], "o3_resnet_tensorrt")
     target = "cuda"
     with tvm.transform.PassContext(opt_level=OPT_LEVEL.get(), config={'relay.ext.tensorrt.options': config}):
         lib = relay.build(mod, target=target, params=params)
