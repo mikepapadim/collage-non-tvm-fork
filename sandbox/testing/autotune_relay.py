@@ -307,7 +307,7 @@ def args_checker(args, parser):
         parser.error('Unsupported target')
 
     this_code_path = os.path.dirname(os.path.abspath(__file__))
-    args.log_file = f"{this_code_path}/../../python/tvm/relay/transform/logs/{args.log_file}"
+    args.log_file = f"{this_code_path}/../../python/tvm/relay/transform/logs/{args.log_file}_{args.hw}.json"
 
 def get_args():
     parser = argparse.ArgumentParser()
@@ -319,6 +319,7 @@ def get_args():
     parser.add_argument("-l", "--log-file", help="log file path")
     parser.add_argument("-dt", "--dtype", help="data type")
     parser.add_argument("-bs", "--batch-size", type=int, help="batch size")
+    parser.add_argument("-hw", "--hw", help="target hardware")
     args = parser.parse_args()
 
     args_checker(args, parser)
@@ -392,7 +393,7 @@ if __name__ == "__main__":
     # Dump the tuning information into JSON file
     search_time = time.time() - start_time
     tuning_option["opt_level"] = OPT_LEVEL.get()
-    dump_autotvm_tuning_info(tuning_option, search_time)
+    dump_autotvm_tuning_info(tuning_option, search_time, args.hw)
 
 ######################################################################
 # Sample Output
