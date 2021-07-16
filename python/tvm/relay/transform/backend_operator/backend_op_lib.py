@@ -122,9 +122,9 @@ class BackendOpLib(object):
 
     # TENSORRT
     add_all_backend_ops_to_lib(self, Target.TENSORRT, [OpType.DIAMOND, OpType.TRANSPOSE,
-                                                       OpType.TUPLE_TWO_IDX, OpType.TUPLE_FIVE_IDX,
-                                                       OpType.TUPLE_FIVE_IDX_CONCAT, OpType.TUPLE_GET_ITEM_0,
-                                                       OpType.TUPLE_GET_ITEM_1,
+                                                       # OpType.TUPLE_TWO_IDX, OpType.TUPLE_FIVE_IDX,
+                                                       # OpType.TUPLE_FIVE_IDX_CONCAT, OpType.TUPLE_GET_ITEM_0,
+                                                       # OpType.TUPLE_GET_ITEM_1,
                                                        OpType.BATCH_MATMUL, OpType.RESHAPE_TRANSPOSE,
                                                        OpType.TRANSPOSE_RESHAPE])
 

@@ -28,6 +28,7 @@
 
 #include <tvm/relay/expr.h>
 #include <tvm/tir/data_layout.h>
+#include <tvm/relay/expr_functor.h>
 
 #include <string>
 #include <tuple>
@@ -36,6 +37,7 @@
 
 #include "infer_layout_utils.h"
 #include "pattern_utils.h"
+#include "pass_utils.h"
 
 namespace tvm {
 namespace relay {
@@ -260,7 +262,9 @@ Expr LayoutRewriter(const Call& ref_call, const Array<Expr>& new_args, const Obj
         Expr tmp = push_back_one_arg(x);
         fields.push_back(tmp);
       }
-      normal_new_args.push_back(Tuple(fields));
+      auto new_tuple = Tuple(fields);
+      MutateBackend(new_tuple, tuple_new_arg->backend);
+      normal_new_args.push_back(new_tuple);
     } else {
       Expr tmp = push_back_one_arg(new_arg);
       normal_new_args.push_back(tmp);
@@ -338,7 +342,9 @@ Expr LayoutRewriter(const Call& ref_call, const Array<Expr>& new_args, const Obj
         transformed_tuple_arg.push_back(memorizer.Transform(arg_item, new_in[pt], new_in2[pt]));
         pt++;
       }
-      transformed_args.push_back(Tuple(transformed_tuple_arg));
+      auto new_tuple = Tuple(transformed_tuple_arg);
+      MutateBackend(new_tuple, tuple_arg->backend);
+      transformed_args.push_back(new_tuple);
     } else {
       transformed_args.push_back(memorizer.Transform(arg, new_in[pt], new_in2[pt]));
       pt++;
@@ -350,6 +356,8 @@ Expr LayoutRewriter(const Call& ref_call, const Array<Expr>& new_args, const Obj
   // (handle tuple output)
   if (ref_call->checked_type()->IsInstance<TupleTypeNode>()) {
     Expr tuple_output = Call(new_call->op, transformed_args, new_call->attrs);
+    MutateBackend(tuple_output, new_call->backend);
+
     Array<Expr> fields;
     for (size_t i = 0; i < new_out.size(); ++i) {
       auto rnode = make_object<LayoutAlternatedExprNode<TransformMemorizerT>>();
@@ -359,11 +367,18 @@ Expr LayoutRewriter(const Call& ref_call, const Array<Expr>& new_args, const Obj
       rnode->memorizer = memorizer;
       fields.push_back(Expr(rnode));
     }
-    return Tuple(fields);
+
+    // Warning(@Soo) This may cause error because Tuple is not labeled with the backend.
+    // However, static int or global variable is not a good idea.
+    // Let's keep it as it is for now.
+    auto new_tuple = Tuple(fields);
+//    UpdateBackendWithNewGroup<TupleNode>(new_tuple);
+    return new_tuple;
   } else {
     auto rnode = make_object<LayoutAlternatedExprNode<TransformMemorizerT>>();
     ICHECK_EQ(new_out.size(), 1);
     rnode->value = Call(new_call->op, transformed_args, new_call->attrs);
+    MutateBackend(rnode->value, new_call->backend);
     rnode->old_layout = old_out[0];
     rnode->new_layout = new_out[0];
     rnode->memorizer = memorizer;

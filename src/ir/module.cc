@@ -182,6 +182,12 @@ void WarnIfMalformed(const IRModule& mod, relay::Function func) {
   // Type check the item before we add it to the module.
   auto fv = relay::FreeVars(func);
   auto ftv = relay::FreeTypeVars(func, mod);
+
+  if (fv.size() > 0) {
+    auto vis_call = tvm::runtime::Registry::Get("relay.transform.optimizer.visualize_network_debug");
+    (*vis_call)(func, "debug_add");
+    std::cerr << "[Done] Debug_add visualization" << std::endl;
+  }
   // TODO(@jroesch): refactor to use diagnostic context
   ICHECK_EQ(fv.size(), 0) << "There are free variables: " << fv << std::endl;
   ICHECK_EQ(ftv.size(), 0) << "There are free type variables: " << fv

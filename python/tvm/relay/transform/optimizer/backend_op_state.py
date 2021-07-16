@@ -72,7 +72,9 @@ class OpStateToMatchTranslator():
 
     def is_valid_ext_compiler_op(self, expr):
         is_not_valid = False
-        is_not_valid = is_tuple_node(expr) or is_tuplegetitem_node(expr)
+        # It's find to allow TensorRT to take tuple or tuplegetitem
+        # It could even allow TensorRT to merge more regions in comp graph
+        # is_not_valid = is_tuple_node(expr) or is_tuplegetitem_node(expr)
 
         # Patterns that TensorRT can't afford
         transpose_pat = is_op("transpose")(wildcard())

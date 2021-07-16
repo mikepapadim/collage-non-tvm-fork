@@ -108,7 +108,9 @@ class ForwardRewriter : private MixedModeMutator {
       if (tuple.same_as(op->tuple)) {
         return GetRef<Expr>(op);
       } else {
-        return TupleGetItem(tuple, op->index);
+        auto new_op = TupleGetItem(tuple, op->index);
+        MutateBackend(new_op, op->backend);
+        return new_op;
       }
     }
   }
@@ -126,7 +128,9 @@ class ForwardRewriter : private MixedModeMutator {
     if (all_fields_unchanged) {
       return GetRef<Expr>(op);
     } else {
-      return Tuple(fields);
+      auto new_op = Tuple(fields);
+      MutateBackend(new_op, op->backend);
+      return new_op;
     }
   }
 
@@ -168,7 +172,10 @@ class ForwardRewriter : private MixedModeMutator {
       }
     }
     if (unchanged) return ref_call;
-    return Call(new_op, call_args, call_node->attrs, call_node->type_args);
+
+    auto new_call = Call(new_op, call_args, call_node->attrs, call_node->type_args);
+    MutateBackend(new_call, call_node->backend);
+    return new_call;
   }
 };
 

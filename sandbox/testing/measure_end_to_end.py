@@ -158,25 +158,25 @@ if __name__ == "__main__":
     args = get_args()
 
     # NasNet-A only works for opt_level 2 (not 3 due to the avgpool2d issue)
-    if args.network == "nasneta":
-        OPT_LEVEL.set(2)
+    # if args.network == "nasneta":
+    #     OPT_LEVEL.set(2)
 
     # We can't test this because this network include batch norm.
     mod, params, shape_dict, _ = get_network_from_torch(args.network, 1)
 
     # Warning(@soo): Note that the opt_level of AutoTVM and AutoSch is 2 to make an apple-to-apple comparison
 
-    mean_perf, std_perf = measure_end_to_end_perf_autotvm(mod["main"], params, 'cuda', shape_dict, True, args.network)
-    print(f"[Ours] Performance of {args.network} (mean, std) = ({mean_perf:.4f}+-{std_perf:.4f})")
+    # mean_perf, std_perf = measure_end_to_end_perf_autotvm(mod["main"], params, 'cuda', shape_dict, True, args.network)
+    # print(f"[Ours] Performance of {args.network} (mean, std) = ({mean_perf:.4f}+-{std_perf:.4f})")
 
     # mean_perf, std_perf = measure_end_to_end_perf_tensorrt(mod, params, 'cuda', shape_dict, False)
     # print(f"[TensorRT] Performance of {args.network} (mean, std) = ({mean_perf:.4f}+-{std_perf:.4f})")
 
-    # mean_perf, std_perf = measure_end_to_end_perf_autotvm(mod["main"], params, 'cuda -libs=cudnn', shape_dict, False)
+    # mean_perf, std_perf = measure_end_to_end_perf_autotvm(mod["main"], params, 'cuda -libs=cudnn', shape_dict, False, args.network)
     # print(f"[AutoTVM+CuDNN] Performance of {args.network} (mean, std) = ({mean_perf:.4f}+-{std_perf:.4f})")
     #
-    # mean_perf, std_perf = measure_end_to_end_perf_autotvm(mod["main"], params, 'cuda', shape_dict, False)
-    # print(f"[AutoTVM] Performance of {args.network} (mean, std) = ({mean_perf:.4f}+-{std_perf:.4f})")
+    mean_perf, std_perf = measure_end_to_end_perf_autotvm(mod["main"], params, 'cuda', shape_dict, False, args.network)
+    print(f"[AutoTVM] Performance of {args.network} (mean, std) = ({mean_perf:.4f}+-{std_perf:.4f})")
 
     # mean_perf, std_perf = measure_end_to_end_perf_autosch(mod["main"], params, 'cuda', shape_dict, False)
     # print(f"[AutoSCH] Performance of {args.network} (mean, std) = ({mean_perf:.4f}+-{std_perf:.4f})")

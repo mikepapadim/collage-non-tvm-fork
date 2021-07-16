@@ -43,7 +43,8 @@ def get_next_expr_after_match(relay_expr, prev_relay_expr, pattern):
     if type(relay_expr) == tvm.relay.expr.Var:
         if is_data_var_node(relay_expr):
             return [(relay_expr, prev_relay_expr)]
-        return [(None, prev_relay_expr)]
+        assert False, "Var node other than data exists!"
+        # return [(None, prev_relay_expr)]
     elif is_constant_node(relay_expr):
         return [(None, prev_relay_expr)]
 
@@ -68,6 +69,11 @@ def get_next_expr_after_match(relay_expr, prev_relay_expr, pattern):
         # else:
         # print("Expr : ", relay_expr)
         # print("Pattern : ", pattern)
+
+        # Warning(@Soo): pattern args are not necessarily in the same order with expr args
+        # e.g., is_op("add")(is_op("nn.conv2d"), wildcard) can still match add(data, conv)
+        # Thus, we need to figure out the order and call the function in right order
+        # Update (@Soo): With ordered_pattern_matcher, now the order is guaranteed.
         for a_idx, node in enumerate(relay_expr.args):
             target_node += get_next_expr_after_match(node, relay_expr, pattern.args[a_idx])
 #             # FIX: Hacky way to avoid residual connection

@@ -749,8 +749,21 @@ namespace tvm {
       void MergeFromTo(Group* child, Group* parent) {
 //        if (is_tensorrt_op_) {
 //        std::cerr << "*********************************************" << std::endl;
-//        std::cerr << "child root: " << GetRef<ObjectRef>(child->root_ref) << std::endl;
-//        std::cerr << "parent root: " << GetRef<ObjectRef>(parent->root_ref) << std::endl;
+//        if (GetRef<ObjectRef>(child->root_ref).as<CallNode>()) {
+//          std::cerr << "child root (pat: " << child->pattern << ", b_op : " << child->backend_op_name <<
+//              "): " << GetRef<ObjectRef>(child->root_ref).as<CallNode>()->op << std::endl;
+//        }
+//
+//        if (GetRef<ObjectRef>(parent->root_ref).as<CallNode>()) {
+//          std::cerr << "parent root: (pat: " << parent->pattern << ", b_op : " << parent->backend_op_name <<
+//              "): " << GetRef<ObjectRef>(parent->root_ref).as<CallNode>()->op << std::endl;
+//        } else {
+//          PrintOpType(GetRef<ObjectRef>(parent->root_ref));
+//          std::cerr << "parent root: (pat: " << parent->pattern << ", b_op : " << parent->backend_op_name <<
+//              "): " << std::endl;
+//        }
+
+
 //        }
         child = child->FindRoot();
         parent = parent->FindRoot();
@@ -880,7 +893,9 @@ namespace tvm {
           int cur_group_id = pair_info.group_id;
           if (b_op_to_last_node_.find(cur_group_id) != b_op_to_last_node_.end()) {
             auto* prev_graph_node = b_op_to_last_node_[cur_group_id];
-//            std::cerr << "Merge from "  << prev_graph_node->index << " to " << nid << std::endl;
+//            std::cerr << "-------------------------------------------------" << std::endl;
+//            std::cerr << "cur_group id: " << cur_group_id << ", " <<
+//                "Merge from "  << prev_graph_node->index << " to " << nid << std::endl;
             is_tensorrt_op_ = IsTensorRTOp(pair_info.backend_op_name);
             CommitFuse(prev_graph_node, graph_node);
           }
@@ -1369,7 +1384,7 @@ namespace tvm {
       // If you comment this line, we can try original fusion pass.
       if (fn_node->GetAttr<IntImm>(attr::kCustomFusionPass).defined()) is_custom_pass = true;
       auto fused_expr = FuseMutator().Transform(expr, fuse_opt_level, max_fuse_depth, is_custom_pass);
-//      std::cerr << "[Done] FuseOps" << std::endl;
+//      std::cerr << "[Done] FuseOps (is_custom_pass: " << is_custom_pass << ")" << std::endl;
 
 //      auto vis_call = tvm::runtime::Registry::Get("relay.transform.optimizer.visualize_expr");
 //      (*vis_call)(fused_expr, "FuseOps_after");
@@ -1377,14 +1392,55 @@ namespace tvm {
       return fused_expr;
     }
 
+    Expr InferBackendForConstantFunc(const Expr& expr) {
+      // WARNING(@Soo): Assume that all exprs are function!
+      const FunctionNode* fn_node = static_cast<const FunctionNode*>(expr.get());
+      bool is_custom_pass = false;
+      // Warning(@Soo) - every fusion should be done by saved match log regardless of algorithms!
+      // If you comment this line, we can try original fusion pass.
+      if (fn_node->GetAttr<IntImm>(attr::kCustomFusionPass).defined()) is_custom_pass = true;
+
+      struct InferBackendForConstantVisitor : ExprVisitor {
+        String parent_backend_ = "default";
+
+        void VisitExpr_(const CallNode* op) final {
+          this->VisitSpan(op->span);
+          this->VisitExpr(op->op);
+
+          for (auto ty_arg : op->type_args) {
+            this->VisitType(ty_arg);
+          }
+
+          for (auto arg : op->args) {
+            parent_backend_ = op->backend;
+            this->VisitExpr(arg);
+          }
+        }
+
+        void VisitExpr_(const ConstantNode* op) final {
+          MutateBackend(GetRef<Expr>(op), parent_backend_);
+          ExprVisitor::VisitExpr_(op);
+        }
+      } visitor;
+
+      if (is_custom_pass) visitor(expr);
+//      std::cerr << "[Done] InferBackendForConstant" << std::endl;
+      return expr;
+    }
+
+    IRModule VisualizeIRFunc(IRModule module, String filename="default") {
+      Expr expr = module->Lookup("main");
+      auto vis_call = tvm::runtime::Registry::Get("relay.transform.optimizer.visualize_network_debug");
+      (*vis_call)(expr, filename);
+      return module;
+    }
     /*
      * Goal
      * - Calculate best opeartor match depending on which algorithm we pick.
      * - Dump best match into the log and let FuseOps pass read and apply it on IR.
      */
-    IRModule PlanFusionWithExtCompiler(IRModule module) {
+    IRModule AssignBackendFunc(IRModule module) {
 //      std::cerr << "Plan Fusion With ExtCompiler" << std::endl;
-
       Expr expr = module->Lookup("main");
       const FunctionNode* fn_node = expr.as<FunctionNode>();
 
@@ -1425,6 +1481,13 @@ namespace tvm {
 //          Map<Expr, String> backend_op_match = (*fdp_call)(expr);
 //        }
 //        std::cerr << "Before extenral pass: " << expr << std::endl;
+
+        // Visualization of the network for sanity check
+//        auto vis_call = tvm::runtime::Registry::Get("relay.transform.optimizer.visualize_network_debug");
+//        Expr expr = module->Lookup("main");
+//        (*vis_call)(expr, "before_AssignTensorRT");
+//        std::cerr << "[Done] Debug visualization" << std::endl;
+
         // Apply external compiler ops first before we fuse operators
         // just like what original TensorRT pipeline does.
         auto ex_op_call = tvm::runtime::Registry::Get("relay.transform.optimizer.apply_external_compiler_op");
@@ -1432,11 +1495,36 @@ namespace tvm {
         module = (*ex_op_call)(module);
         std::cerr << "[Done] PlanFusionWithExtCompiler" << std::endl;
       }
+
+//      std::cerr << "[Done] AlterOpLayout for TVM ops after PlanFusionWithExtCompiler" << std::endl;
       return module;
     }
 
-
 namespace transform {
+      Pass InferBackendForConstant() {
+        runtime::TypedPackedFunc<Function(Function, IRModule, PassContext)> infer_backend_func =
+            [=](Function f, IRModule m, PassContext pc) {
+              return Downcast<Function>(InferBackendForConstantFunc(f));
+            };
+
+        return CreateFunctionPass(infer_backend_func, 1, "InferBackendForConstant", {});
+      }
+
+      Pass VisualizeIR(String filename) {
+        // Custom Module pass to deal with external compiler, e.g., tensorrt
+        runtime::TypedPackedFunc<IRModule(IRModule, PassContext)> visualize_ir_func =
+            [=](IRModule m, PassContext pc) { return VisualizeIRFunc(m, filename); };
+        return CreateModulePass(visualize_ir_func, 0, "VisualizeIR", {});
+      }
+
+      Pass AssignBackend() {
+        // Custom Module pass to deal with external compiler, e.g., tensorrt
+        runtime::TypedPackedFunc<IRModule(IRModule, PassContext)> assign_backend_func =
+            [=](IRModule m, PassContext pc) { return AssignBackendFunc(m); };
+        return CreateModulePass(assign_backend_func, 0, "AssignBackend", {});
+      }
+
+      TVM_REGISTER_GLOBAL("relay._transform.AssignBackend").set_body_typed(AssignBackend);
 
       Pass FuseOps(int fuse_opt_level) {
         runtime::TypedPackedFunc<Function(Function, IRModule, PassContext)> pass_func =
@@ -1446,24 +1534,44 @@ namespace transform {
               return Downcast<Function>(FuseOps(f, opt_level, max_fuse_depth.value(), m));
             };
 
-        // Custom Module pass to deal with external compiler, e.g., tensorrt
-        runtime::TypedPackedFunc<IRModule(IRModule, PassContext)> ext_compiler_func =
-            [=](IRModule m, PassContext pc) { return PlanFusionWithExtCompiler(m); };
-//        runtime::TypedPackedFunc<IRModule(IRModule, PassContext)> ext_compiler_func =
-//            [=](IRModule m, PassContext pc) { return ExtCompilerMutator(m).Transform(); };
-
-        auto fuse_pass = CreateFunctionPass(pass_func, 1, "FuseOps", {"InferType"});
-        auto ext_compiler_pass = CreateModulePass(ext_compiler_func, 0,
-                                                  "ExternalCompilerMutator", {});
-
-        return Sequential({ext_compiler_pass, fuse_pass});
-//        return Sequential({fuse_pass, ext_compiler_pass});
-//        return CreateFunctionPass(pass_func, 1, "FuseOps", {"InferType"});
+        return CreateFunctionPass(pass_func, 1, "FuseOps", {"InferType"});
       }
-
       TVM_REGISTER_GLOBAL("relay._transform.FuseOps").set_body_typed(FuseOps);
 
     }  // namespace transform
 
   }  // namespace relay
 }  // namespace tvm
+
+
+//namespace transform {
+//
+//      Pass FuseOps(int fuse_opt_level) {
+//        runtime::TypedPackedFunc<Function(Function, IRModule, PassContext)> pass_func =
+//            [=](Function f, IRModule m, PassContext pc) {
+//              int opt_level = fuse_opt_level == -1 ? pc->opt_level : fuse_opt_level;
+//              auto max_fuse_depth = pc->GetConfig("relay.FuseOps.max_depth", Integer(kMaxFusedOps));
+//              return Downcast<Function>(FuseOps(f, opt_level, max_fuse_depth.value(), m));
+//            };
+//
+//        // Custom Module pass to deal with external compiler, e.g., tensorrt
+//        runtime::TypedPackedFunc<IRModule(IRModule, PassContext)> ext_compiler_func =
+//            [=](IRModule m, PassContext pc) { return PlanFusionWithExtCompiler(m); };
+////        runtime::TypedPackedFunc<IRModule(IRModule, PassContext)> ext_compiler_func =
+////            [=](IRModule m, PassContext pc) { return ExtCompilerMutator(m).Transform(); };
+//
+//        auto fuse_pass = CreateFunctionPass(pass_func, 1, "FuseOps", {"InferType"});
+//        auto ext_compiler_pass = CreateModulePass(ext_compiler_func, 0,
+//                                                  "ExternalCompilerMutator", {});
+//
+//        return Sequential({ext_compiler_pass, fuse_pass});
+////        return Sequential({fuse_pass, ext_compiler_pass});
+////        return CreateFunctionPass(pass_func, 1, "FuseOps", {"InferType"});
+//      }
+//
+//      TVM_REGISTER_GLOBAL("relay._transform.FuseOps").set_body_typed(FuseOps);
+//
+//    }  // namespace transform
+//
+//  }  // namespace relay
+//}  // namespace tvm

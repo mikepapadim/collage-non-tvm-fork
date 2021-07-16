@@ -28,6 +28,7 @@
 #include <tvm/relay/op_attr_types.h>
 #include <tvm/relay/transform.h>
 #include <tvm/te/operation.h>
+#include <tvm/relay/expr_functor.h>
 
 #include <functional>
 #include <string>
@@ -87,8 +88,19 @@ class AlterTransformMemorizer : public TransformMemorizer {
       //   Probably we need to disable the AlterOpLayout when compiling dynamic models.
       Expr altered_value =
           falter_layout[op](ref_call->attrs, new_args, tinfos, ref_call->checked_type());
+
+//      std::cerr << "new_args ===================================" << std::endl;
+//      for (auto & elem : new_args) std::cerr << elem << ", ";
+//      std::cerr << std::endl;
+
+//      auto print_call = tvm::runtime::Registry::Get("relay.transform.optimizer.print_attr_args");
+//      (*print_call)(ref_call);
+//      std::cerr << "OP, tinfos, checked_type : " << op << " , " << ref_call->attrs <<
+//                " , " << tinfos << " , " << ref_call->checked_type() << std::endl;
       if (altered_value.defined()) {
         new_e = altered_value;
+//        std::cerr << "$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$" << std::endl;
+//        std::cerr << "OP : " << new_e.as<CallNode>()->op << std::endl;
         modified = true;
       }
     }
@@ -96,6 +108,7 @@ class AlterTransformMemorizer : public TransformMemorizer {
       new_e = Call(ref_call->op, new_args, ref_call->attrs);
     }
 
+    MutateBackend(new_e, ref_call->backend);
     const CallNode* new_call = new_e.as<CallNode>();
     ICHECK(new_call) << "Can only replace the original operator with another call node";
     return GetRef<Call>(new_call);
@@ -110,10 +123,23 @@ class AlterTransformMemorizer : public TransformMemorizer {
  * 2. Do not support nested tuple arguments.
  */
 Expr AlterOpLayout(const Expr& expr) {
+  // Warning(@Soo): Ignore this pass if this is custom fusion pass because
+  // we shouldn't alter op layout before we make op assignment decision
+  // e.g., we can't offload conv2d_winograd to TensorRT
+
+  // Update(@Soo): We can always do AlterOpLayout pass no matter whether it's custom fusion or not
+//  const FunctionNode* fn_node = static_cast<const FunctionNode*>(expr.get());
+//  if (fn_node->GetAttr<IntImm>(attr::kCustomFusionPass).defined()
+//      && !fn_node->GetAttr<IntImm>(attr::kAllowAlterOp).defined()) {
+//    std::cerr << "Pass AlterOpLayout because it's custom pass" << std::endl;
+//    return expr;
+//  } else {
+//    std::cerr << "AlterOpLayout will be executed!" << std::endl;
+//  }
+
   // TODO(@icemelon9): need to rerun type inference after applying an alter op.
   AlterTransformMemorizer alterMemorizer(make_object<AlterTransformMemorizerNode>());
   auto fcontext = [&](const Call& call) -> ObjectRef { return alterMemorizer; };
-
   return ForwardRewrite(expr, LayoutRewriter<AlterTransformMemorizer>, fcontext);
 }
 

@@ -19,6 +19,7 @@ from .utils import *
 from .op_config import Config, MeasuredConfigs
 from .target import Target, get_target_cost_func
 from .op_type import OpType, optype_to_pattern, relayop_to_varnames
+from ..utility.debug_helper import printe
 
 # It gives the path of backend_op.py no matter where you import this file
 # cur_dir_path = Path(__file__).parent.absolute()
@@ -77,11 +78,11 @@ class BackendOp(object):
 
     if cost_info != None:
       # pass
-      print("REUSED RESULT!!!!")
+      printe("REUSED RESULT!!!!")
     else:
         # print("!!!Warning!!! Random cost!")
         # cost_info = (-1, -1)
-      print("NOT REUSED!!!!")
+      printe("NOT REUSED!!!!")
     
       cost_func = get_target_cost_func(self._target)
       cost_info = cost_func(self._name, expr, self._target)
@@ -99,7 +100,12 @@ class BackendOp(object):
 @lru_cache(None)
 def extract_subgraph(expr, max_depth, pattern):
   # use this to make sure the nodes (exprs) are consistent between different branches
+  # Warning(@Soo): This is not necessary when we don't have diamond patterns
+  # Still, this case happens in NasNet-A, e.g., addition of same avgpool2d results
   old_expr_to_new = dict()
+
+  def set_old_expr_to_new(expr, new_expr):
+    old_expr_to_new[expr] = new_expr
 
   def get_expr(expr):
     if expr in old_expr_to_new:
@@ -107,18 +113,24 @@ def extract_subgraph(expr, max_depth, pattern):
     return expr
 
   def helper(expr, depth, pattern):
+    assert pattern.match(expr), f"(pattern, expr) = ({pattern}, {expr.op}, {expr.args[0].op})"
+    # Warning(@Soo): To resolve NasNet-A corner case, e.g., addition of same avgpool2d results
+    cur_checked_type = expr.checked_type
     expr = get_expr(expr)
 
     if isinstance(pattern, WildcardPattern):
-      # Warning(@Soo): Hacky exception handling for NasNet-A (same avgpool2d for two inputs of add)
-      # The issue is that avgpool2d somehow is missing type information even after type inference
       # try:
       #   ret = relay.var("data", expr.checked_type)
       # except ValueError:
-      #
-      #   assert is_op("nn.avg_pool2d")(wildcard()).match(expr)
-      #   ret = relay.var("data", expr.args[0].checked_type)
-      ret = relay.var("data", expr.checked_type)
+      #   # Warning(@Soo): Hacky exception handling for NasNet-A (same avgpool2d for two inputs of add)
+      #   # The issue is that avgpool2d somehow is missing type information even after type inference      #
+      #   printe("Checked type is not available for following expr")
+      #   printe(repr(expr))
+
+      # The above issue with avgpool2d is resolved!
+      # The problem is because checked_type is updated when generating new expr.
+      # We resolved it by saving checked_type from old expression
+      ret = relay.var("data", cur_checked_type)
       return ret
     elif isinstance(pattern, ConstantPattern):
       return expr
@@ -164,7 +176,7 @@ def extract_subgraph(expr, max_depth, pattern):
       args = new_args
 
       new_expr = tvm.relay.expr.Call(op, args, attrs, type_args, span)
-      old_expr_to_new[expr] = new_expr
+      set_old_expr_to_new(expr, new_expr)
       return new_expr
 
     elif is_tuple_node(expr):
@@ -172,12 +184,15 @@ def extract_subgraph(expr, max_depth, pattern):
       for c_idx, child in enumerate(expr.fields):
         pat_child = pattern.fields[c_idx]
         new_args.append(helper(child, depth - 1, pat_child))
-      return relay.Tuple(new_args)
+      new_expr = relay.Tuple(new_args)
+      set_old_expr_to_new(expr, new_expr)
+
+      return new_expr
 
     elif is_tuplegetitem_node(expr):
-      tuple_value = helper(expr.tuple_value, depth, pattern.tuple)
+      tuple_value = helper(expr.tuple_value, depth, pattern.tuple_value)
       new_expr = tvm.relay.expr.TupleGetItem(tuple_value, expr.index)
-      old_expr_to_new[expr] = new_expr
+      set_old_expr_to_new(expr, new_expr)
       return new_expr
 
     elif is_var_node(expr):

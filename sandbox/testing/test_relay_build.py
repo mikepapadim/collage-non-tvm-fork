@@ -93,8 +93,8 @@ if __name__ == "__main__":
     args = get_args()
 
     # NasNet-A only works for opt_level 2 (not 3 due to the avgpool2d issue)
-    if args.network == "nasneta":
-        OPT_LEVEL.set(2)
+    # if args.network == "nasneta":
+    #     OPT_LEVEL.set(2)
 
     mod, params, shape_dict, _ = get_network_from_torch(args.network, 1)
     # mod, params, shape_dict, _ = crop_network_from_torch(args.network, 1, 22)

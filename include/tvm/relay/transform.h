@@ -105,6 +105,9 @@ TVM_DLL Pass FoldConstant();
  *
  * \return The pass.
  */
+TVM_DLL Pass InferBackendForConstant();
+TVM_DLL Pass VisualizeIR(String filename = "default");
+TVM_DLL Pass AssignBackend();
 TVM_DLL Pass FuseOps(int fuse_opt_level = -1);
 
 /*!

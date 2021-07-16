@@ -7,6 +7,7 @@ from .optimizer_utils import get_pattern_len, get_next_expr_after_match
 from ..backend_operator.backend_op import get_optimal_backendop
 from ..backend_operator.target import *
 from .ext_compiler_op_merger import *
+from .ordered_pattern_matcher import OrderedPatternMatcher
 
 try:
     import Queue as Q  # ver. < 3.0
@@ -116,7 +117,7 @@ class CompGraphOptimizer:
     def __init__(self, backendop_lib, target_backend=None):
         self._backendop_lib = backendop_lib
         self._target_backend = target_backend
-
+        self._ordered_pattern_matcher = OrderedPatternMatcher()
         # Attribute key to pass to N-to-1 lowering pass
         self._bop_attr_key = "backend-op"
 
@@ -162,7 +163,11 @@ class CompGraphOptimizer:
             # print(self._backendop_lib.get_all_patterns())
             for pat in self._backendop_lib.get_all_patterns():
                 # print(pat)
-                if pat.get_pattern().match(f_expr):
+
+                # ordered_pattern_matcher consider the order of arguments when matching
+                # in contrast to basic Relay pattern matching
+                if self._ordered_pattern_matcher.match(f_expr, pat.get_pattern()):
+                # if pat.get_pattern().match(f_expr):
                     # Check if there is an existing frontier with the same goal idx
                     # Conv(Data, Weight)
                     # get_next_expr_after_match -> [Data, Weight]

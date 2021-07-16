@@ -309,15 +309,28 @@ class RelayBuildModule : public runtime::ModuleNode {
     pass_seqs.push_back(transform::CanonicalizeCast());
     pass_seqs.push_back(transform::CanonicalizeOps());
 
+
+    // FoldConstant needs to come ahead of AssignBackend for some networks (e.g., NasNet-A)
+    pass_seqs.push_back(transform::FoldConstant());
+    // InferType is needed for assigning backend and altering op layout
+    pass_seqs.push_back(transform::InferType());
+    // AssignBackend won't be executed if this is not a custom fusion build.
+    pass_seqs.push_back(transform::AssignBackend());
+//    pass_seqs.push_back(transform::VisualizeIR("after_AssignBackend"));
+
     // Alter layout transformation is only applied to homogeneous execution yet.
     if (targets.size() == 1) {
-      pass_seqs.push_back(transform::InferType());
       pass_seqs.push_back(transform::AlterOpLayout());
+//      pass_seqs.push_back(transform::VisualizeIR("after_AlterOpLayout"));
     }
 
     // Fast math optimizations.
     pass_seqs.push_back(transform::FastMath());
     pass_seqs.push_back(transform::FoldConstant());
+
+    // InferBackendForConstant is to assign backend to newly created Constant from FoldConstant
+    pass_seqs.push_back(transform::InferBackendForConstant());
+//    pass_seqs.push_back(transform::VisualizeIR("after_FoldConstant"));
 
     // Create a sequential pass and perform optimizations.
     transform::Pass seq = transform::Sequential(pass_seqs);
@@ -340,10 +353,11 @@ class RelayBuildModule : public runtime::ModuleNode {
     }
 
     // Fuse the operations if it is needed.
-    // Warning(@Soo): Added to resolve type missing issue in Fuse pass
-    // But, it did not resolve. So, I commented it
-//    relay_module = transform::InferType()(relay_module);
+//    std::cerr << "Fuse Ops" << std::endl;
+//    relay_module = transform::VisualizeIR("before_FuseOps")(relay_module);
     relay_module = transform::FuseOps()(relay_module);
+//    relay_module = transform::VisualizeIR("after_FuseOps")(relay_module);
+//    std::cerr << "[Done] Fuse Ops" << std::endl;
 
     // Do layout rewrite for auto-scheduler.
     if (backend::IsAutoSchedulerEnabled() && targets.size() == 1) {
