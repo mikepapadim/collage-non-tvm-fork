@@ -80,7 +80,7 @@ torch.onnx.export(scripted_model, input_data,
                   do_constant_folding=False,
                   input_names=input_names, output_names=output_names, 
                   training = torch.onnx.TrainingMode.TRAINING,
-                  example_outputs=torch.rand((1, 2048, 7, 7, 1)),
+                  example_outputs=torch.rand((1, 2048, 1, 7, 7)),
                   opset_version=12)
 onnx_model = onnx.load(f"models/{NAME}.onnx")
 
