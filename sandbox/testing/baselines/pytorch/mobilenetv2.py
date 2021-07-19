@@ -3,18 +3,18 @@ import torch
 import math
 
 
-def conv_bn(inp, oup, stride):
+def conv(inp, oup, stride):
     return nn.Sequential(
         nn.Conv2d(inp, oup, 3, stride, 1, bias=False),
-        nn.BatchNorm2d(oup),
+        #nn.BatchNorm2d(oup),
         nn.ReLU6(inplace=True)
     )
 
 
-def conv_1x1_bn(inp, oup):
+def conv_1x1(inp, oup):
     return nn.Sequential(
         nn.Conv2d(inp, oup, 1, 1, 0, bias=False),
-        nn.BatchNorm2d(oup),
+        #nn.BatchNorm2d(oup),
         nn.ReLU6(inplace=True)
     )
 
@@ -37,25 +37,25 @@ class InvertedResidual(nn.Module):
             self.conv = nn.Sequential(
                 # dw
                 nn.Conv2d(hidden_dim, hidden_dim, 3, stride, 1, groups=hidden_dim, bias=False),
-                nn.BatchNorm2d(hidden_dim),
+                #nn.BatchNorm2d(hidden_dim),
                 nn.ReLU6(inplace=True),
                 # pw-linear
                 nn.Conv2d(hidden_dim, oup, 1, 1, 0, bias=False),
-                nn.BatchNorm2d(oup),
+                #nn.BatchNorm2d(oup),
             )
         else:
             self.conv = nn.Sequential(
                 # pw
                 nn.Conv2d(inp, hidden_dim, 1, 1, 0, bias=False),
-                nn.BatchNorm2d(hidden_dim),
+                #nn.BatchNorm2d(hidden_dim),
                 nn.ReLU6(inplace=True),
                 # dw
                 nn.Conv2d(hidden_dim, hidden_dim, 3, stride, 1, groups=hidden_dim, bias=False),
-                nn.BatchNorm2d(hidden_dim),
+                #nn.BatchNorm2d(hidden_dim),
                 nn.ReLU6(inplace=True),
                 # pw-linear
                 nn.Conv2d(hidden_dim, oup, 1, 1, 0, bias=False),
-                nn.BatchNorm2d(oup),
+                #nn.BatchNorm2d(oup),
             )
 
     def forward(self, x):
@@ -86,7 +86,7 @@ class MobileNetV2(nn.Module):
         assert input_size % 32 == 0
         # input_channel = make_divisible(input_channel * width_mult)  # first channel is always 32!
         self.last_channel = make_divisible(last_channel * width_mult) if width_mult > 1.0 else last_channel
-        self.features = [conv_bn(3, input_channel, 2)]
+        self.features = [conv(3, input_channel, 2)]
         # building inverted residual blocks
         for t, c, n, s in interverted_residual_setting:
             output_channel = make_divisible(c * width_mult) if t > 1 else c
@@ -97,7 +97,7 @@ class MobileNetV2(nn.Module):
                     self.features.append(block(input_channel, output_channel, 1, expand_ratio=t))
                 input_channel = output_channel
         # building last several layers
-        self.features.append(conv_1x1_bn(input_channel, self.last_channel))
+        self.features.append(conv_1x1(input_channel, self.last_channel))
         # make it nn.Sequential
         self.features = nn.Sequential(*self.features)
 
