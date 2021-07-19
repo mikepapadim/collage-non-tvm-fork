@@ -143,7 +143,7 @@ def mobilenet_v2(pretrained=True):
 
 
 if __name__ == '__main__':
-    net = mobilenet_v2(True)
+    net = mobilenet_v2(False)
     input_shape = [1, 3, 224, 224]
     input_data = torch.randn(input_shape)
     print(net(input_data).size())
