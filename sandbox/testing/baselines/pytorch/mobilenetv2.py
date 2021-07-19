@@ -230,7 +230,7 @@ if __name__ == '__main__':
                     do_constant_folding=False,
                     input_names=input_names, output_names=output_names, 
                     training = torch.onnx.TrainingMode.TRAINING,
-                    example_outputs=torch.rand((1, 1280, 7, 7)),
+                    example_outputs=torch.rand((1, 1280, 4, 4)),
                     opset_version=12)
     onnx_model = onnx.load(f"models/{NAME}.onnx")
 
