@@ -31,15 +31,15 @@ def resnet50(input):
     t = input
     for i in range(3):
         t = resnet_block(t, (1,1,1,1,1), 64, "resnet_block_1_{}".format(i))
-    strides=(1,2,2,2,1)
+    strides=(1,1,2,2,1)
     for i in range(4):
         t = resnet_block(t, strides, 128, "resnet_block_2_{}".format(i))
         strides=(1,1,1,1,1)
-    strides=(1,2,2,2,1)
+    strides=(1,1,2,2,1)
     for i in range(6):
         t = resnet_block(t, strides, 256, "resnet_block_3_{}".format(i))
         strides=(1,1,1,1,1)
-    strides=(1,2,2,2,1)
+    strides=(1,1,2,2,1)
     for i in range(3):
         t = resnet_block(t, strides, 512, "resnet_block_4_{}".format(i))
         strides=(1,1,1,1,1)
