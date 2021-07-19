@@ -22,8 +22,8 @@ def resnet_block(input, strides, out_channels, name):
 parser = argparse.ArgumentParser()
 parser.add_argument("--xla", help="Whether to run with TensorFlowXLA optimizations", action="store_true")
 parser.add_argument("--print_tensorboard", help="Name of folder to output the tensorboard information")
-parser.add_argument("--iterations", help="How many iterations to average for timing (default 5000)", type=int, default=5000)
-parser.add_argument("--discard_iter", help="How many iterations to not time during warm up (default 1000)", type=int, default=1000)
+parser.add_argument("--iterations", help="How many iterations to average for timing (default 5000)", type=int, default=5)
+parser.add_argument("--discard_iter", help="How many iterations to not time during warm up (default 1000)", type=int, default=1)
 args = parser.parse_args()
 
 @tf.function(experimental_compile=args.xla)
@@ -50,9 +50,11 @@ for i in range(args.discard_iter + args.iterations):
     inputs = tf.constant(np.random.random_sample((1,64,3,56,56)).astype(np.float32))
 
     t0 = timeit.default_timer()
-    resnet50(inputs)
+    a = resnet50(inputs)
     t1 = timeit.default_timer()
     times.append(t1 - t0)
+
+    print(a.numpy().shape)
 
 total = 0
 for i in range(args.discard_iter, len(times)):
