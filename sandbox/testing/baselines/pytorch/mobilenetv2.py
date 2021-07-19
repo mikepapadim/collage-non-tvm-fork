@@ -86,7 +86,7 @@ class MobileNetV2(nn.Module):
         assert input_size % 32 == 0
         # input_channel = make_divisible(input_channel * width_mult)  # first channel is always 32!
         self.last_channel = make_divisible(last_channel * width_mult) if width_mult > 1.0 else last_channel
-        self.features = [conv(3, input_channel, 2)]
+        self.features = []
         # building inverted residual blocks
         for t, c, n, s in interverted_residual_setting:
             output_channel = make_divisible(c * width_mult) if t > 1 else c
@@ -155,7 +155,7 @@ if __name__ == '__main__':
 
     model = mobilenet_v2().cuda()
     model.eval()
-    inputs = torch.randn(1, 3, 224, 224).cuda()
+    inputs = torch.randn(1, 32, 56, 56).cuda()
 
     from torch2trt import torch2trt
     import time
@@ -201,7 +201,7 @@ if __name__ == '__main__':
     avg = total / (args.iterations)
     print("Average inference time of the last " + str(args.iterations) + " iterations: " + str(avg) + " ms")
 
-    input_shape = [1, 3, 224, 224]
+    input_shape = [1, 32, 56, 56]
     input_data = torch.randn(input_shape)
     scripted_model = torch.jit.trace(model.cpu(), input_data).eval()
 
@@ -230,7 +230,7 @@ if __name__ == '__main__':
                     do_constant_folding=False,
                     input_names=input_names, output_names=output_names, 
                     training = torch.onnx.TrainingMode.TRAINING,
-                    example_outputs=torch.rand((1, 2048, 7, 7)),
+                    example_outputs=torch.rand((1, 1280, 7, 7)),
                     opset_version=12)
     onnx_model = onnx.load(f"models/{NAME}.onnx")
 
