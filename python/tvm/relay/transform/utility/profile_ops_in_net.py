@@ -40,18 +40,18 @@ def _get_op_name(expr):
     op_name = str(expr.op.name).split("nn.")[-1]
     return op_name
 
-def _measure_single_op(expr, op_perf_dic, target):
+def _measure_single_op(expr, op_perf_dic, target, hw_name):
     is_skip_node = isinstance(expr, tvm.ir.op.Op) or isinstance(expr, relay.Function)
     is_skip_node |= is_tuple_node(expr)
     if is_skip_node:
         return
 
     is_matched_once = False
-    backendop_lib = BackendOpLib.get()
+    backendop_lib = BackendOpLib.get(hw_name)
     for pat in backendop_lib.get_all_patterns():
         if pat.get_op_type().depth() == 1 and pat.match(expr):
             # Measure an op perf for a given backend
-            _, op_cost = get_optimal_backendop(backendop_lib, expr, pat, [target])
+            _, op_cost = get_optimal_backendop(backendop_lib, expr, pat, [target], hw_name)
             op_perf_dic[_get_op_name(expr)] += op_cost
 
             if is_matched_once:
@@ -98,12 +98,12 @@ def draw_bar_plot(df, network, col_name, target_name, fig_name):
                 #bbox_inches='tight')
     print(f"The following plot is generated: {fig_name}")
 
-def profile_ops_in_net(expr, network, target_name):
+def profile_ops_in_net(expr, network, target_name, hw_name):
 
     # Measure op perf by traversing the network
     op_perf_dic = defaultdict(int)
     target = STR_TO_TARGET[target_name]
-    relay.analysis.post_order_visit(expr, lambda node: _measure_single_op(node, op_perf_dic, target))
+    relay.analysis.post_order_visit(expr, lambda node: _measure_single_op(node, op_perf_dic, target, hw_name))
 
     # Plot op perfs in the pie chart
     # Warning(@Soo): make sure we have dict instead of defaultdict to create plots

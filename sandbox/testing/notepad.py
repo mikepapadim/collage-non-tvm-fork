@@ -1,8 +1,8 @@
 from tvm.relay.dataflow_pattern import *
 from tvm import relay
 
-pat = is_op("concatenate")(wildcard())
-print(pat.args)
+
+
 # dshape = (1, 16, 64, 64)
 # x = relay.var("x", shape=dshape)
 # pooled = relay.nn.max_pool2d(x, pool_size=(2, 2), strides=(2, 2), padding=(0, 0))
@@ -16,13 +16,6 @@ print(pat.args)
 #     data=data, weight=conv_weight, kernel_size=(1, 1), channels=64, padding=(0, 0)
 # )
 #
-Add(Conv, Var), Add(Var, Conv)
-is_op("add")(is_op("nn.conv2d")(wildcard(), wildcard()), wildcard())
-add(maxpool2d. conv2d)
-Add(Conv, wildcard)
-add = relay.add(relay.var("data", relay.TensorType((1, 64, 58, 58), "float32")), conv2d)
-pat = is_op("add")(is_op("nn.conv2d")(wildcard(), wildcard()), wildcard())
-match = pat.match(add)
 # is_tuple_get_item()
 # print(repr(add))
 # print(pat)

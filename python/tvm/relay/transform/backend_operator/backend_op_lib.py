@@ -51,13 +51,13 @@ class BackendOpCostEvaluator:
 
     BackendOpCostEvaluator.__instance = self
 
-  def log_backend_op_perf(self, b_op_lib, expr, target):
+  def log_backend_op_perf(self, b_op_lib, expr, target, hw_name):
     assert type(target) != list
 
     for pattern in b_op_lib.get_all_patterns():
       if pattern.get_pattern().match(expr):
         print("PATTERN:\n", pattern.get_pattern())
-        res = get_optimal_backendop(b_op_lib, expr, pattern, [target])
+        res = get_optimal_backendop(b_op_lib, expr, pattern, [target], hw_name)
         if res == None:
           print("No satisfying backend operators")
         else:
@@ -78,20 +78,20 @@ class BackendOpLib(object):
   __instance = None
 
   @staticmethod
-  def get():
+  def get(hw_name):
     """ Static access method. """
     if BackendOpLib.__instance == None:
-      BackendOpLib()
+      BackendOpLib(hw_name)
     return BackendOpLib.__instance
 
-  def __init__(self):
+  def __init__(self, hw_name):
     """ Virtually private constructor. """
     if BackendOpLib.__instance != None:
       raise Exception("This class is a singleton!")
 
     # list of all backend operators
     self._measured_configs = MeasuredConfigs()
-    self._measured_configs.load_from_log()
+    self._measured_configs.load_from_log(hw_name)
 
     self.all_backendops = []
     # dictionary that maps each pattern to list of backend ops represented by the pattern
@@ -169,5 +169,5 @@ class BackendOpLib(object):
     return list(self.pattern_to_backendops.keys())
 
   # save newly measured op perfs to the log
-  def save_to_log(self):
-    return self._measured_configs.save_to_log()
+  def save_to_log(self, hw_name):
+    return self._measured_configs.save_to_log(hw_name)

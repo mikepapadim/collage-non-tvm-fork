@@ -39,7 +39,7 @@ import gc
 
 # the goal ('fitness') function to be maximized
 class EvolutionarySearcher:
-    def __init__(self, op_state_to_match_translator, expr, net_name,
+    def __init__(self, op_state_to_match_translator, expr, net_name, hw_name,
                  n_ops, pop_size=100, cx_prob=0.5, mut_prob=0.2, max_iter=100):
 
         self.op_state_to_match_translator = op_state_to_match_translator
@@ -56,6 +56,7 @@ class EvolutionarySearcher:
 
         # Load network to measure
         self.net_name = net_name
+        self.hw_name = hw_name
         self.target_str = 'cuda'
 
         self.mod, self.params, self.shape_dict, _ = get_network_from_torch(net_name, 1)
@@ -143,7 +144,7 @@ class EvolutionarySearcher:
     # There is no more oom with this!
     def measure_subprocess(self):
         from subprocess import Popen, PIPE, STDOUT, DEVNULL
-        cmd = ['python3',  'testing/tmp_measure_network.py', self.net_name, self.target_str]
+        cmd = ['python3',  'testing/tmp_measure_network.py', self.net_name, self.target_str, self.hw_name]
         p = Popen(cmd, stdout=DEVNULL, stderr=PIPE)
         # p = Popen(cmd)
         p.wait()
@@ -197,7 +198,7 @@ class EvolutionarySearcher:
         else:
             self.numDup += 1
             # mean_perf, std_perf = measure_end_to_end_user_defined(self.mod["main"], self.params, self.shape_dict,
-            #                                                       self.target_str, self.net_name)
+            #                                                       self.target_str, self.net_name, self.hw_name)
             mean_perf, std_perf = self.measure_subprocess()
         # self._memo_state[individual_hash] = -mean_perf
 

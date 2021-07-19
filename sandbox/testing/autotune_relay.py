@@ -294,6 +294,7 @@ def args_checker(args, parser):
     is_missing_arg |= not args.log_file
     is_missing_arg |= not args.dtype
     is_missing_arg |= not args.batch_size
+    is_missing_arg |= not args.hw
 
     if is_missing_arg:
         parser.error('Make sure you input all arguments')

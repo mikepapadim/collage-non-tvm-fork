@@ -37,7 +37,9 @@ cur_dir_path = Path(__file__).parent.absolute()
 LOG_PATH = f"{cur_dir_path}/../logs"
 BEST_MATCH_LOG = f"{LOG_PATH}/best_match"
 USER_DEFINED_MATCH_LOG = f"{LOG_PATH}/user_defined_match.log"
-AUTOTVM_LOG = f"{LOG_PATH}/autotvm_ops.json"
+HW_FUNC_ATTR = "TargetHW"
+NETWORK_FUNC_ATTR = "NetworkName"
+# AUTOTVM_LOG = f"{LOG_PATH}/autotvm_ops.json"
 # Temporary autoscheduler log file
 # FIXME(@Soo): Accumulate autoscheduler logs to the same file
 # AUTOSCH_LOG = "/home/byungsoj/backend-aware-graph-opt/package/autotune/tmp/autosch_ops.json.resnet50.tmp"
@@ -50,6 +52,9 @@ measure
 - 2) operator
     > Keep as is
 """
+
+def get_autotvm_log_path(hw_name):
+    return f"{LOG_PATH}/autotvm_ops_{hw_name}.json"
 
 def measure(ftimer, is_net, *args):
     # Dummy run to check whether it runs correctly e.g., segfault due to large workspace
@@ -118,7 +123,7 @@ class TVMSubGraphCostFunc_AutoSch(TargetCostFunc):
     # measure the cost of running an expression on a target, in milliseconds.
     # We assume that the target has a backend operator satisfying the configuration of the expr
     @staticmethod
-    def measure_cost(name, expr, target):
+    def measure_cost(name, expr, target, hw_name):
         # Create workload
         inputs = relay.analysis.free_vars(expr)
         expr_func = relay.Function(inputs, expr)
@@ -151,17 +156,18 @@ class TVMSubGraphCostFunc_AutoTVM(TargetCostFunc):
     # measure the cost of running an expression on a target, in milliseconds.
     # We assume that the target has a backend operator satisfying the configuration of the expr
     @staticmethod
-    def measure_cost(name, expr, target):
+    def measure_cost(name, expr, target, hw_name):
         # Create workload
         inputs = relay.analysis.free_vars(expr)
         expr_func = relay.Function(inputs, expr)
         net, params = testing.create_workload(expr_func)
 
-        assert(os.path.exists(AUTOTVM_LOG))
+        assert(os.path.exists(get_autotvm_log_path(hw_name)))
 
+        # print(f"Measure autotvm log: {get_autotvm_log_path(hw_name)}")
         # AutoTVM codes
         # Compile kernels with history best records
-        with autotvm.apply_history_best(AUTOTVM_LOG):
+        with autotvm.apply_history_best(get_autotvm_log_path(hw_name)):
             target_str = target.__str__()
             with tvm.transform.PassContext(opt_level=OPT_LEVEL.get()):
                 lib = relay.build_module.build(net, target=target_str, params=params)
@@ -184,7 +190,7 @@ class TVMSubGraphCostFunc_NoTuning(TargetCostFunc):
     # measure the cost of running an expression on a target, in milliseconds.
     # We assume that the target has a backend operator satisfying the configuration of the expr
     @staticmethod
-    def measure_cost(name, expr, target):
+    def measure_cost(name, expr, target, hw_name):
         # Create workload
         inputs = relay.analysis.free_vars(expr)
         expr_func = relay.Function(inputs, expr)
@@ -244,7 +250,7 @@ class CuDNNCostFunc(TargetCostFunc):
         super().__init__()
 
     @staticmethod
-    def measure_cost(name, expr, target):
+    def measure_cost(name, expr, target, hw_name):
         from tvm.contrib import cudnn
         from tvm import te
         from tvm import tir
@@ -692,7 +698,7 @@ class TensorRTCostFunc(TargetCostFunc):
         super().__init__()
 
     @staticmethod
-    def measure_cost(name, expr, target):
+    def measure_cost(name, expr, target, hw_name):
 
         # Create workload
         inputs = relay.analysis.free_vars(expr)

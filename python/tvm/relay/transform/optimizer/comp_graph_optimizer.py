@@ -142,7 +142,7 @@ class CompGraphOptimizer:
         # self._func_var_id = -1
         # self._has_call = 0
 
-    def optimize(self, comp_graph):
+    def optimize(self, comp_graph, hw_name):
         # HACKY: Reset matched_expr
         comp_graph.reset()
         frontiers = Q.PriorityQueue()
@@ -151,7 +151,7 @@ class CompGraphOptimizer:
         self.loc2match = {hash(comp_graph.get_root()): {"match":[], "cost":0, "string":""}}
         while not frontiers.empty():
             # Facilitate the debugging process
-            self._backendop_lib.save_to_log()
+            self._backendop_lib.save_to_log(hw_name)
             f = frontiers.get()
             f_expr = f.get_relay_expr()
             print("="*45)
@@ -181,7 +181,8 @@ class CompGraphOptimizer:
                     for t_idx, (expr_after_match, prev_expr_after_match) in enumerate(tuple_after_matches):
                         # Get new frontier, matched backend ops, and their costs
                         new_loc = comp_graph.expr2node[hash(expr_after_match)]
-                        pat_op, pat_cost = get_optimal_backendop(self._backendop_lib, f_expr, pat, self._target_backend)
+                        pat_op, pat_cost = get_optimal_backendop(self._backendop_lib, f_expr, pat,
+                                                                 self._target_backend, hw_name)
 
                         # Skip update if there is no backend op available for matched pattern
                         if pat_op == None:
@@ -334,7 +335,7 @@ class ExhaustiveSearcher:
 
         while not frontiers.empty():
             # Facilitate the debugging process
-            self._backendop_lib.save_to_log()
+            self._backendop_lib.save_to_log(hw_name)
 
             f = frontiers.get()
             f_expr = f.get_relay_expr()

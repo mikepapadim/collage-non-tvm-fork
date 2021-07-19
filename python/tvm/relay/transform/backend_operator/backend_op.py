@@ -56,7 +56,7 @@ class BackendOp(object):
   def get_max_depth(self):
     return self._max_depth
 
-  def get_cost(self, expr):
+  def get_cost(self, expr, hw_name):
 
     # configuration: backend operator name, operator type (which encode pattern), data shape, node attributes
 
@@ -85,7 +85,7 @@ class BackendOp(object):
       printe("NOT REUSED!!!!")
     
       cost_func = get_target_cost_func(self._target)
-      cost_info = cost_func(self._name, expr, self._target)
+      cost_info = cost_func(self._name, expr, self._target, hw_name)
       self._measured_configs.save_cost(config, cost_info)
     
     # We use mean as a cost instead of sampling for now
@@ -208,7 +208,7 @@ def extract_subgraph(expr, max_depth, pattern):
 
 # given a pattern and a relay expr matching that pattern, return the cheapest backend operator
 # satisfying the constraints and its cost. Return None if no backend operators satisfy constraints.
-def get_optimal_backendop(b_op_lib, expr, pattern, target = None):
+def get_optimal_backendop(b_op_lib, expr, pattern, target = None, hw_name = "INVALID"):
   assert type(target) == list
   
   backendops = b_op_lib.get_backendops(pattern)
@@ -232,7 +232,7 @@ def get_optimal_backendop(b_op_lib, expr, pattern, target = None):
       print(f"Subgraph to measure (target: {str(op._target.name())}):", subgraph)
     else:
       print(f"Subgraph to measure (target: {str(op._target.name())}):", repr(subgraph))
-    cost = op.get_cost(subgraph)
+    cost = op.get_cost(subgraph, hw_name)
     print(f"Cost of subgraph : {cost:4f}")
     print("-" * 45)
 
