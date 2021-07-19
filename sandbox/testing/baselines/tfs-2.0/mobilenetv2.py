@@ -29,8 +29,8 @@ def block(tensor, inp, oup, stride, expand_ratio):
     use_res_connect = stride == 1 and inp == oup
 
     if expand_ratio == 1:
-        convd = make_conv2d(input_tensor=convd, filter_shape=(3,3,hidden_dim, hidden_dim), strides=(1,1,stride,stride), padding=[[0, 0], [0, 0],[1, 1], [1, 1]], actimode="RELU", name="_conv1")
-        convd = make_conv2d(input_tensor=convd, filter_shape=(1,1,hidden_dim, oup), strides=(1,1,1,1), padding=[[0, 0], [0, 0],[0, 0], [0, 0]], actimode="NONE", name="_conv1")
+        convd = make_conv2d(input_tensor=convd, filter_shape=(3,3,hidden_dim, hidden_dim), strides=(1,1,stride,stride), padding=[[0, 0], [0, 0],[1, 1], [1, 1]], actimode="RELU", name="conv1")
+        convd = make_conv2d(input_tensor=convd, filter_shape=(1,1,hidden_dim, oup), strides=(1,1,1,1), padding=[[0, 0], [0, 0],[0, 0], [0, 0]], actimode="NONE", name="conv1")
 
         """
         conv = nn.Sequential(
@@ -42,15 +42,15 @@ def block(tensor, inp, oup, stride, expand_ratio):
         )
         """
     else:
-        convd = make_conv2d(input_tensor=convd, filter_shape=(1,1,inp, hidden_dim), strides=(1,1,1,1), padding=[[0, 0], [0, 0],[0, 0], [0, 0]], actimode="NONE", name="_conv1")
+        convd = make_conv2d(input_tensor=convd, filter_shape=(1,1,inp, hidden_dim), strides=(1,1,1,1), padding=[[0, 0], [0, 0],[0, 0], [0, 0]], actimode="NONE", name="conv1")
         groups = hidden_dim
-        t = tf.split(convd, groups, axis=1, name="_split")
+        t = tf.split(convd, groups, axis=1, name="split")
         assert(len(t) == groups)
         for i in range(groups):
-            t[i] = make_conv2d(input_tensor=t[i], filter_shape=(3,3,t[i].shape[1],hidden_dim//groups), strides=(1,1,stride,stride), padding=[[0, 0], [0, 0],[1, 1], [1, 1]], actimode="RELU", name="_conv2_".format(i))
-        output = tf.concat(t, axis=1, name="_concat")
+            t[i] = make_conv2d(input_tensor=t[i], filter_shape=(3,3,t[i].shape[1],hidden_dim//groups), strides=(1,1,stride,stride), padding=[[0, 0], [0, 0],[1, 1], [1, 1]], actimode="RELU", name="conv2_".format(i))
+        output = tf.concat(t, axis=1, name="concat")
         #convd = make_conv2d(input_tensor=output, filter_shape=(3,3,hidden_dim, hidden_dim), strides=(1,1,stride,stride), padding=[[0, 0], [0, 0],[1, 1], [1, 1]], actimode="RELU", name="_conv1")
-        convd = make_conv2d(input_tensor=convd, filter_shape=(1,1,hidden_dim, oup), strides=(1,1,1,1), padding=[[0, 0], [0, 0],[0, 0], [0, 0]], actimode="NONE", name="_conv1")
+        convd = make_conv2d(input_tensor=convd, filter_shape=(1,1,hidden_dim, oup), strides=(1,1,1,1), padding=[[0, 0], [0, 0],[0, 0], [0, 0]], actimode="NONE", name="conv1")
 
         """
         conv = nn.Sequential(
