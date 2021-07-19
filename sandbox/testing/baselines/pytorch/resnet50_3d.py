@@ -25,7 +25,7 @@ args = parser.parse_args()
 
 model = resnet50().cuda()
 model.eval()
-inputs = torch.randn(1, 3, 56, 56, 64).cuda()
+inputs = torch.randn(1, 64, 3, 56, 56).cuda()
 
 print(model(inputs).size())
 
@@ -51,7 +51,7 @@ for i in range(args.discard_iter, len(times)):
 avg = total / (args.iterations)
 print("Average inference time of the last " + str(args.iterations) + " iterations: " + str(avg) + " ms")
 
-input_shape = [1, 3, 56, 56, 64]
+input_shape = [1, 64, 3, 56, 56]
 input_data = torch.randn(input_shape)
 scripted_model = torch.jit.trace(model.cpu(), input_data).eval()
 
