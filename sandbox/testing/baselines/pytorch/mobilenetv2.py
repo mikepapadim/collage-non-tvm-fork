@@ -66,7 +66,7 @@ class InvertedResidual(nn.Module):
 
 
 class MobileNetV2(nn.Module):
-    def __init__(self, n_class=1000, input_size=224, width_mult=1.):
+    def __init__(self, input_size=224, width_mult=1.):
         super(MobileNetV2, self).__init__()
         block = InvertedResidual
         input_channel = 32
@@ -101,15 +101,10 @@ class MobileNetV2(nn.Module):
         # make it nn.Sequential
         self.features = nn.Sequential(*self.features)
 
-        # building classifier
-        #self.classifier = nn.Linear(self.last_channel, n_class)
-
         self._initialize_weights()
 
     def forward(self, x):
         x = self.features(x)
-        #x = x.mean(3).mean(2)
-        #x = self.classifier(x)
         return x
 
     def _initialize_weights(self):
@@ -128,22 +123,13 @@ class MobileNetV2(nn.Module):
                 m.bias.data.zero_()
 
 
-def mobilenet_v2(pretrained=True):
+def mobilenet_v2():
     model = MobileNetV2(width_mult=1)
-
-    if pretrained:
-        try:
-            from torch.hub import load_state_dict_from_url
-        except ImportError:
-            from torch.utils.model_zoo import load_url as load_state_dict_from_url
-        state_dict = load_state_dict_from_url(
-            'https://www.dropbox.com/s/47tyzpofuuyyv1b/mobilenetv2_1.0-f2a8633.pth.tar?dl=1', progress=True)
-        model.load_state_dict(state_dict)
     return model
 
 
 if __name__ == '__main__':
-    net = mobilenet_v2(False)
+    net = mobilenet_v2()
     input_shape = [1, 3, 224, 224]
     input_data = torch.randn(input_shape)
     print(net(input_data).size())
