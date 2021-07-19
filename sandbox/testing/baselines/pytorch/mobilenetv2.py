@@ -71,7 +71,7 @@ class MobileNetV2(nn.Module):
         block = InvertedResidual
         input_channel = 32
         last_channel = 1280
-        interverted_residual_setting = [
+        inverted_residual_setting = [
             # t, c, n, s
             [1, 16, 1, 1],
             [6, 24, 2, 2],
@@ -88,7 +88,7 @@ class MobileNetV2(nn.Module):
         self.last_channel = make_divisible(last_channel * width_mult) if width_mult > 1.0 else last_channel
         self.features = []
         # building inverted residual blocks
-        for t, c, n, s in interverted_residual_setting:
+        for t, c, n, s in inverted_residual_setting:
             output_channel = make_divisible(c * width_mult) if t > 1 else c
             for i in range(n):
                 if i == 0:
