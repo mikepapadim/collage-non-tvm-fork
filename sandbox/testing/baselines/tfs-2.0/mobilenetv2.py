@@ -28,6 +28,7 @@ def block(tensor, inp, oup, stride, expand_ratio):
     hidden_dim = int(inp * expand_ratio)
     use_res_connect = stride == 1 and inp == oup
 
+    print(inp)
     if expand_ratio == 1:
         convd = make_conv2d(input_tensor=convd, filter_shape=(3,3,hidden_dim, hidden_dim), strides=(1,1,stride,stride), padding=[[0, 0], [0, 0],[1, 1], [1, 1]], actimode="RELU", name="conv1")
         convd = make_conv2d(input_tensor=convd, filter_shape=(1,1,hidden_dim, oup), strides=(1,1,1,1), padding=[[0, 0], [0, 0],[0, 0], [0, 0]], actimode="NONE", name="conv1")
