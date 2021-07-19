@@ -2,7 +2,7 @@ import tvm
 from tvm import te
 import numpy as np
 import tvm.contrib.graph_executor as runtime
-#from tvm.contrib import graph_runtime as runtime
+#import tvm.contrib.graph_executor as runtime
 from tvm import relay
 from tvm.relay import testing
 import pytest as pyt

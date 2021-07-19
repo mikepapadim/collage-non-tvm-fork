@@ -3,7 +3,7 @@ from tvm import relay
 import tvm.relay.testing as testing
 import tvm
 import numpy as np
-# from tvm.contrib import graph_runtime as runtime
+# import tvm.contrib.graph_executor as runtime
 from tvm import autotvm, auto_scheduler
 
 import os

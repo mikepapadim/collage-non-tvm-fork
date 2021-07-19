@@ -1,7 +1,7 @@
 from tvm.relay.dataflow_pattern import *
 from tvm import relay
 import tvm.relay.testing as testing
-from tvm.contrib import graph_runtime as runtime
+import tvm.contrib.graph_executor as runtime
 import numpy as np
 
 from ..backend_operator.op_type import relayop_to_varnames
