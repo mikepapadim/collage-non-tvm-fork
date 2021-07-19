@@ -15,6 +15,8 @@ models = [('bert', [64,1024], np.random.random_sample((64,1024))),
           ('nasrnn', [1,512], np.random.random_sample((1,512))),
           ('resnet50', [1,64,56,56], np.random.random_sample((1,64,56,56))),
           ('resnext50', [1,64,56,56], np.random.random_sample((1,64,56,56))),
+          ('resnet50_3d', [1,64,3,56,56], np.random.random_sample((1,64,3,56,56))),
+          ('mobilenet_v2', [1,32,56,56], np.random.random_sample((1,32,56,56)))
          ]
 
 result_dict = {}
