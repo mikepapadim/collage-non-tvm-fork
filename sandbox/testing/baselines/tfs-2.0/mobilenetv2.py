@@ -42,6 +42,7 @@ def block(tensor, inp, oup, stride, expand_ratio):
             nn.Conv2d(hidden_dim, oup, 1, 1, 0, bias=False),
         )
         """
+        tensor = convd
     else:
         convd = make_conv2d(input_tensor=convd, filter_shape=(1,1,inp, hidden_dim), strides=(1,1,1,1), padding=[[0, 0], [0, 0],[1, 1], [1, 1]], actimode="RELU", name="conv1")
         groups = hidden_dim
@@ -65,6 +66,7 @@ def block(tensor, inp, oup, stride, expand_ratio):
             nn.Conv2d(hidden_dim, oup, 1, 1, 0, bias=False),
         )
         """
+        tensor = convd
     
     if use_res_connect:
         tensor = tensor + convd
