@@ -153,7 +153,7 @@ if __name__ == '__main__':
     parser.add_argument("--discard_iter", help="How many iterations to not time during warm up", type=int, default=100)
     args = parser.parse_args()
 
-    model = mobilenet_v2()
+    model = mobilenet_v2().cuda()
     model.eval()
     inputs = torch.randn(1, 3, 224, 224).cuda()
 
