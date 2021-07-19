@@ -117,7 +117,7 @@ class RelayParser:
         net, params = testing.create_workload(expr_func)
 
         # Build the subgraph
-        ctx = tvm.context(target_str, 0)
+        ctx = tvm.device(target_str, 0)
         lib = relay.build_module.build(net, target_str, params=params)
         module = runtime.GraphModule(lib["default"](ctx))
 
