@@ -1,6 +1,6 @@
 import tvm
 from tvm import relay
-from tvm.contrib import graph_runtime as runtime
+import tvm.contrib.graph_executor as runtime
 import numpy as np
 
 from .optimizer_utils import get_pattern_len, get_next_expr_after_match
