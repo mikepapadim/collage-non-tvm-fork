@@ -3,7 +3,7 @@ from tvm import relay
 import tvm.relay.testing as testing
 import tvm
 import numpy as np
-# from tvm.contrib import graph_runtime as runtime
+# import tvm.contrib.graph_executor as runtime
 from tvm import autotvm, auto_scheduler
 
 import os
@@ -217,7 +217,7 @@ class TVMSubGraphCostFunc_NoTuning(TargetCostFunc):
         return measure(ftimer, is_net=False)
 
         # target_str = target.__str__()
-        # ctx = tvm.context(target_str, 0)
+        # ctx = tvm.device(target_str, 0)
         # lib = relay.build_module.build(net, target_str, params=params)
         # module = runtime.GraphModule(lib["default"](ctx))
         #
@@ -285,7 +285,7 @@ class CuDNNCostFunc(TargetCostFunc):
         # FIXME(@Soo): We should redesign Target class to deal with new TVM build interface
         target_str = target.__str__()
         ctx = tvm.gpu()
-        # ctx = tvm.context(target_str, 0)
+        # ctx = tvm.device(target_str, 0)
 
         data_shape = get_data_shape(expr)
         in_channels = data_shape[1]

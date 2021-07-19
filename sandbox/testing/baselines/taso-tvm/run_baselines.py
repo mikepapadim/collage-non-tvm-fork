@@ -7,7 +7,7 @@ from tvm import relay
 import tvm
 from tvm import te
 import numpy as np
-from tvm.contrib import graph_runtime as runtime
+import tvm.contrib.graph_executor as runtime
 from tvm.relay import testing
 
 models = [('bert', [64,1024], np.random.random_sample((64,1024))),
@@ -15,6 +15,8 @@ models = [('bert', [64,1024], np.random.random_sample((64,1024))),
           ('nasrnn', [1,512], np.random.random_sample((1,512))),
           ('resnet50', [1,64,56,56], np.random.random_sample((1,64,56,56))),
           ('resnext50', [1,64,56,56], np.random.random_sample((1,64,56,56))),
+          ('resnet50_3d', [1,64,3,56,56], np.random.random_sample((1,64,3,56,56))),
+          ('mobilenet_v2', [1,32,56,56], np.random.random_sample((1,32,56,56)))
          ]
 
 result_dict = {}
@@ -40,7 +42,7 @@ for NAME, input_shape, inputs in models:
         text_file.write(mod2.astext(show_meta_data=True))
 
     # Bulid the subgraph
-    ctx = tvm.context("cuda", 0)
+    ctx = tvm.device("cuda", 0)
 
     with tvm.transform.PassContext(opt_level=3):
         lib2 = relay.build(mod2, target="cuda", target_host="llvm", params=params2)

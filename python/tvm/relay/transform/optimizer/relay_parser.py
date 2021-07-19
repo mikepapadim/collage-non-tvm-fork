@@ -1,7 +1,7 @@
 from tvm.relay.dataflow_pattern import *
 from tvm import relay
 import tvm.relay.testing as testing
-from tvm.contrib import graph_runtime as runtime
+import tvm.contrib.graph_executor as runtime
 import numpy as np
 
 from ..backend_operator.op_type import relayop_to_varnames
@@ -117,7 +117,7 @@ class RelayParser:
         net, params = testing.create_workload(expr_func)
 
         # Build the subgraph
-        ctx = tvm.context(target_str, 0)
+        ctx = tvm.device(target_str, 0)
         lib = relay.build_module.build(net, target_str, params=params)
         module = runtime.GraphModule(lib["default"](ctx))
 
