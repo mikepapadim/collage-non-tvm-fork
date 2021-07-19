@@ -84,6 +84,7 @@ def make_divisible(x, divisible_by=8):
 @tf.function(experimental_compile=args.xla)
 def mobilenetv2(input):    
     tensor = input
+    input_channel = 32
     for t, c, n, s in inverted_residual_setting:
         output_channel = make_divisible(c * 1) if t > 1 else c
         for i in range(n):
