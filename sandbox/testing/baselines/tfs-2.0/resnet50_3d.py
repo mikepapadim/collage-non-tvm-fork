@@ -12,11 +12,11 @@ config.gpu_options.allow_growth = True
 session = tf.compat.v1.Session(config=config)
 
 def resnet_block(input, strides, out_channels, name):
-    t = make_conv3d(input_tensor=input, filter_shape=(1,1,input.shape[1],out_channels), strides=(1,1,1,1,1), padding="SAME", actimode="RELU", name=name+"_conv1")
-    t = make_conv3d(input_tensor=t, filter_shape=(3,3,out_channels,out_channels), strides=strides, padding="SAME", actimode="RELU", name=name+"_conv2")
-    t = make_conv3d(input_tensor=t, filter_shape=(1,1,out_channels,out_channels*4), strides=(1,1,1,1,1), padding="SAME", actimode="NONE", name=name+"_conv3")
+    t = make_conv3d(input_tensor=input, filter_shape=(1,1,1,input.shape[1],out_channels), strides=(1,1,1,1,1), padding="SAME", actimode="RELU", name=name+"_conv1")
+    t = make_conv3d(input_tensor=t, filter_shape=(3,3,3,out_channels,out_channels), strides=strides, padding="SAME", actimode="RELU", name=name+"_conv2")
+    t = make_conv3d(input_tensor=t, filter_shape=(1,1,1,out_channels,out_channels*4), strides=(1,1,1,1,1), padding="SAME", actimode="NONE", name=name+"_conv3")
     if (strides[2]>1) or (input.shape[1] != out_channels * 4):
-        input = make_conv3d(input_tensor=input, filter_shape=(1,1,input.shape[1],out_channels*4), strides=strides, padding="SAME", actimode="RELU", name=name+"_conv4")
+        input = make_conv3d(input_tensor=input, filter_shape=(1,1,1,input.shape[1],out_channels*4), strides=strides, padding="SAME", actimode="RELU", name=name+"_conv4")
     return tf.nn.relu(tf.add(input, t))
 
 parser = argparse.ArgumentParser()
@@ -47,7 +47,7 @@ def resnet50(input):
 
 times = []
 for i in range(args.discard_iter + args.iterations):
-    inputs = tf.constant(np.random.random_sample((1,3,56,56,64)).astype(np.float32))
+    inputs = tf.constant(np.random.random_sample((1,64,3,56,56)).astype(np.float32))
 
     t0 = timeit.default_timer()
     resnet50(inputs)
