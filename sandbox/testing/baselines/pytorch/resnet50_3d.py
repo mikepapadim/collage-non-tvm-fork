@@ -95,7 +95,7 @@ with open(f"models/{NAME}_onnx.txt", "w") as text_file:
     text_file.write(mod2.astext(show_meta_data=True))
 
 # Bulid the subgraph
-ctx = tvm.context("cuda", 0)
+ctx = tvm.device("cuda", 0)
 
 with tvm.transform.PassContext(opt_level=3):
     lib = relay.build(mod, target="cuda", target_host="llvm", params=params)
