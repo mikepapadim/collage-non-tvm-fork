@@ -2,7 +2,7 @@ import torch
 import argparse
 import onnx
 import onnxruntime
-from resnets import resnet50
+from resnets_3d import resnet50
 import torch.autograd.profiler as profiler
 import tvm.relay.op
 from tqdm import tqdm 
