@@ -53,7 +53,7 @@ def block(graph, tensor, inp, oup, stride, expand_ratio):
         tensor = convd
     
     if use_res_connect:
-        tensor = tensor + convd
+        tensor = graph.add(tensor, convd)
 
     return tensor
 
