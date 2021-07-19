@@ -25,7 +25,7 @@ args = parser.parse_args()
 
 model = resnet50().cuda()
 model.eval()
-inputs = torch.randn(1, 3, 64, 56, 56).cuda()
+inputs = torch.randn(1, 64, 56, 56, 3).cuda()
 
 print(model(inputs).size())
 
@@ -51,7 +51,7 @@ for i in range(args.discard_iter, len(times)):
 avg = total / (args.iterations)
 print("Average inference time of the last " + str(args.iterations) + " iterations: " + str(avg) + " ms")
 
-input_shape = [1, 3, 64, 56, 56]
+input_shape = [1, 64, 56, 56, 3]
 input_data = torch.randn(input_shape)
 scripted_model = torch.jit.trace(model.cpu(), input_data).eval()
 
@@ -80,7 +80,7 @@ torch.onnx.export(scripted_model, input_data,
                   do_constant_folding=False,
                   input_names=input_names, output_names=output_names, 
                   training = torch.onnx.TrainingMode.TRAINING,
-                  example_outputs=torch.rand((1, 2048, 7, 7)),
+                  example_outputs=torch.rand((1, 2048, 7, 7, 1)),
                   opset_version=12)
 onnx_model = onnx.load(f"models/{NAME}.onnx")
 
