@@ -42,7 +42,7 @@ def block(tensor, inp, oup, stride, expand_ratio):
         )
         """
     else:
-        convd = make_conv2d(input_tensor=convd, filter_shape=(1,1,inp, hidden_dim), strides=(1,1,1,1), padding=[[0, 0], [0, 0],[0, 0], [0, 0]], actimode="NONE", name="conv1")
+        convd = make_conv2d(input_tensor=convd, filter_shape=(1,1,inp, hidden_dim), strides=(1,1,1,1), padding=[[0, 0], [0, 0],[1, 1], [1, 1]], actimode="RELU", name="conv1")
         groups = hidden_dim
         t = tf.split(convd, groups, axis=1, name="split")
         assert(len(t) == groups)
