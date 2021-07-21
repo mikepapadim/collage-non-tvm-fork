@@ -75,12 +75,16 @@ def measure(ftimer, is_net, *args):
     # Measure performance. Continue until we get results within the max standard deviation
     while True:
         perfs = np.array(ftimer(*args).results) * 1000  # convert to millisecond
-        std_perf = np.std(perfs)
-        printe(f"Mean, std of perf : {np.mean(perfs)}, {std_perf}")
+        mean_perf, std_perf = np.mean(perfs), np.std(perfs)
+        printe(f"Mean, std of perf : {mean_perf}, {std_perf}")
 
-        if std_perf <= MAX_STANDARD_DEVIATION:
-        #if is_net or std_perf <= MAX_STANDARD_DEVIATION:
-            mean_perf = np.mean(perfs)
+        # If mean_perf is more than 1 ms, then we should reduce threshold not to take too long,
+        # e.g., BERT or Conv3D ops
+        # Otherwise, we keep MAX_STANDARD_DEVIATION no matter how small the mean_perf is.
+        # MAX_STANDARD_DEVIATION much of variance shouldn't matter anyway for end-to-end perf.
+        threshold = max(MAX_STANDARD_DEVIATION, MAX_STANDARD_DEVIATION*mean_perf)
+        # if is_net or std_perf <= MAX_STANDARD_DEVIATION:
+        if std_perf <= threshold:
             break
 
     return mean_perf, std_perf

@@ -179,6 +179,12 @@ class CompGraphOptimizer:
                     # Consdier only valid nodes
                     tuple_after_matches = [tup for tup in tuple_after_matches if hash(tup[0]) in comp_graph.expr2node]
                     for t_idx, (expr_after_match, prev_expr_after_match) in enumerate(tuple_after_matches):
+                        # print(f"Branch {t_idx}")
+                        # print("New frontier")
+                        # print(expr_after_match)
+                        # print("Expr before new frontier")
+                        # print(prev_expr_after_match)
+                        # print("-" * 30)
                         # Get new frontier, matched backend ops, and their costs
                         new_loc = comp_graph.expr2node[hash(expr_after_match)]
                         pat_op, pat_cost = get_optimal_backendop(self._backendop_lib, f_expr, pat,
@@ -192,6 +198,7 @@ class CompGraphOptimizer:
                         # new_string = self.loc2match[hash(f)]['string'] + "-" + self._pattern_to_name[pat]
 
                         # Flush matchings from second branch if there are more than one branches
+                        # because we only need one matching result regardless of how many branches we have
                         if t_idx == 0:
                             new_match = self.loc2match[hash(f)]["match"] + [(pat_op, pat_cost, hash(f_expr))]
                             # @Sung: Add driver cost
@@ -202,6 +209,8 @@ class CompGraphOptimizer:
                             new_match, new_cost, new_string = [], 0, "+"
 
                         # Maintain pair2match for keeping track of match results for each branch
+                        # out_key is the new frontier (node after match)
+                        # in_key is the node right before the new frontier
                         new_loc.matched_expr[hash(prev_expr_after_match)] = 1
                         out_key = hash(new_loc) # new_loc is node after match
                         in_key = hash(prev_expr_after_match)
@@ -280,189 +289,143 @@ We call this tree as FrontierGraph and it allows exhaustive search over all poss
 2) Second pass is for evaluating all possible backend op assignments for a graph. Note that we only compile an
 entire graph rather than compiling multiple subgraphs to evaluate entire graph in DP.
 """
-class ExhaustiveSearcher:
-    def __init__(self, backendop_lib, target_backend=None):
-        self._backendop_lib = backendop_lib
-        self._target_backend = target_backend
-
-        # Attribute key to pass to N-to-1 lowering pass
-        self._bop_attr_key = "backend-op"
-
-        # For printing matched backend ops in ResNet graph
-        patterns = self._backendop_lib.get_all_patterns()
-        self._pattern_to_name = {}
-        for pat in patterns:
-            backend_ops = self._backendop_lib.pattern_to_backendops[pat]
-
-            assert len(backend_ops) > 0
-            name = backend_ops[0]._op_type.name()
-            self._pattern_to_name[pat] = name
-
-        self.memo_map = {}
-
-        # Key: Expr / Value: backend op id + name
-        self._backend_op_id = 0
-        self.frontier_graph = None
-
-    def debug_print(self, f, f_expr):
-        print("=" * 45)
-        if is_call_node(f_expr):
-            print(f"(topo_order, op_type) : {f._topological_order}, {f_expr.op}")
-        else:
-            print(f"(topo_order, op_type) : {f._topological_order}, {type(f_expr)}, Non-call node")
-
-    def create_backend_op_annotation(self, backend_op):
-        return f"{self._backend_op_id}-{backend_op}"
-
-    def get_backend_ops(self, pattern):
-        backend_ops = self._backendop_lib.get_backendops(pattern)
-        backend_op_annotations = []
-        for op in backend_ops:
-            if op.get_target() in self._target_backend:
-                backend_op_annotations.append(self.create_backend_op_annotation(op))
-
-        return backend_op_annotations
-
-    def optimize(self, comp_graph):
-        # HACKY: Reset matched_expr
-        comp_graph.reset()
-
-        # Note that we have Node object (not Relay Expr) in the frontiers
-        frontiers = Q.PriorityQueue()
-        frontiers.put(comp_graph.get_root())
-        self.frontier_graph = FrontierGraph(FrontierNode(comp_graph.get_root().get_relay_expr(), None))
-        pair2match = {}
-
-        while not frontiers.empty():
-            # Facilitate the debugging process
-            self._backendop_lib.save_to_log(hw_name)
-
-            f = frontiers.get()
-            f_expr = f.get_relay_expr()
-            f_node = FrontierNode(comp_graph.get_root().get_relay_expr(), None)
-
-            # Debug printing
-            self.debug_print(f, f_expr)
-
-            # print(self._backendop_lib.get_all_patterns())
-            for pat in self._backendop_lib.get_all_patterns():
-                # print(pat)
-                if pat.get_pattern().match(f_expr):
-                    # Check if there is an existing frontier with the same goal idx
-                    # Conv(Data, Weight)
-                    # get_next_expr_after_match -> [Data, Weight]
-                    # prev_expr_after_match = Conv()
-                    assert get_pattern_len(pat.get_pattern()) >= 1
-
-                    tuple_after_matches = get_next_expr_after_match(f_expr, None, pat.get_pattern())
-                    print("The following pattern is matched:", pat.get_pattern())
-
-                    # Consdier only valid nodes
-                    tuple_after_matches = [tup for tup in tuple_after_matches if hash(tup[0]) in comp_graph.expr2node]
-                    for t_idx, (expr_after_match, prev_expr_after_match) in enumerate(tuple_after_matches):
-                        # Get new frontier, matched backend ops, and their costs
-                        new_loc = comp_graph.expr2node[hash(expr_after_match)]
-                        backend_ops = self.get_backend_ops(pat)
-
-                        # Skip update if there is no backend op available for matched pattern
-                        if len(backend_ops) == 0:
-                            continue
-
-                        # Flush matchings from second branch if there are more than one branches
-                        if t_idx == 0:
-                            pass
-                            # new_string = self.loc2match[hash(f)]['string'] + "-" + self._pattern_to_name[pat]
-                            # print(f"Assign matched op : {pat_op}")
-                        else:
-                            new_match, new_cost, new_string = [], 0, "+"
-
-                        # Maintain pair2match for keeping track of match results for each branch
-                        new_loc.matched_expr[hash(prev_expr_after_match)] = 1
-                        # new_loc is node after match
-                        out_key, in_key = hash(new_loc), hash(prev_expr_after_match)
-
-                        if out_key not in pair2match:
-                            pair2match[out_key] = {}
-
-                        if in_key not in pair2match[out_key] or pair2match[out_key][in_key]["cost"] > new_cost:
-                            pair2match[out_key][in_key] = {"match": new_match, "cost": new_cost, "string": new_string}
-
-                        # Update loc2match for final outcome
-                        if new_loc.get_n_parents() == new_loc.get_n_matched():
-                            if hash(new_loc) not in self.loc2match:
-                                frontiers.put(new_loc)
-
-                            new_match, new_cost, new_string = [], 0, ""
-                            for _, match_dic in pair2match[out_key].items():
-                                new_match += match_dic["match"]
-                                new_cost += match_dic["cost"]
-                                new_string += match_dic["string"]
-
-                            if hash(new_loc) not in self.loc2match or self.loc2match[hash(new_loc)]["cost"] > new_cost:
-                                self.loc2match[hash(new_loc)] = {"match": new_match, "cost": new_cost,
-                                                                 "string": new_string}
-
-    def get_optimized_match(self, comp_graph):
-        assert self.loc2match is not None
-
-        # Get final match (expr, backend_op_name)
-        result_idx = -1
-        final_match = {}
-        fused_group_id = 0
-        # print(self.loc2match)
-        # print([hash(node) for node in comp_graph._nodes])
-        # print(comp_graph._nodes[-1].get_relay_expr())
-        for (pat_op, pat_cost, hash_expr) in self.loc2match[hash(comp_graph._nodes[result_idx])]["match"]:
-            final_match[hash_expr] = (fused_group_id, pat_op)
-            fused_group_id += 1
-
-        optimized_match, post_order_match_result = ExprMatcher(final_match).match(comp_graph.get_relay_expr())
-
-        return optimized_match, post_order_match_result
-
-
-
-
-    # # pylint: disable=no-else-return
-    # def visit(self, expr):
-    #     """Apply the visitor to an expression."""
-    #     if expr in self.memo_map:
-    #         return self.memo_map[expr]
-    #
-    #     if isinstance(expr, relay.Function):
-    #         res = self.visit_function(expr)
-    #     elif isinstance(expr, relay.Call):
-    #         res = self.visit_call(expr)
-    #     elif isinstance(expr, relay.Var):
-    #         res = self.visit_var(expr)
-    #     elif isinstance(expr, relay.Tuple):
-    #         res = self.visit_tuple(expr)
-    #     elif isinstance(expr, relay.TupleGetItem):
-    #         res = self.visit_tuple_getitem(expr)
-    #     elif isinstance(expr, relay.Constant):
-    #         res = self.visit_constant(expr)
-    #     else:
-    #         raise Exception("warning unhandled case: {0}".format(type(expr)))
-    #
-    #     self.memo_map[expr] = res
-    #
-    #     return res
-    #
-    # def visit_function(self, _):
-    #     raise NotImplementedError()
-    #
-    # def visit_call(self, _):
-    #     raise NotImplementedError()
-    #
-    # def visit_var(self, _):
-    #     raise NotImplementedError()
-    #
-    # def visit_tuple(self, _):
-    #     raise NotImplementedError()
-    #
-    # def visit_tuple_getitem(self, _):
-    #     raise NotImplementedError()
-    #
-    # def visit_constant(self, _):
-    #     raise NotImplementedError()
-    #
+# class ExhaustiveSearcher:
+#     def __init__(self, backendop_lib, target_backend=None):
+#         self._backendop_lib = backendop_lib
+#         self._target_backend = target_backend
+#
+#         # Attribute key to pass to N-to-1 lowering pass
+#         self._bop_attr_key = "backend-op"
+#
+#         # For printing matched backend ops in ResNet graph
+#         patterns = self._backendop_lib.get_all_patterns()
+#         self._pattern_to_name = {}
+#         for pat in patterns:
+#             backend_ops = self._backendop_lib.pattern_to_backendops[pat]
+#
+#             assert len(backend_ops) > 0
+#             name = backend_ops[0]._op_type.name()
+#             self._pattern_to_name[pat] = name
+#
+#         self.memo_map = {}
+#
+#         # Key: Expr / Value: backend op id + name
+#         self._backend_op_id = 0
+#         self.frontier_graph = None
+#
+#     def debug_print(self, f, f_expr):
+#         print("=" * 45)
+#         if is_call_node(f_expr):
+#             print(f"(topo_order, op_type) : {f._topological_order}, {f_expr.op}")
+#         else:
+#             print(f"(topo_order, op_type) : {f._topological_order}, {type(f_expr)}, Non-call node")
+#
+#     def create_backend_op_annotation(self, backend_op):
+#         return f"{self._backend_op_id}-{backend_op}"
+#
+#     def get_backend_ops(self, pattern):
+#         backend_ops = self._backendop_lib.get_backendops(pattern)
+#         backend_op_annotations = []
+#         for op in backend_ops:
+#             if op.get_target() in self._target_backend:
+#                 backend_op_annotations.append(self.create_backend_op_annotation(op))
+#
+#         return backend_op_annotations
+#
+#     def optimize(self, comp_graph):
+#         # HACKY: Reset matched_expr
+#         comp_graph.reset()
+#
+#         # Note that we have Node object (not Relay Expr) in the frontiers
+#         frontiers = Q.PriorityQueue()
+#         frontiers.put(comp_graph.get_root())
+#         self.frontier_graph = FrontierGraph(FrontierNode(comp_graph.get_root().get_relay_expr(), None))
+#         pair2match = {}
+#
+#         while not frontiers.empty():
+#             # Facilitate the debugging process
+#             self._backendop_lib.save_to_log(hw_name)
+#
+#             f = frontiers.get()
+#             f_expr = f.get_relay_expr()
+#             f_node = FrontierNode(comp_graph.get_root().get_relay_expr(), None)
+#
+#             # Debug printing
+#             self.debug_print(f, f_expr)
+#
+#             # print(self._backendop_lib.get_all_patterns())
+#             for pat in self._backendop_lib.get_all_patterns():
+#                 # print(pat)
+#                 if pat.get_pattern().match(f_expr):
+#                     # Check if there is an existing frontier with the same goal idx
+#                     # Conv(Data, Weight)
+#                     # get_next_expr_after_match -> [Data, Weight]
+#                     # prev_expr_after_match = Conv()
+#                     assert get_pattern_len(pat.get_pattern()) >= 1
+#
+#                     tuple_after_matches = get_next_expr_after_match(f_expr, None, pat.get_pattern())
+#                     print("The following pattern is matched:", pat.get_pattern())
+#
+#                     # Consdier only valid nodes
+#                     tuple_after_matches = [tup for tup in tuple_after_matches if hash(tup[0]) in comp_graph.expr2node]
+#                     for t_idx, (expr_after_match, prev_expr_after_match) in enumerate(tuple_after_matches):
+#                         # Get new frontier, matched backend ops, and their costs
+#                         new_loc = comp_graph.expr2node[hash(expr_after_match)]
+#                         backend_ops = self.get_backend_ops(pat)
+#
+#                         # Skip update if there is no backend op available for matched pattern
+#                         if len(backend_ops) == 0:
+#                             continue
+#
+#                         # Flush matchings from second branch if there are more than one branches
+#                         if t_idx == 0:
+#                             pass
+#                             # new_string = self.loc2match[hash(f)]['string'] + "-" + self._pattern_to_name[pat]
+#                             # print(f"Assign matched op : {pat_op}")
+#                         else:
+#                             new_match, new_cost, new_string = [], 0, "+"
+#
+#                         # Maintain pair2match for keeping track of match results for each branch
+#                         new_loc.matched_expr[hash(prev_expr_after_match)] = 1
+#                         # new_loc is node after match
+#                         out_key, in_key = hash(new_loc), hash(prev_expr_after_match)
+#
+#                         if out_key not in pair2match:
+#                             pair2match[out_key] = {}
+#
+#                         if in_key not in pair2match[out_key] or pair2match[out_key][in_key]["cost"] > new_cost:
+#                             pair2match[out_key][in_key] = {"match": new_match, "cost": new_cost, "string": new_string}
+#
+#                         # Update loc2match for final outcome
+#                         if new_loc.get_n_parents() == new_loc.get_n_matched():
+#                             if hash(new_loc) not in self.loc2match:
+#                                 frontiers.put(new_loc)
+#
+#                             new_match, new_cost, new_string = [], 0, ""
+#                             for _, match_dic in pair2match[out_key].items():
+#                                 new_match += match_dic["match"]
+#                                 new_cost += match_dic["cost"]
+#                                 new_string += match_dic["string"]
+#
+#                             if hash(new_loc) not in self.loc2match or self.loc2match[hash(new_loc)]["cost"] > new_cost:
+#                                 self.loc2match[hash(new_loc)] = {"match": new_match, "cost": new_cost,
+#                                                                  "string": new_string}
+#
+#     def get_optimized_match(self, comp_graph):
+#         assert self.loc2match is not None
+#
+#         # Get final match (expr, backend_op_name)
+#         result_idx = -1
+#         final_match = {}
+#         fused_group_id = 0
+#         # print(self.loc2match)
+#         # print([hash(node) for node in comp_graph._nodes])
+#         # print(comp_graph._nodes[-1].get_relay_expr())
+#         for (pat_op, pat_cost, hash_expr) in self.loc2match[hash(comp_graph._nodes[result_idx])]["match"]:
+#             final_match[hash_expr] = (fused_group_id, pat_op)
+#             fused_group_id += 1
+#
+#         optimized_match, post_order_match_result = ExprMatcher(final_match).match(comp_graph.get_relay_expr())
+#
+#         return optimized_match, post_order_match_result
+#

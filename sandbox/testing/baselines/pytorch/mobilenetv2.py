@@ -60,7 +60,7 @@ class InvertedResidual(nn.Module):
 
     def forward(self, x):
         if self.use_res_connect:
-            return x + self.conv(x)
+            return self.conv(x) + x
         else:
             return self.conv(x)
 
@@ -131,7 +131,6 @@ import torch
 import argparse
 import onnx
 import onnxruntime
-from resnets_3d import resnet50
 import torch.autograd.profiler as profiler
 import tvm.relay.op
 from tqdm import tqdm 

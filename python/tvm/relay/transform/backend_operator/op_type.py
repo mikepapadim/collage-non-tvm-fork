@@ -9,7 +9,7 @@ from .utils import get_diamond
 
 class OpType(Enum):
   # ID, name, depth
-  # RESNE(X)T
+  # RESNE(X)T, Mobilenet-v2
   ADD = ('add', 1)
   CONV2D = ('conv2d', 1)
   CONV2D_WINOGRAD_WO_WT = ('conv2d_winograd_without_weight_transform', 1)
@@ -53,6 +53,12 @@ class OpType(Enum):
   CONV2D_ADD = ('conv2d+add', 2)
   AVG_POOL2D_ADD = ('avgpool2d+add', 2)
   TUPLE_FIVE_IDX_CONCAT = ('tuple_five_idx+concat', 2)
+
+  # ResNet-3D
+  CONV3D = ('conv3d', 1)
+  CONV3D_RELU = ('conv3d+relu', 2)
+  CONV3D_ADD = ('conv3d+add', 2)
+  CONV3D_ADD_RELU = ('conv3d+add+relu', 3)
 
   # Others
   DIAMOND = ('diamond', 6)  # Not sure yet if it works well for DP
@@ -117,6 +123,12 @@ optype_to_pattern = {
   OpType.AVG_POOL2D_ADD : Pattern(is_op("add")(is_op("nn.avg_pool2d")(wildcard()), wildcard())),
   OpType.TUPLE_FIVE_IDX_CONCAT : Pattern(is_op("concatenate")(is_tuple([wildcard(), wildcard(), wildcard(), wildcard(), wildcard()]))),
 
+  # ResNet-3D
+  OpType.CONV3D: Pattern(is_op("nn.conv3d")(wildcard(), wildcard())),
+  OpType.CONV3D_RELU: Pattern(is_op("nn.relu")(is_op("nn.conv3d")(wildcard(), wildcard()))),
+  OpType.CONV3D_ADD : Pattern(is_op("add")(is_op("nn.conv3d")(wildcard(), wildcard()), wildcard())),
+  OpType.CONV3D_ADD_RELU: Pattern(is_op("nn.relu")(is_op("add")(is_op("nn.conv3d")(wildcard(), wildcard()), wildcard()))),
+
   # Others
   OpType.DIAMOND : get_diamond(),
   OpType.BN : Pattern(is_tuple_get_item(is_op("nn.batch_norm")(wildcard(), wildcard(), wildcard(), wildcard(), wildcard()), 0)),
@@ -165,6 +177,9 @@ relayop_to_varnames = {
   "nn.avg_pool2d" : ["data"],
   "nn.max_pool2d" : ["data"],
   "tuple" : ["data", "data", "data", "data", "data"],
+
+  # RESNET_3D
+  "nn.conv3d": ["data", "weight"],
 
   # Others
   "nn.batch_norm" : ["data", "bn_data_gamma", "bn_data_beta", "bn_data_moving_mean", "bn_data_moving_var"],

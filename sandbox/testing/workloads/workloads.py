@@ -15,6 +15,8 @@ WORKLOADS_DIC = {
     "nasrnn": {'x.1': [1, 2560]},
     # "nasrnn": {'x.1': [1, 512], 'x.2': [1, 512], 'x.3': [1, 512], 'x.4': [1, 512], 'x': [1, 512]},
     "bert": {"input0": [64, 1024]},
+    "resnet50_3d": {"input0": [1, 64, 3, 56, 56]},
+    "mobilenet_v2": {"input0": [1, 32, 56, 56]},
 }
 
 def create_relay_workload(expr):
