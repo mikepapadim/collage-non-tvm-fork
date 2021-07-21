@@ -23,6 +23,7 @@ def measure_end_to_end_user_defined(net, params, shape_dict, target_str, net_nam
     # print(f"[measure_end_to_end_user_defined] User-defined fusion (ID: {CustomFusionPass.USER_DEFINED_FUSION})")
     net = net.with_attr("CustomFusionPass", CustomFusionPass.USER_DEFINED_FUSION)
     net = net.with_attr(NETWORK_FUNC_ATTR, net_name)
+    net = net.with_attr(HW_FUNC_ATTR, hw_name)
 
     # printe(f"End-To-End measure")
     # printe(f"OPT LEVEL : {OPT_LEVEL.get()}")

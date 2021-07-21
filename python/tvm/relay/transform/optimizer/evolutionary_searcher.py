@@ -149,8 +149,8 @@ class EvolutionarySearcher:
         # p = Popen(cmd)
         p.wait()
         out, err = p.communicate()
-        # printe("message from subprocess")
-        # printe(err)
+        printe("message from subprocess")
+        printe(err)
         res = err.decode("utf-8").partition("##result:")
         assert(len(res)==3)
         numbers = res[2].split()
@@ -167,7 +167,7 @@ class EvolutionarySearcher:
 
         # Dump this opt_match in to files so that build pipeline can read it
         # USER_DEFINED_MATCH_LOG
-        match_path = f"{LOG_PATH}/user_defined_match_{self.net_name}.log"
+        match_path = f"{LOG_PATH}/user_defined_match_{self.net_name}_{self.hw_name}.log"
         self.op_match_logger.save(self.expr, opt_match, log_path=match_path)
         #printe(f"[Evaluation] Match log saved")
         # Measure entire computation graph with opt_match
@@ -229,11 +229,11 @@ class EvolutionarySearcher:
 
         # Dump the best match
         best_opt_match = self.op_state_to_match_translator.translate(best_ind[0])
-        best_match_log_path = f"{BEST_MATCH_LOG}_{self.net_name}.log"
+        best_match_log_path = f"{BEST_MATCH_LOG}_{self.net_name}_{self.hw_name}.log"
         self.op_match_logger.save(self.expr, best_opt_match, log_path=best_match_log_path)
 
         # Dump the best performance with best match
-        best_perf_log_path = f"{BEST_MATCH_LOG}_{self.net_name}_perf.log"
+        best_perf_log_path = f"{BEST_MATCH_LOG}_{self.net_name}_{self.hw_name}_perf.log"
 
         # This is inference time in ms
         best_perf = -self.get_ind_perf_from_pair(best_ind)
@@ -281,7 +281,7 @@ class EvolutionarySearcher:
         df = pd.DataFrame.from_dict(time_perf_dic, orient="index")
 
         # For better printing
-        time_perf_log_path = f"{LOG_PATH}/time_perf_{self.net_name}.log"
+        time_perf_log_path = f"{LOG_PATH}/time_perf_{self.net_name}_{self.hw_name}.log"
         df.columns = ["best performance (ms)"]
         df.index.name = "search time (secs)"
         df.to_csv(time_perf_log_path)

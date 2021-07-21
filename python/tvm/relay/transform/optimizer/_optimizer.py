@@ -143,8 +143,9 @@ def get_temp_opt_match(relay_expr):
 def get_user_fusion(relay_expr):
     printe("User-defined fusion")
     net_name = relay_expr.attrs[NETWORK_FUNC_ATTR]
+    hw_name = relay_expr.attrs[HW_FUNC_ATTR]
     relay_expr = get_function_body(relay_expr)
-    match_path = f"{LOG_PATH}/user_defined_match_{net_name}.log"
+    match_path = f"{LOG_PATH}/user_defined_match_{net_name}_{hw_name}.log"
     # match_path = f"{LOG_PATH}/best_match_{net_name}.log"
     opt_match = OpMatchReader().read(relay_expr, match_path)
 
@@ -262,11 +263,11 @@ def run_two_level_opt(relay_expr):
     #     OPT_LEVEL.set(2)
 
     # Save fisrt layer best results
-    first_layer_best_match_log_path = f"{BEST_MATCH_LOG}_{net_name}_op_level.log"
+    first_layer_best_match_log_path = f"{BEST_MATCH_LOG}_{net_name}_{hw_name}_op_level.log"
     OpMatchLogger().save(relay_expr, optimized_match, log_path=first_layer_best_match_log_path)
 
     # Save it for user-defined fusion pass to measure end-to-end perf
-    match_path = f"{LOG_PATH}/user_defined_match_{net_name}.log"
+    match_path = f"{LOG_PATH}/user_defined_match_{net_name}_{hw_name}.log"
     OpMatchLogger().save(relay_expr, optimized_match, log_path=match_path)
 
     # n_ops for each network (it may vary depending on trials)
