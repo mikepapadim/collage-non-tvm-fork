@@ -291,8 +291,9 @@ def run_two_level_opt(relay_expr):
     if n_ops > 0:
         ev_searcher = EvolutionarySearcher(op_state_to_match_translator, relay_expr, net_name, hw_name,
                                            n_ops=n_ops,
-                                           pop_size=10, max_iter=5) # For debugging
-                                           # pop_size=50,   max_iter=100000) # For experiment
+                                           # pop_size=10, max_iter=2)  # For simpler debugging
+                                           # pop_size=10, max_iter=5) # For debugging
+                                           pop_size=50,   max_iter=100000) # For experiment
         second_opt_match = ev_searcher.search(rnd_seed=64)
     else:
         second_opt_match = optimized_match
@@ -304,6 +305,10 @@ def run_two_level_opt(relay_expr):
     # print(f"fusion dic (before merge): {optimized_match}")
     # optimized_match = ExtCompilerOpMerger(optimized_match).merge(relay_expr)
     # print(f"fusion dic (after  merge): {optimized_match}")
+
+    # Update backend information to corresponding best match
+    second_layer_best_match_log_path = f"{BEST_MATCH_LOG}_{net_name}_{hw_name}.log"
+    second_opt_match = OpMatchReader().read(relay_expr, second_layer_best_match_log_path)
 
     return second_opt_match
 
