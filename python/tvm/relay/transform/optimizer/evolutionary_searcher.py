@@ -149,12 +149,16 @@ class EvolutionarySearcher:
         # p = Popen(cmd)
         p.wait()
         out, err = p.communicate()
-        # printe("me[ssage from subprocess")
-        # printe(err)
-        res = err.decode("utf-8").partition("##result:")
-        assert(len(res)==3)
-        numbers = res[2].split()
-        mean_perf, std_perf = float(numbers[0]), float(numbers[1])
+
+        try:
+            res = err.decode("utf-8").partition("##result:")
+            # assert(len(res)==3)
+            numbers = res[2].split()
+            mean_perf, std_perf = float(numbers[0]), float(numbers[1])
+        except:
+            printe("Error message from subprocess")
+            printe(err)
+            raise
 
         return mean_perf, std_perf
 

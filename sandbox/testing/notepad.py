@@ -1,6 +1,12 @@
 from tvm.relay.dataflow_pattern import *
 from tvm import relay
+import logging
 
+logging.basicConfig(filename='example.log', encoding='utf-8', level=logging.DEBUG)
+logging.debug('This message should go to the log file')
+logging.info('So should this')
+logging.warning('And this, too')
+logging.error('And non-ASCII stuff, too, like Øresund and Malmö')
 
 
 # dshape = (1, 16, 64, 64)
