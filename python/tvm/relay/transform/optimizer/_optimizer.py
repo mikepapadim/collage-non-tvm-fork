@@ -143,8 +143,9 @@ def get_temp_opt_match(relay_expr):
 def get_user_fusion(relay_expr):
     printe("User-defined fusion")
     net_name = relay_expr.attrs[NETWORK_FUNC_ATTR]
+    hw_name = relay_expr.attrs[HW_FUNC_ATTR]
     relay_expr = get_function_body(relay_expr)
-    match_path = f"{LOG_PATH}/user_defined_match_{net_name}.log"
+    match_path = f"{LOG_PATH}/user_defined_match_{net_name}_{hw_name}.log"
     # match_path = f"{LOG_PATH}/best_match_{net_name}.log"
     opt_match = OpMatchReader().read(relay_expr, match_path)
 
@@ -168,7 +169,10 @@ def run_op_level_opt(relay_expr):
 
     # Sanity check: Enable all backends except for TensorRT
     # targets = [Target.TVM_GPU_AUTOTVM, Target.CUDNN, Target.CUBLAS]
-    targets = [Target.TVM_GPU_AUTOTVM, Target.CUDNN, Target.CUBLAS, Target.TENSORRT]
+    # We coudln't figure out how to support CUBLAS in Jetson yet
+    # It shouldn't be a big deal though given TensorRT uses CuBLAS internally
+    # targets = [Target.TVM_GPU_AUTOTVM, Target.CUDNN, Target.TENSORRT]
+    targets = [Target.TVM_GPU_AUTOTVM, Target.CUDNN, Target.TENSORRT, Target.CUBLAS]
 
     batch_size = 1
     backendop_lib = setup_backend_op_lib(relay_expr, targets, batch_size, hw_name)
@@ -220,7 +224,7 @@ def run_two_level_opt(relay_expr):
 
     # It is a function if you get it from last pass of Relay build
     print("[Python side] Run two-level optimization")
-    # visualize_network(relay_expr, "o3_resnet2")
+    # visualize_network(relay_expr, "o3_mobilenet_v2")
     # op-level optimization: DP with all backends but external compilers, e.g., TensorRT
     func_expr = relay_expr
     optimized_match, relay_expr, backendop_lib, n_relay_nodes = run_op_level_opt(relay_expr)
@@ -259,11 +263,11 @@ def run_two_level_opt(relay_expr):
     #     OPT_LEVEL.set(2)
 
     # Save fisrt layer best results
-    first_layer_best_match_log_path = f"{BEST_MATCH_LOG}_{net_name}_op_level.log"
+    first_layer_best_match_log_path = f"{BEST_MATCH_LOG}_{net_name}_{hw_name}_op_level.log"
     OpMatchLogger().save(relay_expr, optimized_match, log_path=first_layer_best_match_log_path)
 
     # Save it for user-defined fusion pass to measure end-to-end perf
-    match_path = f"{LOG_PATH}/user_defined_match_{net_name}.log"
+    match_path = f"{LOG_PATH}/user_defined_match_{net_name}_{hw_name}.log"
     OpMatchLogger().save(relay_expr, optimized_match, log_path=match_path)
 
     # n_ops for each network (it may vary depending on trials)
@@ -282,13 +286,14 @@ def run_two_level_opt(relay_expr):
 
     # 100 * 200 (20000) leads to out of memory issues. We attribute this to large population issue of deap lib
     # Note that some of individuals may not be measured in each generation if they are measured anytime earlier
-    # visualize_network(relay_expr, "o3_resnext_after_match")
+    # visualize_network(relay_expr, "o3_mobilenet_v2_after_match")
     # cx_prob = 0.8, mut_prob = 0.5, resnet50: 2.512
     if n_ops > 0:
         ev_searcher = EvolutionarySearcher(op_state_to_match_translator, relay_expr, net_name, hw_name,
                                            n_ops=n_ops,
-                                           pop_size=10, max_iter=5) # For debugging
-                                           # pop_size=50,   max_iter=100000) # For experiment
+                                           # pop_size=10, max_iter=2)  # For simpler debugging
+                                           # pop_size=10, max_iter=5) # For debugging
+                                           pop_size=50,   max_iter=100000) # For experiment
         second_opt_match = ev_searcher.search(rnd_seed=64)
     else:
         second_opt_match = optimized_match
@@ -300,6 +305,10 @@ def run_two_level_opt(relay_expr):
     # print(f"fusion dic (before merge): {optimized_match}")
     # optimized_match = ExtCompilerOpMerger(optimized_match).merge(relay_expr)
     # print(f"fusion dic (after  merge): {optimized_match}")
+
+    # Update backend information to corresponding best match
+    second_layer_best_match_log_path = f"{BEST_MATCH_LOG}_{net_name}_{hw_name}.log"
+    second_opt_match = OpMatchReader().read(relay_expr, second_layer_best_match_log_path)
 
     return second_opt_match
 

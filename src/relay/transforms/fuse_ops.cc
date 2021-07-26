@@ -748,23 +748,22 @@ namespace tvm {
        */
       void MergeFromTo(Group* child, Group* parent) {
 //        if (is_tensorrt_op_) {
-//        std::cerr << "*********************************************" << std::endl;
-//        if (GetRef<ObjectRef>(child->root_ref).as<CallNode>()) {
-//          std::cerr << "child root (pat: " << child->pattern << ", b_op : " << child->backend_op_name <<
-//              "): " << GetRef<ObjectRef>(child->root_ref).as<CallNode>()->op << std::endl;
-//        }
+//          std::cerr << "*********************************************" << std::endl;
+//          if (GetRef<ObjectRef>(child->root_ref).as<CallNode>()) {
+//            std::cerr << "child root (pat: " << child->pattern << ", b_op : " << child->backend_op_name <<
+//                "): " << GetRef<ObjectRef>(child->root_ref).as<CallNode>()->op << std::endl;
+//          }
 //
-//        if (GetRef<ObjectRef>(parent->root_ref).as<CallNode>()) {
-//          std::cerr << "parent root: (pat: " << parent->pattern << ", b_op : " << parent->backend_op_name <<
-//              "): " << GetRef<ObjectRef>(parent->root_ref).as<CallNode>()->op << std::endl;
-//        } else {
-//          PrintOpType(GetRef<ObjectRef>(parent->root_ref));
-//          std::cerr << "parent root: (pat: " << parent->pattern << ", b_op : " << parent->backend_op_name <<
-//              "): " << std::endl;
+//          if (GetRef<ObjectRef>(parent->root_ref).as<CallNode>()) {
+//            std::cerr << "parent root: (pat: " << parent->pattern << ", b_op : " << parent->backend_op_name <<
+//                "): " << GetRef<ObjectRef>(parent->root_ref).as<CallNode>()->op << std::endl;
+//          } else {
+//            PrintOpType(GetRef<ObjectRef>(parent->root_ref));
+//            std::cerr << "parent root: (pat: " << parent->pattern << ", b_op : " << parent->backend_op_name <<
+//                "): " << std::endl;
+//          }
 //        }
 
-
-//        }
         child = child->FindRoot();
         parent = parent->FindRoot();
         if (child == parent) return;

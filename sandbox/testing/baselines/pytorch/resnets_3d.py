@@ -222,7 +222,7 @@ def _resnet(
     return model
 
 
-def resnet50(**kwargs: Any) -> ResNet:
+def resnet50_3d(**kwargs: Any) -> ResNet:
     r"""ResNet-50 model from
     `"Deep Residual Learning for Image Recognition" <https://arxiv.org/pdf/1512.03385.pdf>`_.
     Args:

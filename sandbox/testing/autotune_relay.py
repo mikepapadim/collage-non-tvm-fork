@@ -72,6 +72,7 @@ from tvm.contrib import graph_executor
 from tvm.relay.transform.backend_operator.target import OPT_LEVEL
 from tvm.relay.transform.utility.json_logger import *
 import time
+from tvm.relay.transform.utility.debug_helper import *
 # import tvm.contrib.graph_runtime as runtime
 
 # import tensorflow as tf
@@ -338,9 +339,12 @@ if __name__ == "__main__":
 
     #remote = rpc.connect(host, port)
 
-    # Check if we have all important args
 
+    # Check if we have all important args
     args = get_args()
+
+    # Setup automatic logging feature (to file)
+    setup_logging(task_name="autotvm_tuning", net_name=args.network, hw_name=args.hw)
     print(args)
     # target = tvm.target.cuda()
     # #target_host = 'llvm -mtriple=aarch64-linux-gnu'
@@ -358,8 +362,8 @@ if __name__ == "__main__":
         "network": args.network,
         "tuner": "xgb",
         # "n_trial": 10,  # Debug: Note that if this is too small, AutoTVM can't find valid schedules.
-        # "n_trial": 2000, # This is for AutoTVM. AutoScheduler dynamically adjusts before autotuning based on n_tasks
-        "n_trial": 4000,  # This is for AutoTVM. AutoScheduler dynamically adjusts before autotuning based on n_tasks
+        "n_trial": 2000, # This is for AutoTVM. AutoScheduler dynamically adjusts before autotuning based on n_tasks
+        # "n_trial": 4000,  # This is for AutoTVM. AutoScheduler dynamically adjusts before autotuning based on n_tasks
         "early_stopping": 600, # This only applies to AutoTVM now
 
         #"measure_option": autotvm.measure_option(

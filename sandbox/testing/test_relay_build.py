@@ -100,7 +100,7 @@ if __name__ == "__main__":
     #     OPT_LEVEL.set(2)
 
     mod, params, shape_dict, _ = get_network_from_torch(args.network, 1)
-    # mod, params, shape_dict, _ = crop_network_from_torch(args.network, 1, 22)
+    # mod, params, shape_dict, _ = crop_network_from_torch(args.network, 1, 25)
     # mod, params = get_network_from_relay(args.network, 1)
     # printe(repr(mod["main"]))
     # build_network_tensorrt(mod, params)

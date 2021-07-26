@@ -2,7 +2,7 @@ import torch
 import argparse
 import onnx
 import onnxruntime
-from resnets_3d import resnet50
+from resnets_3d import resnet50_3d
 import torch.autograd.profiler as profiler
 import tvm.relay.op
 from tqdm import tqdm 
@@ -24,7 +24,7 @@ if __name__ == "__main__":
     parser.add_argument("--discard_iter", help="How many iterations to not time during warm up", type=int, default=100)
     args = parser.parse_args()
 
-    model = resnet50().cuda()
+    model = resnet50_3d().cuda()
     model.eval()
     inputs = torch.randn(1, 64, 3, 56, 56).cuda()
 
