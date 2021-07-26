@@ -2,10 +2,11 @@ from tvm.relay.dataflow_pattern import *
 from tvm import relay
 import logging
 
-logging.basicConfig(filename='example.log', encoding='utf-8', level=logging.DEBUG)
+logging.basicConfig(filename='example.log', level=logging.INFO)
 logging.debug('This message should go to the log file')
 logging.info('So should this')
 logging.warning('And this, too')
+raise ValueError("What if it happens")
 logging.error('And non-ASCII stuff, too, like Øresund and Malmö')
 
 
