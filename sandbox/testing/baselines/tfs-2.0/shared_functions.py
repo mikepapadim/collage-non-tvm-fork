@@ -27,6 +27,13 @@ def make_conv2d(input_tensor, filter_shape, strides, padding, actimode, name):
     conv2d = tf.nn.conv2d(input=input_tensor, filters=weights, strides=strides, padding=padding, data_format="NCHW", name=conv_name)
     return make_activation(conv2d, actimode, name)
 
+def make_conv3d(input_tensor, filter_shape, strides, padding, actimode, name):
+    weights_name = name + "_weights"
+    conv_name = name + "_conv3d"
+    weights = tf.constant(np.random.random_sample(filter_shape), name=weights_name, dtype=tf.float32)
+    conv2d = tf.nn.conv3d(input=input_tensor, filters=weights, strides=strides, padding=padding, data_format="NCDHW", name=conv_name)
+    return make_activation(conv2d, actimode, name)
+
 def make_conv2d_bn(input_tensor, filter_shape, strides, padding, actimode, name):
     weights_name = name + "_weights"
     conv_name = name + "_conv2d"

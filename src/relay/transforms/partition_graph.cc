@@ -54,17 +54,16 @@ int NEW_BACKEND_GROUP_ID = 10000000;
 int NEW_BACKEND_GROUP_ID_EXT_COMPILER = 20000000;
 
 template <typename T>
-void UpdateBackendWithNewGroup(Expr op) {
+void UpdateBackendWithNewGroup(tvm::relay::Expr op) {
   std::string new_backend = std::to_string(NEW_BACKEND_GROUP_ID++) + "-tvmgpu-autotvm";
   op.as_non_const<T>()->backend = new_backend;
 }
 
 template <typename T>
-void UpdateBackendWithNewGroupForExtCompiler(Expr op) {
+void UpdateBackendWithNewGroupForExtCompiler(tvm::relay::Expr op) {
   std::string new_backend = std::to_string(NEW_BACKEND_GROUP_ID_EXT_COMPILER++) + "-tensorrt";
   op.as_non_const<T>()->backend = new_backend;
 }
-
 
 /*! \brief This struct maintains the required metadata for a region to generate a corresponding
  * global function and function call. Global function will be passed to the target specific codegen

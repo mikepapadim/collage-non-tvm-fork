@@ -16,9 +16,9 @@ if __name__ == "__main__":
     targets = [Target.TVM_GPU_NO_TUNING]
     batch_size = 1
 
-    backendop_lib = BackendOpLib.get()
-    backendop_lib.measure_backend_ops(networks, targets, batch_size)
-    backendop_lib.save_to_log()
+    # backendop_lib = BackendOpLib.get()
+    # backendop_lib.measure_backend_ops(networks, targets, batch_size)
+    # backendop_lib.save_to_log()
 
 # Note: Execute one target at a time. Otherwise, you will get random error.
 # Warning: Larger batch size leads to the error: 

@@ -151,6 +151,7 @@ def plot_nasneta(df, network_name, target_batch_size):
 if __name__ == "__main__":
     target_batch_size = 1
     network_name = 'nasneta'
+    hw_name = 'rtx2070'
 
     NETWORK_TO_PLOT_FUNC = {
         'resnet50': plot_resnet50,
@@ -163,7 +164,7 @@ if __name__ == "__main__":
     set_plt_font_size()
 
     measured_configs = MeasuredConfigs()
-    measured_configs.load_from_log()
+    measured_configs.load_from_log(hw_name)
     # measured_configs.measured_configs
 
     df = get_processed_dp(measured_configs, target_batch_size)

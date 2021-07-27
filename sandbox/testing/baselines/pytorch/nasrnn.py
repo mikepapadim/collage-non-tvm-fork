@@ -4,7 +4,7 @@ import numpy as np
 import time 
 import torch.nn as nn
 import numpy
-from tvm.contrib import graph_runtime as runtime
+import tvm.contrib.graph_executor as runtime
 import torch
 import tvm
 from tvm import relay
@@ -20,7 +20,7 @@ from tvm import relay
 import tvm
 from tvm import te
 import numpy as np
-from tvm.contrib import graph_runtime as runtime
+import tvm.contrib.graph_executor as runtime
 from tvm.relay import testing
 from torch.nn.parameter import Parameter
 
@@ -202,7 +202,7 @@ if __name__ == "__main__":
         text_file.write(mod2.astext(show_meta_data=True))
 
     # Bulid the subgraph
-    ctx = tvm.context("cuda", 0)
+    ctx = tvm.device("cuda", 0)
 
     with tvm.transform.PassContext(opt_level=3):
         lib = relay.build(mod, target="cuda", target_host="llvm", params=params)

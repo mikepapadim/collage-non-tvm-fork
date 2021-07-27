@@ -3,7 +3,7 @@ from tvm import relay
 from tvm.contrib import graph_executor as runtime
 
 from tvm.relay.transform.backend_operator.utils import is_function_node
-from tvm.relay.transform.backend_operator.target import measure, NUM_MEASUREMENTS_PER_REPEAT, NUM_REPEATS, AUTOTVM_LOG, AUTOSCH_LOG
+from tvm.relay.transform.backend_operator.target import measure, NUM_MEASUREMENTS_PER_REPEAT, NUM_REPEATS, AUTOSCH_LOG
 from tvm.relay.transform.backend_operator.target import OPT_LEVEL
 from tvm.relay.transform.optimizer.custom_fusion_pass import *
 from tvm.relay.transform.optimizer.optimizer_utils import *
@@ -19,14 +19,15 @@ import argparse
 
 from workloads.workloads import WORKLOADS_DIC
 
-def build_network(net, params, mode, net_name):
+def build_network(net, params, mode, net_name, hw_name):
     assert is_function_node(net)
     assert CustomFusionPass.has_value(mode)
 
     net = net.with_attr("CustomFusionPass", mode)
-    net = net.with_attr("NetworkName", net_name)
+    net = net.with_attr(NETWORK_FUNC_ATTR, net_name)
+    net = net.with_attr(HW_FUNC_ATTR, hw_name)
 
-    with autotvm.apply_history_best(AUTOTVM_LOG):
+    with autotvm.apply_history_best(get_autotvm_log_path(hw_name)):
         with tvm.transform.PassContext(opt_level=OPT_LEVEL.get()):
         # with tvm.transform.PassContext(opt_level=OPT_LEVEL.get(), trace=print_ir):
             lib = relay.build(net, "cuda", params=params)
@@ -56,7 +57,7 @@ def build_network_tensorrt(mod, params):
     # print(repr(mod["main"]))
     # print("config" + "-"*30)
     # print(config)
-
+    # visualize_network(mod["main"], "o3_resnet_tensorrt")
     target = "cuda"
     with tvm.transform.PassContext(opt_level=OPT_LEVEL.get(), config={'relay.ext.tensorrt.options': config}):
         lib = relay.build(mod, target=target, params=params)
@@ -70,6 +71,7 @@ def build_network_tensorrt(mod, params):
 
 def args_checker(args, parser):
     is_missing_arg = not args.network
+    is_missing_arg |= not args.hw
     # is_missing_arg |= not args.target
     # is_missing_arg |= not args.dtype
     # is_missing_arg |= not args.batch_size
@@ -81,6 +83,7 @@ def get_args():
     parser = argparse.ArgumentParser()
     # Default type is string for argparse
     parser.add_argument("-n", "--network", help="name of a neural network")
+    parser.add_argument("-hw", "--hw", help="target hardware")
     # parser.add_argument("-t", "--target", help="target device")
     # parser.add_argument("-dt", "--dtype", help="data type")
     # parser.add_argument("-bs", "--batch-size", type=int, help="batch size")
@@ -93,18 +96,18 @@ if __name__ == "__main__":
     args = get_args()
 
     # NasNet-A only works for opt_level 2 (not 3 due to the avgpool2d issue)
-    if args.network == "nasneta":
-        OPT_LEVEL.set(2)
+    # if args.network == "nasneta":
+    #     OPT_LEVEL.set(2)
 
     mod, params, shape_dict, _ = get_network_from_torch(args.network, 1)
-    # mod, params, shape_dict, _ = crop_network_from_torch(args.network, 1, 22)
+    # mod, params, shape_dict, _ = crop_network_from_torch(args.network, 1, 25)
     # mod, params = get_network_from_relay(args.network, 1)
     # printe(repr(mod["main"]))
     # build_network_tensorrt(mod, params)
-    lib = build_network(mod["main"], params, CustomFusionPass.TWO_LEVEL_OPT, args.network)
+    lib = build_network(mod["main"], params, CustomFusionPass.TWO_LEVEL_OPT, args.network, args.hw)
     # lib = build_network(mod["main"], params, CustomFusionPass.DP, args.network)
     # lib = build_network(mod["main"], params, CustomFusionPass.USER_DEFINED_FUSION, args.network)
-    print(f"We successfully built the {args.network}")
+    print(f"We successfully built the {args.network} on {args.hw}")
 
     # Verify if the network output is same after our optimization
     # verify_network_output(mod["main"], params, 'cuda', shape_dict)

@@ -1,7 +1,7 @@
 from tvm import relay
 import tvm
 from tvm.relay.transform.backend_operator.utils import is_function_node
-from tvm.relay.transform.backend_operator.target import measure, NUM_MEASUREMENTS_PER_REPEAT, NUM_REPEATS, AUTOTVM_LOG, AUTOSCH_LOG
+from tvm.relay.transform.backend_operator.target import measure, NUM_MEASUREMENTS_PER_REPEAT, NUM_REPEATS, AUTOSCH_LOG
 from tvm.relay.transform.backend_operator.target import OPT_LEVEL
 from tvm.relay.transform.optimizer.custom_fusion_pass import CustomFusionPass
 from workloads.torch_workloads import get_network_from_torch

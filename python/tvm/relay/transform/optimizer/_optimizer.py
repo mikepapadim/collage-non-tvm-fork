@@ -25,11 +25,23 @@ from .ext_compiler_op_annotator import ExtCompilerOpAnnotator
 from tvm.relay.op.contrib.tensorrt import prune_tensorrt_subgraphs
 from tvm.relay import transform
 
-def setup_backend_op_lib(network_expr, targets, batch_size):
-    backendop_lib = BackendOpLib.get()
+def setup_backend_op_lib(network_expr, targets, batch_size, hw_name):
+    backendop_lib = BackendOpLib.get(hw_name)
     # backendop_lib.measure_backend_ops(network_expr, targets, batch_size)
 
     return backendop_lib
+
+@tvm._ffi.register_func("relay.transform.optimizer.print_attr_args")
+def print_attr_args(expr):
+    printe(f"attr: {get_attr_vals(expr)}")
+
+@tvm._ffi.register_func("relay.transform.optimizer.visualize_network_debug")
+def visualize_network_debug(relay_expr, name):
+    net_name = 'default'
+    if relay_expr.attrs is not None and NETWORK_FUNC_ATTR in dict(relay_expr.attrs):
+        net_name = dict(relay_expr.attrs)[NETWORK_FUNC_ATTR]
+        visualize_network(relay_expr, f"{net_name}_{name}")
+        printe("[Done] Debug visualization")
 
 @tvm._ffi.register_func("relay.transform.optimizer.apply_external_compiler_op")
 def apply_external_compiler_op(mod):
@@ -107,10 +119,10 @@ def apply_external_compiler_op(mod):
     # Do prune_tensorrt_subgraphs
     # with tvm.transform.PassContext(opt_level=OPT_LEVEL.get(), config={"relay.ext.tensorrt.options": config},trace=print_ir):
     with tvm.transform.PassContext(opt_level=OPT_LEVEL.get(), config={"relay.ext.tensorrt.options": config}):
-        printe("Before sequential")
+        # printe("Before sequential")
         # printe(repr(mod["main"]))
         mod = seq(mod)
-        printe("After sequential")
+        # printe("After sequential")
         # Warning(@Soo): Would it be problematic?
         # mod = prune_tensorrt_subgraphs(mod)
 
@@ -130,9 +142,10 @@ def get_temp_opt_match(relay_expr):
 @tvm._ffi.register_func("relay.transform.optimizer.get_user_fusion")
 def get_user_fusion(relay_expr):
     printe("User-defined fusion")
-    net_name = relay_expr.attrs["NetworkName"]
+    net_name = relay_expr.attrs[NETWORK_FUNC_ATTR]
+    hw_name = relay_expr.attrs[HW_FUNC_ATTR]
     relay_expr = get_function_body(relay_expr)
-    match_path = f"{LOG_PATH}/user_defined_match_{net_name}.log"
+    match_path = f"{LOG_PATH}/user_defined_match_{net_name}_{hw_name}.log"
     # match_path = f"{LOG_PATH}/best_match_{net_name}.log"
     opt_match = OpMatchReader().read(relay_expr, match_path)
 
@@ -143,6 +156,7 @@ def get_user_fusion(relay_expr):
     # return relay_expr
 
 def run_op_level_opt(relay_expr):
+    hw_name = relay_expr.attrs[HW_FUNC_ATTR]
     relay_expr = get_function_body(relay_expr)
 
     comp_graph = ComputationGraph(relay_expr)
@@ -151,20 +165,24 @@ def run_op_level_opt(relay_expr):
 
     # Sanity check: Only AutoTVM
     # targets = [Target.TVM_GPU_AUTOTVM]
+    # targets = [Target.TENSORRT]
 
     # Sanity check: Enable all backends except for TensorRT
     # targets = [Target.TVM_GPU_AUTOTVM, Target.CUDNN, Target.CUBLAS]
-    targets = [Target.TVM_GPU_AUTOTVM, Target.CUDNN, Target.CUBLAS, Target.TENSORRT]
+    # We coudln't figure out how to support CUBLAS in Jetson yet
+    # It shouldn't be a big deal though given TensorRT uses CuBLAS internally
+    # targets = [Target.TVM_GPU_AUTOTVM, Target.CUDNN, Target.TENSORRT]
+    targets = [Target.TVM_GPU_AUTOTVM, Target.CUDNN, Target.TENSORRT, Target.CUBLAS]
 
     batch_size = 1
-    backendop_lib = setup_backend_op_lib(relay_expr, targets, batch_size)
+    backendop_lib = setup_backend_op_lib(relay_expr, targets, batch_size, hw_name)
 
     # Optimizing graph
     print("Computation graph created")
     optimizer = CompGraphOptimizer(backendop_lib, targets)
     print("Optimizer created")
-    optimizer.optimize(comp_graph)
-    print("It's optimized")
+    optimizer.optimize(comp_graph, hw_name)
+    print("Optimizer finished optimizing comp graph")
     optimized_match, post_order_match_result = optimizer.get_optimized_match(comp_graph)
 
     # print("Match result: ", optimized_match)
@@ -176,7 +194,7 @@ def run_op_level_opt(relay_expr):
     print_matching_final(comp_graph, optimizer.loc2match)
     print("-"*40)
 
-    backendop_lib.save_to_log()
+    backendop_lib.save_to_log(hw_name)
 
     return optimized_match, relay_expr, backendop_lib, n_relay_nodes
 
@@ -206,8 +224,7 @@ def run_two_level_opt(relay_expr):
 
     # It is a function if you get it from last pass of Relay build
     print("[Python side] Run two-level optimization")
-
-    visualize_network(relay_expr, "o3_bert")
+    # visualize_network(relay_expr, "o3_mobilenet_v2")
     # op-level optimization: DP with all backends but external compilers, e.g., TensorRT
     func_expr = relay_expr
     optimized_match, relay_expr, backendop_lib, n_relay_nodes = run_op_level_opt(relay_expr)
@@ -238,18 +255,19 @@ def run_two_level_opt(relay_expr):
     # Extract ops that are not assigned to TensorRT
 
     # Warning(@soo): Network name is hardcoded for now. We can fix it later
-    net_name = func_expr.attrs["NetworkName"]
+    hw_name = func_expr.attrs[HW_FUNC_ATTR]
+    net_name = func_expr.attrs[NETWORK_FUNC_ATTR]
     printe(f"Network name: {net_name}")
 
-    if net_name == "nasneta":
-        OPT_LEVEL.set(2)
+    # if net_name == "nasneta":
+    #     OPT_LEVEL.set(2)
 
     # Save fisrt layer best results
-    first_layer_best_match_log_path = f"{BEST_MATCH_LOG}_{net_name}_op_level.log"
+    first_layer_best_match_log_path = f"{BEST_MATCH_LOG}_{net_name}_{hw_name}_op_level.log"
     OpMatchLogger().save(relay_expr, optimized_match, log_path=first_layer_best_match_log_path)
 
     # Save it for user-defined fusion pass to measure end-to-end perf
-    match_path = f"{LOG_PATH}/user_defined_match_{net_name}.log"
+    match_path = f"{LOG_PATH}/user_defined_match_{net_name}_{hw_name}.log"
     OpMatchLogger().save(relay_expr, optimized_match, log_path=match_path)
 
     # n_ops for each network (it may vary depending on trials)
@@ -268,12 +286,14 @@ def run_two_level_opt(relay_expr):
 
     # 100 * 200 (20000) leads to out of memory issues. We attribute this to large population issue of deap lib
     # Note that some of individuals may not be measured in each generation if they are measured anytime earlier
-
+    # visualize_network(relay_expr, "o3_mobilenet_v2_after_match")
     # cx_prob = 0.8, mut_prob = 0.5, resnet50: 2.512
     if n_ops > 0:
-        ev_searcher = EvolutionarySearcher(op_state_to_match_translator, relay_expr, net_name, n_ops=n_ops,
-                                           pop_size=10, max_iter=5) # For debugging
-                                           # pop_size=50, max_iter=100000) # For experiment
+        ev_searcher = EvolutionarySearcher(op_state_to_match_translator, relay_expr, net_name, hw_name,
+                                           n_ops=n_ops,
+                                           # pop_size=10, max_iter=2)  # For simpler debugging
+                                           # pop_size=10, max_iter=5) # For debugging
+                                           pop_size=50,   max_iter=100000) # For experiment
         second_opt_match = ev_searcher.search(rnd_seed=64)
     else:
         second_opt_match = optimized_match
@@ -286,79 +306,15 @@ def run_two_level_opt(relay_expr):
     # optimized_match = ExtCompilerOpMerger(optimized_match).merge(relay_expr)
     # print(f"fusion dic (after  merge): {optimized_match}")
 
+    # Update backend information to corresponding best match
+    second_layer_best_match_log_path = f"{BEST_MATCH_LOG}_{net_name}_{hw_name}.log"
+    second_opt_match = OpMatchReader().read(relay_expr, second_layer_best_match_log_path)
+
     return second_opt_match
 
 @tvm._ffi.register_func("relay.transform.optimizer.run_dp")
 def run_dp(relay_expr):
-    """Optimizing pass for computation graph representation (Relay IR).
-
-    Parameters
-    ----------
-    relay_expr : tvm.relay.expr
-        Relay IR for computation graph
-
-    Returns
-    -------
-    matched_relay_expr : tvm.relay.expr
-        The result matching between backend operators and Relay operators
-    """
-
-    # It is a function if you get it from last pass of Relay build
-    print("Optimizing on the Python side")
-    # print("Relay expression")
-    # print(relay_expr)
-    # profile_ops_in_net(relay_expr, "bert", "tensorrt")
-    # import sys
-    # sys.exit(0)
-    # visualize_network(relay_expr, "o3_bert")
-    relay_expr = get_function_body(relay_expr)
-
-    comp_graph = ComputationGraph(relay_expr)
-
-    # Warning: ResNet-8 doesn't have tuned operators / CuDNN doesn't work for ResNet-8
-    # target_backend = None # Consider all targets
-
-    # Sanity check: AutoTVM
-    # targets = [Target.TVM_GPU_AUTOTVM]
-
-    # Sanity check: Only CuDNN
-    # targets = [Target.TVM_GPU_AUTOTVM, Target.CUDNN]
-
-    # Enable all backends except for CuDNN
-    # targets = [Target.TVM_GPU_AUTOTVM, Target.CUBLAS, Target.TENSORRT]
-
-    # Enable all backends
-    targets = [Target.TVM_GPU_AUTOTVM, Target.CUBLAS, Target.CUDNN, Target.TENSORRT]
-
-    batch_size = 1
-    backendop_lib = setup_backend_op_lib(relay_expr, targets, batch_size)
-
-    # Optimizing graph
-    print("Computation graph created")
-    optimizer = CompGraphOptimizer(backendop_lib, targets)
-    print("Optimizer created")
-    optimizer.optimize(comp_graph)
-    print("It's optimized")
-    optimized_match, post_order_match_result = optimizer.get_optimized_match(comp_graph)
-
-    # print("Match result: ", optimized_match)
-    # post_order_match_result is for debugging to check if it matches the final result from the TVM DP fusion pass
-    print("Match result")
-    for idx, pair in enumerate(post_order_match_result):
-        print(idx, pair)
-    # Debug (@soo)
-    print_matching_final(comp_graph, optimizer.loc2match)
-    print("-"*40)
-    # print("Optimized match")
-    # print(optimized_match)
-
-    # print(f"fusion dic (before merge): {optimized_match}")
-    # optimized_match = ExtCompilerOpMerger(optimized_match).merge(relay_expr)
-    # print(f"fusion dic (after  merge): {optimized_match}")
-
-    backendop_lib.save_to_log()
-
-    # return optimized_match
+    run_op_level_opt(relay_expr)
 
 """
 This is still work in progress.
@@ -370,10 +326,11 @@ Cons: How do you consider all possible TensorRT operators? I don't have good ans
 @tvm._ffi.register_func("relay.transform.optimizer.run_exhaustive_search")
 def run_exhaustive_search(relay_expr):
     # It is a function if you get it from last pass of Relay build
+    hw_name = relay_expr.attrs[HW_FUNC_ATTR]
     print("Optimizing on the Python side")
     # print("Relay expression")
     # print(relay_expr)
-    # profile_ops_in_net(relay_expr, "bert", "tensorrt")
+    # profile_ops_in_net(relay_expr, "bert", "tensorrt", "rtx2070")
     # import sys
     # sys.exit(0)
     # visualize_network(relay_expr, "o3_bert")
@@ -393,13 +350,13 @@ def run_exhaustive_search(relay_expr):
     # Enable all backends
     targets = [Target.TVM_GPU_AUTOTVM, Target.CUBLAS, Target.CUDNN, Target.TENSORRT]
     batch_size = 1
-    backendop_lib = setup_backend_op_lib(relay_expr, targets, batch_size)
+    backendop_lib = setup_backend_op_lib(relay_expr, targets, batch_size, hw_name)
 
     # Optimizing graph
     print("Computation graph created")
     optimizer = ExhaustiveSearcher(backendop_lib, targets)
     print("Optimizer created")
-    optimizer.optimize(comp_graph)
+    optimizer.optimize(comp_graph, hw_name)
     print("It's optimized")
     optimized_match, post_order_match_result = optimizer.get_optimized_match(comp_graph)
 
@@ -418,7 +375,7 @@ def run_exhaustive_search(relay_expr):
     # optimized_match = ExtCompilerOpMerger(optimized_match).merge(relay_expr)
     # print(f"fusion dic (after  merge): {optimized_match}")
 
-    backendop_lib.save_to_log()
+    backendop_lib.save_to_log(hw_name)
 
     return optimized_match
 

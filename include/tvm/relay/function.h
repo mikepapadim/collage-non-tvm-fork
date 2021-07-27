@@ -130,6 +130,9 @@ namespace attr {
 constexpr const char* kBackendOp = "BackendOp";
 /*! \brief Indicate whether we use original or custom fusion pass. */
 constexpr const char* kCustomFusionPass = "CustomFusionPass";
+/*! \brief Indicate whether we use original or custom fusion pass. */
+constexpr const char* kAllowAlterOp = "AllowAlterOp";
+
 
 /*! \brief Mark the function as a primitive function. */
 constexpr const char* kPrimitive = "Primitive";

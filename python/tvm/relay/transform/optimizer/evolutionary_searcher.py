@@ -39,7 +39,7 @@ import gc
 
 # the goal ('fitness') function to be maximized
 class EvolutionarySearcher:
-    def __init__(self, op_state_to_match_translator, expr, net_name,
+    def __init__(self, op_state_to_match_translator, expr, net_name, hw_name,
                  n_ops, pop_size=100, cx_prob=0.5, mut_prob=0.2, max_iter=100):
 
         self.op_state_to_match_translator = op_state_to_match_translator
@@ -56,6 +56,7 @@ class EvolutionarySearcher:
 
         # Load network to measure
         self.net_name = net_name
+        self.hw_name = hw_name
         self.target_str = 'cuda'
 
         self.mod, self.params, self.shape_dict, _ = get_network_from_torch(net_name, 1)
@@ -143,17 +144,21 @@ class EvolutionarySearcher:
     # There is no more oom with this!
     def measure_subprocess(self):
         from subprocess import Popen, PIPE, STDOUT, DEVNULL
-        cmd = ['python3',  'testing/tmp_measure_network.py', self.net_name, self.target_str]
+        cmd = ['python3',  'testing/tmp_measure_network.py', self.net_name, self.target_str, self.hw_name]
         p = Popen(cmd, stdout=DEVNULL, stderr=PIPE)
         # p = Popen(cmd)
         p.wait()
         out, err = p.communicate()
-        # printe("message from subprocess")
-        # printe(err)
-        res = err.decode("utf-8").partition("##result:")
-        assert(len(res)==3)
-        numbers = res[2].split()
-        mean_perf, std_perf = float(numbers[0]), float(numbers[1])
+
+        try:
+            res = err.decode("utf-8").partition("##result:")
+            # assert(len(res)==3)
+            numbers = res[2].split()
+            mean_perf, std_perf = float(numbers[0]), float(numbers[1])
+        except:
+            printe("Error message from subprocess")
+            printe(err)
+            raise
 
         return mean_perf, std_perf
 
@@ -166,7 +171,7 @@ class EvolutionarySearcher:
 
         # Dump this opt_match in to files so that build pipeline can read it
         # USER_DEFINED_MATCH_LOG
-        match_path = f"{LOG_PATH}/user_defined_match_{self.net_name}.log"
+        match_path = f"{LOG_PATH}/user_defined_match_{self.net_name}_{self.hw_name}.log"
         self.op_match_logger.save(self.expr, opt_match, log_path=match_path)
         #printe(f"[Evaluation] Match log saved")
         # Measure entire computation graph with opt_match
@@ -197,7 +202,7 @@ class EvolutionarySearcher:
         else:
             self.numDup += 1
             # mean_perf, std_perf = measure_end_to_end_user_defined(self.mod["main"], self.params, self.shape_dict,
-            #                                                       self.target_str, self.net_name)
+            #                                                       self.target_str, self.net_name, self.hw_name)
             mean_perf, std_perf = self.measure_subprocess()
         # self._memo_state[individual_hash] = -mean_perf
 
@@ -228,11 +233,11 @@ class EvolutionarySearcher:
 
         # Dump the best match
         best_opt_match = self.op_state_to_match_translator.translate(best_ind[0])
-        best_match_log_path = f"{BEST_MATCH_LOG}_{self.net_name}.log"
+        best_match_log_path = f"{BEST_MATCH_LOG}_{self.net_name}_{self.hw_name}.log"
         self.op_match_logger.save(self.expr, best_opt_match, log_path=best_match_log_path)
 
         # Dump the best performance with best match
-        best_perf_log_path = f"{BEST_MATCH_LOG}_{self.net_name}_perf.log"
+        best_perf_log_path = f"{BEST_MATCH_LOG}_{self.net_name}_{self.hw_name}_perf.log"
 
         # This is inference time in ms
         best_perf = -self.get_ind_perf_from_pair(best_ind)
@@ -280,7 +285,7 @@ class EvolutionarySearcher:
         df = pd.DataFrame.from_dict(time_perf_dic, orient="index")
 
         # For better printing
-        time_perf_log_path = f"{LOG_PATH}/time_perf_{self.net_name}.log"
+        time_perf_log_path = f"{LOG_PATH}/time_perf_{self.net_name}_{self.hw_name}.log"
         df.columns = ["best performance (ms)"]
         df.index.name = "search time (secs)"
         df.to_csv(time_perf_log_path)

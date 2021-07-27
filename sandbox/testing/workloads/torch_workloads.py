@@ -9,6 +9,9 @@ from baselines.pytorch.resnets import resnet50, resnext50_32x4d, resnet_block
 from baselines.pytorch.nasnet_a import NASNetA
 from baselines.pytorch.nasrnn import NASRNN
 from baselines.pytorch.bert import BERT
+from baselines.pytorch.resnets_3d import resnet50_3d
+from baselines.pytorch.mobilenetv2 import mobilenet_v2
+
 from tvm.relay.transform.utility.debug_helper import printe
 
 NETWORK_TO_TORCH_MODEL = {
@@ -18,6 +21,10 @@ NETWORK_TO_TORCH_MODEL = {
     "nasneta" : NASNetA,
     "nasrnn": NASRNN,
     "bert": BERT,
+
+    # Additional models to evaluate
+    "resnet50_3d": resnet50_3d,
+    "mobilenet_v2": mobilenet_v2,
 }
 
 # Warning(@Soo): It does not work for NasRNN

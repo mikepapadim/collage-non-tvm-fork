@@ -2,7 +2,7 @@ import torch
 import argparse
 import onnx
 import onnxruntime
-from resnets import resnext50_32x4d
+from resnets_3d import resnet50_3d
 import torch.autograd.profiler as profiler
 import tvm.relay.op
 from tqdm import tqdm 
@@ -16,17 +16,17 @@ from torchvision.models import resnet
 
 torch.backends.cudnn.benchmark = True
 
-NAME = 'resnext50_32x4d'
+NAME = 'resnet50_3d'
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--iterations", help="How many iterations to average for timing", type=int, default=5000)
-    parser.add_argument("--discard_iter", help="How many iterations to not time during warm up", type=int, default=1000)
+    parser.add_argument("--iterations", help="How many iterations to average for timing", type=int, default=500)
+    parser.add_argument("--discard_iter", help="How many iterations to not time during warm up", type=int, default=100)
     args = parser.parse_args()
 
-    model = resnext50_32x4d().cuda()
+    model = resnet50_3d().cuda()
     model.eval()
-    inputs = torch.randn(1, 64, 56, 56).cuda()
+    inputs = torch.randn(1, 64, 3, 56, 56).cuda()
 
     from torch2trt import torch2trt
     import time
@@ -53,7 +53,7 @@ if __name__ == "__main__":
     times = []
     with torch.no_grad():
         for i in tqdm(range(args.discard_iter + args.iterations)):
-
+            
             start = torch.cuda.Event(enable_timing=True)
             end = torch.cuda.Event(enable_timing=True)
 
@@ -72,7 +72,7 @@ if __name__ == "__main__":
     avg = total / (args.iterations)
     print("Average inference time of the last " + str(args.iterations) + " iterations: " + str(avg) + " ms")
 
-    input_shape = [1, 64, 56, 56]
+    input_shape = [1, 64, 3, 56, 56]
     input_data = torch.randn(input_shape)
     scripted_model = torch.jit.trace(model.cpu(), input_data).eval()
 
@@ -81,6 +81,8 @@ if __name__ == "__main__":
     input_name = "input0"
     shape_list = [(input_name, input_shape)]
     mod, params = relay.frontend.from_pytorch(scripted_model, shape_list)
+
+    #print("Relay module function:\n", mod.astext(show_meta_data=True))
 
     with open(f"models/{NAME}.txt", "w") as text_file:
         text_file.write(mod.astext(show_meta_data=True))
@@ -93,14 +95,14 @@ if __name__ == "__main__":
     with torch.no_grad():
         out_torch = model(inputs.cpu()).cpu().detach().numpy()
 
-    torch.onnx.export(scripted_model, input_data,
-                      f"models/{NAME}.onnx", verbose=False,
-                      export_params=True,
-                      do_constant_folding=False,
-                      input_names=input_names, output_names=output_names,
-                      training = torch.onnx.TrainingMode.TRAINING,
-                      example_outputs=torch.rand((1, 2048, 7, 7)),
-                      opset_version=12)
+    torch.onnx.export(scripted_model, input_data, 
+                    f"models/{NAME}.onnx", verbose=False, 
+                    export_params=True,
+                    do_constant_folding=False,
+                    input_names=input_names, output_names=output_names, 
+                    training = torch.onnx.TrainingMode.TRAINING,
+                    example_outputs=torch.rand((1, 2048, 1, 7, 7)),
+                    opset_version=12)
     onnx_model = onnx.load(f"models/{NAME}.onnx")
 
     sess = onnxruntime.InferenceSession(f"models/{NAME}.onnx")

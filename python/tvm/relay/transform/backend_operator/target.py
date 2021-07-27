@@ -3,7 +3,7 @@ from tvm import relay
 import tvm.relay.testing as testing
 import tvm
 import numpy as np
-# from tvm.contrib import graph_runtime as runtime
+# import tvm.contrib.graph_executor as runtime
 from tvm import autotvm, auto_scheduler
 
 import os
@@ -37,7 +37,9 @@ cur_dir_path = Path(__file__).parent.absolute()
 LOG_PATH = f"{cur_dir_path}/../logs"
 BEST_MATCH_LOG = f"{LOG_PATH}/best_match"
 USER_DEFINED_MATCH_LOG = f"{LOG_PATH}/user_defined_match.log"
-AUTOTVM_LOG = f"{LOG_PATH}/autotvm_ops.json"
+HW_FUNC_ATTR = "TargetHW"
+NETWORK_FUNC_ATTR = "NetworkName"
+# AUTOTVM_LOG = f"{LOG_PATH}/autotvm_ops.json"
 # Temporary autoscheduler log file
 # FIXME(@Soo): Accumulate autoscheduler logs to the same file
 # AUTOSCH_LOG = "/home/byungsoj/backend-aware-graph-opt/package/autotune/tmp/autosch_ops.json.resnet50.tmp"
@@ -50,6 +52,9 @@ measure
 - 2) operator
     > Keep as is
 """
+
+def get_autotvm_log_path(hw_name):
+    return f"{LOG_PATH}/autotvm_ops_{hw_name}.json"
 
 def measure(ftimer, is_net, *args):
     # Dummy run to check whether it runs correctly e.g., segfault due to large workspace
@@ -70,12 +75,16 @@ def measure(ftimer, is_net, *args):
     # Measure performance. Continue until we get results within the max standard deviation
     while True:
         perfs = np.array(ftimer(*args).results) * 1000  # convert to millisecond
-        std_perf = np.std(perfs)
-        printe(f"Mean, std of perf : {np.mean(perfs)}, {std_perf}")
+        mean_perf, std_perf = np.mean(perfs), np.std(perfs)
+        printe(f"Mean, std of perf : {mean_perf}, {std_perf}")
 
-        if std_perf <= MAX_STANDARD_DEVIATION:
-        #if is_net or std_perf <= MAX_STANDARD_DEVIATION:
-            mean_perf = np.mean(perfs)
+        # If mean_perf is more than 1 ms, then we should reduce threshold not to take too long,
+        # e.g., BERT or Conv3D ops
+        # Otherwise, we keep MAX_STANDARD_DEVIATION no matter how small the mean_perf is.
+        # MAX_STANDARD_DEVIATION much of variance shouldn't matter anyway for end-to-end perf.
+        threshold = max(MAX_STANDARD_DEVIATION, MAX_STANDARD_DEVIATION*mean_perf)
+        # if is_net or std_perf <= MAX_STANDARD_DEVIATION:
+        if std_perf <= threshold:
             break
 
     return mean_perf, std_perf
@@ -118,7 +127,7 @@ class TVMSubGraphCostFunc_AutoSch(TargetCostFunc):
     # measure the cost of running an expression on a target, in milliseconds.
     # We assume that the target has a backend operator satisfying the configuration of the expr
     @staticmethod
-    def measure_cost(name, expr, target):
+    def measure_cost(name, expr, target, hw_name):
         # Create workload
         inputs = relay.analysis.free_vars(expr)
         expr_func = relay.Function(inputs, expr)
@@ -151,17 +160,18 @@ class TVMSubGraphCostFunc_AutoTVM(TargetCostFunc):
     # measure the cost of running an expression on a target, in milliseconds.
     # We assume that the target has a backend operator satisfying the configuration of the expr
     @staticmethod
-    def measure_cost(name, expr, target):
+    def measure_cost(name, expr, target, hw_name):
         # Create workload
         inputs = relay.analysis.free_vars(expr)
         expr_func = relay.Function(inputs, expr)
         net, params = testing.create_workload(expr_func)
 
-        assert(os.path.exists(AUTOTVM_LOG))
+        assert(os.path.exists(get_autotvm_log_path(hw_name)))
 
+        # print(f"Measure autotvm log: {get_autotvm_log_path(hw_name)}")
         # AutoTVM codes
         # Compile kernels with history best records
-        with autotvm.apply_history_best(AUTOTVM_LOG):
+        with autotvm.apply_history_best(get_autotvm_log_path(hw_name)):
             target_str = target.__str__()
             with tvm.transform.PassContext(opt_level=OPT_LEVEL.get()):
                 lib = relay.build_module.build(net, target=target_str, params=params)
@@ -184,7 +194,7 @@ class TVMSubGraphCostFunc_NoTuning(TargetCostFunc):
     # measure the cost of running an expression on a target, in milliseconds.
     # We assume that the target has a backend operator satisfying the configuration of the expr
     @staticmethod
-    def measure_cost(name, expr, target):
+    def measure_cost(name, expr, target, hw_name):
         # Create workload
         inputs = relay.analysis.free_vars(expr)
         expr_func = relay.Function(inputs, expr)
@@ -211,7 +221,7 @@ class TVMSubGraphCostFunc_NoTuning(TargetCostFunc):
         return measure(ftimer, is_net=False)
 
         # target_str = target.__str__()
-        # ctx = tvm.context(target_str, 0)
+        # ctx = tvm.device(target_str, 0)
         # lib = relay.build_module.build(net, target_str, params=params)
         # module = runtime.GraphModule(lib["default"](ctx))
         #
@@ -244,7 +254,7 @@ class CuDNNCostFunc(TargetCostFunc):
         super().__init__()
 
     @staticmethod
-    def measure_cost(name, expr, target):
+    def measure_cost(name, expr, target, hw_name):
         from tvm.contrib import cudnn
         from tvm import te
         from tvm import tir
@@ -279,7 +289,7 @@ class CuDNNCostFunc(TargetCostFunc):
         # FIXME(@Soo): We should redesign Target class to deal with new TVM build interface
         target_str = target.__str__()
         ctx = tvm.gpu()
-        # ctx = tvm.context(target_str, 0)
+        # ctx = tvm.device(target_str, 0)
 
         data_shape = get_data_shape(expr)
         in_channels = data_shape[1]
@@ -692,7 +702,7 @@ class TensorRTCostFunc(TargetCostFunc):
         super().__init__()
 
     @staticmethod
-    def measure_cost(name, expr, target):
+    def measure_cost(name, expr, target, hw_name):
 
         # Create workload
         inputs = relay.analysis.free_vars(expr)
@@ -701,6 +711,11 @@ class TensorRTCostFunc(TargetCostFunc):
 
         from tvm.relay.op.contrib.tensorrt import partition_for_tensorrt
         mod, config = partition_for_tensorrt(net, params)
+
+        # We confirm that TVM can't pass conv2d to TensorRT if it's winograd without wt
+        # if name == "tensorrt_conv2d_winograd_without_weight_transform":
+        #     print(name, mod["main"])
+        #     sys.exit(0)
 
         target = "cuda"
         with tvm.transform.PassContext(opt_level=OPT_LEVEL.get(), config={'relay.ext.tensorrt.options': config}):

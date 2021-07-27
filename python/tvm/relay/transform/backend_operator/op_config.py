@@ -5,8 +5,15 @@ import pickle
 from os import path
 
 cur_dir_path = Path(__file__).parent.absolute()
-COST_LOG = f"{cur_dir_path}/../logs/operator_cost.log"
-COST_LOG_READABLE = f"{cur_dir_path}/../logs/operator_cost.json"
+# COST_LOG = f"{cur_dir_path}/../logs/operator_cost.log"
+# COST_LOG_READABLE = f"{cur_dir_path}/../logs/operator_cost.json"
+
+def get_opcost_log_path(hw_name, is_readable):
+  extension = "log"
+  if is_readable:
+    extension = "json"
+
+  return f"{cur_dir_path}/../logs/operator_cost_{hw_name}.{extension}"
 
 # @Sung: [TODO] Need to check hash conflict
 # configuration includes operator name, operator type (backend operators from different targets might have the same type),
@@ -58,24 +65,29 @@ class MeasuredConfigs(object):
   def save_cost(self, config, cost):
     self.measured_configs[config] = cost
 
-  def save_to_log(self):
-    with open(COST_LOG, 'wb+') as log:
+  def save_to_log(self, hw_name):
+    cost_log = get_opcost_log_path(hw_name, False)
+    cost_log_readable = get_opcost_log_path(hw_name, True)
+    # print(f"[Save] Cost log : {cost_log}")
+    with open(cost_log, 'wb+') as log:
       pickle.dump(self.measured_configs, log)
 
     str_configs = dict()
     for key, perf in self.measured_configs.items():
         str_configs[str(key)] = perf
 
-    with open(COST_LOG_READABLE, 'w+') as log:
+    with open(cost_log_readable, 'w+') as log:
       json.dump(str_configs, log, sort_keys=True, indent=4)
 
   # If log doesn't exist, it uses default empty dictionary.
-  def load_from_log(self):
+  def load_from_log(self, hw_name):
+    cost_log = get_opcost_log_path(hw_name, False)
+    # print(f"[Load] Cost log : {cost_log}")
     try:
-      if path.exists(COST_LOG):
-        with open(COST_LOG, 'rb') as log:
+      if path.exists(cost_log):
+        with open(cost_log, 'rb') as log:
           print("Cost configurations loaded")
           self.measured_configs = pickle.load(log)
     except:
 #       pass
-      raise Exception(f'{COST_LOG} is not valid')
+      raise Exception(f'{cost_log} is not valid')
