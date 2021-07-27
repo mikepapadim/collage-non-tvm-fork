@@ -8,6 +8,7 @@ cur_dir_path = Path(__file__).parent.absolute()
 COST_LOG = f"{cur_dir_path}/../logs/operator_cost.log"
 COST_LOG_READABLE = f"{cur_dir_path}/../logs/operator_cost.json"
 
+# @Sung: [TODO] Need to check hash conflict
 # configuration includes operator name, operator type (backend operators from different targets might have the same type),
 # data shape of all free variables, and node attributes
 class Config(object):

@@ -147,6 +147,18 @@ class CompGraphOptimizer:
         frontiers = Q.PriorityQueue()
         frontiers.put(comp_graph.get_root())
         pair2match = {}
+
+
+
+        root_expr = comp_graph.get_root().get_relay_expr()
+        dom_tree = relay.analysis.construct_dom_tree(root_expr)
+
+        for node, dom in dom_tree.items():
+            print(f"{node} --> {dom}\n")
+            print("\n")
+
+
+
         self.loc2match = {hash(comp_graph.get_root()): {"match":[], "cost":0, "string":""}}
         while not frontiers.empty():
             # Facilitate the debugging process
@@ -158,6 +170,13 @@ class CompGraphOptimizer:
                 print(f"(topo_order, op_type) : {f._topological_order}, {f_expr.op}")
             else:
                 print(f"(topo_order, op_type) : {f._topological_order}, {type(f_expr)}, Non-call node")
+
+            # @Sung: run all pattern engines
+            for engine in self._backendop_lib.get_all_pattern_engines():
+                engine.run(dom_tree, f_expr)
+
+            assert(0)
+
 
             # print(self._backendop_lib.get_all_patterns())
             for pat in self._backendop_lib.get_all_patterns():
