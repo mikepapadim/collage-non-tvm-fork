@@ -4,6 +4,7 @@ from tvm.relay.transform.backend_operator.utils import is_function_node
 from tvm.relay.transform.backend_operator.target import *
 from tvm.relay.transform.optimizer.custom_fusion_pass import CustomFusionPass
 from workloads.torch_workloads import get_network_from_torch
+from workloads.relay_workloads import get_network_from_relay
 from tvm.contrib import graph_executor as runtime
 import numpy as np
 import argparse
@@ -36,7 +37,8 @@ def measure_end_to_end_perf_autotvm(net, params, target_str, shape_dict, is_ours
     assert is_function_node(net)
     if is_ours:
         # net = net.with_attr("CustomFusionPass", CustomFusionPass.DP)
-        net = net.with_attr("CustomFusionPass", CustomFusionPass.USER_DEFINED_FUSION)
+        net = net.with_attr("CustomFusionPass", CustomFusionPass.DP)
+        #net = net.with_attr("CustomFusionPass", CustomFusionPass.USER_DEFINED_FUSION)
         net = net.with_attr("NetworkName", net_name)
 
 
@@ -51,7 +53,7 @@ def measure_end_to_end_perf_autotvm(net, params, target_str, shape_dict, is_ours
         # Setup execution
         for input_name, input_shape in shape_dict.items():
             input_data = np.random.uniform(-1, 1, size=input_shape).astype("float32")
-            module.set_input(input_name, input_data)
+            #module.set_input(input_name, input_data)
 
 
         ftimer = module.module.time_evaluator("run", dev, number=NUM_MEASUREMENTS_PER_REPEAT_E2E, repeat=NUM_REPEATS_E2E)
@@ -162,7 +164,10 @@ if __name__ == "__main__":
         OPT_LEVEL.set(2)
 
     # We can't test this because this network include batch norm.
-    mod, params, shape_dict, _ = get_network_from_torch(args.network, 1)
+    #mod, params, shape_dict, _ = get_network_from_torch(args.network, 1)
+    #mod, params, shape_dict, _ = get_network_from_torch("nasneta", 1)
+    #mod, params, shape_dict, _ = get_network_from_relay("conv2d+relu_x2", 1)
+    mod, params, shape_dict, _ = get_network_from_relay("diamond", 1)
 
     # Warning(@soo): Note that the opt_level of AutoTVM and AutoSch is 2 to make an apple-to-apple comparison
 

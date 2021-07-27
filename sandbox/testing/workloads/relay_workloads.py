@@ -43,6 +43,31 @@ def get_conv2d_relu(batch_size):
 
     return mod, params
 
+def get_diamond(batch_size):
+    # Chain graph
+    out_channels = 16
+    # batch_size = 1
+
+    data = relay.var("data", relay.TensorType((batch_size, 3, 224, 224), "float32"))
+    conv_weight = relay.var("weight", relay.TensorType((out_channels, 3, 3, 3), "float32"))
+    expr = relay.nn.conv2d(
+        data=data, weight=conv_weight, kernel_size=(3, 3), channels=out_channels, padding=(1, 1)
+    )
+    path1 = relay.nn.relu(expr)
+    path2 = relay.tanh(expr)
+    path2 = relay.sigmoid(path2)
+    expr = relay.add(path1, path2)
+
+    mod, params = create_relay_workload(expr)
+
+    shape_dict = {
+        "data": (batch_size, 64, 56, 56),
+        "weight": (64, 64, 1, 1),
+    }
+
+    return mod, params, shape_dict
+
+
 # This is first two conv + relu in ResNet-50
 def get_conv2d_relu_x2(batch_size):
     # Chain graph
@@ -66,7 +91,13 @@ def get_conv2d_relu_x2(batch_size):
     mod = relay.transform.InferType()(mod)
     # print(mod["main"].body.checked_type)
 
-    return mod, params
+    shape_dict = {
+        "data": (batch_size, 64, 56, 56),
+        "2_weight": (64, 64, 1, 1),
+        "1_weight": (64, 64, 3, 3)
+    }
+
+    return mod, params, shape_dict
 
 def get_annotate_test(batch_size):
     data = relay.var("data", shape=(10, 10))
@@ -191,17 +222,18 @@ NAME_TO_WORKLOAD = {
     "conv2d+relu":get_conv2d_relu,
     "conv2d":get_conv2d,
     "conv2d+relu_x2":get_conv2d_relu_x2,
+    "diamond":get_diamond,
     "annotate_test":get_annotate_test,
 }
 
 def get_network_from_relay(name, batch_size):
     func = None
     if name in NAME_TO_WORKLOAD:
-        mod, params = NAME_TO_WORKLOAD[name](batch_size)
+        mod, params, shape_dict = NAME_TO_WORKLOAD[name](batch_size)
     else:
         raise ValueError("Unsupported workload: " + name)
 
-    return mod, params
+    return mod, params, shape_dict, None
 
     # """Get the symbol definition and random weight of a network"""
     # dtype = 'float32'
