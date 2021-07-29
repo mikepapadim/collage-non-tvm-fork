@@ -3,7 +3,7 @@ from tvm import relay
 import tvm.contrib.graph_executor as runtime
 import numpy as np
 
-from .optimizer_utils import get_pattern_len, get_next_expr_after_match
+from .optimizer_utils import get_next_expr_after_match
 from ..backend_operator.backend_op import get_optimal_backendop
 from ..backend_operator.target import *
 from .ext_compiler_op_merger import *
@@ -122,14 +122,15 @@ class CompGraphOptimizer:
         self._bop_attr_key = "backend-op"
 
         # For printing matched backend ops in ResNet graph
-        patterns = self._backendop_lib.get_all_patterns()
-        self._pattern_to_name = {}
-        for pat in patterns:
-            backend_ops = self._backendop_lib.pattern_to_backendops[pat]
+        #patterns = self._backendop_lib.get_all_patterns()
+        #self._pattern_to_name = {}
+        #for pat in patterns:
+        #    backend_ops = self._backendop_lib.pattern_to_backendops[pat]
 
-            assert len(backend_ops) > 0
-            name = backend_ops[0]._op_type.name()
-            self._pattern_to_name[pat] = name
+       #     assert len(backend_ops) > 0
+            #name = backend_ops[0]._op_name
+            #TODO: Check with Soo
+       #     self._pattern_to_name[pat] = pat.get_name()
 
         self.loc2match = None
         self._memo = None
@@ -149,16 +150,12 @@ class CompGraphOptimizer:
         frontiers.put(comp_graph.get_root())
         pair2match = {}
 
-
-
         root_expr = comp_graph.get_root().get_relay_expr()
         dom_tree = relay.analysis.construct_dom_tree(root_expr)
 
-        for node, dom in dom_tree.items():
-            print(f"{node} --> {dom}\n")
-            print("\n")
-
-
+        #for node, dom in dom_tree.items():
+        #    print(f"{node} --> {dom}\n")
+        #    print("\n")
 
         self.loc2match = {hash(comp_graph.get_root()): {"match":[], "cost":0, "string":""}}
         while not frontiers.empty():
@@ -172,12 +169,9 @@ class CompGraphOptimizer:
             else:
                 print(f"(topo_order, op_type) : {f._topological_order}, {type(f_expr)}, Non-call node")
 
-            # @Sung: run all pattern engines
-            for engine in self._backendop_lib.get_all_pattern_engines():
-                engine.run(dom_tree, f_expr)
-
-            assert(0)
-
+            # @Sung: run all pattern generators
+            for generator in self._backendop_lib.get_all_pattern_generators():
+                generator.run(dom_tree, f_expr)
 
             # print(self._backendop_lib.get_all_patterns())
             for pat in self._backendop_lib.get_all_patterns():
@@ -185,16 +179,16 @@ class CompGraphOptimizer:
 
                 # ordered_pattern_matcher consider the order of arguments when matching
                 # in contrast to basic Relay pattern matching
-                if self._ordered_pattern_matcher.match(f_expr, pat.get_pattern()):
-                # if pat.get_pattern().match(f_expr):
+                if self._ordered_pattern_matcher.match(f_expr, pat.get_relay_pattern()):
+                # if pat.get_relay_pattern().match(f_expr):
                     # Check if there is an existing frontier with the same goal idx
                     # Conv(Data, Weight)
                     # get_next_expr_after_match -> [Data, Weight]
                     # next_expr_after_match = Conv()
-                    assert get_pattern_len(pat.get_pattern()) >= 1
-                    # tuple_after_matches = get_next_expr_after_match(f_expr, None, get_pattern_len(pat.get_pattern()))
-                    tuple_after_matches = get_next_expr_after_match(f_expr, None, pat.get_pattern())
-                    print("The following pattern is matched:", pat.get_pattern())
+                    assert pat.get_depth() >= 1
+                    # tuple_after_matches = get_next_expr_after_match(f_expr, None, pat.get_depth())
+                    tuple_after_matches = get_next_expr_after_match(f_expr, None, pat.get_relay_pattern())
+                    print("The following pattern is matched:", pat.get_relay_pattern())
                     # Consdier only valid nodes
                     tuple_after_matches = [tup for tup in tuple_after_matches if hash(tup[0]) in comp_graph.expr2node]
                     for t_idx, (expr_after_match, prev_expr_after_match) in enumerate(tuple_after_matches):
@@ -210,7 +204,7 @@ class CompGraphOptimizer:
                                                                  self._target_backend, hw_name)
 
                         # Skip update if there is no backend op available for matched pattern
-                        if pat_op == None:
+                        if pat_op is None:
                             continue
                         # new_match = self.loc2match[hash(f)]["match"] + [(pat_op, pat_cost, hash(f_expr))]
                         # new_cost = self.loc2match[hash(f)]["cost"] + pat_cost
@@ -222,7 +216,10 @@ class CompGraphOptimizer:
                             new_match = self.loc2match[hash(f)]["match"] + [(pat_op, pat_cost, hash(f_expr))]
                             # @Sung: Add driver cost
                             new_cost = self.loc2match[hash(f)]["cost"] + pat_cost + self.C
-                            new_string = self.loc2match[hash(f)]['string'] + "-" + self._pattern_to_name[pat]
+
+                            #assert(pat in self._pattern_to_name)
+                            #new_string = self.loc2match[hash(f)]['string'] + "-" + self._pattern_to_name[pat]
+                            new_string = self.loc2match[hash(f)]['string'] + "-" + pat.get_name()
                             # print(f"Assign matched op : {pat_op}")
                         else:
                             new_match, new_cost, new_string = [], 0, "+"
@@ -375,15 +372,15 @@ entire graph rather than compiling multiple subgraphs to evaluate entire graph i
 #             # print(self._backendop_lib.get_all_patterns())
 #             for pat in self._backendop_lib.get_all_patterns():
 #                 # print(pat)
-#                 if pat.get_pattern().match(f_expr):
+#                 if pat.get_relay_pattern().match(f_expr):
 #                     # Check if there is an existing frontier with the same goal idx
 #                     # Conv(Data, Weight)
 #                     # get_next_expr_after_match -> [Data, Weight]
 #                     # prev_expr_after_match = Conv()
-#                     assert get_pattern_len(pat.get_pattern()) >= 1
+#                     assert pat.get_deptn() >= 1
 #
-#                     tuple_after_matches = get_next_expr_after_match(f_expr, None, pat.get_pattern())
-#                     print("The following pattern is matched:", pat.get_pattern())
+#                     tuple_after_matches = get_next_expr_after_match(f_expr, None, pat.get_relay_pattern())
+#                     print("The following pattern is matched:", pat.get_relay_pattern())
 #
 #                     # Consdier only valid nodes
 #                     tuple_after_matches = [tup for tup in tuple_after_matches if hash(tup[0]) in comp_graph.expr2node]

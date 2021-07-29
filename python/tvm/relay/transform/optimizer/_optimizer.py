@@ -6,7 +6,6 @@ import tvm.driver
 # from ..backend_operator.record import backendop_lib
 from ..backend_operator.op_config import MeasuredConfigs
 from ..backend_operator.target import Target, USER_DEFINED_MATCH_LOG
-from ..backend_operator.op_type import OpType
 from ..backend_operator.backend_op_lib import BackendOpLib
 from ..backend_operator.utils import *
 

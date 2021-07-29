@@ -27,7 +27,6 @@ from ...runtime.ndarray import cpu
 from . import _ffi_api
 from .feature import Feature
 
-from tvm.relay.transform.backend_operator.utils import *
 
 def context_analysis(mod, default_device):
     """Analyze the device context information of each IR node in a Relay
