@@ -34,11 +34,11 @@ def myinfo(self, message, *args, **kws):
     self.log(MYINFO, message, *args, **kws)
 logging.Logger.myinfo = myinfo
 
-def setup_logging(task_name, net_name, hw_name, logging_level=logging.WARNING):
+def setup_logging(log_dir, task_name, net_name, hw_name, logging_level=logging.WARNING, batch_size=1):
     date_now = datetime.datetime.now()
     this_code_path = os.path.dirname(os.path.abspath(__file__))
     date_now = date_now.strftime("%m-%d-%H:%M")
-    file_path = f"{this_code_path}/../logs/exp_logs/{task_name}_{hw_name}_{net_name}_{date_now}"
+    file_path = f"{this_code_path}/../logs/{log_dir}/{task_name}_{hw_name}_{net_name}_bs{batch_size}_{date_now}.log"
 
     logging.basicConfig(filename=file_path, level=logging_level,
                         format='%(asctime)s:[%(levelname)s] %(message)s')

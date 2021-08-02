@@ -73,6 +73,7 @@ from tvm.relay.transform.backend_operator.target import OPT_LEVEL
 from tvm.relay.transform.utility.json_logger import *
 import time
 from tvm.relay.transform.utility.debug_helper import *
+from tvm.contrib.utils import tempdir
 # import tvm.contrib.graph_runtime as runtime
 
 # import tensorflow as tf
@@ -168,6 +169,20 @@ def tune_autotvm_tasks(
 ########################################################################
 # Finally, we launch tuning jobs and evaluate the end-to-end performance.
 
+def upload_module_to_device(lib, args):
+    # export library
+    tmp = tempdir()
+    filename = "net.tar"
+    lib.export_library(tmp.relpath(filename))
+
+    # upload module to device
+    print("Upload...")
+    remote = autotvm.measure.request_remote(args.device, args.host_ip, args.host_port, timeout=10000)
+    remote.upload(tmp.relpath(filename))
+    rlib = remote.load_module(filename)
+
+    return remote, rlib
+
 
 def tune_and_evaluate_autotvm(tuning_opt, args):
     # extract workloads from relay program
@@ -195,8 +210,9 @@ def tune_and_evaluate_autotvm(tuning_opt, args):
             lib = relay.build_module.build(mod, target=args.target, params=params)
 
         # load parameters
-        dev = tvm.device(str(args.target), 0)
-        module = graph_executor.GraphModule(lib["default"](dev))
+        remote, rlib = upload_module_to_device(lib, args)
+        dev = remote.device(str(args.target), 0)
+        module = graph_executor.GraphModule(rlib["default"](dev))
 
         # Set the input of the module
         set_module_input(module, shape_dict, args)
@@ -304,7 +320,8 @@ def args_checker(args, parser):
         parser.error('Wrong tuner input')
 
     if args.target == 'cuda':
-        args.target = tvm.target.cuda()
+        args.target = tvm.target.Target(f"cuda -model=tx2")
+        # args.target = tvm.target.cuda()
     else:
         parser.error('Unsupported target')
 
@@ -345,7 +362,14 @@ if __name__ == "__main__":
     log_dir = "autotvm_tuning_logs"
     # Setup automatic logging feature (to file)
     setup_logging(log_dir, task_name="autotvm_tuning", net_name=args.network, hw_name=args.hw, batch_size=args.batch_size)
+
+    # Hard-coded device and host information
+    args.device = "jetson-1"
+    args.host_ip = "192.168.10.1"
+    args.host_port = 9191
+
     print(args)
+
     # target = tvm.target.cuda()
     # #target_host = 'llvm -mtriple=aarch64-linux-gnu'
     # target_host = 'llvm'
@@ -366,23 +390,22 @@ if __name__ == "__main__":
         # "n_trial": 4000,  # This is for AutoTVM. AutoScheduler dynamically adjusts before autotuning based on n_tasks
         "early_stopping": 600, # This only applies to AutoTVM now
 
-        #"measure_option": autotvm.measure_option(
-        #    builder=autotvm.LocalBuilder(timeout=10),
-        #    runner=autotvm.RPCRunner(
-        #        "jetson-1",  # change the device key to your key
-        #        "tracker",
-        #        9191,
-        #        number=20,
-        #        repeat=3,
-        #        timeout=10,
-        #        min_repeat_ms=150,
-        #    ),
-        #),
-
+        # Warning(@Soo): Note that if device is andrioid, we need different pipeline.
+        # Check out the tutorial: https://tvm.apache.org/docs/tutorials/autotvm/tune_conv2d_cuda.html
         "measure_option": autotvm.measure_option(
-            builder=autotvm.LocalBuilder(timeout=10),
-            runner=autotvm.LocalRunner(number=20, repeat=3, timeout=4, min_repeat_ms=150),
+            builder=autotvm.LocalBuilder(),
+            runner=autotvm.RPCRunner(
+                args.device,
+                host=args.host_ip,
+                port=args.host_port,
+                number=10,
+                timeout=5,
+            ),
         ),
+        # "measure_option": autotvm.measure_option(
+        #     builder=autotvm.LocalBuilder(timeout=10),
+        #     runner=autotvm.LocalRunner(number=20, repeat=3, timeout=4, min_repeat_ms=150),
+        # ),
     }
 
     # We do not run the tuning in our webpage server since it takes too long.
@@ -398,7 +421,7 @@ if __name__ == "__main__":
     # Dump the tuning information into JSON file
     search_time = time.time() - start_time
     tuning_option["opt_level"] = OPT_LEVEL.get()
-    dump_autotvm_tuning_info(log_dir, tuning_option, search_time, args.hw, args.batch_size)
+    dump_autotvm_tuning_info(tuning_option, search_time, args.hw, args.batch_size)
 
 ######################################################################
 # Sample Output

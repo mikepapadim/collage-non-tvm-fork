@@ -13,7 +13,7 @@ class JSONLogger:
         with open(file_path, "w") as outfile:
             json.dump(dic, outfile)
 
-def dump_autotvm_tuning_info(tuning_option, search_time, hw_name):
+def dump_autotvm_tuning_info(log_dir, tuning_option, search_time, hw_name, batch_size=1):
     del tuning_option['measure_option']
     tuning_option["search_time"] = f"{search_time:.2f}s"
     date_now = datetime.datetime.now()
@@ -22,7 +22,7 @@ def dump_autotvm_tuning_info(tuning_option, search_time, hw_name):
     this_code_path = os.path.dirname(os.path.abspath(__file__))
     net_name = tuning_option["network"]
     date_now = date_now.strftime("%m-%d:%H")
-    file_path = f"{this_code_path}/../logs/json_logs/autotvm_tuning_log_{hw_name}_{net_name}_{date_now}"
+    file_path = f"{this_code_path}/../logs/{log_dir}/autotvm_tuning_config_{hw_name}_{net_name}_bs{batch_size}_{date_now}.log"
     JSONLogger().dump(tuning_option, file_path)
 
 

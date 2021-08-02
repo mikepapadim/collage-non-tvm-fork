@@ -1,30 +1,38 @@
-from tvm.relay.dataflow_pattern import *
-from tvm import relay
-import logging
-import sys
-
-class StreamToLogger(object):
-    """
-    Fake file-like stream object that redirects writes to a logger instance.
-    """
-    def __init__(self, logger, level):
-       self.logger = logger
-       self.level = level
-       self.linebuf = ''
-
-    def write(self, buf):
-       for line in buf.rstrip().splitlines():
-          self.logger.log(self.level, line.rstrip())
-
-    def flush(self):
-        pass
-
-logging.basicConfig(filename='example.log', level=logging.WARNING, format='%(asctime)s:[%(levelname)s] %(message)s')
-log = logging.getLogger('logger')
-sys.stdout = StreamToLogger(log,logging.WARNING)
-sys.stderr = StreamToLogger(log,logging.CRITICAL)
-print('Test to standard out')
-raise Exception('Test to standard error')
+# from tvm.relay.dataflow_pattern import *
+# from tvm import relay
+# import logging
+# import sys
+# import Enum
+#
+# class Color(Enum):
+#     black = 0
+#
+# class Color():
+#     def __init__(self):
+#
+# print(Color.black)
+# class StreamToLogger(object):
+#     """
+#     Fake file-like stream object that redirects writes to a logger instance.
+#     """
+#     def __init__(self, logger, level):
+#        self.logger = logger
+#        self.level = level
+#        self.linebuf = ''
+#
+#     def write(self, buf):
+#        for line in buf.rstrip().splitlines():
+#           self.logger.log(self.level, line.rstrip())
+#
+#     def flush(self):
+#         pass
+#
+# logging.basicConfig(filename='example.log', level=logging.WARNING, format='%(asctime)s:[%(levelname)s] %(message)s')
+# log = logging.getLogger('logger')
+# sys.stdout = StreamToLogger(log,logging.WARNING)
+# sys.stderr = StreamToLogger(log,logging.CRITICAL)
+# print('Test to standard out')
+# raise Exception('Test to standard error')
 
 # logging.debug('This message should go to the log file')
 # logging.info('So should this')

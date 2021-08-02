@@ -28,14 +28,14 @@ NETWORK_TO_TORCH_MODEL = {
 }
 
 # Warning(@Soo): It does not work for NasRNN
-def load_torch_model_from_pth(name):
+def load_torch_model_from_pth(name, batch_size):
     # Get the model
     this_code_path = os.path.dirname(os.path.abspath(__file__))
     model = torch.jit.load(f"{this_code_path}/../baselines/pytorch/models/{name}.pth")
     model.eval()
 
     # Create the input data
-    shape_dict = WORKLOADS_DIC[name]
+    shape_dict = WORKLOADS_DIC[name][batch_size]
     assert len(shape_dict) == 1
     for shape in shape_dict.values():
         input_shape = shape
@@ -44,7 +44,7 @@ def load_torch_model_from_pth(name):
     scripted_model = torch.jit.trace(model.cpu(), input_data).eval()
     return scripted_model
 
-def load_torch_model_from_code(name):
+def load_torch_model_from_code(name, batch_size):
     # Get the model
     if name == "nasrnn":
         model = NETWORK_TO_TORCH_MODEL[name](is_gpu=False)#.cuda()
@@ -54,12 +54,12 @@ def load_torch_model_from_code(name):
     model.eval()
 
     # Create the input data
-    shape_dict = WORKLOADS_DIC[name]
+    shape_dict = WORKLOADS_DIC[name][batch_size]
     assert len(shape_dict) == 1
     for shape in shape_dict.values():
         input_shape = shape
     input_data = torch.randn(input_shape)
-
+    # print(f"Input data: {input_shape}")
     scripted_model = torch.jit.trace(model.cpu(), input_data).eval()
     return scripted_model
 
@@ -67,11 +67,15 @@ def load_torch_model_from_code(name):
 def get_network_from_torch(name, batch_size):
     assert name in WORKLOADS_DIC
     # if batch_size > 1, we need to think about how to take care of bert and nasrnn
-    assert batch_size == 1
+    # assert batch_size == 1
 
-    torch_model = load_torch_model_from_code(name)
+    # NasRNN and BERT are not ready to deal with more than batch size of 1
+    if name in ["bert", "nasrnn"] and batch_size > 1:
+        raise NotImplementedError("NasRNN and BERT are not ready to deal with more than batch size of 1")
+
+    torch_model = load_torch_model_from_code(name, batch_size)
     # Set the input shape dict
-    shape_dict = WORKLOADS_DIC[name]
+    shape_dict = WORKLOADS_DIC[name][batch_size]
 
     # Warning: For from_pytorch, we should convert dictionary to list
     shape_arr = list(shape_dict.items())

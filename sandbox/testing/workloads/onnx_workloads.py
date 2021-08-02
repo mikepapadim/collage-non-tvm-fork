@@ -17,7 +17,7 @@ def get_network_from_onnx(name, batch_size):
     onnx_model = onnx.load(f"{this_code_path}/../baselines/pytorch/models/{name}.onnx")
 
     # Set the input shape dict
-    shape_dict = WORKLOADS_DIC[name]
+    shape_dict = WORKLOADS_DIC[name][batch_size]
     # We should copy shape_dict because shape_dict will be consumed in from_onnx
     shape_dict_tmp = copy.deepcopy(shape_dict)
     mod, params = relay.frontend.from_onnx(onnx_model, shape_dict_tmp, freeze_params=True)
