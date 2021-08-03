@@ -254,4 +254,5 @@ def serialize_subgraph(subgraph):
   return "/".join(node_list)
 
 
-
+def get_op_pattern(expr):
+    return expr.op.get_attr("TOpPattern")

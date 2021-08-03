@@ -5,7 +5,7 @@ from .backend_op import BackendOp, get_optimal_backendop
 from .op_config import Config, MeasuredConfigs
 
 #from ..workloads.onnx_workloads import get_network_from_onnx
-from .utils import no_constraints_func
+from .utils import no_constraints_func, get_op_pattern
 from .target import Target
 from .op_type import optype_to_pattern
 from .pattern import Pattern
@@ -64,31 +64,154 @@ class BackendOpCostEvaluator:
 
 
 
+# @ Sung: Check all nodes between src and sink by using fcheck (checks fusion conditions)
+def check_path(src, sink, fcheck):
+    queue = [ src ]
+    while len(queue)>0:
+        node = queue.pop(0)
+        if node == sink:
+            continue
+
+        if not fcheck(node, node==sink):
+            return False
+
+        children = []
+        if is_tuple_node(node):
+            children = node.fields
+        elif is_tuplegetitem_node(node):
+            children = [ node.tuple ]
+        elif is_call_node(node):
+            children = node.args
+        else:
+            raise Exception(f"Unsupported type ({type(node)})")
+        queue.extend(children)
+
+    return True
+
+def generate_relay_pattern_node(node):
+    if is_tuple_node(node):
+        return is_tuple(), len(node.fields)
+    elif is_tuplegetitem_node(node):
+        return is_tuple_get_item, 2
+    elif is_call_node(node):
+        return is_op(node.op.name), len(node.args)
+    elif is_constant_node(node):
+        return is_constant(), 0
+    elif is_var_node(node):
+        return is_var(), 0
+    else:
+        raise Exception(f"Unsupported type ({type(node)})")
+
+
+# NOTE: Seems like relay pattern matching considers pointer of pattern node.
+#       Also, relay pattern string can be misleading
+# for example,
+#         is_conv2d = is_op('nn.conv2d')(is_var(), is_var())
+#         path1 = is_op('nn.relu')(is_conv2d)
+#         path2 = is_op('nn.leaky_relu')(is_conv2d)
+#         diamond = is_op('add')(path1, path2)
+#         --> CallPatternNode(Op(add), [CallPatternNode(Op(nn.relu), [CallPatternNode(Op(nn.conv2d), [VarPattern(),VarPattern()])]), CallPatternNode(Op(nn.leaky_relu), [CallPatternNode(Op(nn.conv2d), [VarPattern(),VarPattern()])])])
+#
+#         This diamond pattern does not match with the following expr
+#            inp1 = relay.var('input1')
+#            inp2 = relay.var('input2')
+#            weight1 = relay.var('weight1')
+#            weight2 = relay.var('weight2')
+#            conv2d1 = relay.op.nn.conv2d(inp1, weight1)
+#            conv2d2 = relay.op.nn.conv2d(inp2, weight2)
+#            relu = relay.op.nn.relu(conv2d1)
+#            leaky_relu = relay.op.nn.leaky_relu(conv2d2, alpha=0)
+#            out = relu + leaky_relu
+
+# dfs
+def build_pattern_with_map(node, sink, nodeToPatternMap):
+    if node not in nodeToPatternMap:
+        print(f"{node.op} is not in pattern map")
+    assert(node in nodeToPatternMap)
+    rpattern = nodeToPatternMap[node]
+
+    children = []
+    if is_tuple_node(node):
+        children = node.fields
+    elif is_tuplegetitem_node(node):
+        children = [ node.tuple ]
+    elif is_call_node(node):
+        children = node.args
+    else:
+        raise Exception(f"Unsupported type ({type(node)})")
+
+    if node == sink:
+        return rpattern
+
+    operands = [ build_pattern_with_map(child, sink, nodeToPatternMap) for child in children ]
+    return rpattern(*operands)
+
+
+def generate_relay_pattern(src, sink, cur_pattern_type = None, nodeToPatternMap = dict(), orig_src = None):
+    # Handle single node
+    if src is None:
+        assert(cur_pattern_type is None)
+        rpattern, num_operands = generate_relay_pattern_node(sink)
+        operands = [wildcard() for __ in range(num_operands)]
+        return rpattern(*operands), get_op_pattern(sink), 1
+
+    # Handle multiple nodes between src and sink
+    queue = [ src ]
+    cnt = 0 # count the number of new nodes
+    assert(cur_pattern_type is not None)
+    while len(queue)>0:
+        node = queue.pop(0)
+        cur_pattern_type = max(cur_pattern_type, get_op_pattern(node))
+        if node == sink:
+            continue
+
+        # NOTE: src should be created in the previous call
+        if node not in nodeToPatternMap:
+            cnt += 1
+            nodeToPatternMap[node] = generate_relay_pattern_node(node)[0]
+
+        children = []
+        if is_tuple_node(node):
+            children = node.fields
+        elif is_tuplegetitem_node(node):
+            children = [ node.tuple ]
+        elif is_call_node(node):
+            children = node.args
+        else:
+            raise Exception(f"Unsupported type ({type(node)})")
+
+        queue.extend(children)
+
+    sink_pnode, num_operands = generate_relay_pattern_node(sink)
+    operands = [wildcard() for __ in range(num_operands)]
+    nodeToPatternMap[sink] = sink_pnode(*operands)
+    rpattern = build_pattern_with_map(orig_src, sink, nodeToPatternMap)
+
+    return rpattern, cur_pattern_type, cnt
+
+
+
+
 #@Sung: base class for pattern_rule
 class BasePatternGenerator:
   # OpKind, Comp graph, rule
+  # NOTE: Ideall, OpKind should be defined by user depending on their pattern strategy.
+  # However, as we will only support TVM pattern rules and use the relay attribute of OpKind, we are not going to define it for now.
 
-  # NOTE: Ideall, OpKind should be defined by user depending on their pattern strategy. However, as we will only support TVM pattern rules and use the relay attribute of OpKind, we are not going to define it for now.
-
-  def __init__(self, _target,  _dictOpKinds=dict(), _pattern_rules=None):
+  def __init__(self, _target,  _pattern_rules=None, _optype2enum=None, _enum2optype=None):
       self.target = _target
-      self.dictOpKinds = _dictOpKinds
       self.fgen = _pattern_rules
       self.id = 0 # pattern id
-
-  def _register_op_kind(self, _op, _kind):
-      self.dictOpKinds[_op] = _kind
-
-  def _register_op_dict(self, _dict):
-      self.dictOpKinds = _dict
+      self.optype2enum = _optype2enum
+      self.enum2optype = _enum2optype
 
   def _register_pattern_rule(self, _pattern_rules):
       self.fgen = _pattern_rules
 
   def run(self, dom_tree, expr):
       # def tvm_pattern_rule(dom_tree, op_dict, expr):
-      self.fgen(dom_tree, self.dictOpKinds, expr)
-      pass
+      self.fgen(expr, dom_tree, self.target, self.optype2enum, self.enum2optype)
+
 
 # library class (singleton) representing all backend operators
 class BackendOpLib(object):
@@ -114,7 +237,6 @@ class BackendOpLib(object):
     self.all_pattern_generators = []
     # dictionary that maps each pattern to list of backend ops represented by the pattern
     self.pattern_to_backendops = defaultdict(set)
-
     self._add_all_backendops()
 
     BackendOpLib.__instance = self
@@ -146,14 +268,14 @@ class BackendOpLib(object):
     # self._add_backendop_with_key(Target.CUDNN, "CONV2D_BIAS_ADD_RELU")
 
     # TENSORRT
-    add_all_backend_ops_to_lib(self, Target.TENSORRT, ["DIAMOND", "TRANSPOSE",
+    #add_all_backend_ops_to_lib(self, Target.TENSORRT, ["DIAMOND", "TRANSPOSE",
                                                        # "TUPLE_TWO_IDX", "TUPLE_FIVE_IDX",
                                                        # "TUPLE_FIVE_IDX_CONCAT",
                                                        # "TUPLE_GET_ITEM_0",
                                                        # "TUPLE_GET_ITEM_1",
-                                                       "BATCH_MATMUL",
-                                                       "RESHAPE_TRANSPOSE",
-                                                       "TRANSPOSE_RESHAPE"])
+    #                                                   "BATCH_MATMUL",
+    #                                                   "RESHAPE_TRANSPOSE",
+    #                                                   "TRANSPOSE_RESHAPE"])
 
     # CUBLAS
     # TODO: Add patterns. matmul, batch matmul
@@ -161,8 +283,9 @@ class BackendOpLib(object):
     #self._add_backendop_with_key(Target.CUBLAS, "BATCH_MATMUL")
 
 
+    #self._add_backendop_with_key(Target.TVM_GPU_AUTOTVM, "BATCH_MATMUL")
     # @Sung: add TVM pattern rule
-    def tvm_pattern_rule(dom_tree, op_dict, expr, target=Target.TVM_GPU_AUTOTVM):
+    def tvm_pattern_rule(expr, dom_tree, target=Target.TVM_GPU_AUTOTVM, optype2enum = None, enm2optype = None):
         # NOTE: Two possible choices
         # 1. Use dataflow pattern matcher in TVM.
         # e.g., op = is_op('nn.dense').has_attr({"TOpPattern": K_ELEMWISE}) in tests/python/relay/test_dataflow_pattern.py
@@ -181,7 +304,6 @@ class BackendOpLib(object):
         #
         #
         # 2. Manual implementation e.g., expr.op.get_attr("TOpPattern")
-        #
 
         # TODO:
         # Name of pattern: Serialization
@@ -189,73 +311,112 @@ class BackendOpLib(object):
         # Depth?
         # Relay pattern gen:
 
-        def get_op_pattern(expr):
-            return expr.op.get_attr("TOpPattern")
-
         # Try expension. If valid, create a pattern and try further.
-        def run_fuse(src, sink, cur_pattern_type = None, NUM_MAX_OP = 256):
+        def run_fuse(src, sink, cur_pattern_type = None, cur_num_op = 0, nodeToPatternMap = dict(), orig_src = None):
+            if sink is None:
+                return None
+
+            sink_type = get_op_pattern(sink)
+            if cur_pattern_type == optype2enum["kOpaque"] or cur_num_op > NUM_MAX_OP:
+                return None
+
+            # NOTE: This is current assumption. May not be true all the time.
+            assert(sink_type != optype2enum["kOpaque"])
+            num_nodes = 0
+            cur_relay_pattern = None
+
             if src is None:
+                assert(orig_src is None)
+                orig_src = sink
                 # Hanlde single op
-                cur_pattern_type = get_op_pattern(sink)
-                op_name = sink.op.name
-
-                args = [wildcard()]*len(sink.args)
-                cur_relay_pattern = is_op(op_name)(*args)
-                pattern_name = op_name
+                cur_relay_pattern, cur_pattern_type, num_nodes = generate_relay_pattern(src, sink)
             else:
-                if cur_op_type == op_dict["kOpaque"] or cur_num_op > NUM_MAX_OP:
-                    return None
+                # TODO:
+                # 1. check all nodes between src to sink
+                # 2. Automatically generate relay pattern
+                #       -- find the better name?
+                if sink_type == optype2enum["kOutEWiseFusable"]:
+                    def fcheck(node, is_sink):
+                        return get_op_pattern(node) <= optype2enum["kBroadcast"]
+                    if cur_pattern_type <= optype2enum["kInjective"] and check_path(src, sink, fcheck):
+                        cur_relay_pattern, cur_pattern_type, num_nodes = generate_relay_pattern(src, sink, cur_pattern_type, nodeToPatternMap, orig_src)
 
+                elif sink_type <= optype2enum["kBroadcast"]:
+                    def fcheck(node, is_sink):
+                        kind = get_op_pattern(node)
+                        if not is_sink:
+                            return kind <= optype2enum["kInjective"]
+                        else:
+                            return kind <= optype2enum["kOUtEWiseFusable"]
+
+                    if (cur_pattern_type <= optype2enum["kCommReduce"] ) and check_path(src, sink, fcheck):
+                        cur_relay_pattern, cur_pattern_type, num_nodes = generate_relay_pattern(src, sink, cur_pattern_type, nodeToPatternMap, orig_src)
+
+                elif sink_type == optype2enum["kInjective"] or sink_type == optype2enum["kTuple"]:
+                    def fcheck(node, is_sink):
+                        return get_op_pattern(node) <= optype2enum["kInjective"]
+                    if check_path(src, sink, fcheck):
+                        cur_relay_pattern, cur_pattern_type, num_nodes = generate_relay_pattern(src, sink, cur_pattern_type, nodeToPatternMap, orig_src)
+
+                else:
+                    raise Exception(f"Unsupported type ({type(sink)})")
+
+
+                #tvm.relay.analysis.post_order_visit
+                #// no actions needed if the current node have no dominator
+                #   if (dom_node->parent == nullptr) continue;
+
+                # NOTE: Do not fuse tuples unitl phase 2.
+                # // Do not fuse into tuple for now e.g.,   if (groups_[dom_parent_gindex]->pattern == kTuple) continue;
+
+                # Phase 0:
+                #    Path for OutEWiseFusable: conv2d --> Fuse following elem-wise ops
+                #    if (group_node->pattern == kOutEWiseFusable) {}
+
+                #    else if group_node->pattern <= kBroadcast:
+                #        Pre-condition: can only be fused to parent which is injective or reduction.
+                #     if (dom_node->parent != nullptr &&
+                #               (dom_node->pattern <= kInjective || dom_node->pattern == kCommReduce))
+
+                # Phase 1: group_node->pattern == kInjective || group_node->pattern == kTuple)
+                # Phase 2:  Fuse injective ops into intermediate tuples, if any
+
+                # class Config(object) in python/tvm/relay/transform/backend_operator/op_config.py
+
+                # Nice! This works
+                #pattern = is_op('add')
+                #print(pattern)
+                #pattern = is_op('nn.relu')(wildcard(), pattern)
+                #print(pattern)
+                # Register?
+
+
+            # Invalid pattern
+            if num_nodes==0 or cur_relay_pattern is None:
+                return None
+
+
+            cur_num_op += num_nodes
             # Register
+            print(f"\t----- Register {cur_relay_pattern}")
             self._add_backendop(target, Pattern(cur_relay_pattern))
 
+            # We may be able to expand
+            if sink in dom_tree and get_op_pattern(orig_src) != optype2enum["kTuple"]:
+                run_fuse(sink, dom_tree[sink], cur_pattern_type, cur_num_op, nodeToPatternMap, orig_src)
 
-            #tvm.relay.analysis.post_order_visit
-
-            #// no actions needed if the current node have no dominator
-            #                       if (dom_node->parent == nullptr) continue;
-
-
-            # NOTE: Do not fuse tuples unitl phase 2.
-            # // Do not fuse into tuple for now e.g.,   if (groups_[dom_parent_gindex]->pattern == kTuple) continue;
-
-            # Phase 0:
-            #    Path for OutEWiseFusable: conv2d --> Fuse following elem-wise ops
-            #    if (group_node->pattern == kOutEWiseFusable) {}
-
-            #    else if group_node->pattern <= kBroadcast:
-            #        Pre-condition: can only be fused to parent which is injective or reduction.
-            #     if (dom_node->parent != nullptr &&
-            #               (dom_node->pattern <= kInjective || dom_node->pattern == kCommReduce))
-
-            # Phase 1: group_node->pattern == kInjective || group_node->pattern == kTuple)
-            # Phase 2:  Fuse injective ops into intermediate tuples, if any
-
-        # class Config(object) in python/tvm/relay/transform/backend_operator/op_config.py
-
+        NUM_MAX_OP = 256
         # Assume op == callnode
-        if is_call_node(expr):
+        if not (is_constant_node(expr) or is_var_node(expr)):
             run_fuse(None, expr)
-
-        # Nice! This works
-        #pattern = is_op('add')
-        #print(pattern)
-        #pattern = is_op('nn.relu')(wildcard(), pattern)
-        #print(pattern)
-        # Register?
 
 
 
 
     # defined at include/tvm/relay/op_attr_types.h
-    tvm_op_dict = {"kElemWise":0, "kBroadcast":1, "kInjective":2, "kCommReduce":3, "kOutEWiseFusable":4, "kTuple":7, "kOpaque":8}
-
-    #tvm_targets = [Target.TVM_GPU_AUTOTVM, Target.TVM_GPU_AUTOSCH, Target.GPU_NO_TUNING]
-    #for tvm_target in tvm_targets:
-    #    tvm_pattern_generator = BasePatternGenerator(tvm_target, tvm_op_dict, tvm_pattern_rule)
-    #    self._add_backend_pattern_rule(tvm_pattern_generator)
-
-    tvm_pattern_generator = BasePatternGenerator(Target.TVM_GPU_AUTOTVM, tvm_op_dict, tvm_pattern_rule)
+    tvm_enum2optype = {0:"kElemWise", 1:"kBroadcast", 2:"kInjective", 3:"kCommReduce", 4:"kOutEWiseFusable", 7:"kTuple", 8:"kOpaque"}
+    tvm_optype2enum = {"kElemWise":0, "kBroadcast":1, "kInjective":2, "kCommReduce":3, "kOutEWiseFusable":4, "kTuple":7, "kOpaque":8}
+    tvm_pattern_generator = BasePatternGenerator(Target.TVM_GPU_AUTOTVM, tvm_pattern_rule, tvm_optype2enum, tvm_enum2optype)
     self._add_backend_pattern_rule(tvm_pattern_generator)
 
     # TVM_GPU

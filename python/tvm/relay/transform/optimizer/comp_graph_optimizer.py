@@ -173,14 +173,13 @@ class CompGraphOptimizer:
             for generator in self._backendop_lib.get_all_pattern_generators():
                 generator.run(dom_tree, f_expr)
 
-            # print(self._backendop_lib.get_all_patterns())
             for pat in self._backendop_lib.get_all_patterns():
-                # print(pat)
+                print("Checking... ", pat)
 
                 # ordered_pattern_matcher consider the order of arguments when matching
                 # in contrast to basic Relay pattern matching
                 if self._ordered_pattern_matcher.match(f_expr, pat.get_relay_pattern()):
-                # if pat.get_relay_pattern().match(f_expr):
+                #if pat.get_relay_pattern().match(f_expr):
                     # Check if there is an existing frontier with the same goal idx
                     # Conv(Data, Weight)
                     # get_next_expr_after_match -> [Data, Weight]
@@ -190,7 +189,11 @@ class CompGraphOptimizer:
                     tuple_after_matches = get_next_expr_after_match(f_expr, None, pat.get_relay_pattern())
                     print("The following pattern is matched:", pat.get_relay_pattern())
                     # Consdier only valid nodes
+                    # Stores branches after the match
                     tuple_after_matches = [tup for tup in tuple_after_matches if hash(tup[0]) in comp_graph.expr2node]
+
+
+                    # Iterate each branch
                     for t_idx, (expr_after_match, prev_expr_after_match) in enumerate(tuple_after_matches):
                         # print(f"Branch {t_idx}")
                         # print("New frontier")
@@ -198,14 +201,16 @@ class CompGraphOptimizer:
                         # print("Expr before new frontier")
                         # print(prev_expr_after_match)
                         # print("-" * 30)
+
+
                         # Get new frontier, matched backend ops, and their costs
+                        # node in the comp_graph
                         new_loc = comp_graph.expr2node[hash(expr_after_match)]
                         pat_op, pat_cost = get_optimal_backendop(self._backendop_lib, f_expr, pat,
                                                                  self._target_backend, hw_name)
 
                         # Skip update if there is no backend op available for matched pattern
-                        if pat_op is None:
-                            continue
+                        assert(pat_op is not None)
                         # new_match = self.loc2match[hash(f)]["match"] + [(pat_op, pat_cost, hash(f_expr))]
                         # new_cost = self.loc2match[hash(f)]["cost"] + pat_cost
                         # new_string = self.loc2match[hash(f)]['string'] + "-" + self._pattern_to_name[pat]
@@ -220,10 +225,13 @@ class CompGraphOptimizer:
                             #assert(pat in self._pattern_to_name)
                             #new_string = self.loc2match[hash(f)]['string'] + "-" + self._pattern_to_name[pat]
                             new_string = self.loc2match[hash(f)]['string'] + "-" + pat.get_name()
+
                             # print(f"Assign matched op : {pat_op}")
                         else:
                             new_match, new_cost, new_string = [], 0, "+"
 
+
+                        # Handle joint node
                         # Maintain pair2match for keeping track of match results for each branch
                         # out_key is the new frontier (node after match)
                         # in_key is the node right before the new frontier
@@ -268,6 +276,8 @@ class CompGraphOptimizer:
         # print(self.loc2match)
         # print([hash(node) for node in comp_graph._nodes])
         # print(comp_graph._nodes[-1].get_relay_expr())
+
+        print(comp_graph._nodes[result_idx]._relay_expr)
         for (pat_op, pat_cost, hash_expr) in self.loc2match[hash(comp_graph._nodes[result_idx])]["match"]:
             final_match[hash_expr] = (fused_group_id, pat_op)
             fused_group_id += 1

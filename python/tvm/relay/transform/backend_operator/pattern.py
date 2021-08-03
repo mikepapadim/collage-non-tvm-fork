@@ -22,12 +22,47 @@ def find_depth(relay_pattern):
             depth = max(depth, find_depth(child))
     return depth+1
 
+# TODO: handle conv2d in the diamond edge
+def name_relay_pattern(pattern):
+    goDeeper = True
+    if isinstance(pattern, TuplePattern):
+        node_str = "Tuple"
+        children = pattern.fields
+    elif isinstance(pattern, TupleGetItemPattern):
+        node_str = "TupleGetItem"
+        children = [ pattern.tuple ]
+    elif isinstance(pattern, CallPattern):
+        node_str = str(pattern.op)
+        children = pattern.args
+    elif isinstance(pattern, WildcardPattern):
+        node_str = "*"
+        goDeeper = False
+        children = []
+    elif isinstance(pattern, VarPattern) or isinstance(pattern, ConstantPattern):
+        node_str = "Var/Const"
+        goDeeper = False
+        children = []
+    else:
+        raise Exception(f"{type(relay_pattern)} is not handled yet.")
+
+    if goDeeper:
+        name = node_str + "["
+        for i, child in enumerate(children):
+            if i > 0:
+                name += ", "
+            name += name_relay_pattern(child)
+        name += "]"
+    else:
+        name = node_str
+
+    return name
 
 # currently the Pattern class does not add any additional attributes from TVM's dataflow patterns
 class Pattern(object):
-    def __init__(self, relay_pattern):
+    def __init__(self, relay_pattern, name = None):
         self._relay_pattern = relay_pattern
-        self._name = str(relay_pattern)
+        #self._name = str(relay_pattern)
+        self._name = name_relay_pattern(relay_pattern)
         self._depth = find_depth(relay_pattern)
 
     def __eq__(self, another):
@@ -42,8 +77,8 @@ class Pattern(object):
     def match(self, expr):
         return self._relay_pattern.match(expr)
 
-    def set_name(self, op_type):
-        self._name = op_type
+    #def set_name(self, op_type):
+    #    self._name = op_type
 
     def get_name(self):
         return self._name

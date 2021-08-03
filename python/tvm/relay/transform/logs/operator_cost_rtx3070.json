@@ -1,0 +1,74 @@
+{
+    "op_type: Op(add)(*, *), data_shape: (1, 16, 224, 224), attrs: frozenset({('add', '')}), op_name: tvmgpu-autotvm_Op(add)(*, *)": [
+        0.024913566666666664,
+        8.862505602568538e-05
+    ],
+    "op_type: Op(add)(Op(nn.relu)(Op(nn.conv2d)(*, *)), Op(sigmoid)(Op(tanh)(Op(nn.conv2d)(*, *)))), data_shape: (1, 64, 224, 224), attrs: frozenset({('add', '', 'sigmoid', '', 'tanh', '', 'nn.conv2d', (('strides', (1, 1)), ('padding', (1, 1, 1, 1)), ('dilation', (1, 1)), ('groups', 1), ('channels', 16), ('kernel_size', (3, 3)), ('data_layout', ('N', 'C', 'H', 'W')), ('kernel_layout', ('O', 'I', 'H', 'W')), ('out_layout', ()), ('out_dtype', ''))), ('add', '', 'nn.relu', '', 'nn.conv2d', (('strides', (1, 1)), ('padding', (1, 1, 1, 1)), ('dilation', (1, 1)), ('groups', 1), ('channels', 16), ('kernel_size', (3, 3)), ('data_layout', ('N', 'C', 'H', 'W')), ('kernel_layout', ('O', 'I', 'H', 'W')), ('out_layout', ()), ('out_dtype', '')))}), op_name: tvmgpu-autotvm_Op(add)(Op(nn.relu)(Op(nn.conv2d)(*, *)), Op(sigmoid)(Op(tanh)(Op(nn.conv2d)(*, *))))": [
+        0.3193653166666666,
+        0.0002520222223446728
+    ],
+    "op_type: Op(add)[*, *], data_shape: (1, 16, 224, 224), attrs: frozenset({('add', '')}), op_name: tvmgpu-autotvm_Op(add)[*, *]": [
+        0.025737566666666666,
+        6.41647921804115e-05
+    ],
+    "op_type: Op(add)[Op(nn.relu)[Op(nn.conv2d)[*, *]], Op(sigmoid)[Op(tanh)[Op(nn.conv2d)[*, *]]]], data_shape: (1, 64, 224, 224), attrs: frozenset({('add', '', 'sigmoid', '', 'tanh', '', 'nn.conv2d', (('strides', (1, 1)), ('padding', (1, 1, 1, 1)), ('dilation', (1, 1)), ('groups', 1), ('channels', 16), ('kernel_size', (3, 3)), ('data_layout', ('N', 'C', 'H', 'W')), ('kernel_layout', ('O', 'I', 'H', 'W')), ('out_layout', ()), ('out_dtype', ''))), ('add', '', 'nn.relu', '', 'nn.conv2d', (('strides', (1, 1)), ('padding', (1, 1, 1, 1)), ('dilation', (1, 1)), ('groups', 1), ('channels', 16), ('kernel_size', (3, 3)), ('data_layout', ('N', 'C', 'H', 'W')), ('kernel_layout', ('O', 'I', 'H', 'W')), ('out_layout', ()), ('out_dtype', '')))}), op_name: tvmgpu-autotvm_Op(add)[Op(nn.relu)[Op(nn.conv2d)[*, *]], Op(sigmoid)[Op(tanh)[Op(nn.conv2d)[*, *]]]]": [
+        0.32906235,
+        8.360924988700118e-05
+    ],
+    "op_type: Op(nn.conv2d)(*, *), data_shape: (1, 64, 224, 224), attrs: frozenset({('nn.conv2d', (('strides', (1, 1)), ('padding', (1, 1, 1, 1)), ('dilation', (1, 1)), ('groups', 1), ('channels', 16), ('kernel_size', (3, 3)), ('data_layout', ('N', 'C', 'H', 'W')), ('kernel_layout', ('O', 'I', 'H', 'W')), ('out_layout', ()), ('out_dtype', '')))}), op_name: tvmgpu-autotvm_Op(nn.conv2d)(*, *)": [
+        0.15767621666666667,
+        6.325342327145005e-05
+    ],
+    "op_type: Op(nn.conv2d)[*, *], data_shape: (1, 64, 224, 224), attrs: frozenset({('nn.conv2d', (('strides', (1, 1)), ('padding', (1, 1, 1, 1)), ('dilation', (1, 1)), ('groups', 1), ('channels', 16), ('kernel_size', (3, 3)), ('data_layout', ('N', 'C', 'H', 'W')), ('kernel_layout', ('O', 'I', 'H', 'W')), ('out_layout', ()), ('out_dtype', '')))}), op_name: tvmgpu-autotvm_Op(nn.conv2d)[*, *]": [
+        0.15752528333333332,
+        6.385761940093359e-05
+    ],
+    "op_type: Op(nn.relu)(*), data_shape: (1, 16, 224, 224), attrs: frozenset({('nn.relu', '')}), op_name: tvmgpu-autotvm_Op(nn.relu)(*)": [
+        0.016605833333333334,
+        6.387989163700607e-05
+    ],
+    "op_type: Op(nn.relu)(Op(nn.conv2d)(*, *)), data_shape: (1, 64, 224, 224), attrs: frozenset({('nn.relu', '', 'nn.conv2d', (('strides', (1, 1)), ('padding', (1, 1, 1, 1)), ('dilation', (1, 1)), ('groups', 1), ('channels', 16), ('kernel_size', (3, 3)), ('data_layout', ('N', 'C', 'H', 'W')), ('kernel_layout', ('O', 'I', 'H', 'W')), ('out_layout', ()), ('out_dtype', '')))}), op_name: tvmgpu-autotvm_Op(nn.relu)(Op(nn.conv2d)(*, *))": [
+        0.15769595,
+        0.00011060464125283016
+    ],
+    "op_type: Op(nn.relu)[*], data_shape: (1, 16, 224, 224), attrs: frozenset({('nn.relu', '')}), op_name: tvmgpu-autotvm_Op(nn.relu)[*]": [
+        0.016520499999999997,
+        0.00010522492575430723
+    ],
+    "op_type: Op(nn.relu)[Op(nn.conv2d)[*, *]], data_shape: (1, 64, 224, 224), attrs: frozenset({('nn.relu', '', 'nn.conv2d', (('strides', (1, 1)), ('padding', (1, 1, 1, 1)), ('dilation', (1, 1)), ('groups', 1), ('channels', 16), ('kernel_size', (3, 3)), ('data_layout', ('N', 'C', 'H', 'W')), ('kernel_layout', ('O', 'I', 'H', 'W')), ('out_layout', ()), ('out_dtype', '')))}), op_name: tvmgpu-autotvm_Op(nn.relu)[Op(nn.conv2d)[*, *]]": [
+        0.16106983333333333,
+        8.751137386395935e-05
+    ],
+    "op_type: Op(sigmoid)(*), data_shape: (1, 16, 224, 224), attrs: frozenset({('sigmoid', '')}), op_name: tvmgpu-autotvm_Op(sigmoid)(*)": [
+        0.018560516666666665,
+        2.4158377888886386e-05
+    ],
+    "op_type: Op(sigmoid)(Op(tanh)(*)), data_shape: (1, 16, 224, 224), attrs: frozenset({('sigmoid', '', 'tanh', '')}), op_name: tvmgpu-autotvm_Op(sigmoid)(Op(tanh)(*))": [
+        0.0187877,
+        3.858589984264463e-05
+    ],
+    "op_type: Op(sigmoid)[*], data_shape: (1, 16, 224, 224), attrs: frozenset({('sigmoid', '')}), op_name: tvmgpu-autotvm_Op(sigmoid)[*]": [
+        0.018432000000000004,
+        0.0
+    ],
+    "op_type: Op(sigmoid)[Op(tanh)[*]], data_shape: (1, 16, 224, 224), attrs: frozenset({('sigmoid', '', 'tanh', '')}), op_name: tvmgpu-autotvm_Op(sigmoid)[Op(tanh)[*]]": [
+        0.01873918333333333,
+        4.180463158816483e-05
+    ],
+    "op_type: Op(tanh)(*), data_shape: (1, 16, 224, 224), attrs: frozenset({('tanh', '')}), op_name: tvmgpu-autotvm_Op(tanh)(*)": [
+        0.018499166666666667,
+        2.491372892380662e-05
+    ],
+    "op_type: Op(tanh)(Op(nn.conv2d)(*, *)), data_shape: (1, 64, 224, 224), attrs: frozenset({('tanh', '', 'nn.conv2d', (('strides', (1, 1)), ('padding', (1, 1, 1, 1)), ('dilation', (1, 1)), ('groups', 1), ('channels', 16), ('kernel_size', (3, 3)), ('data_layout', ('N', 'C', 'H', 'W')), ('kernel_layout', ('O', 'I', 'H', 'W')), ('out_layout', ()), ('out_dtype', '')))}), op_name: tvmgpu-autotvm_Op(tanh)(Op(nn.conv2d)(*, *))": [
+        0.15883945,
+        6.38353480970127e-05
+    ],
+    "op_type: Op(tanh)[*], data_shape: (1, 16, 224, 224), attrs: frozenset({('tanh', '')}), op_name: tvmgpu-autotvm_Op(tanh)[*]": [
+        0.01906341666666667,
+        8.70232663653158e-05
+    ],
+    "op_type: Op(tanh)[Op(nn.conv2d)[*, *]], data_shape: (1, 64, 224, 224), attrs: frozenset({('tanh', '', 'nn.conv2d', (('strides', (1, 1)), ('padding', (1, 1, 1, 1)), ('dilation', (1, 1)), ('groups', 1), ('channels', 16), ('kernel_size', (3, 3)), ('data_layout', ('N', 'C', 'H', 'W')), ('kernel_layout', ('O', 'I', 'H', 'W')), ('out_layout', ()), ('out_dtype', '')))}), op_name: tvmgpu-autotvm_Op(tanh)[Op(nn.conv2d)[*, *]]": [
+        0.15882238333333334,
+        8.358883830326349e-05
+    ]
+}

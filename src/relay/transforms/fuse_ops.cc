@@ -910,10 +910,17 @@ namespace tvm {
 
       // execute the fusion algorithm.
       void RunFuse(const IndexedForwardGraph& graph, const DominatorTree& post_dom_tree, int phase) {
+        //std::cerr << "<<< Running Fusion.... >>>\n";
         for (size_t nid = 0; nid < groups_.size(); ++nid) {
           // the group of current node has been specified already.
           auto* graph_node = graph.post_dfs_order[nid];
+
           auto* dom_node = post_dom_tree.nodes[nid];
+
+          assert(graph_node->ref == dom_node->gnode->ref);
+          assert(graph_node == dom_node->gnode);
+          //std::cerr << " -- Graph node  :  " << GetRef<ObjectRef>(graph_node->ref) << "\n";
+
           Group* group_node = groups_[nid];
           ICHECK(group_node != nullptr);
           // no actions for opaque nodes
@@ -922,6 +929,9 @@ namespace tvm {
           if (dom_node->parent == nullptr) continue;
           ICHECK(!graph_node->extern_ref);
           size_t dom_parent_gindex = dom_node->parent->gnode->index;
+          
+          //std::cerr << " \t-- Dom Parent node  :  " << GetRef<ObjectRef>(dom_node->parent->gnode->ref) << "\n";
+          //std::cerr << " \t-- pattern : Group Node - " << group_node->pattern << " // Graph Node - "  << graph_node->pattern << " // Dom Parent Node - " << dom_node->parent->pattern << " // Dom Node - " << dom_node->pattern << "\n";
 
           // refuse the fusion if too many ops are going to be fused together
           if (CountFusedNodesWithNewChild(graph_node, dom_node->parent->gnode) > max_fuse_depth_)
@@ -1040,7 +1050,7 @@ namespace tvm {
           gmap_[graph.post_dfs_order[nid]->ref] = groups[nid];
         }
         // The following line can be used for debug.
-//        this->DebugDumpGroup(body);
+        //this->DebugDumpGroup(body);
         return this->Mutate(body);
       }
 
@@ -1457,7 +1467,7 @@ namespace tvm {
         // PATCH(@Soo): Custom (DP) fusion pass for user defined fusion
         if (custom_fusion_pass_type == kUserDefinedFusion) {
           custom_fusion_pass_str = "relay.transform.optimizer.get_user_fusion";
-          // PATCH(@Soo): Custom (DP) fusion pass for end-to-end measurements
+          // PATCH(@Soo): Custom (DP) fusion pass for subprocess call during the end-to-end measurements
           // Note that if fuse_opt_level == 0, no fusion applied no matter whether it's original or DP.
         } else if (custom_fusion_pass_type == kDP) {
           custom_fusion_pass_str = "relay.transform.optimizer.run_dp";

@@ -48,21 +48,24 @@ def get_diamond(batch_size):
     out_channels = 16
     # batch_size = 1
 
-    data = relay.var("data", relay.TensorType((batch_size, 3, 224, 224), "float32"))
-    conv_weight = relay.var("weight", relay.TensorType((out_channels, 3, 3, 3), "float32"))
+    data = relay.var("data", relay.TensorType((batch_size, 64, 224, 224), "float32"))
+    data2 = relay.var("data2", relay.TensorType((batch_size, 16, 224, 224), "float32"))
+    conv_weight = relay.var("weight", relay.TensorType((out_channels, 64, 3, 3), "float32"))
     expr = relay.nn.conv2d(
         data=data, weight=conv_weight, kernel_size=(3, 3), channels=out_channels, padding=(1, 1)
     )
     path1 = relay.nn.relu(expr)
     path2 = relay.tanh(expr)
     path2 = relay.sigmoid(path2)
+    path2 = relay.add(path2, data2)
     expr = relay.add(path1, path2)
 
     mod, params = create_relay_workload(expr)
 
     shape_dict = {
-        "data": (batch_size, 64, 56, 56),
-        "weight": (64, 64, 1, 1),
+        "data": (batch_size, 64, 224, 224),
+        "data2": (batch_size, 16, 224, 224),
+        "weight": (64, 64, 3, 3),
     }
 
     return mod, params, shape_dict
