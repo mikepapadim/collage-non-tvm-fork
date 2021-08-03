@@ -450,3 +450,24 @@ def get_calibration_data(mod, data):
         calib_data[gvar] = value
 
     return calib_data
+
+
+# @ Sung: Build Dom tree
+def construct_dom_tree(expr):
+    # 1. collect parent node of each op
+    # 2. get LCA of input nodes for each op. --> Dominator
+
+    import tvm
+    def _traverse_expr(node, node_list):
+        if node in node_list:
+            return
+        if isinstance(node, tvm.ir.op.Op):
+            return
+        node_list.append(node)
+
+
+    enode_list = []
+    post_order_visit(expr, lambda enode: _traverse_expr(enode, enode_list))
+
+    return _ffi_api.dominance_analysis(expr, enode_list)
+

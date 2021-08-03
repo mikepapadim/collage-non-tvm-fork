@@ -249,7 +249,6 @@ def get_conv_attr(expr):
     return strides, padding, out_channels, dilation, kernel_size, dtype, attrs.groups, attrs.data_layout, attrs.kernel_layout
 
 class CuDNNCostFunc(TargetCostFunc):
-
     def __init__(self):
         super().__init__()
 
@@ -760,7 +759,8 @@ target_to_cost_func = {
     Target.TVM_GPU_AUTOTVM: TVMSubGraphCostFunc_AutoTVM(),
     Target.TVM_GPU_AUTOSCH: TVMSubGraphCostFunc_AutoSch(),
     Target.TVM_GPU_NO_TUNING: TVMSubGraphCostFunc_NoTuning(),
-    Target.CUDNN: CuDNNCostFunc(),
+    Target.CUDNN: TVMSubGraphCostFunc_NoTuning(),
+    #Target.CUDNN: CuDNNCostFunc(),
     Target.TENSORRT: TensorRTCostFunc(),
     Target.CUBLAS: TVMSubGraphCostFunc_NoTuning(),
 

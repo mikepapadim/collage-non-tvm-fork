@@ -18,7 +18,7 @@ from .utils import get_diamond
 from .utils import *
 from .op_config import Config, MeasuredConfigs
 from .target import Target, get_target_cost_func
-from .op_type import OpType, optype_to_pattern, relayop_to_varnames
+from .op_type import optype_to_pattern, relayop_to_varnames
 from ..utility.debug_helper import printe
 
 # It gives the path of backend_op.py no matter where you import this file
@@ -32,15 +32,22 @@ from ..utility.debug_helper import printe
 # maybe we want more fine-grained control
 
 class BackendOp(object):
-  def __init__(self, name, target, op_type, max_depth, measured_configs_lib, constraint_func):
-    self._name = name
+  def __init__(self, target, pattern, measured_configs_lib, constraint_func):
+  #def __init__(self, name, target, op_name, depth, measured_configs_lib, constraint_func):
     self._target = target
-    self._op_type = op_type
-    self._max_depth = max_depth
-    self._pattern = optype_to_pattern[op_type]
+    self._op_name = pattern.get_name()
+    self._name = target.name() + "_" + self._op_name
+
+    self._depth = pattern.get_depth()
+    self._pattern = pattern #optype_to_pattern[op_type]
     self._measured_configs = measured_configs_lib
     self._constraint_func = constraint_func
 
+  def __hash__(self):
+      return hash((self._name, self._measured_configs, self._constraint_func))
+
+  def __eq__(self, other):
+      return self._name == other._name and self._measured_configs == other._measured_configs and self._constraint_func == other._constraint_func
 
   def __repr__(self):
     return self._name
@@ -53,14 +60,14 @@ class BackendOp(object):
 
   # max depth is the depth of the longest branch
   # (chain pattern has a single branch, diamond pattern has 2 branchese)
-  def get_max_depth(self):
-    return self._max_depth
+  def get_depth(self):
+    return self._depth
 
   def get_cost(self, expr, hw_name):
 
     # configuration: backend operator name, operator type (which encode pattern), data shape, node attributes
 
-    config = Config(self._name, self._op_type.name(), expr)
+    config = Config(self._name, self._op_name, expr)
     # print(config)
 
     # For Tuple, we do not need to measure it
@@ -73,7 +80,7 @@ class BackendOp(object):
 
     cost_info = self._measured_configs.get_cost(config)
 
-    # if self._target == Target.CUDNN and  self._op_type.name() == "conv2d+biasadd+relu":
+    # if self._target == Target.CUDNN and  self._op_name == "conv2d+biasadd+relu":
     #   cost_info = (0, 0)
 
     if cost_info != None:
@@ -83,27 +90,29 @@ class BackendOp(object):
         # print("!!!Warning!!! Random cost!")
         # cost_info = (-1, -1)
       printe("NOT REUSED!!!!")
-    
+
       cost_func = get_target_cost_func(self._target)
       cost_info = cost_func(self._name, expr, self._target, hw_name)
       self._measured_configs.save_cost(config, cost_info)
-    
+
     # We use mean as a cost instead of sampling for now
     mean_cost, std_cost = cost_info
     return mean_cost
 
 # extract the subgraph of the expr that matches the pattern (only the top layers of the recursive relay expr).
-# Since there might be multiple branches, we traverse each branch by "max_depth" steps, and rewrite the child nodes
+# Since there might be multiple branches, we traverse each branch by "depth" steps, and rewrite the child nodes
 # of the last node to free variables. However, when there are multiple branches, only the rewrite at the end of the
 # longest branch will be useful
 # Additionally, we use a cache to memoize calculated results
-@lru_cache(None)
-def extract_subgraph(expr, max_depth, pattern):
+#@lru_cache(None)
+def extract_subgraph(expr, pattern):
   # use this to make sure the nodes (exprs) are consistent between different branches
   # Warning(@Soo): This is not necessary when we don't have diamond patterns
   # Still, this case happens in NasNet-A, e.g., addition of same avgpool2d results
   old_expr_to_new = dict()
 
+  depth = pattern.get_depth()
+  relay_pattern = pattern.get_relay_pattern()
   def set_old_expr_to_new(expr, new_expr):
     old_expr_to_new[expr] = new_expr
 
@@ -112,13 +121,13 @@ def extract_subgraph(expr, max_depth, pattern):
       return old_expr_to_new[expr]
     return expr
 
-  def helper(expr, depth, pattern):
-    assert pattern.match(expr), f"(pattern, expr) = ({pattern}, {expr.op}, {expr.args[0].op})"
+  def helper(expr, depth, relay_pattern):
+    assert relay_pattern.match(expr), f"(relay_pattern, expr) = ({relay_pattern}, {expr.op}, {expr.args[0].op})"
     # Warning(@Soo): To resolve NasNet-A corner case, e.g., addition of same avgpool2d results
     cur_checked_type = expr.checked_type
     expr = get_expr(expr)
 
-    if isinstance(pattern, WildcardPattern):
+    if isinstance(relay_pattern, WildcardPattern):
       # try:
       #   ret = relay.var("data", expr.checked_type)
       # except ValueError:
@@ -132,7 +141,7 @@ def extract_subgraph(expr, max_depth, pattern):
       # We resolved it by saving checked_type from old expression
       ret = relay.var("data", cur_checked_type)
       return ret
-    elif isinstance(pattern, ConstantPattern):
+    elif isinstance(relay_pattern, ConstantPattern):
       return expr
     elif is_call_node(expr):
       # note that only call node has "op" attribute corresponding to a single backend operator
@@ -152,7 +161,7 @@ def extract_subgraph(expr, max_depth, pattern):
           for i in range(len(expr.args)):
             type_arg = expr.type_args[i]
             var_name = var_names[i]
-            
+
             # Tuple should be treated separately
             if (type(type_arg) is tvm.ir.type.TupleType):
                 input_data = expr.args[i]
@@ -170,7 +179,7 @@ def extract_subgraph(expr, max_depth, pattern):
               new_args.append(relay.var(var_name, type_arg))
       else:
         for c_idx, child in enumerate(expr.args):
-          pat_child = pattern.args[c_idx]
+          pat_child = relay_pattern.args[c_idx]
           new_args.append(helper(child, depth - 1, pat_child))
 
       args = new_args
@@ -182,7 +191,7 @@ def extract_subgraph(expr, max_depth, pattern):
     elif is_tuple_node(expr):
       new_args = []
       for c_idx, child in enumerate(expr.fields):
-        pat_child = pattern.fields[c_idx]
+        pat_child = relay_pattern.fields[c_idx]
         new_args.append(helper(child, depth - 1, pat_child))
       new_expr = relay.Tuple(new_args)
       set_old_expr_to_new(expr, new_expr)
@@ -190,7 +199,7 @@ def extract_subgraph(expr, max_depth, pattern):
       return new_expr
 
     elif is_tuplegetitem_node(expr):
-      tuple_value = helper(expr.tuple_value, depth, pattern.tuple_value)
+      tuple_value = helper(expr.tuple_value, depth, relay_pattern.tuple_value)
       new_expr = tvm.relay.expr.TupleGetItem(tuple_value, expr.index)
       set_old_expr_to_new(expr, new_expr)
       return new_expr
@@ -204,23 +213,26 @@ def extract_subgraph(expr, max_depth, pattern):
     else:
       raise Exception(f"Expr type not implemented {type(expr)}")
 
-  return helper(expr, max_depth, pattern)
+  return helper(expr, depth, relay_pattern)
 
 # given a pattern and a relay expr matching that pattern, return the cheapest backend operator
 # satisfying the constraints and its cost. Return None if no backend operators satisfy constraints.
 def get_optimal_backendop(b_op_lib, expr, pattern, target = None, hw_name = "INVALID"):
   assert type(target) == list
-  
+
   backendops = b_op_lib.get_backendops(pattern)
 
   cheapest_op, min_cost = None, float('inf')
+  print("List of backends....")
+  print(backendops)
+
   for op in backendops:
     # if target is not None, only consider backend operators for that target
     if target != None and op.get_target() not in target:
       continue
 
-    max_depth = op.get_max_depth()
-    subgraph = extract_subgraph(expr, max_depth, pattern.get_pattern())
+    subgraph = extract_subgraph(expr, pattern)
+
     # if is_op("nn.conv2d")(wildcard(), wildcard()).match(expr):
     #   eprint(f"subgraph expr: {repr(subgraph)}")
 
