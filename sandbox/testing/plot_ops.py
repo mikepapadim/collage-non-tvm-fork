@@ -1,12 +1,12 @@
-from ..backend_operator.op_config import MeasuredConfigs
 import os
 import matplotlib.pyplot as plt
 import pandas as pd
-from .plot_utils import set_plt_font_size
+from tvm.relay.transform.backend_operator.op_config import MeasuredConfigs
+from tvm.relay.transform.utility.plot_utils import set_plt_font_size
 
 import pickle
-from ..backend_operator.op_type import OpType
-from ..backend_operator.op_config import Config
+from tvm.relay.transform.backend_operator.op_type import OpType
+from tvm.relay.transform.backend_operator.op_config import Config
 # from target import Target
 
 fw, fh = 15, 4
@@ -58,37 +58,74 @@ def draw_plot(df, fig_name):
     x_label_invisible = False
 
     # Save figures
-    plt.xlabel('Operators')
-    plt.ylabel('Inference Time')
+    plt.xlabel('Convolution Operators', labelpad=20)
+    plt.ylabel('Execution Time')
 
     this_code_path = os.path.dirname(os.path.abspath(__file__))
-    fig_name = f'{this_code_path}/../../analysis/results/plots/{fig_name}'
+    # fig_name = f'{this_code_path}/../../../../../sandbox/analysis/results/plots/{fig_name}'
+    fig_name = f'{this_code_path}/../analysis/results/plots/{fig_name}'
     if x_label_invisible:
         ax1 = plt.axes()
         x_axis = ax1.axes.get_xaxis()
         x_axis.set_visible(False)
 
-    plt.xticks(rotation=45)
+    plt.xticks(rotation=0)
+    plt.legend(ncol=3)
     plt.savefig(fig_name, bbox_inches='tight')
+
+def gen_new_dataframe_for_paper_figure(df):
+    # Rename columns
+    df = df.rename(columns={'tvmgpu-autotvm': 'AutoTVM', 'cudnn': 'CuDNN', 'tensorrt': 'TensorRT'}, inplace=False)
+
+    # Rename indices
+    idx_to_op_idx = {}
+    op_idx_to_op_name = {}
+    op_idx = 1
+    for ind in df.index:
+        if df['CuDNN'][ind] <= df['TensorRT'][ind] and df['CuDNN'][ind] <= df['AutoTVM'][ind]:
+            idx_to_op_idx[ind] = op_idx
+            op_idx_to_op_name[op_idx] = f"C{op_idx}"
+            op_idx += 1
+
+    for ind in df.index:
+        if df['TensorRT'][ind] <= df['CuDNN'][ind] and df['TensorRT'][ind] <= df['AutoTVM'][ind]:
+            idx_to_op_idx[ind] = op_idx
+            op_idx_to_op_name[op_idx] = f"C{op_idx}"
+            op_idx += 1
+
+    for ind in df.index:
+        if df['AutoTVM'][ind] <= df['TensorRT'][ind] and df['AutoTVM'][ind] <= df['CuDNN'][ind]:
+            idx_to_op_idx[ind] = op_idx
+            op_idx_to_op_name[op_idx] = f"C{op_idx}"
+            op_idx += 1
+
+    df = df.rename(index=idx_to_op_idx).sort_index()
+    df = df.rename(index=op_idx_to_op_name)
+
+    return df
 
 def plot_resnet50(df, network_name, target_batch_size):
     # Conv GPU plots
     conv_df = filter_df_with_regex(df=df, regex = 'conv2d_\d{1,2}',
                                    cols_to_exclude=['tvmcpu', 'cublas'])#, 'cudnn', 'tensorrt'])#'tvmgpu-no-tuning'])
+
+    # Formatting for figure 1 in our paper
+    conv_df = gen_new_dataframe_for_paper_figure(conv_df)
+    print(conv_df)
     draw_plot(df=conv_df, fig_name=f'rtx_{network_name}_bn{target_batch_size}_conv.png')
 
-    # # Fused ops
-    fused_df = df.filter(like='+', axis=0)
-    fused_df = fused_df[fused_df.columns.difference(['tvmcpu'])]
-    draw_plot(df=fused_df, fig_name=f'rtx_{network_name}_bn{target_batch_size}_fused.png')
-
-    # Other ops
-    # forbidden_str = ['+','conv2d','dense']
-    # re_str = '|'.join(forbidden_str)
-    drop_str = [f"conv2d_{i}" for i in range(1, 23)] + [val for val in df.index.values if "+" in val]# + ['dense_1']
-    other_df = df.drop(index=drop_str)
-    other_df = other_df[other_df.columns.difference(['cublas', 'tvmcpu'])]
-    draw_plot(df=other_df, fig_name=f'rtx_{network_name}_bn{target_batch_size}_others.png')
+    # # # Fused ops
+    # fused_df = df.filter(like='+', axis=0)
+    # fused_df = fused_df[fused_df.columns.difference(['tvmcpu'])]
+    # draw_plot(df=fused_df, fig_name=f'rtx_{network_name}_bn{target_batch_size}_fused.png')
+    #
+    # # Other ops
+    # # forbidden_str = ['+','conv2d','dense']
+    # # re_str = '|'.join(forbidden_str)
+    # drop_str = [f"conv2d_{i}" for i in range(1, 23)] + [val for val in df.index.values if "+" in val]# + ['dense_1']
+    # other_df = df.drop(index=drop_str)
+    # other_df = other_df[other_df.columns.difference(['cublas', 'tvmcpu'])]
+    # draw_plot(df=other_df, fig_name=f'rtx_{network_name}_bn{target_batch_size}_others.png')
 
 def plot_bert(df, network_name, target_batch_size):
     # Matmul (Dense) GPU plot
@@ -150,7 +187,7 @@ def plot_nasneta(df, network_name, target_batch_size):
 
 if __name__ == "__main__":
     target_batch_size = 1
-    network_name = 'nasneta'
+    network_name = 'resnext50'
     hw_name = 'rtx2070'
 
     NETWORK_TO_PLOT_FUNC = {
