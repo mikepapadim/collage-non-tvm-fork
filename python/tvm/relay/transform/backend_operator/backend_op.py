@@ -240,10 +240,10 @@ def get_optimal_backendop(b_op_lib, expr, pattern, target = None, hw_name = "INV
     print("-" * 45)
 
     # Warning(@Soo): there is a bug in printing repr of tuple in TVM.
-    if is_tuple_node(subgraph):
-      print(f"Subgraph to measure (target: {str(op._target.name())}):", subgraph)
-    else:
-      print(f"Subgraph to measure (target: {str(op._target.name())}):", repr(subgraph))
+    # if is_tuple_node(subgraph):
+    #   print(f"Subgraph to measure (target: {str(op._target.name())}):", subgraph)
+    # else:
+    #   print(f"Subgraph to measure (target: {str(op._target.name())}):", repr(subgraph))
     cost = op.get_cost(subgraph, hw_name)
     print(f"Cost of subgraph : {cost:4f}")
     print("-" * 45)

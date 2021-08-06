@@ -157,6 +157,14 @@ class CompGraphOptimizer:
         #    print(f"{node} --> {dom}\n")
         #    print("\n")
 
+        # Debug
+        hash_to_op = {}
+        for node in comp_graph._nodes:
+            if not is_var_node(node.get_relay_expr()):
+                hash_to_op[hash(node)] = node.get_relay_expr().op
+            else:
+                hash_to_op[hash(node)] = "var"
+
         self.loc2match = {hash(comp_graph.get_root()): {"match":[], "cost":0, "string":""}}
         while not frontiers.empty():
             # Facilitate the debugging process
@@ -186,7 +194,11 @@ class CompGraphOptimizer:
                     # next_expr_after_match = Conv()
                     assert pat.get_depth() >= 1
                     # tuple_after_matches = get_next_expr_after_match(f_expr, None, pat.get_depth())
-                    tuple_after_matches = get_next_expr_after_match(f_expr, None, pat.get_relay_pattern())
+
+                    # We need memorization to prevent it from creating same tuple items multiple times.
+                    # For diamond patterns, it will lead to overwriting cost to 0 from second or later branches
+                    tmp_memo = {}
+                    tuple_after_matches = get_next_expr_after_match(f_expr, None, pat.get_relay_pattern(), tmp_memo)
                     print("The following pattern is matched:", pat.get_relay_pattern())
                     # Consdier only valid nodes
                     # Stores branches after the match
@@ -197,9 +209,9 @@ class CompGraphOptimizer:
                     for t_idx, (expr_after_match, prev_expr_after_match) in enumerate(tuple_after_matches):
                         # print(f"Branch {t_idx}")
                         # print("New frontier")
-                        # print(expr_after_match)
+                        # print(repr(expr_after_match))
                         # print("Expr before new frontier")
-                        # print(prev_expr_after_match)
+                        # print(repr(prev_expr_after_match))
                         # print("-" * 30)
 
 
@@ -255,16 +267,20 @@ class CompGraphOptimizer:
                                 new_match += match_dic["match"]
                                 new_cost += match_dic["cost"]
                                 new_string += match_dic["string"]
-
+                            # printe(f"pair2match[outkey]: {pair2match[out_key]}")
+                            # printe(f"new  (idx: {t_idx}): ({new_cost:.4f}, {new_string})")
+                            # printe("--" * 10)
                             # Debug logs to compare costs between fused op vs a combination of single ops
-                            # if hash(new_loc) in self.loc2match:
-                            #     old_cost = self.loc2match[hash(new_loc)]["cost"]
-                            #     old_str = self.loc2match[hash(new_loc)]["string"]
-                            #     eprint(f"old : ({old_cost:.4f}, {old_str})")
-                            #     eprint(f"new : ({new_cost:.4f}, {new_string})")
-                            #     eprint("--" * 10)
+                            if hash(new_loc) in self.loc2match:
+                                old_cost = self.loc2match[hash(new_loc)]["cost"]
+                                old_str = self.loc2match[hash(new_loc)]["string"]
+                                # printe(f"old : ({old_cost:.4f}, {old_str})")
+                                # printe(f"new : ({new_cost:.4f}, {new_string})")
+                                # printe("--" * 10)
                             if hash(new_loc) not in self.loc2match or self.loc2match[hash(new_loc)]["cost"] > new_cost:
                                 self.loc2match[hash(new_loc)] = {"match": new_match, "cost":new_cost, "string":new_string}
+                    for key, val in self.loc2match.items():
+                        print(hash_to_op[key], val)
 
     def get_optimized_match(self, comp_graph):
         assert self.loc2match is not None
@@ -274,10 +290,21 @@ class CompGraphOptimizer:
         final_match = {}
         fused_group_id = 0
         # print(self.loc2match)
-        # print([hash(node) for node in comp_graph._nodes])
-        # print(comp_graph._nodes[-1].get_relay_expr())
+        hash_to_op = {}
+        for node in comp_graph._nodes:
+            if not is_var_node(node.get_relay_expr()):
+                hash_to_op[hash(node)] = node.get_relay_expr().op
+            else:
+                hash_to_op[hash(node)] = "var"
 
-        print(comp_graph._nodes[result_idx]._relay_expr)
+        for key, val in self.loc2match.items():
+            print(hash_to_op[key], val)
+
+        # print([hash(node) for node in comp_graph._nodes])
+
+        # print(repr(comp_graph._nodes[-1].get_relay_expr()))
+        # print(self.loc2match[hash(comp_graph._nodes[result_idx])]["match"])
+        # print(comp_graph._nodes[result_idx]._relay_expr)
         for (pat_op, pat_cost, hash_expr) in self.loc2match[hash(comp_graph._nodes[result_idx])]["match"]:
             final_match[hash_expr] = (fused_group_id, pat_op)
             fused_group_id += 1
