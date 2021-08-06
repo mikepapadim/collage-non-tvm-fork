@@ -210,9 +210,9 @@ def tune_and_evaluate_autotvm(tuning_opt, args):
             % (np.mean(prof_res), np.std(prof_res))
         )
 
-        
+
 def tune_auto_scheduler_tasks(
-    tasks, 
+    tasks,
     task_weights,
     measure_option,
     network,
@@ -259,7 +259,7 @@ def tune_and_evaluate_auto_scheduler(tuning_opt, args):
 
     print(f"Target Host: {args.target_host}")
     tasks, task_weights = auto_scheduler.extract_tasks(mod["main"], params=params, target=args.target)#, target_host=args.target_host)
-    
+
     # run tuning tasks
     print("Tuning...")
     tuning_opt["n_trial"] = len(tasks)*900
@@ -273,7 +273,7 @@ def tune_and_evaluate_auto_scheduler(tuning_opt, args):
         print("Compile...")
         with tvm.transform.PassContext(opt_level=OPT_LEVEL.get(), config={"relay.backend.use_auto_scheduler": True}):
             lib = relay.build(mod, target=args.target, params=params)
-        
+
         dev = tvm.device(str(args.target), 0)
         module = graph_executor.GraphModule(lib["default"](dev))
 
@@ -305,6 +305,11 @@ def args_checker(args, parser):
 
     if args.target == 'cuda':
         args.target = tvm.target.cuda()
+    elif args.target == 'llvm':
+        if args.hw == 'xeon':
+            args.target = 'llvm -mcpu=skylake-avx512'
+        else:
+            parser.error(f"Unsupported CPU: {args.hw}")
     else:
         parser.error('Unsupported target')
 
@@ -349,7 +354,7 @@ if __name__ == "__main__":
     # target = tvm.target.cuda()
     # #target_host = 'llvm -mtriple=aarch64-linux-gnu'
     # target_host = 'llvm'
-    # 
+    #
     # #### TUNING OPTION ####
     # # network = "bert"
     # network = "resnet-50"
@@ -528,6 +533,6 @@ tuning_option = {
             timeout=4,
             min_repeat_ms=150,
         ),
-    ), 
+    ),
 }
 """
