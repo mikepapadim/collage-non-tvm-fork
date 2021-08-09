@@ -26,6 +26,7 @@ def build_network(net, params, mode, net_name, hw_name):
     net = net.with_attr("CustomFusionPass", mode)
     net = net.with_attr(NETWORK_FUNC_ATTR, net_name)
     net = net.with_attr(HW_FUNC_ATTR, hw_name)
+    net = net.with_attr(BATCH_SIZE_ATTR, batch_size)
 
     with autotvm.apply_history_best(get_autotvm_log_path(hw_name)):
         with tvm.transform.PassContext(opt_level=OPT_LEVEL.get()):

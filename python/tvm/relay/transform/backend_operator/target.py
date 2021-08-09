@@ -38,6 +38,7 @@ LOG_PATH = f"{cur_dir_path}/../logs"
 BEST_MATCH_LOG = f"{LOG_PATH}/best_match"
 USER_DEFINED_MATCH_LOG = f"{LOG_PATH}/user_defined_match.log"
 HW_FUNC_ATTR = "TargetHW"
+BATCH_SIZE_ATTR = "BatchSize"
 NETWORK_FUNC_ATTR = "NetworkName"
 # AUTOTVM_LOG = f"{LOG_PATH}/autotvm_ops.json"
 # Temporary autoscheduler log file
