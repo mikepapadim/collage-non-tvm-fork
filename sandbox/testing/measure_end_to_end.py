@@ -139,12 +139,23 @@ def verify_network_output(net, params, target_str, shape_dict, hw_name):
 def args_checker(args, parser):
     is_missing_arg = not args.network
     is_missing_arg |= not args.hw
-    # is_missing_arg |= not args.target
+    is_missing_arg |= not args.target
     # is_missing_arg |= not args.dtype
     # is_missing_arg |= not args.batch_size
 
     if is_missing_arg:
         parser.error('Make sure you input all arguments')
+
+    if args.target == 'cuda':
+        pass
+    elif args.target == 'llvm':
+        if args.hw == 'xeon':
+            # pass
+            args.target = 'llvm -mcpu=skylake-avx512'
+        else:
+            parser.error(f"Unsupported CPU: {args.hw}")
+    else:
+        parser.error(f"Unsupported target: {args.target}")
 
 def get_args():
     parser = argparse.ArgumentParser()
@@ -152,7 +163,7 @@ def get_args():
     parser.add_argument("-n", "--network", help="name of a neural network")
     parser.add_argument("-hw", "--hw", help="target hardware")
     parser.add_argument("-bs", "--batch-size", default=1, type=int, help="batch size")
-    # parser.add_argument("-t", "--target", help="target device")
+    parser.add_argument("-t", "--target", help="target device")
     # parser.add_argument("-dt", "--dtype", help="data type")
 
     args = parser.parse_args()
@@ -179,7 +190,7 @@ if __name__ == "__main__":
                                                           True, args.network, args.hw, args.batch_size)
     print(f"[{args.network}] Performance of Ours on {args.hw} (mean, std) = ({mean_perf:.4f}+-{std_perf:.4f})")
 
-    # mean_perf, std_perf = measure_end_to_end_perf_tensorrt(mod, params, 'cuda', shape_dict, False)
+    # mean_perf, std_perf = measure_end_to_end_perf_tensorrt(mod, params, args.target, shape_dict, False)
     # print(f"[{args.network}] Performance of TensorRT on {args.hw} (mean, std) = ({mean_perf:.4f}+-{std_perf:.4f})")
     #
     # mean_perf, std_perf = measure_end_to_end_perf_autotvm(mod["main"], params, 'cuda', shape_dict,
