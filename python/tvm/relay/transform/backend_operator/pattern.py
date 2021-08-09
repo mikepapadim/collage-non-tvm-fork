@@ -23,25 +23,46 @@ def find_depth(relay_pattern):
     return depth+1
 
 # TODO: handle conv2d in the diamond edge
-def name_relay_pattern(pattern):
+def name_relay_pattern(pattern, idMap = None, cnt = 0):
+    if idMap is None:
+        idMap = dict()
+
+
+
     goDeeper = True
+    if isinstance(pattern, WildcardPattern):
+        node_str = ""
+    else:
+        if (pattern not in idMap):
+            idMap[pattern] = cnt
+            cnt += 1
+
+        uid = idMap[pattern]
+        node_str = f"{uid}-"
+
     if isinstance(pattern, TuplePattern):
-        node_str = "Tuple"
+        node_str += "Tuple"
         children = pattern.fields
     elif isinstance(pattern, TupleGetItemPattern):
-        node_str = "TupleGetItem"
+        node_str += "TupleGetItem"
         children = [ pattern.tuple ]
-    elif isinstance(pattern, CallPattern):
-        node_str = str(pattern.op)
-        children = pattern.args
     elif isinstance(pattern, WildcardPattern):
-        node_str = "*"
+        node_str += "*"
         goDeeper = False
         children = []
     elif isinstance(pattern, VarPattern) or isinstance(pattern, ConstantPattern):
-        node_str = "Var/Const"
+        node_str += "Var/Const"
         goDeeper = False
         children = []
+    elif isinstance(pattern, CallPattern):
+        if isinstance(pattern.op, VarPattern) or isinstance(pattern.op, ConstantPattern):
+            node_str += "Var/Const"
+            goDeeper = False
+            children = []
+        else:
+            node_str += str(pattern.op)
+            children = pattern.args
+
     else:
         raise Exception(f"{type(relay_pattern)} is not handled yet.")
 
@@ -50,19 +71,22 @@ def name_relay_pattern(pattern):
         for i, child in enumerate(children):
             if i > 0:
                 name += ", "
-            name += name_relay_pattern(child)
+            _name, _cnt = name_relay_pattern(child, idMap, cnt)
+            name += _name
+            cnt = _cnt
+
         name += "]"
     else:
         name = node_str
 
-    return name
+    return name, cnt
 
 # currently the Pattern class does not add any additional attributes from TVM's dataflow patterns
 class Pattern(object):
     def __init__(self, relay_pattern, name = None):
         self._relay_pattern = relay_pattern
         #self._name = str(relay_pattern)
-        self._name = name_relay_pattern(relay_pattern)
+        self._name = name_relay_pattern(relay_pattern)[0]
         self._depth = find_depth(relay_pattern)
 
     def __eq__(self, another):

@@ -72,11 +72,10 @@ def check_path(src, sink, fcheck):
         if node == sink:
             continue
 
-        if not fcheck(node, node==sink):
-            return False
-
         children = []
-        if is_tuple_node(node):
+        if is_var_node(node) or is_constant_node(node):
+            continue
+        elif is_tuple_node(node):
             children = node.fields
         elif is_tuplegetitem_node(node):
             children = [ node.tuple ]
@@ -84,6 +83,10 @@ def check_path(src, sink, fcheck):
             children = node.args
         else:
             raise Exception(f"Unsupported type ({type(node)})")
+
+        if not fcheck(node, node==sink):
+            return False
+
         queue.extend(children)
 
     return True
@@ -129,9 +132,10 @@ def build_pattern_with_map(node, sink, nodeToPatternMap):
         print(f"{node.op} is not in pattern map")
     assert(node in nodeToPatternMap)
     rpattern = nodeToPatternMap[node]
-
     children = []
-    if is_tuple_node(node):
+    if is_var_node(node) or is_constant_node(node):
+        pass
+    elif is_tuple_node(node):
         children = node.fields
     elif is_tuplegetitem_node(node):
         children = [ node.tuple ]
@@ -161,7 +165,6 @@ def generate_relay_pattern(src, sink, cur_pattern_type = None, nodeToPatternMap 
     assert(cur_pattern_type is not None)
     while len(queue)>0:
         node = queue.pop(0)
-        cur_pattern_type = max(cur_pattern_type, get_op_pattern(node))
         if node == sink:
             continue
 
@@ -171,12 +174,15 @@ def generate_relay_pattern(src, sink, cur_pattern_type = None, nodeToPatternMap 
             nodeToPatternMap[node] = generate_relay_pattern_node(node)[0]
 
         children = []
-        if is_tuple_node(node):
+        if is_var_node(node) or is_constant_node(node):
+            continue
+        elif is_tuple_node(node):
             children = node.fields
         elif is_tuplegetitem_node(node):
             children = [ node.tuple ]
         elif is_call_node(node):
             children = node.args
+            cur_pattern_type = max(cur_pattern_type, get_op_pattern(node))
         else:
             raise Exception(f"Unsupported type ({type(node)})")
 

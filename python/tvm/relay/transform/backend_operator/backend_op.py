@@ -221,10 +221,7 @@ def get_optimal_backendop(b_op_lib, expr, pattern, target = None, hw_name = "INV
   assert type(target) == list
 
   backendops = b_op_lib.get_backendops(pattern)
-
   cheapest_op, min_cost = None, float('inf')
-  print("List of backends....")
-  print(backendops)
 
   for op in backendops:
     # if target is not None, only consider backend operators for that target
