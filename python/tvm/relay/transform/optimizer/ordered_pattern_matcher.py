@@ -5,8 +5,9 @@ class OrderedPatternMatcher:
         pass
 
     def match(self, expr, pattern):
+        # self.matched_exprs = []
         is_matched = self.visit_expr(expr, pattern)
-        return is_matched
+        return is_matched #, self.matched_exprs
 
     # Visit Relay expressions in post-order
     def visit_expr(self, expr, pattern):
@@ -17,6 +18,12 @@ class OrderedPatternMatcher:
 
         if isinstance(pattern, WildcardPattern):
             return True
+
+        # If the code reaches here, it meas that expr matches and the pattern is not Wildcard.
+        # Thus, we should add this to matched_exprs if it's not constant or var node
+        # Note that we only save operator nodes as matched exprs
+        # if not is_constant_node(expr) and not is_var_node(expr):
+        #     self.matched_exprs.append(expr)
 
         # We assume that child class at least have methods for these
         if is_constant_node(expr) or is_var_node(expr):

@@ -1,16 +1,19 @@
 import tvm
 from tvm import relay
 from ..backend_operator.utils import *
-from .optimizer_utils import is_data_var_node
+from .optimizer_utils import *
 
-class Node:
+class CGNode:
     def __init__(self, relay_expr, topological_order):
         self._relay_expr = relay_expr
         self._topological_order = topological_order
         self._hash_val = hash(relay_expr)
         self._parents = []
         self.matched_expr = {}
-    
+
+    def set_node_idx(self, idx):
+        self.idx = idx
+
     def get_n_matched(self):
         return len(self.matched_expr.keys())
 
@@ -50,6 +53,10 @@ class ComputationGraph:
         self._expr2graph(relay_expr=relay_expr, topological_order=0, parent_expr=None)
         self._nodes.sort(key=lambda x: x._topological_order)
 
+        # Set node idx for DP
+        for idx, node in enumerate(self._nodes):
+            node.set_node_idx(idx)
+
         assert self._n_nodes == len(self._nodes)
     
     def reset(self):
@@ -65,9 +72,9 @@ class ComputationGraph:
     def _get_n_nodes(self, relay_expr, is_relay_nodes=0):
         self._memo[hash(relay_expr)] = True
         n_nodes = 1
-        if is_constant_node(relay_expr) or (is_var_node(relay_expr) and not is_data_var_node(relay_expr)):
+        if is_constant_node(relay_expr) or (is_var_node(relay_expr) and not is_data_node(relay_expr)):
             n_nodes = is_relay_nodes
-        elif is_var_node(relay_expr) and is_data_var_node(relay_expr):
+        elif is_data_var_node(relay_expr):
             n_nodes = 1
         elif is_tuplegetitem_node(relay_expr):
             next_expr = relay_expr.tuple_value
@@ -94,19 +101,20 @@ class ComputationGraph:
         return self._nodes[0]
 
     def _add_node(self, relay_expr, topological_order, parent_expr):
-        self._nodes.append(Node(relay_expr, topological_order))
+        node_idx = len(self._nodes)
+        self._nodes.append(CGNode(relay_expr, topological_order))
         self._nodes[-1].add_parent(parent_expr)
         self.expr2node[hash(relay_expr)] = self._nodes[-1]
 
         self._memo[hash(relay_expr)] = True
 
     def _expr2graph(self, relay_expr, topological_order, parent_expr):
-        if is_constant_node(relay_expr) or (is_var_node(relay_expr) and not is_data_var_node(relay_expr)):
+        if is_constant_node(relay_expr) or (is_var_node(relay_expr) and not is_data_node(relay_expr)):
             return
         else:
             self._add_node(relay_expr, topological_order, parent_expr)
 
-            if is_var_node(relay_expr) and is_data_var_node(relay_expr):
+            if is_data_var_node(relay_expr):
                 return
             elif is_tuple_node(relay_expr):
                 for node_idx, node in enumerate(relay_expr.fields):

@@ -258,7 +258,7 @@ class BackendOpLib(object):
   def _add_all_backendops(self):
     # CUDNN
     # FIXME(@Soo): For ResNext, some of CUDNN convolution doesn't work.
-    #self._add_backendop_with_key(Target.CUDNN, "CONV2D")
+    self._add_backendop_with_key(Target.CUDNN, "CONV2D")
     # self._add_backendop_with_key(Target.CUDNN, "CONV2D_RELU")
     # self._add_backendop_with_key(Target.CUDNN, "RELU")
     # self._add_backendop_with_key(Target.CUDNN, "BIAS_ADD")
@@ -274,19 +274,19 @@ class BackendOpLib(object):
     # self._add_backendop_with_key(Target.CUDNN, "CONV2D_BIAS_ADD_RELU")
 
     # TENSORRT
-    #add_all_backend_ops_to_lib(self, Target.TENSORRT, ["DIAMOND", "TRANSPOSE",
+    add_all_backend_ops_to_lib(self, Target.TENSORRT, ["DIAMOND", "TRANSPOSE",
                                                        # "TUPLE_TWO_IDX", "TUPLE_FIVE_IDX",
                                                        # "TUPLE_FIVE_IDX_CONCAT",
                                                        # "TUPLE_GET_ITEM_0",
                                                        # "TUPLE_GET_ITEM_1",
-    #                                                   "BATCH_MATMUL",
-    #                                                   "RESHAPE_TRANSPOSE",
-    #                                                   "TRANSPOSE_RESHAPE"])
+                                                      "BATCH_MATMUL",
+                                                      "RESHAPE_TRANSPOSE",
+                                                      "TRANSPOSE_RESHAPE"])
 
     # CUBLAS
     # TODO: Add patterns. matmul, batch matmul
-    #self._add_backendop_with_key(Target.CUBLAS, "DENSE")
-    #self._add_backendop_with_key(Target.CUBLAS, "BATCH_MATMUL")
+    self._add_backendop_with_key(Target.CUBLAS, "DENSE")
+    self._add_backendop_with_key(Target.CUBLAS, "BATCH_MATMUL")
 
 
     #self._add_backendop_with_key(Target.TVM_GPU_AUTOTVM, "BATCH_MATMUL")
@@ -420,14 +420,14 @@ class BackendOpLib(object):
 
 
     # defined at include/tvm/relay/op_attr_types.h
-    tvm_enum2optype = {0:"kElemWise", 1:"kBroadcast", 2:"kInjective", 3:"kCommReduce", 4:"kOutEWiseFusable", 7:"kTuple", 8:"kOpaque"}
-    tvm_optype2enum = {"kElemWise":0, "kBroadcast":1, "kInjective":2, "kCommReduce":3, "kOutEWiseFusable":4, "kTuple":7, "kOpaque":8}
-    tvm_pattern_generator = BasePatternGenerator(Target.TVM_GPU_AUTOTVM, tvm_pattern_rule, tvm_optype2enum, tvm_enum2optype)
-    self._add_backend_pattern_rule(tvm_pattern_generator)
+    # tvm_enum2optype = {0:"kElemWise", 1:"kBroadcast", 2:"kInjective", 3:"kCommReduce", 4:"kOutEWiseFusable", 7:"kTuple", 8:"kOpaque"}
+    # tvm_optype2enum = {"kElemWise":0, "kBroadcast":1, "kInjective":2, "kCommReduce":3, "kOutEWiseFusable":4, "kTuple":7, "kOpaque":8}
+    # tvm_pattern_generator = BasePatternGenerator(Target.TVM_GPU_AUTOTVM, tvm_pattern_rule, tvm_optype2enum, tvm_enum2optype)
+    # self._add_backend_pattern_rule(tvm_pattern_generator)
 
     # TVM_GPU
-    #add_all_backend_ops_to_lib(self, Target.TVM_GPU_AUTOSCH)
-    #add_all_backend_ops_to_lib(self, Target.TVM_GPU_AUTOTVM)
+    # add_all_backend_ops_to_lib(self, Target.TVM_GPU_AUTOSCH)
+    add_all_backend_ops_to_lib(self, Target.TVM_GPU_AUTOTVM)
     # add_all_backend_ops_to_lib_except_fused(backendop_lib, Target.TVM_GPU)
 
     # TVM_GPU_NO_TUNING

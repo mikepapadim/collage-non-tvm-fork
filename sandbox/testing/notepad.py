@@ -1,3 +1,33 @@
+# class BackendOp(object):
+#   def __init__(self):
+#       self._name = "abc"
+#   def __repr__(self):
+#     return self._name
+#
+# a = BackendOp()
+# print(a._name)
+
+from collections import defaultdict
+a = defaultdict(dict)
+a[1][2] = 0
+print(a)
+# a.add(1)
+# a.add(2)
+# for i in a:
+#     print(i)
+# b = frozenbitarray('1110')
+# c = frozenbitarray('1000')
+# print(a|b)
+
+# dic = {}
+# dic[a] = 1
+# print(dic[b])
+#
+# # c = ['0', '0', '0']
+# # c[2] = '1'
+# # print("".join(c))
+# print('0'*10)
+
 # from tvm.relay.dataflow_pattern import *
 # from tvm import relay
 # import logging

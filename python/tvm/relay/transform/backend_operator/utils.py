@@ -121,6 +121,9 @@ def is_call_or_tuplegetitem_node(expr):
 def is_var_node(expr):
   return type(expr) == tvm.relay.expr.Var
 
+def is_constant_or_var_node(expr):
+  return is_constant_node(expr) or is_var_node(expr)
+
 def no_constraints_func(config):
   return True
 

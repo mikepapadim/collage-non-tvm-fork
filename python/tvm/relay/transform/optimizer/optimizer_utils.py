@@ -28,8 +28,7 @@ def print_ir(mod, info, is_before):
         # if info.name != "FuseOps":
         visualize_network(mod["main"], info.name + "_after")
 
-
-def is_data_var_node(expr):
+def is_data_node(expr):
     is_data_var = False
     for data_name_hint in DATA_NAME_HINTS:
         if data_name_hint in expr.name_hint:
@@ -37,85 +36,57 @@ def is_data_var_node(expr):
             break
     return is_data_var
 
-def get_next_expr_after_match(relay_expr, prev_relay_expr, pattern, tmp_memo):
-    target_node = []
+def is_data_var_node(expr):
+    if is_var_node(expr) and is_data_node(expr):
+        return True
 
-    # Prevent diamond pattern from creating two same next elements and overwriting cost to 0
-    if relay_expr in tmp_memo:
-        return []
-    else:
-        tmp_memo[relay_expr] = True
+    return False
 
-    if type(relay_expr) == tvm.relay.expr.Var:
-        if is_data_var_node(relay_expr):
-            return [(relay_expr, prev_relay_expr)]
-        assert False, "Var node other than data exists!"
-        # return [(None, prev_relay_expr)]
-    elif is_constant_node(relay_expr):
-        return [(None, prev_relay_expr)]
-
-    if isinstance(pattern, WildcardPattern):
-        return [(relay_expr, prev_relay_expr)]
-    # Warning(@Soo): This is hacky way
-    elif isinstance(pattern, ConstantPattern):
-        return [(None, prev_relay_expr)]
-
-    # If it is tuple, you should use tuple_value instead of args
-    # Caution: depth or depth-1?
-    if type(relay_expr) == tvm.relay.expr.TupleGetItem:
-        target_node += get_next_expr_after_match(relay_expr.tuple_value, relay_expr, pattern.tuple, tmp_memo)
-    elif is_tuple_node(relay_expr):
-        for f_idx, node in enumerate(relay_expr.fields):
-            target_node += get_next_expr_after_match(node, relay_expr, pattern.fields[f_idx], tmp_memo)
-    else:
-        # Note that batch_matmul also has args
-        # if type(relay_expr) == tvm.relay.nn.batch_matmul:
-        #     target_node += get_next_expr_after_match(relay_expr.x, relay_expr, depth - 1)
-        #     target_node += get_next_expr_after_match(relay_expr.y, relay_expr, depth - 1)
-        # else:
-        # print("Expr : ", relay_expr)
-        # print("Pattern : ", pattern)
-
-        # Warning(@Soo): pattern args are not necessarily in the same order with expr args
-        # e.g., is_op("add")(is_op("nn.conv2d"), wildcard) can still match add(data, conv)
-        # Thus, we need to figure out the order and call the function in right order
-        # Update (@Soo): With ordered_pattern_matcher, now the order is guaranteed.
-        for a_idx, node in enumerate(relay_expr.args):
-            target_node += get_next_expr_after_match(node, relay_expr, pattern.args[a_idx], tmp_memo)
-#             # FIX: Hacky way to avoid residual connection
-#             break
-
-    return target_node
-
-
-# def get_next_expr_after_match(relay_expr, prev_relay_expr, depth):
+# def get_next_expr_after_match(relay_expr, prev_relay_expr, pattern, tmp_memo):
 #     target_node = []
+#
+#     # Prevent diamond pattern from creating two same next elements and overwriting cost to 0
+#     if relay_expr in tmp_memo:
+#         return []
+#     else:
+#         tmp_memo[relay_expr] = True
 #
 #     if type(relay_expr) == tvm.relay.expr.Var:
 #         if is_data_var_node(relay_expr):
 #             return [(relay_expr, prev_relay_expr)]
-#         return [(None, prev_relay_expr)]
+#         assert False, "Var node other than data exists!"
+#         # return [(None, prev_relay_expr)]
 #     elif is_constant_node(relay_expr):
 #         return [(None, prev_relay_expr)]
 #
-#     if depth == 0:
+#     if isinstance(pattern, WildcardPattern):
 #         return [(relay_expr, prev_relay_expr)]
+#     # Warning(@Soo): This is hacky way
+#     elif isinstance(pattern, ConstantPattern):
+#         return [(None, prev_relay_expr)]
 #
 #     # If it is tuple, you should use tuple_value instead of args
 #     # Caution: depth or depth-1?
 #     if type(relay_expr) == tvm.relay.expr.TupleGetItem:
-#         target_node += get_next_expr_after_match(relay_expr.tuple_value, relay_expr, depth-1)
+#         target_node += get_next_expr_after_match(relay_expr.tuple_value, relay_expr, pattern.tuple, tmp_memo)
 #     elif is_tuple_node(relay_expr):
-#         for node in relay_expr.fields:
-#             target_node += get_next_expr_after_match(node, relay_expr, depth-1)
+#         for f_idx, node in enumerate(relay_expr.fields):
+#             target_node += get_next_expr_after_match(node, relay_expr, pattern.fields[f_idx], tmp_memo)
 #     else:
 #         # Note that batch_matmul also has args
 #         # if type(relay_expr) == tvm.relay.nn.batch_matmul:
 #         #     target_node += get_next_expr_after_match(relay_expr.x, relay_expr, depth - 1)
 #         #     target_node += get_next_expr_after_match(relay_expr.y, relay_expr, depth - 1)
 #         # else:
-#         for node in relay_expr.args:
-#             target_node += get_next_expr_after_match(node, relay_expr, depth-1)
+#         # print("Expr : ", relay_expr)
+#         # print("Pattern : ", pattern)
+#
+#         # Warning(@Soo): pattern args are not necessarily in the same order with expr args
+#         # e.g., is_op("add")(is_op("nn.conv2d"), wildcard) can still match add(data, conv)
+#         # Thus, we need to figure out the order and call the function in right order
+#         # Update (@Soo): With ordered_pattern_matcher, now the order is guaranteed.
+#         for a_idx, node in enumerate(relay_expr.args):
+#             target_node += get_next_expr_after_match(node, relay_expr, pattern.args[a_idx], tmp_memo)
 # #             # FIX: Hacky way to avoid residual connection
 # #             break
 #

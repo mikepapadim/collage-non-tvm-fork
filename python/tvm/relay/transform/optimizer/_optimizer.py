@@ -11,15 +11,15 @@ from ..backend_operator.utils import *
 
 #from ..utility.visualize import visualize_network
 from ..utility.profile_ops_in_net import profile_ops_in_net
-from .optimizer_utils import *
+# from .optimizer_utils import *
 
 from .comp_graph import ComputationGraph
 from .comp_graph_optimizer import *
-from .ext_compiler_op_merger import *
 from .backend_op_state import *
 from .evolutionary_searcher import EvolutionarySearcher
 from .op_match_logger import *
 from ..utility.debug_helper import printe
+# from .ext_compiler_op_merger import *
 from .ext_compiler_op_annotator import ExtCompilerOpAnnotator
 from tvm.relay.op.contrib.tensorrt import prune_tensorrt_subgraphs
 from tvm.relay import transform
@@ -171,27 +171,41 @@ def run_op_level_opt(relay_expr):
     # We coudln't figure out how to support CUBLAS in Jetson yet
     # It shouldn't be a big deal though given TensorRT uses CuBLAS internally
     # targets = [Target.TVM_GPU_AUTOTVM, Target.CUDNN, Target.TENSORRT]
-    targets = [Target.TVM_GPU_AUTOTVM, Target.CUDNN, Target.TENSORRT, Target.CUBLAS]
+    # targets = [Target.TVM_GPU_AUTOTVM, Target.CUDNN, Target.TENSORRT, Target.CUBLAS]
+    targets = [Target.TVM_GPU_AUTOTVM, Target.TENSORRT, Target.CUBLAS]
 
     batch_size = 1
     backendop_lib = setup_backend_op_lib(relay_expr, targets, batch_size, hw_name)
 
     # Optimizing graph
-    print("Computation graph created")
     optimizer = CompGraphOptimizer(backendop_lib, targets)
-    print("Optimizer created")
-    optimizer.optimize(comp_graph, hw_name)
-    print("Optimizer finished optimizing comp graph")
-    optimized_match, post_order_match_result = optimizer.get_optimized_match(comp_graph)
+
+    """
+    Warning(@Soo): Note that current DP optimizer does not work for patterns with more than one root.
+    For example, Conv     Conv (Two parallel convolution) case can't be handled 
+                   \       /
+                      ReLU        
+    Following lines need to be modified to afford more than two roots
+    - pat.get_relay_pattern().match(f_expr) 
+    
+    This is because of inherent limitation of Relay pattern and 
+    the discrepancy between what Relay pattern supports and how TVM fusion strategy works.
+    We can come back to this later if this is critical to performance
+    """
+    optimized_match = optimizer.optimize(comp_graph, hw_name)
+
+    print("[Op-Level: DP] It finished optimizing comp graph and assigning backend ops to Relay Expr (backend attr)")
+
+    # optimized_match, post_order_match_result = optimizer.get_optimized_match(comp_graph)
 
     # print("Match result: ", optimized_match)
     # post_order_match_result is for debugging to check if it matches the final result from the TVM DP fusion pass
-    print("Match result")
-    for idx, pair in enumerate(post_order_match_result):
-        print(idx, pair)
-    # Debug (@soo)
-    print_matching_final(comp_graph, optimizer.loc2match)
-    print("-"*40)
+    # print("Match result")
+    # for idx, pair in enumerate(post_order_match_result):
+    #     print(idx, pair)
+    # # Debug (@soo)
+    # print_matching_final(comp_graph, optimizer.loc2match)
+    # print("-"*40)
 
     backendop_lib.save_to_log(hw_name)
 
@@ -315,68 +329,68 @@ def run_two_level_opt(relay_expr):
 def run_dp(relay_expr):
     run_op_level_opt(relay_expr)
 
-"""
-This is still work in progress.
-
-Pros: it gives us upper bound
-Cons: How do you consider all possible TensorRT operators? I don't have good answers to that yet.
-
-"""
-@tvm._ffi.register_func("relay.transform.optimizer.run_exhaustive_search")
-def run_exhaustive_search(relay_expr):
-    # It is a function if you get it from last pass of Relay build
-    hw_name = relay_expr.attrs[HW_FUNC_ATTR]
-    print("Optimizing on the Python side")
-    # print("Relay expression")
-    # print(relay_expr)
-    # profile_ops_in_net(relay_expr, "bert", "tensorrt", "rtx2070")
-    # import sys
-    # sys.exit(0)
-    # visualize_network(relay_expr, "o3_bert")
-    relay_expr = get_function_body(relay_expr)
-
-    comp_graph = ComputationGraph(relay_expr)
-
-    # Warning: ResNet-8 doesn't have tuned operators / CuDNN doesn't work for ResNet-8
-    # target_backend = None # Consider all targets
-
-    # Sanity check: AutoTVM
-    # targets = [Target.TVM_GPU_AUTOTVM]
-
-    # Sanity check: Only CuDNN
-    # targets = [Target.TVM_GPU_AUTOTVM, Target.CUDNN]
-
-    # Enable all backends
-    targets = [Target.TVM_GPU_AUTOTVM, Target.CUBLAS, Target.CUDNN, Target.TENSORRT]
-    batch_size = 1
-    backendop_lib = setup_backend_op_lib(relay_expr, targets, batch_size, hw_name)
-
-    # Optimizing graph
-    print("Computation graph created")
-    optimizer = ExhaustiveSearcher(backendop_lib, targets)
-    print("Optimizer created")
-    optimizer.optimize(comp_graph, hw_name)
-    print("It's optimized")
-    optimized_match, post_order_match_result = optimizer.get_optimized_match(comp_graph)
-
-    # print("Match result: ", optimized_match)
-    # post_order_match_result is for debugging to check if it matches the final result from the TVM DP fusion pass
-    print("Match result")
-    for idx, pair in enumerate(post_order_match_result):
-        print(idx, pair)
-    # Debug (@soo)
-    print_matching_final(comp_graph, optimizer.loc2match)
-    print("-" * 40)
-    # print("Optimized match")
-    # print(optimized_match)
-
-    # print(f"fusion dic (before merge): {optimized_match}")
-    # optimized_match = ExtCompilerOpMerger(optimized_match).merge(relay_expr)
-    # print(f"fusion dic (after  merge): {optimized_match}")
-
-    backendop_lib.save_to_log(hw_name)
-
-    return optimized_match
+# """
+# This is still work in progress.
+#
+# Pros: it gives us upper bound
+# Cons: How do you consider all possible TensorRT operators? I don't have good answers to that yet.
+#
+# """
+# @tvm._ffi.register_func("relay.transform.optimizer.run_exhaustive_search")
+# def run_exhaustive_search(relay_expr):
+#     # It is a function if you get it from last pass of Relay build
+#     hw_name = relay_expr.attrs[HW_FUNC_ATTR]
+#     print("Optimizing on the Python side")
+#     # print("Relay expression")
+#     # print(relay_expr)
+#     # profile_ops_in_net(relay_expr, "bert", "tensorrt", "rtx2070")
+#     # import sys
+#     # sys.exit(0)
+#     # visualize_network(relay_expr, "o3_bert")
+#     relay_expr = get_function_body(relay_expr)
+#
+#     comp_graph = ComputationGraph(relay_expr)
+#
+#     # Warning: ResNet-8 doesn't have tuned operators / CuDNN doesn't work for ResNet-8
+#     # target_backend = None # Consider all targets
+#
+#     # Sanity check: AutoTVM
+#     # targets = [Target.TVM_GPU_AUTOTVM]
+#
+#     # Sanity check: Only CuDNN
+#     # targets = [Target.TVM_GPU_AUTOTVM, Target.CUDNN]
+#
+#     # Enable all backends
+#     targets = [Target.TVM_GPU_AUTOTVM, Target.CUBLAS, Target.CUDNN, Target.TENSORRT]
+#     batch_size = 1
+#     backendop_lib = setup_backend_op_lib(relay_expr, targets, batch_size, hw_name)
+#
+#     # Optimizing graph
+#     print("Computation graph created")
+#     optimizer = ExhaustiveSearcher(backendop_lib, targets)
+#     print("Optimizer created")
+#     optimizer.optimize(comp_graph, hw_name)
+#     print("It's optimized")
+#     optimized_match, post_order_match_result = optimizer.get_optimized_match(comp_graph)
+#
+#     # print("Match result: ", optimized_match)
+#     # post_order_match_result is for debugging to check if it matches the final result from the TVM DP fusion pass
+#     print("Match result")
+#     for idx, pair in enumerate(post_order_match_result):
+#         print(idx, pair)
+#     # Debug (@soo)
+#     print_matching_final(comp_graph, optimizer.loc2match)
+#     print("-" * 40)
+#     # print("Optimized match")
+#     # print(optimized_match)
+#
+#     # print(f"fusion dic (before merge): {optimized_match}")
+#     # optimized_match = ExtCompilerOpMerger(optimized_match).merge(relay_expr)
+#     # print(f"fusion dic (after  merge): {optimized_match}")
+#
+#     backendop_lib.save_to_log(hw_name)
+#
+#     return optimized_match
 
 # # Test script with ResNet-8
 # if __name__ == "__main__":
