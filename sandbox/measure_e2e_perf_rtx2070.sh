@@ -19,9 +19,9 @@
 #CUDA_VISIBLE_DEVICES=1 python3 testing/measure_end_to_end.py -n nasrnn -hw rtx2070 -t cuda
 
 # Batch size of 8
-CUDA_VISIBLE_DEVICES=1 python3 testing/measure_end_to_end.py -n resnet50 -hw rtx2070 -bs 8 -t cuda
-CUDA_VISIBLE_DEVICES=1 python3 testing/measure_end_to_end.py -n resnext50_32x4d -hw rtx2070 -bs 8 -t cuda
-CUDA_VISIBLE_DEVICES=1 python3 testing/measure_end_to_end.py -n nasneta -hw rtx2070 -bs 8 -t cuda
+#CUDA_VISIBLE_DEVICES=1 python3 testing/measure_end_to_end.py -n resnet50 -hw rtx2070 -bs 8 -t cuda
+#CUDA_VISIBLE_DEVICES=1 python3 testing/measure_end_to_end.py -n resnext50_32x4d -hw rtx2070 -bs 8 -t cuda
+#CUDA_VISIBLE_DEVICES=1 python3 testing/measure_end_to_end.py -n nasneta -hw rtx2070 -bs 8 -t cuda
 #CUDA_VISIBLE_DEVICES=1 python3 testing/measure_end_to_end.py -n resnet50_3d -hw rtx2070 -bs 8 -t cuda
 #CUDA_VISIBLE_DEVICES=1 python3 testing/measure_end_to_end.py -n mobilenet_v2 -hw rtx2070 -bs 8 -t cuda
 #CUDA_VISIBLE_DEVICES=1 python3 testing/measure_end_to_end.py -n bert -hw rtx2070 -bs 8 -t cuda

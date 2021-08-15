@@ -7,13 +7,13 @@
 #CUDA_VISIBLE_DEVICES=1 python3 testing/test_relay_build.py -n nasrnn -hw rtx2070
 #CUDA_VISIBLE_DEVICES=1 python3 testing/test_relay_build.py -n bert -hw rtx2070
 #CUDA_VISIBLE_DEVICES=1 python3 testing/test_relay_build.py -n nasneta -hw rtx2070
-CUDA_VISIBLE_DEVICES=0 python3 testing/test_relay_build.py -n resnet50_3d -hw rtx3070
+#CUDA_VISIBLE_DEVICES=0 python3 testing/test_relay_build.py -n resnet50_3d -hw rtx3070
 #CUDA_VISIBLE_DEVICES=0 python3 testing/test_relay_build.py -n mobilenet_v2 -hw rtx3070
 
 # Relay examples
 #CUDA_VISIBLE_DEVICES=0 python3 testing/test_relay_build.py -n annotate_test -hw rtx2070
 #CUDA_VISIBLE_DEVICES=1 python3 testing/test_relay_build.py -n conv2d -hw rtx2070
 #CUDA_VISIBLE_DEVICES=1 python3 testing/test_relay_build.py -n conv2d+relu -hw rtx2070
-#CUDA_VISIBLE_DEVICES=1 python3 testing/test_relay_build.py -n conv2d+relu_x2 -hw rtx2070
+CUDA_VISIBLE_DEVICES=1 python3 testing/test_relay_build.py -n conv2d+relu_x2 -hw rtx2070
 
 

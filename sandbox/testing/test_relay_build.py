@@ -19,7 +19,7 @@ import argparse
 
 from workloads.workloads import WORKLOADS_DIC
 
-def build_network(net, params, mode, net_name, hw_name):
+def build_network(net, params, mode, net_name, hw_name, batch_size):
     assert is_function_node(net)
     assert CustomFusionPass.has_value(mode)
 
@@ -100,13 +100,13 @@ if __name__ == "__main__":
     # if args.network == "nasneta":
     #     OPT_LEVEL.set(2)
 
-    mod, params, shape_dict, _ = get_network_from_torch(args.network, 1)
+    # mod, params, shape_dict, _ = get_network_from_torch(args.network, 1)
     # mod, params, shape_dict, _ = crop_network_from_torch(args.network, 1, 25)
-    # mod, params = get_network_from_relay(args.network, 1)
+    mod, params = get_network_from_relay(args.network, 1)
     # printe(repr(mod["main"]))
     # build_network_tensorrt(mod, params)
-    lib = build_network(mod["main"], params, CustomFusionPass.TWO_LEVEL_OPT, args.network, args.hw)
-    # lib = build_network(mod["main"], params, CustomFusionPass.DP, args.network)
+    # lib = build_network(mod["main"], params, CustomFusionPass.TWO_LEVEL_OPT, args.network, args.hw)
+    lib = build_network(mod["main"], params, CustomFusionPass.DP, args.network, args.hw, 1)
     # lib = build_network(mod["main"], params, CustomFusionPass.USER_DEFINED_FUSION, args.network)
     print(f"We successfully built the {args.network} on {args.hw}")
 
