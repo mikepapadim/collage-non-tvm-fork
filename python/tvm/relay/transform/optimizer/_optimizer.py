@@ -173,7 +173,7 @@ def run_op_level_opt(relay_expr):
     # It shouldn't be a big deal though given TensorRT uses CuBLAS internally
     # targets = [Target.TVM_GPU_AUTOTVM, Target.CUDNN, Target.TENSORRT]
     # targets = [Target.TVM_GPU_AUTOTVM, Target.CUDNN, Target.TENSORRT, Target.CUBLAS]
-    targets = [Target.TVM_GPU_AUTOTVM, Target.TENSORRT, Target.CUBLAS]
+    targets = [Target.TVM_GPU_AUTOTVM, Target.TENSORRT]#, Target.CUBLAS]
 
     batch_size = 1
     backendop_lib = setup_backend_op_lib(relay_expr, targets, batch_size, hw_name)
