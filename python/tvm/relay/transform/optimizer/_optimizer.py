@@ -192,7 +192,7 @@ def run_op_level_opt(relay_expr):
     
     This is because of inherent limitation of Relay pattern and 
     the discrepancy between what Relay pattern supports and how TVM fusion strategy works.
-    We can come back to this later if this is critical to performance
+    We can come back to this later if this is critical to performance, which is unlikely for now given networks we have.
     """
     optimized_match = optimizer.optimize(comp_graph, hw_name)
 

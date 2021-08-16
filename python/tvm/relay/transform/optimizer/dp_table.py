@@ -82,7 +82,8 @@ class MatchInfoExtractor:
         if is_constant_or_var_node(expr):
             self.match_dic[expr] = self.op_name
 
-            # Warning(@Soo): Comment this because data node can be matched multiple times, so we should exclude it
+            # Warning(@Soo): Comment this because data node can be matched multiple times,
+            # so we should exclude it from matched_nodes. It will still be included in match_dic
             # # Corner case: Var for input data should be considered as a node
             # if is_data_var_node(expr):
             #     node = self._comp_graph.expr2node[hash(expr)]
