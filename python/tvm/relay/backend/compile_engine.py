@@ -275,7 +275,6 @@ def select_implementation(op, attrs, inputs, out_type, target, use_autotvm=True)
 
 @tvm._ffi.register_func("relay.backend.target_specific_lowering")
 def target_specific_lowering(func, inputMap, target_info=None):
-
     import sys
     from tvm.relay.op.contrib.tensorrt import partition_for_tensorrt
     #print("\t[Compile_engine.py] Custom lowering?", file=sys.stderr)
@@ -534,6 +533,8 @@ def lower_call(call, inputs, target):
             op, call.attrs, inputs, ret_type, target, use_autotvm=False
         )
 
+    import sys
+    print(f"{op}, {target} --> {best_impl.name}", file=sys.stderr)
     # re-enable AutoTVM tracing
     if reenable_tracing:
         env.tracing = True

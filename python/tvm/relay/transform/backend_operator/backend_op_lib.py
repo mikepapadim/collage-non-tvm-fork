@@ -290,9 +290,7 @@ class BackendOpLib(object):
 
 
     #self._add_backendop_with_key(Target.TVM_GPU_AUTOTVM, "BATCH_MATMUL")
-    # @Sung: add TVM pattern rule
-    def tvm_pattern_rule(expr, dom_tree, target=Target.TVM_GPU_AUTOTVM, optype2enum = None, enm2optype = None):
-        # NOTE: Two possible choices
+    # NOTE: Two possible choices
         # 1. Use dataflow pattern matcher in TVM.
         # e.g., op = is_op('nn.dense').has_attr({"TOpPattern": K_ELEMWISE}) in tests/python/relay/test_dataflow_pattern.py
         #       wildcard().has_attr({"TOpPattern": K_ELEMWISE})
@@ -318,6 +316,9 @@ class BackendOpLib(object):
         # Relay pattern gen:
 
         # Try expension. If valid, create a pattern and try further.
+
+    # @Sung: add TVM pattern rule
+    def tvm_pattern_rule(expr, dom_tree, target=Target.TVM_GPU_AUTOTVM, optype2enum = None, enm2optype = None):
         def run_fuse(src, sink, cur_pattern_type = None, cur_num_op = 0, nodeToPatternMap = dict(), orig_src = None):
             if sink is None:
                 return None
