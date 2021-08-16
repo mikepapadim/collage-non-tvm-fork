@@ -103,47 +103,34 @@ class ComputationGraph:
     def _add_node(self, relay_expr, topological_order, parent_expr):
         node_idx = len(self._nodes)
         self._nodes.append(CGNode(relay_expr, topological_order))
-        self._nodes[-1].add_parent(parent_expr)
         self.expr2node[hash(relay_expr)] = self._nodes[-1]
-
-        self._memo[hash(relay_expr)] = True
 
     def _expr2graph(self, relay_expr, topological_order, parent_expr):
         if is_constant_node(relay_expr) or (is_var_node(relay_expr) and not is_data_node(relay_expr)):
             return
         else:
-            self._add_node(relay_expr, topological_order, parent_expr)
+            if hash(relay_expr) not in self._memo:
+                self._add_node(relay_expr, topological_order, parent_expr)
+                self.expr2node[hash(relay_expr)].add_parent(parent_expr)
+                self._memo[hash(relay_expr)] = True
+            else:
+                self.expr2node[hash(relay_expr)].add_parent(parent_expr)
+                if self.expr2node[hash(relay_expr)]._topological_order < topological_order:
+                    self.expr2node[hash(relay_expr)]._topological_order = topological_order
+                else:
+                    return
 
             if is_data_var_node(relay_expr):
                 return
             elif is_tuple_node(relay_expr):
                 for node_idx, node in enumerate(relay_expr.fields):
-                    if hash(node) not in self._memo:
-                        # memorize this visit to prevent it from visiting twice
-                        # +1 here means counting the current node
-                        self._expr2graph(node, topological_order + 1, relay_expr)
-                    else:
-                        # Make sure the node has a right (larger) topological order
-                        # if there are multiple choices
-                        if self.expr2node[hash(node)]._topological_order < topological_order:
-                            self.expr2node[hash(node)]._topological_order = topological_order
-                        self.expr2node[hash(node)].add_parent(relay_expr)
+                    self._expr2graph(node, topological_order + 1, relay_expr)
             elif is_tuplegetitem_node(relay_expr):
                 # If it is tuple, you should use tuple_value instead of args
                 next_expr = relay_expr.tuple_value
-                if hash(next_expr) not in self._memo:
-                    self._expr2graph(next_expr, topological_order+1, relay_expr)
+                self._expr2graph(next_expr, topological_order+1, relay_expr)
             elif is_call_node(relay_expr):
                 for node_idx, node in enumerate(relay_expr.args):
-                    if hash(node) not in self._memo:
-                        # memorize this visit to prevent it from visiting twice
-                        # +1 here means counting the current node
-                        self._expr2graph(node, topological_order+1, relay_expr)
-                    else:
-                        # Make sure the node has a right (larger) topological order
-                        # if there are multiple choices
-                        if self.expr2node[hash(node)]._topological_order < topological_order:
-                            self.expr2node[hash(node)]._topological_order = topological_order
-                        self.expr2node[hash(node)].add_parent(relay_expr)
+                    self._expr2graph(node, topological_order + 1, relay_expr)
             else:
                 raise Exception("Unexpected Relay expr type")

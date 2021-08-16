@@ -210,7 +210,7 @@ class DPTable:
         self._comp_graph = comp_graph
 
         self._n_nodes = comp_graph.get_n_nodes() - 1
-
+        printe(f"# of nodes in comp graph: {self._n_nodes}")
         root_node = comp_graph.get_root()
         default_key_str = ''.join(self.gen_default_node_key_list())
         self._zero_key = frozenbitarray(default_key_str)

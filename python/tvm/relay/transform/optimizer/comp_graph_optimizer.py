@@ -181,14 +181,13 @@ class CompGraphOptimizer:
             # for generator in self._backendop_lib.get_all_pattern_generators():
             #     generator.run(dom_tree, f_expr)
 
+            n_match_frontier = 0
             for pat in self._backendop_lib.get_all_patterns():
                 # print("Checking... ", pat)
 
-                # [Deprecated] ordered_pattern_matcher; because we have new robust DP implementation that works
-                # regardless of pattern orders.
                 # ordered_pattern_matcher consider the order of arguments when matching
-                # in contrast to basic Relay pattern matching
-
+                # in contrast to basic Relay pattern matching.
+                # If we don't use this, we need to modify extract_subgraph (for op measurement)
                 if self._ordered_pattern_matcher.match(f_expr, pat.get_relay_pattern()):
                 # if pat.get_relay_pattern().match(f_expr):
                     assert pat.get_depth() >= 1 # 0 depth doesn't make sense
@@ -210,7 +209,14 @@ class CompGraphOptimizer:
                     # print(dp_table._dp_table)
 
                     # Add new frontiers to the queue
+                    prev_qsize = frontier_queue._frontiers.qsize()
                     frontier_queue.put(new_frontiers)
+                    n_match_frontier += frontier_queue._frontiers.qsize() - prev_qsize
+
+            # if n_match_frontier == 0:
+            #     printe("[Debug!] This frontier didn't match!!")
+            # else:
+            #     printe(f"n_match_froniter : {n_match_frontier}")
 
         # Assign backend operator annotation (group_id + backend_op_name) to Relay expr (backend attribute)
         dp_table.assign_backend_op_to_expr()

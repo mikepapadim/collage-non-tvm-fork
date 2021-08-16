@@ -158,6 +158,7 @@ def run_op_level_opt(relay_expr):
     hw_name = relay_expr.attrs[HW_FUNC_ATTR]
     relay_expr = get_function_body(relay_expr)
 
+    print(f"[Op-Level: DP] Computation graph generation...")
     comp_graph = ComputationGraph(relay_expr)
     n_relay_nodes = comp_graph.n_relay_nodes
     print(f"# of relay nodes in comp graph: {n_relay_nodes}")
@@ -180,6 +181,7 @@ def run_op_level_opt(relay_expr):
     # Optimizing graph
     optimizer = CompGraphOptimizer(backendop_lib, targets)
 
+    # visualize_network(relay_expr, "o3_nasnet_test", comp_graph.expr2node)
     """
     Warning(@Soo): Note that current DP optimizer does not work for patterns with more than one root.
     For example, Conv     Conv (Two parallel convolution) case can't be handled 
