@@ -36,9 +36,9 @@ def measure_end_to_end_perf_tensorrt(mod, params, target_str, shape_dict, is_our
 def measure_end_to_end_perf_autotvm(net, params, target_str, shape_dict, is_ours, net_name, hw_name):
     assert is_function_node(net)
     if is_ours:
-        # net = net.with_attr("CustomFusionPass", CustomFusionPass.DP)
+        net = net.with_attr("CustomFusionPass", CustomFusionPass.DP)
         # net = net.with_attr("CustomFusionPass", CustomFusionPass.USER_DEFINED_FUSION)
-        net = net.with_attr("CustomFusionPass", CustomFusionPass.TWO_LEVEL_OPT)
+        #net = net.with_attr("CustomFusionPass", CustomFusionPass.TWO_LEVEL_OPT)
         net = net.with_attr(NETWORK_FUNC_ATTR, net_name)
         net = net.with_attr(HW_FUNC_ATTR, hw_name)
 
@@ -54,12 +54,36 @@ def measure_end_to_end_perf_autotvm(net, params, target_str, shape_dict, is_ours
         # Setup execution
         for input_name, input_shape in shape_dict.items():
             input_data = np.random.uniform(-1, 1, size=input_shape).astype("float32")
-            #module.set_input(input_name, input_data)
+            module.set_input(input_name, input_data)
 
 
-        ftimer = module.module.time_evaluator("run", dev, number=NUM_MEASUREMENTS_PER_REPEAT_E2E, repeat=NUM_REPEATS_E2E)
+    ftimer = module.module.time_evaluator("run", dev, number=NUM_MEASUREMENTS_PER_REPEAT_E2E, repeat=NUM_REPEATS_E2E)
 
     return measure(ftimer, is_net=False)
+
+
+def measure_end_to_end_perf_cudnn(net, params, target_str, shape_dict, is_ours, net_name, hw_name):
+    assert is_function_node(net)
+
+    with tvm.transform.PassContext(opt_level=OPT_LEVEL.get()):
+        lib = relay.build(net, target_str, params=params)
+    print(f"We successfully built the network")
+
+    # Create workload
+    dev = tvm.device(target_str, 0)
+    module = runtime.GraphModule(lib["default"](dev))
+
+    # Setup execution
+    for input_name, input_shape in shape_dict.items():
+        input_data = np.random.uniform(-1, 1, size=input_shape).astype("float32")
+        module.set_input(input_name, input_data)
+
+
+    ftimer = module.module.time_evaluator("run", dev, number=NUM_MEASUREMENTS_PER_REPEAT_E2E, repeat=NUM_REPEATS_E2E)
+
+    return measure(ftimer, is_net=False)
+
+
 
 def measure_end_to_end_perf_autosch(net, params, target_str, shape_dict, is_ours):
     assert is_function_node(net)
@@ -167,12 +191,13 @@ if __name__ == "__main__":
     #     OPT_LEVEL.set(2)
 
     # We can't test this because this network include batch norm.
-    #mod, params, shape_dict, _ = get_network_from_torch(args.network, 1)
+    mod, params, shape_dict, _ = get_network_from_torch(args.network, 1)
     #mod, params, shape_dict, _ = get_network_from_torch("nasneta", 1)
     #mod, params, shape_dict, _ = get_network_from_relay("conv2d+relu_x2", 1)
-    mod, params, shape_dict, _ = get_network_from_relay("diamond", 1)
+    #mod, params, shape_dict, _ = get_network_from_relay("diamond", 1)
 
-    # mean_perf, std_perf = measure_end_to_end_perf_autotvm(mod["main"], params, 'cuda', shape_dict,
+    #mean_perf, std_perf = measure_end_to_end_perf_autotvm(mod["main"], params, 'cuda', shape_dict,
+                                                           #False, args.network, args.hw)
     #                                                       True, args.network, args.hw)
     # print(f"[{args.network}] Performance of Ours on {args.hw} (mean, std) = ({mean_perf:.4f}+-{std_perf:.4f})")
 
@@ -183,9 +208,13 @@ if __name__ == "__main__":
     #                                                       False, args.network, args.hw)
     # print(f"[{args.network}] Performance of AutoTVM on {args.hw} (mean, std) = ({mean_perf:.4f}+-{std_perf:.4f})")
     #
-    # mean_perf, std_perf = measure_end_to_end_perf_autotvm(mod["main"], params, 'cuda -libs=cudnn', shape_dict,
-    #                                                       False, args.network, args.hw)
-    # print(f"[{args.network}] Performance of AutoTVM+CuDNN on {args.hw} (mean, std) = ({mean_perf:.4f}+-{std_perf:.4f})")
+
+    #mean_perf, std_perf = measure_end_to_end_perf_cudnn(mod["main"], params, 'cuda -libs=cudnn', shape_dict,
+#                                                           False, args.network, args.hw)
+
+    mean_perf, std_perf = measure_end_to_end_perf_cudnn(mod["main"], params, 'llvm', shape_dict,
+                                                           False, args.network, args.hw)
+    print(f"[{args.network}] Performance of AutoTVM+CuDNN on {args.hw} (mean, std) = ({mean_perf:.4f}+-{std_perf:.4f})")
 
     # mean_perf, std_perf = measure_end_to_end_perf_autosch(mod["main"], params, 'cuda', shape_dict, False)
     # print(f"[AutoSCH] Performance of {args.network} (mean, std) = ({mean_perf:.4f}+-{std_perf:.4f})")
