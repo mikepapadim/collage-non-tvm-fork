@@ -112,6 +112,8 @@ def extract_subgraph(expr, pattern):
   old_expr_to_new = dict()
 
   depth = pattern.get_depth()
+  # print(f"depth: {depth}")
+
   relay_pattern = pattern.get_relay_pattern()
   def set_old_expr_to_new(expr, new_expr):
     old_expr_to_new[expr] = new_expr

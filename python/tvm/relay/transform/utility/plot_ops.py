@@ -62,7 +62,7 @@ def draw_plot(df, fig_name):
     plt.ylabel('Inference Time')
 
     this_code_path = os.path.dirname(os.path.abspath(__file__))
-    fig_name = f'{this_code_path}/../../analysis/results/plots/{fig_name}'
+    fig_name = f'{this_code_path}/../../../../../sandbox/analysis/results/plots/{fig_name}'
     if x_label_invisible:
         ax1 = plt.axes()
         x_axis = ax1.axes.get_xaxis()
@@ -77,18 +77,18 @@ def plot_resnet50(df, network_name, target_batch_size):
                                    cols_to_exclude=['tvmcpu', 'cublas'])#, 'cudnn', 'tensorrt'])#'tvmgpu-no-tuning'])
     draw_plot(df=conv_df, fig_name=f'rtx_{network_name}_bn{target_batch_size}_conv.png')
 
-    # # Fused ops
-    fused_df = df.filter(like='+', axis=0)
-    fused_df = fused_df[fused_df.columns.difference(['tvmcpu'])]
-    draw_plot(df=fused_df, fig_name=f'rtx_{network_name}_bn{target_batch_size}_fused.png')
-
-    # Other ops
-    # forbidden_str = ['+','conv2d','dense']
-    # re_str = '|'.join(forbidden_str)
-    drop_str = [f"conv2d_{i}" for i in range(1, 23)] + [val for val in df.index.values if "+" in val]# + ['dense_1']
-    other_df = df.drop(index=drop_str)
-    other_df = other_df[other_df.columns.difference(['cublas', 'tvmcpu'])]
-    draw_plot(df=other_df, fig_name=f'rtx_{network_name}_bn{target_batch_size}_others.png')
+    # # # Fused ops
+    # fused_df = df.filter(like='+', axis=0)
+    # fused_df = fused_df[fused_df.columns.difference(['tvmcpu'])]
+    # draw_plot(df=fused_df, fig_name=f'rtx_{network_name}_bn{target_batch_size}_fused.png')
+    #
+    # # Other ops
+    # # forbidden_str = ['+','conv2d','dense']
+    # # re_str = '|'.join(forbidden_str)
+    # drop_str = [f"conv2d_{i}" for i in range(1, 23)] + [val for val in df.index.values if "+" in val]# + ['dense_1']
+    # other_df = df.drop(index=drop_str)
+    # other_df = other_df[other_df.columns.difference(['cublas', 'tvmcpu'])]
+    # draw_plot(df=other_df, fig_name=f'rtx_{network_name}_bn{target_batch_size}_others.png')
 
 def plot_bert(df, network_name, target_batch_size):
     # Matmul (Dense) GPU plot
@@ -150,7 +150,7 @@ def plot_nasneta(df, network_name, target_batch_size):
 
 if __name__ == "__main__":
     target_batch_size = 1
-    network_name = 'nasneta'
+    network_name = 'resnext50'
     hw_name = 'rtx2070'
 
     NETWORK_TO_PLOT_FUNC = {

@@ -40,8 +40,12 @@ def get_conv2d_relu(batch_size):
     expr = relay.nn.relu(expr)
 
     mod, params = create_relay_workload(expr)
+    shape_dict = {
+        "data": (batch_size, 3, 224, 224),
+        "weight": (16, 3, 3, 3)
+    }
 
-    return mod, params
+    return mod, params, shape_dict
 
 def get_diamond(batch_size):
     # Chain graph
@@ -49,22 +53,31 @@ def get_diamond(batch_size):
     # batch_size = 1
 
     data = relay.var("data", relay.TensorType((batch_size, 64, 224, 224), "float32"))
-    data2 = relay.var("data2", relay.TensorType((batch_size, 16, 224, 224), "float32"))
+    # data2 = relay.var("data2", relay.TensorType((batch_size, 16, 224, 224), "float32"))
     conv_weight = relay.var("weight", relay.TensorType((out_channels, 64, 3, 3), "float32"))
+
+    #conv_weight2 = relay.var("weight2", relay.TensorType((out_channels, out_channels, 3, 3), "float32"))
+    #conv_weight3 = relay.var("weight3", relay.TensorType((out_channels, out_channels, 3, 3), "float32"))
     expr = relay.nn.conv2d(
         data=data, weight=conv_weight, kernel_size=(3, 3), channels=out_channels, padding=(1, 1)
     )
     path1 = relay.nn.relu(expr)
+    #path1 = relay.nn.conv2d(
+    #    data=path1, weight=conv_weight2, kernel_size=(3, 3), channels=out_channels, padding=(1, 1)
+    #)
+    #path2 = relay.nn.conv2d(
+    #    data=expr, weight=conv_weight3, kernel_size=(3, 3), channels=out_channels, padding=(1, 1)
+    #)
     path2 = relay.tanh(expr)
     path2 = relay.sigmoid(path2)
-    path2 = relay.add(path2, data2)
+    # path2 = relay.add(path2, data2)
     expr = relay.add(path1, path2)
 
     mod, params = create_relay_workload(expr)
 
     shape_dict = {
         "data": (batch_size, 64, 224, 224),
-        "data2": (batch_size, 16, 224, 224),
+        # "data2": (batch_size, 16, 224, 224),
         "weight": (64, 64, 3, 3),
     }
 
@@ -84,6 +97,7 @@ def get_conv2d_relu_x2(batch_size):
     expr = relay.nn.relu(expr)
 
     # Input size: [1, 64, 58, 58]
+    # expr = relay.var("data", relay.TensorType((batch_size, 64, 58, 58), "float32"))
     conv_weight2 = relay.var("1_weight", relay.TensorType((64, 64, 3, 3), "float32"))
     expr = relay.nn.conv2d(
         data=expr, weight=conv_weight2, kernel_size=(3, 3), channels=64, padding=(1, 1)

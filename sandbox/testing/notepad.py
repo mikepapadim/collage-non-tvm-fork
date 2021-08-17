@@ -1,30 +1,68 @@
-from tvm.relay.dataflow_pattern import *
-from tvm import relay
-import logging
-import sys
+# class BackendOp(object):
+#   def __init__(self):
+#       self._name = "abc"
+#   def __repr__(self):
+#     return self._name
+#
+# a = BackendOp()
+# print(a._name)
 
-class StreamToLogger(object):
-    """
-    Fake file-like stream object that redirects writes to a logger instance.
-    """
-    def __init__(self, logger, level):
-       self.logger = logger
-       self.level = level
-       self.linebuf = ''
+from collections import defaultdict
+a = defaultdict(dict)
+a[1][2] = 0
+print(a)
+# a.add(1)
+# a.add(2)
+# for i in a:
+#     print(i)
+# b = frozenbitarray('1110')
+# c = frozenbitarray('1000')
+# print(a|b)
 
-    def write(self, buf):
-       for line in buf.rstrip().splitlines():
-          self.logger.log(self.level, line.rstrip())
+# dic = {}
+# dic[a] = 1
+# print(dic[b])
+#
+# # c = ['0', '0', '0']
+# # c[2] = '1'
+# # print("".join(c))
+# print('0'*10)
 
-    def flush(self):
-        pass
-
-logging.basicConfig(filename='example.log', level=logging.WARNING, format='%(asctime)s:[%(levelname)s] %(message)s')
-log = logging.getLogger('logger')
-sys.stdout = StreamToLogger(log,logging.WARNING)
-sys.stderr = StreamToLogger(log,logging.CRITICAL)
-print('Test to standard out')
-raise Exception('Test to standard error')
+# from tvm.relay.dataflow_pattern import *
+# from tvm import relay
+# import logging
+# import sys
+# import Enum
+#
+# class Color(Enum):
+#     black = 0
+#
+# class Color():
+#     def __init__(self):
+#
+# print(Color.black)
+# class StreamToLogger(object):
+#     """
+#     Fake file-like stream object that redirects writes to a logger instance.
+#     """
+#     def __init__(self, logger, level):
+#        self.logger = logger
+#        self.level = level
+#        self.linebuf = ''
+#
+#     def write(self, buf):
+#        for line in buf.rstrip().splitlines():
+#           self.logger.log(self.level, line.rstrip())
+#
+#     def flush(self):
+#         pass
+#
+# logging.basicConfig(filename='example.log', level=logging.WARNING, format='%(asctime)s:[%(levelname)s] %(message)s')
+# log = logging.getLogger('logger')
+# sys.stdout = StreamToLogger(log,logging.WARNING)
+# sys.stderr = StreamToLogger(log,logging.CRITICAL)
+# print('Test to standard out')
+# raise Exception('Test to standard error')
 
 # logging.debug('This message should go to the log file')
 # logging.info('So should this')

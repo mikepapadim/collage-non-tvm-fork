@@ -50,8 +50,8 @@ def lower(sch, inputs, func_name, source_func):
     try:
         f = tvm.driver.lower(sch, inputs, name=func_name)
 
-        print(f"lower function {func_name}", file=sys.stderr)
-        print(f"{tvm.driver.lower(sch, inputs, simple_mode=True)}" , file=sys.stderr)
+        #print(f"lower function {func_name}", file=sys.stderr)
+        #print(f"{tvm.driver.lower(sch, inputs, simple_mode=True)}" , file=sys.stderr)
         #logging.debug("%s", _build.lower(sch, inputs, simple_mode=True))
 
         #logging.debug("lower function %s", func_name)
