@@ -12,7 +12,7 @@ except ImportError:
 """
 FrontierQueue class
 - It maintains frontiers to match patterns using PriorityQueue
-- Current main job is to prevent duplicate frontiers from being added to PriorityQueue  
+- Current main job is to prevent duplicate frontiers from being added to PriorityQueue
 """
 
 class FrontierQueue:
@@ -127,7 +127,7 @@ class MatchInfoExtractor:
 """
 DPTableCell class
 - It keeps necessary information for last optimal match for a DP table cell
- > e.g., opt_cost, opt_pat, opt_match 
+ > e.g., opt_cost, opt_pat, opt_match
 """
 class DPTableCell:
     def __init__(self, best_b_op_cost, best_b_op_name, prev_cell, match_dic,
@@ -395,7 +395,7 @@ class DPTable:
 
     def assign_backend_op_to_expr(self):
         all_matched_key = frozenbitarray('1'*self._n_nodes)
-        print(self._node_to_key)
+        #print(self._node_to_key)
         # This is a cell representing the first match;
         opt_match_cell = self._dp_table[all_matched_key]
 

@@ -172,8 +172,9 @@ def run_op_level_opt(relay_expr):
     # We coudln't figure out how to support CUBLAS in Jetson yet
     # It shouldn't be a big deal though given TensorRT uses CuBLAS internally
     # targets = [Target.TVM_GPU_AUTOTVM, Target.CUDNN, Target.TENSORRT]
-    # targets = [Target.TVM_GPU_AUTOTVM, Target.CUDNN, Target.TENSORRT, Target.CUBLAS]
-    targets = [Target.TVM_GPU_AUTOTVM, Target.TENSORRT]#, Target.CUBLAS]
+    targets = [Target.TVM_GPU_AUTOTVM, Target.CUDNN, Target.TENSORRT, Target.CUBLAS]
+    #targets = [Target.TVM_GPU_AUTOTVM, Target.CUDNN]
+    #targets = [Target.TVM_GPU_AUTOTVM, Target.TENSORRT]#, Target.CUBLAS]
 
     batch_size = 1
     backendop_lib = setup_backend_op_lib(relay_expr, targets, batch_size, hw_name)
@@ -184,13 +185,13 @@ def run_op_level_opt(relay_expr):
     # visualize_network(relay_expr, "o3_nasnet_test", comp_graph.expr2node)
     """
     Warning(@Soo): Note that current DP optimizer does not work for patterns with more than one root.
-    For example, Conv     Conv (Two parallel convolution) case can't be handled 
+    For example, Conv     Conv (Two parallel convolution) case can't be handled
                    \       /
-                      ReLU        
+                      ReLU
     Following lines need to be modified to afford more than two roots
-    - pat.get_relay_pattern().match(f_expr) 
-    
-    This is because of inherent limitation of Relay pattern and 
+    - pat.get_relay_pattern().match(f_expr)
+
+    This is because of inherent limitation of Relay pattern and
     the discrepancy between what Relay pattern supports and how TVM fusion strategy works.
     We can come back to this later if this is critical to performance, which is unlikely for now given networks we have.
     """

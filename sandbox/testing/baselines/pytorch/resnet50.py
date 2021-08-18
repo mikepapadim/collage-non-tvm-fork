@@ -5,7 +5,7 @@ import onnxruntime
 from resnets import resnet50
 import torch.autograd.profiler as profiler
 import tvm.relay.op
-from tqdm import tqdm 
+from tqdm import tqdm
 from tvm import relay
 import tvm
 from tvm import te
@@ -28,6 +28,7 @@ if __name__ == "__main__":
     model.eval()
     inputs = torch.randn(1, 64, 56, 56).cuda()
 
+    """
     from torch2trt import torch2trt
     import time
     model_trt = torch2trt(model, [inputs])
@@ -47,6 +48,7 @@ if __name__ == "__main__":
         total += times[i]
     avg = total / (args.iterations)
     print("TensorRT: Average inference time of the last " + str(args.iterations) + " iterations: " + str(avg) + " ms")
+    """
 
     print(model(inputs).size())
 

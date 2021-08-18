@@ -19,6 +19,7 @@ import tvm._ffi
 import tvm.driver
 from tvm.target import Target
 
+import sys
 
 @tvm._ffi.register_func("relay.backend.lower")
 def lower(sch, inputs, func_name, source_func):
@@ -48,6 +49,11 @@ def lower(sch, inputs, func_name, source_func):
     import logging
     try:
         f = tvm.driver.lower(sch, inputs, name=func_name)
+
+        #print(f"lower function {func_name}", file=sys.stderr)
+        #print(f"{tvm.driver.lower(sch, inputs, simple_mode=True)}" , file=sys.stderr)
+        #logging.debug("%s", _build.lower(sch, inputs, simple_mode=True))
+
         #logging.debug("lower function %s", func_name)
         #logging.debug("%s", _build.lower(sch, inputs, simple_mode=True))
     except Exception:

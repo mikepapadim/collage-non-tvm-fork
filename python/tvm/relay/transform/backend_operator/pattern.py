@@ -22,12 +22,10 @@ def find_depth(relay_pattern):
             depth = max(depth, find_depth(child))
     return depth+1
 
-# TODO: handle conv2d in the diamond edge
+
 def name_relay_pattern(pattern, idMap = None, cnt = 0):
     if idMap is None:
         idMap = dict()
-
-
 
     goDeeper = True
     if isinstance(pattern, WildcardPattern):
@@ -80,6 +78,7 @@ def name_relay_pattern(pattern, idMap = None, cnt = 0):
         name = node_str
 
     return name, cnt
+
 
 # currently the Pattern class does not add any additional attributes from TVM's dataflow patterns
 class Pattern(object):

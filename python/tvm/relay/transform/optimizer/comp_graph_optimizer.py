@@ -52,7 +52,32 @@ class CompGraphOptimizer:
 
         root_expr = comp_graph.get_root().get_relay_expr()
         # dom_tree: <class 'tvm.ir.container.Map'> --> dictionary in Python
-        dom_tree = relay.analysis.construct_dom_tree(root_expr)
+        dom_tree = relay.analysis.construct_dom_tree(root_expr, post_dom = True)
+
+
+        # @Sung: run all pattern generators
+        all_exprs = []
+        def _traverse_expr(node, node_list):
+            if not is_call_node(node):
+                return
+            if node in node_list:
+                return
+            if isinstance(node, tvm.ir.op.Op):
+                return
+            node_list.append(node)
+
+        relay.analysis.post_order_visit(root_expr, lambda expr: _traverse_expr(expr, all_exprs))
+
+        for expr in all_exprs:
+            #if expr.op.name == "nn.dense":
+            for generator in self._backendop_lib.get_all_pattern_generators():
+                 generator.run(dom_tree, expr)
+
+
+        for pat in self._backendop_lib.get_all_patterns():
+            print("Checking... ", pat)
+
+
         # for node, dom in dom_tree.items():
         #    print(f"{repr(node)} --> {repr(dom)}\n")
         #    print("\n")
@@ -77,10 +102,6 @@ class CompGraphOptimizer:
                 print(f"(topo_order, op_type) : {f._topological_order}, {f_expr.op}")
             else:
                 print(f"(topo_order, op_type) : {f._topological_order}, {type(f_expr)}, Non-call node")
-
-            # # @Sung: run all pattern generators
-            # for generator in self._backendop_lib.get_all_pattern_generators():
-            #     generator.run(dom_tree, f_expr)
 
             n_match_frontier = 0
             for pat in self._backendop_lib.get_all_patterns():

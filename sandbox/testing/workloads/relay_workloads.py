@@ -55,20 +55,21 @@ def get_diamond(batch_size):
     data = relay.var("data", relay.TensorType((batch_size, 64, 224, 224), "float32"))
     # data2 = relay.var("data2", relay.TensorType((batch_size, 16, 224, 224), "float32"))
     conv_weight = relay.var("weight", relay.TensorType((out_channels, 64, 3, 3), "float32"))
-    conv_weight2 = relay.var("weight2", relay.TensorType((out_channels, out_channels, 3, 3), "float32"))
-    conv_weight3 = relay.var("weight3", relay.TensorType((out_channels, out_channels, 3, 3), "float32"))
+
+    #conv_weight2 = relay.var("weight2", relay.TensorType((out_channels, out_channels, 3, 3), "float32"))
+    #conv_weight3 = relay.var("weight3", relay.TensorType((out_channels, out_channels, 3, 3), "float32"))
     expr = relay.nn.conv2d(
         data=data, weight=conv_weight, kernel_size=(3, 3), channels=out_channels, padding=(1, 1)
     )
     path1 = relay.nn.relu(expr)
-    path1 = relay.nn.conv2d(
-        data=path1, weight=conv_weight2, kernel_size=(3, 3), channels=out_channels, padding=(1, 1)
-    )
-    path2 = relay.nn.conv2d(
-        data=expr, weight=conv_weight3, kernel_size=(3, 3), channels=out_channels, padding=(1, 1)
-    )
-    # path2 = relay.tanh(expr)
-    # path2 = relay.sigmoid(path2)
+    #path1 = relay.nn.conv2d(
+    #    data=path1, weight=conv_weight2, kernel_size=(3, 3), channels=out_channels, padding=(1, 1)
+    #)
+    #path2 = relay.nn.conv2d(
+    #    data=expr, weight=conv_weight3, kernel_size=(3, 3), channels=out_channels, padding=(1, 1)
+    #)
+    path2 = relay.tanh(expr)
+    path2 = relay.sigmoid(path2)
     # path2 = relay.add(path2, data2)
     expr = relay.add(path1, path2)
 

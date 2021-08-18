@@ -919,7 +919,6 @@ namespace tvm {
 
           assert(graph_node->ref == dom_node->gnode->ref);
           assert(graph_node == dom_node->gnode);
-          //std::cerr << " -- Graph node  :  " << GetRef<ObjectRef>(graph_node->ref) << "\n";
 
           Group* group_node = groups_[nid];
           ICHECK(group_node != nullptr);
@@ -929,7 +928,7 @@ namespace tvm {
           if (dom_node->parent == nullptr) continue;
           ICHECK(!graph_node->extern_ref);
           size_t dom_parent_gindex = dom_node->parent->gnode->index;
-          
+          //std::cerr << " -- Graph node  :  " << GetRef<ObjectRef>(graph_node->ref) << "\n";
           //std::cerr << " \t-- Dom Parent node  :  " << GetRef<ObjectRef>(dom_node->parent->gnode->ref) << "\n";
           //std::cerr << " \t-- pattern : Group Node - " << group_node->pattern << " // Graph Node - "  << graph_node->pattern << " // Dom Parent Node - " << dom_node->parent->pattern << " // Dom Node - " << dom_node->pattern << "\n";
 
@@ -1041,6 +1040,7 @@ namespace tvm {
       // Run the transform
       Expr Transform(const Expr& body, int fuse_opt_level, size_t max_fuse_depth,
                     bool is_custom_pass = false) {
+
         // setup the group map.
         auto graph = IndexedForwardGraph::Create(&arena_, body);
         auto groups = GraphPartitioner(&arena_, fuse_opt_level,
@@ -1050,8 +1050,9 @@ namespace tvm {
           gmap_[graph.post_dfs_order[nid]->ref] = groups[nid];
         }
         // The following line can be used for debug.
-        //this->DebugDumpGroup(body);
-        return this->Mutate(body);
+        auto ret = this->Mutate(body);
+        //this->DebugDumpGroup(ret);
+        return ret;
       }
 
     private:

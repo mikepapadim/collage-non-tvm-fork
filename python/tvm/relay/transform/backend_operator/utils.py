@@ -258,4 +258,10 @@ def serialize_subgraph(subgraph):
 
 
 def get_op_pattern(expr):
-    return expr.op.get_attr("TOpPattern")
+    if is_tuple_node(expr):
+        return 7 # kTuple: hardcoded for now
+    elif is_call_node(expr):
+        return expr.op.get_attr("TOpPattern")
+    else:
+        raise RuntimeError(f"{type(expr)} is not defined yet.")
+
