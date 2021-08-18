@@ -17,7 +17,7 @@ from .pattern import Pattern
 from .utils import get_diamond
 from .utils import *
 from .op_config import Config, MeasuredConfigs
-from .target import Target, get_target_cost_func
+from .target import get_target_cost_func
 from .op_type import optype_to_pattern, relayop_to_varnames
 from ..utility.debug_helper import printe
 

@@ -1459,6 +1459,7 @@ namespace tvm {
       constexpr int kDP = 1;
       constexpr int kExhaustiveSearch = 2;
       constexpr int kTwoLevelOpt = 3;
+      constexpr int kOpMeasurement = 4;
 
       // Do nothing when it's not custom fusion pass
       if (fn_node->GetAttr<IntImm>(attr::kCustomFusionPass).defined()) {
@@ -1476,6 +1477,8 @@ namespace tvm {
           custom_fusion_pass_str = "relay.transform.optimizer.run_two_level_opt";
         } else if (custom_fusion_pass_type == kExhaustiveSearch) {
           custom_fusion_pass_str = "relay.transform.optimizer.run_exhaustive_search";
+        } else if (custom_fusion_pass_type == kOpMeasurement) {
+          custom_fusion_pass_str = "relay.transform.optimizer.assign_backend_for_op_measurement";
         } else {
           ICHECK(false) << "Fusion pass type " << fn_node->GetAttr<IntImm>(attr::kCustomFusionPass)
                         << "is not expected\n\n";

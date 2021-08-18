@@ -144,6 +144,64 @@ class CompGraphOptimizer:
         dp_table.assign_backend_op_to_expr()
 
 
+class AssignBackendExprVisitor:
+    def __init__(self):
+        self._memo = {}
+
+    def assign(self, expr, annotation):
+        self._memo = {}
+        self._annotation = annotation
+        self.visit_expr(expr)
+
+    # Visit Relay expressions in post-order
+    def visit_expr(self, expr):
+
+        if hash(expr) in self._memo:
+           return
+        else:
+            # memorize this visit to prevent it from visiting twice
+            self._memo[hash(expr)] = True
+            relay.analysis.update_backend(expr, self._annotation)
+
+        # We assume that child class at least have methods for these
+        if is_constant_node(expr):
+            self.visit_expr_const(expr)
+        elif is_var_node(expr):
+            self.visit_expr_var(expr)
+        elif is_tuplegetitem_node(expr):
+            self.visit_expr_tuplegetitem(expr)
+        elif is_call_node(expr):
+            self.visit_expr_call(expr)
+        elif is_function_node(expr):
+            self.visit_expr_func(expr)
+        elif is_tuple_node(expr):
+            self.visit_expr_tuple(expr)
+        else:
+            raise Exception(f"Unexpected expression type, {type(expr)}")
+
+    def visit_expr_const(self, expr):
+        pass
+
+    def visit_expr_var(self, expr):
+        pass
+
+    def visit_expr_tuple(self, expr):
+        for arg in expr.fields:
+            self.visit_expr(arg)
+
+    def visit_expr_tuplegetitem(self, expr):
+        self.visit_expr(expr.tuple_value)
+
+    def visit_expr_call(self, expr):
+        op, args, attrs, type_args, span = expr.op, expr.args, expr.attrs, expr.type_args, expr.span
+
+        for arg in args:
+            self.visit_expr(arg)
+
+    def visit_expr_func(self, expr):
+        params, body, ret_type, type_params = expr.params, expr.body, expr.ret_type, expr.type_params
+        self.visit_expr(body)
+
 # """
 # FrontierGraph and FrontierNode is to allow effective search over matched backend op assignments.
 # We use DFS to explore all possible combinations of backend ops.

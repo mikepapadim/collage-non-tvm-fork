@@ -24,8 +24,12 @@ def get_conv2d(batch_size):
 
     # Workload
     mod, params = create_relay_workload(expr)
+    shape_dict = {
+        "data": (batch_size, 3, 224, 224),
+        # "weight": (16, 3, 3, 3)
+    }
 
-    return mod, params
+    return mod, params, shape_dict
 
 def get_conv2d_relu(batch_size):
     # Chain graph
@@ -78,7 +82,7 @@ def get_diamond(batch_size):
     shape_dict = {
         "data": (batch_size, 64, 224, 224),
         # "data2": (batch_size, 16, 224, 224),
-        "weight": (64, 64, 3, 3),
+        # "weight": (64, 64, 3, 3),
     }
 
     return mod, params, shape_dict

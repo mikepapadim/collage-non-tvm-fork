@@ -332,6 +332,18 @@ def run_two_level_opt(relay_expr):
 def run_dp(relay_expr):
     run_op_level_opt(relay_expr)
 
+@tvm._ffi.register_func("relay.transform.optimizer.assign_backend_for_op_measurement")
+def assign_backend_for_op_measurement(relay_expr):
+    backend_op_name = relay_expr.attrs[BACKEND_OP_ATTR]
+    assert isinstance(backend_op_name, str)
+
+    relay_expr = get_function_body(relay_expr)
+    AssignBackendExprVisitor().assign(relay_expr, backend_op_name)
+
+    # printe(repr(relay_expr))
+    # sys.exit(0)
+
+
 # """
 # This is still work in progress.
 #

@@ -206,9 +206,9 @@ if __name__ == "__main__":
 
     mod, params, shape_dict, _ = get_network_from_torch(args.network, args.batch_size)
     # mod, params, shape_dict, _ = get_network_from_torch("nasneta", 1)
-    #mod, params, shape_dict, _ = get_network_from_relay("conv2d+relu", 1)
+    # mod, params, shape_dict, _ = get_network_from_relay("conv2d", 1)
     #mod, params, shape_dict, _ = get_network_from_relay("conv2d+relu_x2", 1)
-    #mod, params, shape_dict, _ = get_network_from_relay("diamond", 1)
+    # mod, params, shape_dict, _ = get_network_from_relay("diamond", 1)
     # mod, params, shape_dict, _ = crop_network_from_torch(args.network, 1, 290)
 
     mean_perf, std_perf = measure_end_to_end_perf_autotvm(mod["main"], params, 'cuda', shape_dict,
