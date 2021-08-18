@@ -12,6 +12,16 @@ from tvm import autotvm, auto_scheduler
 from tvm.relay.transform.utility.debug_helper import *
 from workloads.torch_workloads import *
 
+def setup_attrs_ours(net, net_name, hw_name):
+    net = net.with_attr("CustomFusionPass", CustomFusionPass.DP)
+    # net = net.with_attr("CustomFusionPass", CustomFusionPass.USER_DEFINED_FUSION)
+    # net = net.with_attr("CustomFusionPass", CustomFusionPass.TWO_LEVEL_OPT)
+    net = net.with_attr(NETWORK_FUNC_ATTR, net_name)
+    net = net.with_attr(HW_FUNC_ATTR, hw_name)
+
+    return net
+
+
 def measure_end_to_end_perf_tensorrt(mod, params, target_str, shape_dict, is_ours):
     from tvm.relay.op.contrib.tensorrt import partition_for_tensorrt
     mod, config = partition_for_tensorrt(mod, params)
@@ -37,11 +47,7 @@ def measure_end_to_end_perf_tensorrt(mod, params, target_str, shape_dict, is_our
 def measure_end_to_end_perf_autotvm(net, params, target_str, shape_dict, is_ours, net_name, hw_name):
     assert is_function_node(net)
     if is_ours:
-        net = net.with_attr("CustomFusionPass", CustomFusionPass.DP)
-        # net = net.with_attr("CustomFusionPass", CustomFusionPass.USER_DEFINED_FUSION)
-        # net = net.with_attr("CustomFusionPass", CustomFusionPass.TWO_LEVEL_OPT)
-        net = net.with_attr(NETWORK_FUNC_ATTR, net_name)
-        net = net.with_attr(HW_FUNC_ATTR, hw_name)
+        net = setup_attrs_ours(net, net_name, hw_name)
 
     # else:
     with autotvm.apply_history_best(get_autotvm_log_path(hw_name)):
@@ -109,7 +115,7 @@ def measure_end_to_end_perf_autosch(net, params, target_str, shape_dict, is_ours
     return measure(ftimer, is_net=False)
 
 
-def verify_network_output(net, params, target_str, shape_dict, hw_name):
+def verify_network_output(net, params, target_str, shape_dict, net_name, hw_name):
     assert is_function_node(net)
 
     # Create same input data for two networks
@@ -121,7 +127,7 @@ def verify_network_output(net, params, target_str, shape_dict, hw_name):
     # Run original TVM (or AutoTVM)
     with autotvm.apply_history_best(get_autotvm_log_path(hw_name)):
         with tvm.transform.PassContext(opt_level=OPT_LEVEL.get()):
-            lib = relay.build(net, "cuda", params=params)
+            lib = relay.build(net, target_str, params=params)
 
     # Create workload
     dev = tvm.device(target_str, 0)
@@ -135,10 +141,10 @@ def verify_network_output(net, params, target_str, shape_dict, hw_name):
     out_tvm = module.get_output(0).asnumpy()
 
     # Run ours
-    net = net.with_attr("CustomFusionPass", CustomFusionPass.DP)
+    net = setup_attrs_ours(net, net_name, hw_name)
     with autotvm.apply_history_best(get_autotvm_log_path(hw_name)):
         with tvm.transform.PassContext(opt_level=OPT_LEVEL.get()):
-            lib = relay.build(net, "cuda", params=params)
+            lib = relay.build(net, target_str, params=params)
 
     # Create workload
     dev = tvm.device(target_str, 0)
@@ -228,4 +234,4 @@ if __name__ == "__main__":
     # mean_perf, std_perf = measure_end_to_end_perf_autosch(mod["main"], params, 'cuda', shape_dict, False)
     # print(f"[AutoSCH] Performance of {args.network} (mean, std) = ({mean_perf:.4f}+-{std_perf:.4f})")
 
-    verify_network_output(mod["main"], params, 'cuda', shape_dict, args.hw)
+    verify_network_output(mod["main"], params, 'cuda', shape_dict, args.network, args.hw)
