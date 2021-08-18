@@ -1,16 +1,14 @@
-# class BackendOp(object):
-#   def __init__(self):
-#       self._name = "abc"
-#   def __repr__(self):
-#     return self._name
-#
-# a = BackendOp()
-# print(a._name)
+from tvm.relay import *
 
-from collections import defaultdict
-a = defaultdict(dict)
-a[1][2] = 0
-print(a)
+class BackendOp(object):
+  def __init__(self, backend, pattern, constraint):
+
+BackendOp(backend='tensorrt', pattern=is_op('nn.conv2d').has_attr({"TOpPattern": K_ELEMWISE}), constraint = is_op('nn.conv2d').has_attr({"data_layout": "NHWC"}))
+
+# from collections import defaultdict
+# a = defaultdict(dict)
+# a[1][2] = 0
+# print(a)
 # a.add(1)
 # a.add(2)
 # for i in a:
