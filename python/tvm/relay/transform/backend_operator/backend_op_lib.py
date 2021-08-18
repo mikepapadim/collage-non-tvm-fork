@@ -65,17 +65,19 @@ class BackendOpCostEvaluator:
 
 
 # @ Sung: Check all nodes between src and sink by using fcheck (checks fusion conditions)
-def check_path(src, sink, fcheck):
-    queue = [ sink ]
-    while len(queue)>0:
-        node = queue.pop(0)
-        if node == src:
-            continue
+# Start from sink
+# Gotta be dfs
+def check_path(src, node, fcheck, path = [], paths = []):
+    path.append(node)
+    if src == node:
+        assert(len(path))
+        paths.append(path.copy())
 
+    elif is_var_node(node) or is_constant_node(node):
+        pass
+    elif fcheck(node, node==src):
         children = []
-        if is_var_node(node) or is_constant_node(node):
-            continue
-        elif is_tuple_node(node):
+        if is_tuple_node(node):
             children = node.fields
         elif is_tuplegetitem_node(node):
             children = [ node.tuple ]
@@ -84,18 +86,41 @@ def check_path(src, sink, fcheck):
         else:
             raise Exception(f"Unsupported type ({type(node)})")
 
-        if not fcheck(node, node==src):
-            return False
+        for child in children:
+            check_path(src, child, fcheck, path, paths)
 
-        queue.extend(children)
+    out = path.pop()
+    assert(node == out)
 
-    return True
+
+    #print(f"src: {src.op.name}, node: {node.op.name}")
+    #for _path in paths:
+    #    print("Path: ")
+    #    for _node in _path:
+    #        print(_node.op.name)
+    #    print("\n\n")
+    #print("=====")
+
+
+
+def get_args(node):
+    if is_tuple_node(node):
+        return node.fields
+    #elif is_tuplegetitem_node(node):
+    #    return is_tuple_get_item, 2
+    elif is_call_node(node):
+        return node.args
+    elif is_constant_node(node) or is_var_node(node):
+        return []
+    else:
+        raise Exception(f"Unsupported type ({type(node)})")
+
 
 def generate_relay_pattern_node(node):
     if is_tuple_node(node):
         return is_tuple(), len(node.fields)
-    elif is_tuplegetitem_node(node):
-        return is_tuple_get_item, 2
+    #elif is_tuplegetitem_node(node):
+    #    return is_tuple_get_item, 2
     elif is_call_node(node):
         return is_op(node.op.name), len(node.args)
     elif is_constant_node(node):
@@ -126,74 +151,75 @@ def generate_relay_pattern_node(node):
 #            leaky_relu = relay.op.nn.leaky_relu(conv2d2, alpha=0)
 #            out = relu + leaky_relu
 
-# dfs
+
 def build_pattern_with_map(src, node, nodeToPatternMap):
-    if node not in nodeToPatternMap:
-        print(f"{node.op} is not in pattern map")
-    assert(node in nodeToPatternMap)
-    rpattern = nodeToPatternMap[node]
-    children = []
-    if is_var_node(node) or is_constant_node(node):
-        pass
-    elif is_tuple_node(node):
-        children = node.fields
-    elif is_tuplegetitem_node(node):
-        children = [ node.tuple ]
-    elif is_call_node(node):
-        children = node.args
-    else:
-        raise Exception(f"Unsupported type ({type(node)})")
-
-    if node == src:
-        return rpattern
-
-    operands = [ build_pattern_with_map(src, child, nodeToPatternMap) for child in children ]
-    return rpattern(*operands)
-
-
-def generate_relay_pattern(src, sink, cur_pattern_type = None, nodeToPatternMap = dict()):
-    # Handle single node
-    if src == sink:
-        assert(cur_pattern_type is None)
-        rpattern, num_operands = generate_relay_pattern_node(sink)
-        operands = [wildcard() for __ in range(num_operands)]
-        return rpattern(*operands), get_op_pattern(sink), 1
-
-    # Handle multiple nodes between src and sink
-    queue = [ sink ]
-    cnt = 0 # count the number of new nodes
-    assert(cur_pattern_type is not None)
-    while len(queue)>0:
-        node = queue.pop(0)
-        if node == src:
-            continue
-
-        # NOTE: src should be created in the previous call
-        if node not in nodeToPatternMap:
-            cnt += 1
-            nodeToPatternMap[node] = generate_relay_pattern_node(node)[0]
+    if node in nodeToPatternMap:
+        rpattern = nodeToPatternMap[node][0]
 
         children = []
         if is_var_node(node) or is_constant_node(node):
-            continue
+            pass
         elif is_tuple_node(node):
             children = node.fields
         elif is_tuplegetitem_node(node):
             children = [ node.tuple ]
         elif is_call_node(node):
             children = node.args
-            cur_pattern_type = max(cur_pattern_type, get_op_pattern(node))
         else:
             raise Exception(f"Unsupported type ({type(node)})")
 
-        queue.extend(children)
+        if node == src:
+            return rpattern
 
-    src_pnode, num_operands = generate_relay_pattern_node(src)
-    operands = [wildcard() for __ in range(num_operands)]
-    nodeToPatternMap[src] = src_pnode(*operands)
-    rpattern = build_pattern_with_map(src, sink, nodeToPatternMap)
+        operands = [ build_pattern_with_map(src, child, nodeToPatternMap) for child in children ]
+        return rpattern(*operands)
+    else:
+        return wildcard()
 
-    return rpattern, cur_pattern_type, cnt
+
+def generate_relay_pattern(src, sink, paths = None, cur_pattern_type = None, nodeToPatternMap = dict()):
+    if paths is None:
+        # Handle single node
+        assert(not (is_constant_node(src) and is_var_node(src)))
+        assert(cur_pattern_type is None)
+        rpattern, num_operands = generate_relay_pattern_node(sink)
+        operands = [wildcard() for __ in range(num_operands)]
+        return rpattern(*operands), get_op_pattern(sink), 1
+
+    else:
+        # Handle multiple nodes
+        # Create pattern node for all nodes in paths
+        cnt = 0
+        nodeToPatternMap = dict()
+        for path in paths:
+            for node in path:
+                if node not in nodeToPatternMap:
+                    nodeToPatternMap[node] = generate_relay_pattern_node(node)
+                    cnt += 1
+
+                # Create pattern node for const/var
+                for child in get_args(node):
+                    if is_constant_node(child) or is_var_node(child):
+                        if child not in nodeToPatternMap:
+                            nodeToPatternMap[child] = generate_relay_pattern_node(child)
+
+        assert(src in nodeToPatternMap)
+        pnode, num_operands = nodeToPatternMap[src]
+        operands = [wildcard() for __ in range(num_operands)]
+        nodeToPatternMap[src] = (pnode(*operands), 0) # it's zero cause we already handled.
+        rpattern = build_pattern_with_map(src, sink, nodeToPatternMap)
+
+        return rpattern, cur_pattern_type, cnt
+
+
+def check_and_generate_pattern(src, sink, fcheck, cur_pattern_type, nodeToPatternMap):
+    path, paths = [], []
+    #print(">> check and gen")
+    check_path(src, sink, fcheck, path, paths)
+    if len(paths):
+        return generate_relay_pattern(src, sink, paths, cur_pattern_type, nodeToPatternMap)
+    else:
+        return None, None, 0
 
 
 
@@ -259,29 +285,31 @@ class BackendOpLib(object):
     # CUDNN
     # FIXME(@Soo): For ResNext, some of CUDNN convolution doesn't work.
     self._add_backendop_with_key(Target.CUDNN, "CONV2D")
-    # self._add_backendop_with_key(Target.CUDNN, "CONV2D_RELU")
-    # self._add_backendop_with_key(Target.CUDNN, "RELU")
+    #self._add_backendop_with_key(Target.CUDNN, "CONV3D")
+    self._add_backendop_with_key(Target.CUDNN, "RELU")
     # self._add_backendop_with_key(Target.CUDNN, "BIAS_ADD")
+    self._add_backendop_with_key(Target.CUDNN, "SOFTMAX")
+    self._add_backendop_with_key(Target.CUDNN, "MAX_POOL2D")
+    #self._add_backendop_with_key(Target.CUDNN, "AVG_POOL2D") # TODO: AVG_POOL2D, SIGMOID, Tanh
+    # self._add_backendop_with_key(Target.CUDNN, "CONV2D_RELU")
 
     # Not implemented for recording
     # self._add_backendop_with_key(Target.CUDNN, "ADD")
 
-    # self._add_backendop_with_key(Target.CUDNN, "SOFTMAX")
     # self._add_backendop_with_key(Target.CUDNN, "BN")
     # measure_cost doesn't work, we need to fix this later.
-    # self._add_backendop_with_key(Target.CUDNN, "MAX_POOL2D")
     # conv_bias_add_relu --> ResNet doesn't have this pattern, so it wouldn't be measured
     # self._add_backendop_with_key(Target.CUDNN, "CONV2D_BIAS_ADD_RELU")
 
     # TENSORRT
-    #add_all_backend_ops_to_lib(self, Target.TENSORRT, ["DIAMOND", "TRANSPOSE",
+    add_all_backend_ops_to_lib(self, Target.TENSORRT, ["DIAMOND", "TRANSPOSE",
                                                        # "TUPLE_TWO_IDX", "TUPLE_FIVE_IDX",
                                                        # "TUPLE_FIVE_IDX_CONCAT",
                                                        # "TUPLE_GET_ITEM_0",
                                                        # "TUPLE_GET_ITEM_1",
-   #                                                   "BATCH_MATMUL",
-   #                                                   "RESHAPE_TRANSPOSE",
-   #                                                   "TRANSPOSE_RESHAPE"])
+                                                      "BATCH_MATMUL",
+                                                      "RESHAPE_TRANSPOSE",
+                                                      "TRANSPOSE_RESHAPE"])
 
     # CUBLAS
     # TODO: Add patterns. matmul, batch matmul
@@ -302,9 +330,6 @@ class BackendOpLib(object):
                     run_fuse(src, dom_tree[sink], cur_pattern_type, cur_num_op, nodeToPatternMap)
                 return None
 
-
-
-            #print(f"src: {src}, sink: {sink}")
             sink_type = get_op_pattern(sink)
             # NOTE: This is current assumption. May not be true all the time.
             assert(sink_type != optype2enum["kOpaque"])
@@ -315,11 +340,14 @@ class BackendOpLib(object):
                 # Hanlde single op
                 cur_relay_pattern, cur_pattern_type, num_nodes = generate_relay_pattern(src, sink)
             else:
+                #print(f"num: {cur_num_op}, cur_pattern: {enum2optype[cur_pattern_type]}, sink_type: {enum2optype[sink_type]}\nsrc: {src}\nsink: {sink}")
+
                 if cur_pattern_type == optype2enum["kOutEWiseFusable"]:
                     def fcheck(node, is_sink):
                         return get_op_pattern(node) <= optype2enum["kBroadcast"]
-                    if sink_type <= optype2enum["kInjective"] and check_path(src, sink, fcheck):
-                        cur_relay_pattern, cur_pattern_type, num_nodes = generate_relay_pattern(src, sink, cur_pattern_type, nodeToPatternMap)
+
+                    if sink_type <= optype2enum["kInjective"]:
+                        cur_relay_pattern, cur_pattern_type, num_nodes = check_and_generate_pattern(src, sink, fcheck, cur_pattern_type, nodeToPatternMap)
 
                 elif cur_pattern_type <= optype2enum["kBroadcast"]:
                     def fcheck(node, is_sink):
@@ -327,16 +355,15 @@ class BackendOpLib(object):
                         if not is_sink:
                             return kind <= optype2enum["kInjective"]
                         else:
-                            return kind <= optype2enum["kOUtEWiseFusable"]
+                            return kind <= optype2enum["kOutEWiseFusable"]
 
-                    if (sink_type <= optype2enum["kCommReduce"] ) and check_path(src, sink, fcheck):
-                        cur_relay_pattern, cur_pattern_type, num_nodes = generate_relay_pattern(src, sink, cur_pattern_type, nodeToPatternMap)
+                    if sink_type <= optype2enum["kCommReduce"]:
+                        cur_relay_pattern, cur_pattern_type, num_nodes = check_and_generate_pattern(src, sink, fcheck, cur_pattern_type, nodeToPatternMap)
 
                 elif cur_pattern_type == optype2enum["kInjective"] or cur_pattern_type == optype2enum["kTuple"]:
                     def fcheck(node, is_sink):
                         return get_op_pattern(node) <= optype2enum["kInjective"]
-                    if check_path(src, sink, fcheck):
-                        cur_relay_pattern, cur_pattern_type, num_nodes = generate_relay_pattern(src, sink, cur_pattern_type, nodeToPatternMap)
+                    cur_relay_pattern, cur_pattern_type, num_nodes = check_and_generate_pattern(src, sink, fcheck, cur_pattern_type, nodeToPatternMap)
 
                 else:
                     raise Exception(f"Unsupported type ({type(sink)})")
@@ -373,7 +400,7 @@ class BackendOpLib(object):
 
     # TVM_GPU
     # add_all_backend_ops_to_lib(self, Target.TVM_GPU_AUTOSCH)
-    #add_all_backend_ops_to_lib(self, Target.TVM_GPU_AUTOTVM)
+    add_all_backend_ops_to_lib(self, Target.TVM_GPU_AUTOTVM)
     # add_all_backend_ops_to_lib_except_fused(backendop_lib, Target.TVM_GPU)
 
     # TVM_GPU_NO_TUNING

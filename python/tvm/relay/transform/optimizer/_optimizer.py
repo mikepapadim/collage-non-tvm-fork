@@ -172,8 +172,8 @@ def run_op_level_opt(relay_expr):
     # We coudln't figure out how to support CUBLAS in Jetson yet
     # It shouldn't be a big deal though given TensorRT uses CuBLAS internally
     # targets = [Target.TVM_GPU_AUTOTVM, Target.CUDNN, Target.TENSORRT]
-    #targets = [Target.TVM_GPU_AUTOTVM, Target.CUDNN, Target.TENSORRT, Target.CUBLAS]
-    targets = [Target.TVM_GPU_AUTOTVM, Target.CUDNN]
+    targets = [Target.TVM_GPU_AUTOTVM, Target.CUDNN, Target.TENSORRT, Target.CUBLAS]
+    #targets = [Target.TVM_GPU_AUTOTVM, Target.CUDNN]
     #targets = [Target.TVM_GPU_AUTOTVM, Target.TENSORRT]#, Target.CUBLAS]
 
     batch_size = 1

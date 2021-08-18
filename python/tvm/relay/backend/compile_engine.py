@@ -367,6 +367,21 @@ def target_specific_lowering(func, inputMap, target_info=None):
             ret_type = calls[0].checked_type
             inputs = collect_input(inputMap)
 
+        elif pattern == "0-Op(nn.avg_pool2d)[*]":
+            #strategy.add_implementation(
+            #    wrap_custom_compute_maxpool2d(topi.cuda.maxpool2d_cudnn),
+            #    wrap_topi_schedule(topi.generic.schedule_extern),
+            #    name="maxpool2d.cudnn",
+            #)
+
+            assert(0)
+            # has single op
+            attrs = calls[0].attrs
+            ret_type = calls[0].checked_type
+            inputs = collect_input(inputMap)
+
+
+
         # TODO: not supported yet
         #elif pattern == "bn":
             #strategy.add_implementation(

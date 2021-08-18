@@ -69,9 +69,9 @@ class CompGraphOptimizer:
         relay.analysis.post_order_visit(root_expr, lambda expr: _traverse_expr(expr, all_exprs))
 
         for expr in all_exprs:
-            if expr.op.name == "nn.dense":
-                for generator in self._backendop_lib.get_all_pattern_generators():
-                     generator.run(dom_tree, expr)
+            #if expr.op.name == "nn.dense":
+            for generator in self._backendop_lib.get_all_pattern_generators():
+                 generator.run(dom_tree, expr)
 
 
         for pat in self._backendop_lib.get_all_patterns():
