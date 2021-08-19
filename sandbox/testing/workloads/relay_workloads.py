@@ -114,8 +114,8 @@ def get_conv2d_relu_x2(batch_size):
 
     shape_dict = {
         "data": (batch_size, 64, 56, 56),
-        "2_weight": (64, 64, 1, 1),
-        "1_weight": (64, 64, 3, 3)
+        # "2_weight": (64, 64, 1, 1),
+        # "1_weight": (64, 64, 3, 3)
     }
 
     return mod, params, shape_dict
