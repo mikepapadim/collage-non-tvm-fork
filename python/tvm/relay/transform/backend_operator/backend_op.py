@@ -237,7 +237,6 @@ def get_optimal_backendop(b_op_lib, expr, pattern, target = None, hw_name = "INV
 
     # Print the useful logs
     print("-" * 45)
-
     # Warning(@Soo): there is a bug in printing repr of tuple in TVM.
     if is_tuple_node(subgraph):
       print(f"Subgraph to measure (target: {str(op._target.name())}):", subgraph)

@@ -471,35 +471,32 @@ def softmax(x, axis=-1):
     )
 
 
-def maxpool2d(x, pool_size, strides, padding, pool_type, ceil_mode, data_layout, count_include_pad):
-    """Compute softmax using CuDNN
+def avg_pool2d(x, pool_size, strides, padding, pool_type, ceil_mode, data_layout, count_include_pad):
+    dims = 2
+    data_shape = x.shape
+    output_shape = list(data_shape)
+    #outputDim = 1 + (inputDim + 2*padding - windowDim)/poolingStride;
+    for i in range(dims):
+        output_shape[i+2] = int(1 + tvm.tir.div((data_shape[i+2] + 2*padding[i]-pool_size[i]),strides[i]))
 
-    Parameters
-    ----------
-    x : tvm.te.Tensor
-        The input tensor
+    return te.extern(
+        output_shape,
+        [x],
+        lambda ins, outs: tvm.tir.call_packed(
+            "tvm.contrib.cudnn.pooling.forward", ins[0], outs[0],
+            1, 0,  # alpha, beta
+            2, # MODE: CUDNN_POOLING_AVG_EXCLUDE_PADDING   # 1 -- MODE: CUDNN_POOLING_AVG_INCLUDE_PADDING
+            0, # CUDNN_NOT_PROPAGATE_NAN
+            pool_size[0], pool_size[1],
+            padding[0], padding[1],
+            strides[0], strides[1]
+        ),
+        name="y",
+    )
 
-    axis : int
-        The axis to compute the softmax
 
-    Returns
-    -------
-    ret : tvm.te.Tensor
-        The result tensor
-    """
-    """
-         double double_alpha = args[2];
-       double double_beta = args[3];
-       int mode = args[4];
-       int nanOpt = args[5];
-       int windowHeight = args[6];
-       int windowWidth = args[7];
-       int verticalPadding = args[8];
-       int horizontalPadding = args[9];
-       int verticalStride = args[10];
-       int horizontalStride = args[11];
 
-    """
+def max_pool2d(x, pool_size, strides, padding, pool_type, ceil_mode, data_layout, count_include_pad):
     dims = 2
     data_shape = x.shape
     output_shape = list(data_shape)
@@ -523,16 +520,58 @@ def maxpool2d(x, pool_size, strides, padding, pool_type, ceil_mode, data_layout,
     )
 
 
+
+
+def sigmoid(x):
+    return te.extern(
+        x.shape,
+        [x],
+        lambda ins, outs: tvm.tir.call_packed(
+            "tvm.contrib.cudnn.activation.forward", ins[0], outs[0],
+            1, # alpha
+            0, # beta
+            0, # mode
+            0, # nanOpt
+            1e100 # Coeff
+        ),
+        name="y",
+    )
+
 def relu(x):
     return te.extern(
         x.shape,
         [x],
         lambda ins, outs: tvm.tir.call_packed(
             "tvm.contrib.cudnn.activation.forward", ins[0], outs[0],
-            1, 0, 1, 0, 20
+            1, # alpha
+            0, # beta
+            1, # mode
+            0, # nanOpt
+            1e100 # Coeff
         ),
         name="y",
     )
+
+
+def tanh(x):
+    return te.extern(
+        x.shape,
+        [x],
+        lambda ins, outs: tvm.tir.call_packed(
+            "tvm.contrib.cudnn.activation.forward", ins[0], outs[0],
+            1, # alpha
+            0, # beta
+            2, # mode
+            0, # nanOpt
+            1e100 # Coeff
+        ),
+        name="y",
+    )
+
+
+
+
+
 
 def biasadd(data, bias, axis):
     return te.extern(
@@ -619,7 +658,7 @@ def conv2d_relu(x, w, pad, stride, dilation, conv_mode, tensor_format, algo, con
                  oshape,
                  [x, w],
                  lambda ins, outs: tvm.tir.call_packed(
-                     "tvm.contrib.cudnn.conv2d+bias+activation.forward",
+                     "tvm.contrib.cudnn.conv2d+activation.forward",
                        conv_mode, # mode: CUDNN_CONVOLUTION
                        tensor_format, # CUDNN_TENSOR_NCHW
                        algo,

@@ -51,7 +51,7 @@ optype_to_pattern = {
   "TUPLE_FIVE_IDX" : Pattern(is_tuple([wildcard(), wildcard(), wildcard(), wildcard(), wildcard()])),
   "CONV2D_BIAS_ADD_RELU" : Pattern(is_op("nn.relu")(is_op("nn.bias_add")(is_op("nn.conv2d")(wildcard(), wildcard()), is_constant()))),
   "CONV2D_ADD" : Pattern(is_op("add")(is_op("nn.conv2d")(wildcard(), wildcard()), wildcard())),
-  #"AVG_POOL2D_ADD" : Pattern(is_op("add")(is_op("nn.avg_pool2d")(wildcard()), wildcard())),
+  "AVG_POOL2D_ADD" : Pattern(is_op("add")(is_op("nn.avg_pool2d")(wildcard()), wildcard())),
   "TUPLE_FIVE_IDX_CONCAT" : Pattern(is_op("concatenate")(is_tuple([wildcard(), wildcard(), wildcard(), wildcard(), wildcard()]))),
 
   # ResNet-3D

@@ -265,3 +265,16 @@ def get_op_pattern(expr):
     else:
         raise RuntimeError(f"{type(expr)} is not defined yet.")
 
+
+def get_args(node):
+    if is_tuple_node(node):
+        return node.fields
+    #elif is_tuplegetitem_node(node):
+    #    return is_tuple_get_item, 2
+    elif is_call_node(node):
+        return node.args
+    elif is_constant_node(node) or is_var_node(node):
+        return []
+    else:
+        raise Exception(f"Unsupported type ({type(node)})")
+

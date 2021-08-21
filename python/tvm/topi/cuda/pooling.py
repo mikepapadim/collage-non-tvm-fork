@@ -203,8 +203,13 @@ def schedule_pool_grad(outs):
 
     return s
 
-def maxpool2d_cudnn(x, pool_size, strides, padding, pool_type, ceil_mode, data_layout, count_include_pad):
+def max_pool2d_cudnn(x, pool_size, strides, padding, pool_type, ceil_mode, data_layout, count_include_pad):
     """Perform max pool2d on the data using cudnn"""
-    return cudnn.maxpool2d(x, pool_size, strides, padding, pool_type, ceil_mode, data_layout, count_include_pad)
+    return cudnn.max_pool2d(x, pool_size, strides, padding, pool_type, ceil_mode, data_layout, count_include_pad)
+
+def avg_pool2d_cudnn(x, pool_size, strides, padding, pool_type, ceil_mode, data_layout, count_include_pad):
+    """Perform max pool2d on the data using cudnn"""
+    return cudnn.avg_pool2d(x, pool_size, strides, padding, pool_type, ceil_mode, data_layout, count_include_pad)
+
 
 

@@ -51,9 +51,9 @@ class CompGraphOptimizer:
         pair2match = {}
 
         root_expr = comp_graph.get_root().get_relay_expr()
-        # dom_tree: <class 'tvm.ir.container.Map'> --> dictionary in Python
-        dom_tree = relay.analysis.construct_dom_tree(root_expr, post_dom = True)
-
+        dom_tree = relay.analysis.construct_dom_tree(root_expr, post_dom = False)
+        post_dom_tree = relay.analysis.construct_dom_tree(root_expr, post_dom = True)
+        self._ordered_pattern_matcher.add_dom_tree(dom_tree)
 
         # @Sung: run all pattern generators
         all_exprs = []
@@ -69,16 +69,14 @@ class CompGraphOptimizer:
         relay.analysis.post_order_visit(root_expr, lambda expr: _traverse_expr(expr, all_exprs))
 
         for expr in all_exprs:
-            #if expr.op.name == "nn.dense":
             for generator in self._backendop_lib.get_all_pattern_generators():
-                 generator.run(dom_tree, expr)
+                 generator.run(post_dom_tree, expr)
 
 
         for pat in self._backendop_lib.get_all_patterns():
             print("Checking... ", pat)
 
-
-        # for node, dom in dom_tree.items():
+        # for node, dom in post_dom_tree.items():
         #    print(f"{repr(node)} --> {repr(dom)}\n")
         #    print("\n")
 

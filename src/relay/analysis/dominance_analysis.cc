@@ -8,6 +8,7 @@
 #include <cassert>
 #include <vector>
 #include <unordered_map>
+#include <unordered_set>
 
 namespace tvm {
 namespace relay {
@@ -230,11 +231,78 @@ namespace relay {
 
   };
 
+typedef std::unordered_set<Expr, ObjectPtrHash, ObjectPtrEqual> ExprSet;
+
+Array<Expr> get_childs(const Expr& expr){
+  Array<Expr> childs;
+  if(expr.as<CallNode>()) {
+     const CallNode* node = static_cast<const CallNode*>(expr.get());
+     childs = node->args;  
+  }else if(expr.as<TupleNode>()){
+     const TupleNode* node = static_cast<const TupleNode*>(expr.get());
+     childs = node->fields;  
+  }else if(expr.as<TupleGetItemNode>()){
+     const TupleGetItemNode* node = static_cast<const TupleGetItemNode*>(expr.get());
+     childs.push_back(node->tuple);
+  }else if(expr.as<ConstantNode>() || expr.as<VarNode>()){
+     // do nothing
+  }else
+    ICHECK(0);
+  return childs;
+}
+
+bool check(const Expr& expr, const ExprSet& matched_exprs, const ExprSet& doms_of_matched_exprs) {
+  bool result = false;
+  for(Expr child:get_childs(expr)){
+    if(matched_exprs.count(child)){ 
+      result = true;
+      break;
+    }else if(doms_of_matched_exprs.count(expr)){
+      result = false;
+      break;
+    }else{
+      result = result || check(child, matched_exprs, doms_of_matched_exprs);
+    }
+  }
+  return result;
+}
+
+
+bool has_cycle(const Expr& expr, const ExprSet& matched_exprs, const ExprSet& doms_of_matched_exprs) {
+  bool result = false;
+  auto childs = get_childs(expr);
+  if(matched_exprs.count(expr)){
+     // recursively call has_cycle() for its childs
+     for(Expr child:childs){
+       result = result || has_cycle(child, matched_exprs, doms_of_matched_exprs);
+       if(result) break;
+     }
+  }else{
+    for(Expr child:childs){
+       result = result || check(child, matched_exprs, doms_of_matched_exprs);
+       if(result) break;
+
+    }
+  }
+  return result;
+}
+
+
 
 TVM_REGISTER_GLOBAL("relay.analysis.dominance_analysis")
     .set_body_typed([](const Expr& expr, const bool post_dom) {
         auto g = Graph::creator(post_dom).Prepare(expr);
         return DomGraph::creator(post_dom).build(g);
+    });
+
+
+TVM_REGISTER_GLOBAL("relay.analysis.cycle_analysis")
+    .set_body_typed([](const Expr& expr, const Array<Expr>& _matched_exprs, const Array<Expr>& _doms_of_matched_exprs) {
+        ExprSet matched_exprs, doms_of_matched_exprs;
+        for(auto e:_matched_exprs) matched_exprs.insert(e);
+        for(auto e:_doms_of_matched_exprs) doms_of_matched_exprs.insert(e);
+
+        return has_cycle(expr, matched_exprs, doms_of_matched_exprs);
     });
 
 

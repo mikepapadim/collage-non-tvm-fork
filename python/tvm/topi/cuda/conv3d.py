@@ -230,7 +230,7 @@ def conv3d_cudnn(
         conv_mode=1,
         tensor_format=tensor_format,
         algo=-1,  # let CUDNN choose the best algo
-        conv_dtype=dtype,
+        conv_dtype=out_dtype,
     )
 
 

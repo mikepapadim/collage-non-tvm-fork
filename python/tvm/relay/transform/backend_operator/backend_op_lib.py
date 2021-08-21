@@ -5,7 +5,7 @@ from .backend_op import BackendOp, get_optimal_backendop
 from .op_config import Config, MeasuredConfigs
 
 #from ..workloads.onnx_workloads import get_network_from_onnx
-from .utils import no_constraints_func, get_op_pattern
+from .utils import no_constraints_func, get_op_pattern, get_args
 from .target import Target
 from .op_type import optype_to_pattern
 from .pattern import Pattern
@@ -92,28 +92,6 @@ def check_path(src, node, fcheck, path = [], paths = []):
     out = path.pop()
     assert(node == out)
 
-
-    #print(f"src: {src.op.name}, node: {node.op.name}")
-    #for _path in paths:
-    #    print("Path: ")
-    #    for _node in _path:
-    #        print(_node.op.name)
-    #    print("\n\n")
-    #print("=====")
-
-
-
-def get_args(node):
-    if is_tuple_node(node):
-        return node.fields
-    #elif is_tuplegetitem_node(node):
-    #    return is_tuple_get_item, 2
-    elif is_call_node(node):
-        return node.args
-    elif is_constant_node(node) or is_var_node(node):
-        return []
-    else:
-        raise Exception(f"Unsupported type ({type(node)})")
 
 
 def generate_relay_pattern_node(node):
@@ -230,19 +208,30 @@ class BasePatternGenerator:
   # NOTE: Ideall, OpKind should be defined by user depending on their pattern strategy.
   # However, as we will only support TVM pattern rules and use the relay attribute of OpKind, we are not going to define it for now.
 
-  def __init__(self, _target,  _pattern_rules=None, _optype2enum=None, _enum2optype=None):
+  def __init__(self, _target,  _pattern_rules=None, _verify=None, _optype2enum=None, _enum2optype=None):
       self.target = _target
       self.fgen = _pattern_rules
       self.id = 0 # pattern id
       self.optype2enum = _optype2enum
       self.enum2optype = _enum2optype
 
+      # check whether pattern satisfies the constraints
+      if _verify is None:
+          # Default one always returns True
+          self.verify = self.default_verify
+      else:
+          self.verify = _verify
+
   def _register_pattern_rule(self, _pattern_rules):
       self.fgen = _pattern_rules
 
+  # Always return true
+  def default_verify(self, pattern):
+      return True
+
   def run(self, dom_tree, expr):
       # def tvm_pattern_rule(dom_tree, op_dict, expr):
-      self.fgen(expr, dom_tree, self.target, self.optype2enum, self.enum2optype)
+      self.fgen(expr, dom_tree, self.verify, self.target, self.optype2enum, self.enum2optype)
 
 
 # library class (singleton) representing all backend operators
@@ -283,33 +272,39 @@ class BackendOpLib(object):
   # Note that we only support ResNet50 for now
   def _add_all_backendops(self):
     # CUDNN
+
+    # TODO(@Sung)
+    # 1. Support exclusion for TRT
+    # 2. conv3d, ADD, CONV2D_RELU, CONV2D_BIAS_ADD_RELU
+
     # FIXME(@Soo): For ResNext, some of CUDNN convolution doesn't work.
     self._add_backendop_with_key(Target.CUDNN, "CONV2D")
-    #self._add_backendop_with_key(Target.CUDNN, "CONV3D")
-    self._add_backendop_with_key(Target.CUDNN, "RELU")
-    # self._add_backendop_with_key(Target.CUDNN, "BIAS_ADD")
+    self._add_backendop_with_key(Target.CUDNN, "CONV3D")
+
+    def check_activation_constraints(config):
+        dim = len(config._data_shape)
+        return dim == 4 or dim == 5
+
+    self._add_backendop_with_key(Target.CUDNN, "SIGMOID", check_activation_constraints)
+    self._add_backendop_with_key(Target.CUDNN, "TANH", check_activation_constraints)
     self._add_backendop_with_key(Target.CUDNN, "SOFTMAX")
     self._add_backendop_with_key(Target.CUDNN, "MAX_POOL2D")
-    #self._add_backendop_with_key(Target.CUDNN, "AVG_POOL2D") # TODO: AVG_POOL2D, SIGMOID, Tanh
-    # self._add_backendop_with_key(Target.CUDNN, "CONV2D_RELU")
+    self._add_backendop_with_key(Target.CUDNN, "AVG_POOL2D")
+    # TODO:
+    #self._add_backendop_with_key(Target.CUDNN, "CONV3D_ADD_RELU")
+    #self._add_backendop_with_key(Target.CUDNN, "CONV2D_RELU")
+    #self._add_backendop_with_key(Target.CUDNN, "CONV2D_ADD_RELU") # Bug at NasnetA
+    #self._add_backendop_with_key(Target.CUDNN, "RELU", check_activation_constraints) # RELU has correctness issue on ResNext
 
-    # Not implemented for recording
+
+    # NOTE: cudnn ADD, BIAS_ADD cannot be supported due to the current limitation of packed function interface.
+    # cudnnAddTensor() uses the last argument as both input/output.
     # self._add_backendop_with_key(Target.CUDNN, "ADD")
+    # self._add_backendop_with_key(Target.CUDNN, "BIAS_ADD")
 
+    # NOTE: BatchNorm is currently not supported. If you need it, please contact @Sung
     # self._add_backendop_with_key(Target.CUDNN, "BN")
-    # measure_cost doesn't work, we need to fix this later.
-    # conv_bias_add_relu --> ResNet doesn't have this pattern, so it wouldn't be measured
-    # self._add_backendop_with_key(Target.CUDNN, "CONV2D_BIAS_ADD_RELU")
 
-    # TENSORRT
-    add_all_backend_ops_to_lib(self, Target.TENSORRT, ["DIAMOND", "TRANSPOSE",
-                                                       # "TUPLE_TWO_IDX", "TUPLE_FIVE_IDX",
-                                                       # "TUPLE_FIVE_IDX_CONCAT",
-                                                       # "TUPLE_GET_ITEM_0",
-                                                       # "TUPLE_GET_ITEM_1",
-                                                      "BATCH_MATMUL",
-                                                      "RESHAPE_TRANSPOSE",
-                                                      "TRANSPOSE_RESHAPE"])
 
     # CUBLAS
     # TODO: Add patterns. matmul, batch matmul
@@ -317,8 +312,7 @@ class BackendOpLib(object):
     self._add_backendop_with_key(Target.CUBLAS, "BATCH_MATMUL")
 
     # @Sung: add TVM pattern rule
-    # TODO: Check with NASRNN.
-    def tvm_pattern_rule(expr, dom_tree, target=Target.TVM_GPU_AUTOTVM, optype2enum = None, enum2optype = None):
+    def tvm_pattern_rule(expr, dom_tree, verify, target=Target.TVM_GPU_AUTOTVM, optype2enum = None, enum2optype = None):
         def run_fuse(src, sink, cur_pattern_type = None, cur_num_op = 0, nodeToPatternMap = dict()):
             assert(src is not None)
             if cur_pattern_type == optype2enum["kOpaque"] or cur_num_op > NUM_MAX_OP:
@@ -375,9 +369,11 @@ class BackendOpLib(object):
 
 
             cur_num_op += num_nodes
-            # Register
-            print(f"\t----- Register {cur_relay_pattern}")
-            self._add_backendop(target, Pattern(cur_relay_pattern))
+
+            if verify(cur_relay_pattern):
+                # Register
+                #print(f"\t----- Register {cur_relay_pattern}")
+                self._add_backendop(target, Pattern(cur_relay_pattern))
 
             # We may be able to expand
             #if sink in dom_tree and src_type != optype2enum["kTuple"]:
@@ -395,7 +391,7 @@ class BackendOpLib(object):
     # defined at include/tvm/relay/op_attr_types.h
     tvm_enum2optype = {0:"kElemWise", 1:"kBroadcast", 2:"kInjective", 3:"kCommReduce", 4:"kOutEWiseFusable", 7:"kTuple", 8:"kOpaque"}
     tvm_optype2enum = {"kElemWise":0, "kBroadcast":1, "kInjective":2, "kCommReduce":3, "kOutEWiseFusable":4, "kTuple":7, "kOpaque":8}
-    tvm_pattern_generator = BasePatternGenerator(Target.TVM_GPU_AUTOTVM, tvm_pattern_rule, tvm_optype2enum, tvm_enum2optype)
+    tvm_pattern_generator = BasePatternGenerator(Target.TVM_GPU_AUTOTVM, tvm_pattern_rule, None, tvm_optype2enum, tvm_enum2optype)
     self._add_backend_pattern_rule(tvm_pattern_generator)
 
     # TVM_GPU
@@ -411,6 +407,50 @@ class BackendOpLib(object):
     # Fix: Extend this to automatically select backend library based on HW info
     # add_all_backend_ops_to_lib(backendop_lib, Target.TVM_CPU)
 
+
+    # TENSORRT
+    # NOTE: Current TensorRT pattern follows TVM fusion rule for simplicity.
+    # But, since BATCH_MATMUL and TRANSPOSE are not supported, we are going to exclude the patterns if they contain those illegal operators by passing verify function.
+    def trt_verify(pattern):
+        q = [ pattern ]
+        while len(q):
+            cur = q.pop()
+
+            #if isinstance(cur, WildcardPattern) or isinstance(cur, VarPattern) or isinstance(cur, ConstantPattern):
+            if isinstance(cur, WildcardPattern):
+                pass
+            elif isinstance(cur, CallPattern):
+                if isinstance(cur.op, ConstantPattern) or isinstance(cur.op, VarPattern):
+                    pass
+                else:
+                    op_name = cur.op.expr.name
+                    if op_name == "transpose" or op_name == "nn.batch_matmul":
+                        return False
+                    q.extend(cur.args)
+            elif isinstance(cur, TuplePattern):
+                q.extend(cur.fields)
+            elif isinstance(cur, TupleGetItemPattern):
+                q.append(cur.tuple_value)
+            else:
+                raise Exception(f"Unexpected expression type, {type(cur)}")
+
+        return True
+
+    trt_pattern_generator = BasePatternGenerator(Target.TENSORRT, tvm_pattern_rule, trt_verify, tvm_optype2enum, tvm_enum2optype)
+    self._add_backend_pattern_rule(trt_pattern_generator)
+
+
+    #add_all_backend_ops_to_lib(self, Target.TENSORRT, ["DIAMOND", "TRANSPOSE",
+                                                       # "TUPLE_TWO_IDX", "TUPLE_FIVE_IDX",
+                                                       # "TUPLE_FIVE_IDX_CONCAT",
+                                                       # "TUPLE_GET_ITEM_0",
+                                                       # "TUPLE_GET_ITEM_1",
+   #                                                   "BATCH_MATMUL",
+   #                                                   "RESHAPE_TRANSPOSE",
+   #                                                   "TRANSPOSE_RESHAPE"])
+
+
+
   # add a backend operator to the library
   def _add_backendop_with_key(self, target, pattern_key, constraint_func = no_constraints_func):
       self._add_backendop(target, optype_to_pattern[pattern_key], constraint_func)
@@ -419,10 +459,6 @@ class BackendOpLib(object):
     backendop = BackendOp(target, pattern, self._measured_configs, constraint_func)
     self.all_backendops.add(backendop)
     self.pattern_to_backendops[backendop.get_pattern()].add(backendop)
-    #self.all_backendops.append(backendop)
-    #self.pattern_to_backendops[backendop.get_pattern()].append(backendop)
-
-  # return list of backend operators matching a pattern
 
   def measure_backend_ops(self, network_expr, targets, batch_size):
     assert type(targets) == list

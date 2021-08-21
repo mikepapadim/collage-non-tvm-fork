@@ -212,6 +212,7 @@ class TVMSubGraphCostFunc_OpMeasurement(TargetCostFunc):
 
         # Build the subgraph
         target_str = target.__str__()
+
         with tvm.transform.PassContext(opt_level=OPT_LEVEL.get()):
             lib = relay.build_module.build(net, target=target_str, params=params)
 
