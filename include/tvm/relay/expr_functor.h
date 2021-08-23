@@ -411,6 +411,7 @@ Expr PostOrderRewrite(const Expr& expr, ExprRewriter* rewriter);
 void PostOrderVisit(const Expr& node, std::function<void(const Expr&)> fvisit);
 
 void MutateBackend(Expr op, String backend);
+void MutateBackendCopy(Expr op, String backend);
 String GetBackend(Expr op);
 void PrintOpType(ObjectRef op);
 

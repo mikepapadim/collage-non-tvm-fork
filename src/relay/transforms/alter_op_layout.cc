@@ -158,7 +158,10 @@ Expr AlterOpLayout(const Expr& expr) {
   // TODO(@icemelon9): need to rerun type inference after applying an alter op.
   AlterTransformMemorizer alterMemorizer(make_object<AlterTransformMemorizerNode>());
   auto fcontext = [&](const Call& call) -> ObjectRef { return alterMemorizer; };
-  return ForwardRewrite(expr, LayoutRewriter<AlterTransformMemorizer>, fcontext);
+//  std::cerr << "[AlterOpLayout] Input expr: " << expr << std::endl;
+  auto expr_out = ForwardRewrite(expr, LayoutRewriter<AlterTransformMemorizer>, fcontext);
+//  std::cerr << "[AlterOpLayout] Output expr: " << expr_out << std::endl;
+  return expr_out;
 }
 
 }  // namespace alter_op_layout

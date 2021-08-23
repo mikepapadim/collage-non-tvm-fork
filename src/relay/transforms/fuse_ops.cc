@@ -105,7 +105,12 @@ namespace tvm {
         std::string group_id_str = pair_str.substr(0, delim_pos);
 
         // Initialization
+        if (pair_str.compare("default") == 0) {
+          ICHECK(0) << "backend for this op is not assigned; this means that a new op"
+                    << "is introduced to the Relay expression, most likely in AlterLayoutOp pass";
+        }
 //        std::cerr << "pair_str: " << pair_str << std::endl;
+//        std::cerr << "group_id_str: " << group_id_str << std::endl;
         group_id = std::stoi(group_id_str);
         backend_op_name = pair_str.substr(delim_pos+1);
 //        debug_print();
@@ -1421,19 +1426,33 @@ namespace tvm {
             this->VisitType(ty_arg);
           }
 
+          // Change backend if it is default and the op is "expand_dims"
+          // Let's block other ops than expand_dims to prevent side effects
+          if (op->backend.operator std::string().compare("default") == 0) {
+            if (const OpNode* op_node = op->op.as<OpNode>()) {
+              if (op_node->name == "expand_dims") {
+                MutateBackendCopy(GetRef<Expr>(op), parent_backend_);
+              } else {
+                ICHECK(0) << "Unexpected operator type with the backend of default"
+                          << "It is likely that this op was changed in AlterOpLayout";
+              }
+            }
+          }
+
+          parent_backend_ = op->backend;
           for (auto arg : op->args) {
-            parent_backend_ = op->backend;
             this->VisitExpr(arg);
           }
         }
 
         void VisitExpr_(const ConstantNode* op) final {
-          MutateBackend(GetRef<Expr>(op), parent_backend_);
+          MutateBackendCopy(GetRef<Expr>(op), parent_backend_);
           ExprVisitor::VisitExpr_(op);
         }
       } visitor;
 
       if (is_custom_pass) visitor(expr);
+//      std::cerr << "[InferBackendForConstant] " << expr << std::endl;
 //      std::cerr << "[Done] InferBackendForConstant" << std::endl;
       return expr;
     }
