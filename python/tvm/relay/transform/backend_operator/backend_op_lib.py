@@ -291,9 +291,11 @@ class BackendOpLib(object):
     self._add_backendop_with_key(Target.CUDNN, "MAX_POOL2D")
     self._add_backendop_with_key(Target.CUDNN, "AVG_POOL2D")
     # TODO:
+    self._add_backendop_with_key(Target.CUDNN, "CONV2D_ADD_RELU") # Bug at NasnetA
+    #self._add_backendop_with_key(Target.CUDNN, "CONV2D_BIAS_RELU")
     #self._add_backendop_with_key(Target.CUDNN, "CONV3D_ADD_RELU")
+    self._add_backendop_with_key(Target.CUDNN, "CONV3D_BIAS_RELU")
     #self._add_backendop_with_key(Target.CUDNN, "CONV2D_RELU")
-    #self._add_backendop_with_key(Target.CUDNN, "CONV2D_ADD_RELU") # Bug at NasnetA
     #self._add_backendop_with_key(Target.CUDNN, "RELU", check_activation_constraints) # RELU has correctness issue on ResNext
 
 

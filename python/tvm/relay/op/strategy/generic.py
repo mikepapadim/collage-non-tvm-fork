@@ -265,7 +265,7 @@ def wrap_custom_compute_conv2d_relu(
     return _compute_conv2d_relu
 
 
-def wrap_custom_compute_conv2d_biasadd_relu(
+def wrap_custom_compute_conv2d_add_relu(
     topi_compute,
     need_data_layout=False,
     need_out_layout=False,
@@ -273,7 +273,7 @@ def wrap_custom_compute_conv2d_biasadd_relu(
     need_auto_scheduler_layout=False,
 ):
     """Wrap bias add topi compute"""
-    def _compute_conv2d_biasadd_relu(attrs, inputs, out_type):
+    def _compute_conv2d_add_relu(attrs, inputs, out_type):
         padding = get_const_tuple(attrs.padding)
         strides = get_const_tuple(attrs.strides)
         dilation = get_const_tuple(attrs.dilation)
@@ -294,7 +294,43 @@ def wrap_custom_compute_conv2d_biasadd_relu(
         if need_auto_scheduler_layout:
             args.append(get_auto_scheduler_rewritten_layout(attrs))
         return [topi_compute(*args)]
-    return _compute_conv2d_biasadd_relu
+    return _compute_conv2d_add_relu
+
+
+def wrap_custom_compute_conv3d_add_relu(topi_compute, need_layout=False, need_auto_scheduler_layout=False):
+    """wrap conv3d topi compute"""
+
+    def _compute_conv3d_add_relu(attrs, inputs, out_type):
+        padding = get_const_tuple(attrs.padding)
+
+        for p in padding:
+            assert(p == padding[0])
+        padding = padding[0]
+
+        strides = get_const_tuple(attrs.strides)
+        dilation = get_const_tuple(attrs.dilation)
+        groups = attrs.groups
+        layout = attrs.data_layout
+        out_dtype = attrs.out_dtype
+        out_dtype = inputs[0].dtype if out_dtype in ("same", "") else out_dtype
+
+        (dilation_d, dilation_h, dilation_w) = dilation
+        if dilation_d < 1 or dilation_h < 1 or dilation_w < 1:
+            raise ValueError("Dilation should be positive value")
+        if groups != 1:
+            raise ValueError("Not support arbitrary group number for conv3d")
+
+        args = [inputs[0], inputs[1], inputs[2], inputs[3], strides, padding, dilation]
+        if need_layout:
+            args.append(layout)
+        args.append(out_dtype)
+        if need_auto_scheduler_layout:
+            args.append(get_auto_scheduler_rewritten_layout(attrs))
+
+
+        return [topi_compute(*args)]
+
+    return _compute_conv3d_add_relu
 
 
 @override_native_generic_func("softmax_strategy")

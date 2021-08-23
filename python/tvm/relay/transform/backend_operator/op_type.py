@@ -49,7 +49,7 @@ optype_to_pattern = {
   "AVG_POOL2D" : Pattern(is_op("nn.avg_pool2d")(wildcard())),
   "MAX_POOL2D" : Pattern(is_op("nn.max_pool2d")(wildcard())),
   "TUPLE_FIVE_IDX" : Pattern(is_tuple([wildcard(), wildcard(), wildcard(), wildcard(), wildcard()])),
-  "CONV2D_BIAS_ADD_RELU" : Pattern(is_op("nn.relu")(is_op("nn.bias_add")(is_op("nn.conv2d")(wildcard(), wildcard()), is_constant()))),
+  "CONV2D_BIAS_RELU" : Pattern(is_op("nn.relu")(is_op("nn.bias_add")(is_op("nn.conv2d")(wildcard(), wildcard()), is_constant()))),
   "CONV2D_ADD" : Pattern(is_op("add")(is_op("nn.conv2d")(wildcard(), wildcard()), wildcard())),
   "AVG_POOL2D_ADD" : Pattern(is_op("add")(is_op("nn.avg_pool2d")(wildcard()), wildcard())),
   "TUPLE_FIVE_IDX_CONCAT" : Pattern(is_op("concatenate")(is_tuple([wildcard(), wildcard(), wildcard(), wildcard(), wildcard()]))),
@@ -66,6 +66,7 @@ optype_to_pattern = {
   "SOFTMAX" : Pattern(is_op("nn.softmax")(wildcard())),
   "BATCH_FLATTEN" : Pattern(is_op("nn.batch_flatten")(wildcard())),
   "GLOBAL_AVG_POOL2D" : Pattern(is_op("nn.global_avg_pool2d")(wildcard())),
+  "CONV3D_BIAS_RELU" : Pattern(is_op("nn.relu")(is_op("nn.bias_add")(is_op("nn.conv3d")(wildcard(), wildcard()), is_constant()))),
 
   # Other Fused Ops
   "CONV2D_BN": Pattern(is_tuple_get_item(is_op("nn.batch_norm")(is_op("nn.conv2d")(wildcard(), wildcard()), wildcard(), wildcard(), wildcard(), wildcard()), 0)),

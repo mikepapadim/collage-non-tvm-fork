@@ -681,7 +681,42 @@ def conv2d_relu(x, w, pad, stride, dilation, conv_mode, tensor_format, algo, con
                      name="y",
             )
 
-def conv2d_biasadd_relu(x, w, z, b, pad, stride, dilation, conv_mode, tensor_format, algo, conv_dtype, activ_mode, nan_prop_mode, actv_coeff, groups=1):
+def conv2d_add_relu(x, w, z, b, pad, stride, dilation, conv_mode, tensor_format, algo, conv_dtype, activ_mode, nan_prop_mode, actv_coeff, groups=1):
+
+    dims, conv_dtype, pad, stride, dilation, oshape, algo = \
+        prepare(x, w, pad, stride, dilation, tensor_format, algo, conv_dtype, groups)
+
+    return te.extern(
+                 oshape,
+                 [x, w, z, b],
+                 lambda ins, outs: tvm.tir.call_packed(
+                     "tvm.contrib.cudnn.conv2d+add+activation.forward",
+                       conv_mode, # mode: CUDNN_CONVOLUTION
+                       tensor_format, # CUDNN_TENSOR_NCHW
+                       algo,
+                       pad[0], pad[1],
+                       stride[0], stride[1],
+                       dilation[0], dilation[1],
+                       conv_dtype,
+                       ins[0], # x
+                       ins[1], # w
+                       ins[2], # z
+                       ins[3], # bias
+                       outs[0], # y
+                       groups,
+                       1,#alphas[0],
+                       0,#alphas[1],
+                       1,#alphas[0] for z
+                       0,
+                       activ_mode,
+                       nan_prop_mode,
+                       actv_coeff
+                     ),
+                     name="y",
+            )
+
+
+def conv2d_bias_relu(x, w, z, b, pad, stride, dilation, conv_mode, tensor_format, algo, conv_dtype, activ_mode, nan_prop_mode, actv_coeff, groups=1):
 
     dims, conv_dtype, pad, stride, dilation, oshape, algo = \
         prepare(x, w, pad, stride, dilation, tensor_format, algo, conv_dtype, groups)
@@ -697,6 +732,41 @@ def conv2d_biasadd_relu(x, w, z, b, pad, stride, dilation, conv_mode, tensor_for
                        pad[0], pad[1],
                        stride[0], stride[1],
                        dilation[0], dilation[1],
+                       conv_dtype,
+                       ins[0], # x
+                       ins[1], # w
+                       ins[2], # z
+                       ins[3], # bias
+                       outs[0], # y
+                       groups,
+                       1,#alphas[0],
+                       0,#alphas[1],
+                       1,#alphas[0] for z
+                       0,
+                       activ_mode,
+                       nan_prop_mode,
+                       actv_coeff
+                     ),
+                     name="y",
+            )
+
+
+def conv3d_add_relu(x, w, z, b, pad, stride, dilation, conv_mode, tensor_format, algo, conv_dtype, activ_mode, nan_prop_mode, actv_coeff, groups=1):
+
+    dims, conv_dtype, pad, stride, dilation, oshape, algo = \
+        prepare(x, w, pad, stride, dilation, tensor_format, algo, conv_dtype, groups)
+
+    return te.extern(
+                 oshape,
+                 [x, w, z, b],
+                 lambda ins, outs: tvm.tir.call_packed(
+                     "tvm.contrib.cudnn.conv3d+add+activation.forward",
+                       conv_mode, # mode: CUDNN_CONVOLUTION
+                       tensor_format, # CUDNN_TENSOR_NCHW
+                       algo,
+                       pad[0], pad[1], pad[2],
+                       stride[0], stride[1], stride[2],
+                       dilation[0], dilation[1], dilation[2],
                        conv_dtype,
                        ins[0], # x
                        ins[1], # w

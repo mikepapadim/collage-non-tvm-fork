@@ -431,11 +431,11 @@ def target_specific_lowering(func, inputMap, target_info=None):
         # fused ops
         elif pattern == "0-Op(nn.relu)[1-Op(add)[2-Op(nn.conv2d)[*, *], *]]":
             strategy.add_implementation(
-                wrap_custom_compute_conv2d_biasadd_relu(
-                    topi.cuda.conv2d_biasadd_relu_cudnn, need_data_layout=True, has_groups=True
+                wrap_custom_compute_conv2d_add_relu(
+                    topi.cuda.conv2d_add_relu_cudnn, need_data_layout=True, has_groups=True
                 ),
                 wrap_topi_schedule(topi.generic.schedule_extern),
-                name="conv2d_biasadd_relu.cudnn",
+                name="conv2d+add+relu.cudnn",
             )
 
             data, kernel, Z, bias = None, None, None, None
@@ -449,11 +449,67 @@ def target_specific_lowering(func, inputMap, target_info=None):
                     data = inputMap[args[0]]
                     kernel = inputMap[args[1]]
                 elif "add" in call_name:
-                    bias = inputMap[args[1]]
+                    data2 = inputMap[args[1]]
                 elif "relu" in call_name:
                     Z = inputMap[args[0]]
 
-            inputs = [data[0], kernel[0], Z[0], bias[0]]
+            inputs = [data[0], kernel[0], Z[0], data2[0]]
+
+        elif pattern == "0-Op(nn.relu)[1-Op(nn.biad_add)[2-Op(nn.conv2d)[*, *], *]]":
+            strategy.add_implementation(
+                wrap_custom_compute_conv2d_add_relu(
+                    topi.cuda.conv2d_bias_relu_cudnn, need_data_layout=True, has_groups=True
+                ),
+                wrap_topi_schedule(topi.generic.schedule_extern),
+                name="conv2d+bias+relu.cudnn",
+            )
+
+            data, kernel, Z, bias = None, None, None, None
+            attrs, ret_type = None, None
+            for call in calls:
+                call_name = call.op.name
+                if "conv2d" in call_name:
+                    attrs = call.attrs
+                    ret_type = call.checked_type
+                    args = call.args
+                    data = inputMap[args[0]]
+                    kernel = inputMap[args[1]]
+                elif "bias_add" in call_name:
+                    data2 = inputMap[args[1]]
+                elif "relu" in call_name:
+                    Z = inputMap[args[0]]
+
+            inputs = [data[0], kernel[0], Z[0], data2[0]]
+
+
+
+        elif pattern == "0-Op(nn.relu)[1-Op(add)[2-Op(nn.conv3d)[*, *], *]]":
+            strategy.add_implementation(
+                wrap_custom_compute_conv3d_add_relu(
+                    topi.cuda.conv3d_add_relu_cudnn, need_layout=True
+                ),
+                wrap_topi_schedule(topi.generic.schedule_extern),
+                name="conv3d+add+relu.cudnn",
+            )
+
+            data, kernel, Z, bias = None, None, None, None
+            attrs, ret_type = None, None
+            for call in calls:
+                call_name = call.op.name
+                if "conv3d" in call_name:
+                    attrs = call.attrs
+                    ret_type = call.checked_type
+                    args = call.args
+                    data = inputMap[args[0]]
+                    kernel = inputMap[args[1]]
+                elif "add" in call_name:
+                    data2 = inputMap[args[1]]
+                elif "relu" in call_name:
+                    Z = inputMap[args[0]]
+
+            inputs = [data[0], kernel[0], Z[0], data2[0]]
+
+
 
         elif pattern == "0-Op(nn.relu)[1-Op(nn.conv2d)[*, *]]":
             strategy.add_implementation(
