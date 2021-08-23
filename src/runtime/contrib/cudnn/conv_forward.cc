@@ -629,7 +629,7 @@ void ConvolutionBiasActivationForward(int mode, int format, int algo, int convDi
   
   // Dims includes N and C
   int full_dims = convDim + 2;
-  assert(convDim==2);
+  //assert(convDim==2);
 
   // Note: For 2D tenor, using ND setters causes CUDNN_STATUS_NOT_SUPPORTED error
   // in following cudnnGetConvolutionForwardWorkspaceSize() when data type is fp16, int
@@ -754,7 +754,6 @@ void ConvolutionBiasActivationForward(int mode, int format, int algo, int convDi
   assert(w->data);
   assert(z->data);
   assert(y->data);
-  assert(entry_ptr->fused_conv_entry.workspace);
   std::cerr << "Workspace size: " << workspace_size << "\n";
   std::cerr << x->data << " // " << y->data << " // " << z->data << "\n";
 
@@ -781,7 +780,7 @@ void ConvolutionBiasActivationForward(int mode, int format, int algo, int convDi
 
 
 // conv+bias+relu with fuse engine
-void ConvolutionBiasActivationForwardWithFE(int mode, int format, int algo, int convDim, int groups,
+void ConvolutionAddActivationForwardWithFE(int mode, int format, int algo, int convDim, int groups,
     const int64_t pad[],const int64_t stride[], const int64_t dilation[],
     DLTensor* x, DLTensor* w, DLTensor* z, DLTensor* bias, DLTensor* y,
     const std::string& conv_dtype, const void* alphas[], int actvMode, int reluNanOpt, double actvCoeff) {
@@ -803,7 +802,7 @@ void ConvolutionBiasActivationForwardWithFE(int mode, int format, int algo, int 
   //cudnnDataType_t data_type = CuDNNDataType::DLTypeToCuDNNType(x->dtype);
   // Dims includes N and C
   int full_dims = convDim + 2;
-  assert(convDim==2);
+  //assert(convDim==2);
 
   CUDNN_CALL(cudnnSetConvolutionGroupCount(entry_ptr->fused_conv_entry.conv_desc, groups));
   std::vector<int> dim(full_dims);
@@ -1281,7 +1280,7 @@ void FindAlgo(int format, int dims, int groups, const int pad[], const int strid
   ret[0] = best_algo;
 }
 
-TVM_REGISTER_GLOBAL("tvm.contrib.cudnn.conv2d+bias+activation.forward")
+TVM_REGISTER_GLOBAL("tvm.contrib.cudnn.conv2d+add+activation.forward")
     .set_body([](TVMArgs args, TVMRetValue* ret) {
 
       //std::cerr << "### Fused ops\n";
@@ -1317,11 +1316,89 @@ TVM_REGISTER_GLOBAL("tvm.contrib.cudnn.conv2d+bias+activation.forward")
       int reluNanOpt = args[21];
       double actvCoeff = args[22];
 
-      ConvolutionBiasActivationForwardWithFE(mode, format, algo, 2, groups, pad_v, stride_v, dilation_v,
+      ConvolutionAddActivationForwardWithFE(mode, format, algo, 2, groups, pad_v, stride_v, dilation_v,
+          x, w, z, bias, y, conv_dtype, alphas, actvMode, reluNanOpt, actvCoeff);
+    });
+
+
+TVM_REGISTER_GLOBAL("tvm.contrib.cudnn.conv2d+bias+activation.forward")
+    .set_body([](TVMArgs args, TVMRetValue* ret) {
+      int mode = args[0];
+      int format = args[1];
+      int algo = args[2];
+
+      int pad_v[2], stride_v[2], dilation_v[2];
+      for (int i = 0; i < 2; i++) {
+        pad_v[i] = args[3 + i];
+        stride_v[i] = args[5 + i];
+        dilation_v[i] = args[7 + i];
+      }
+
+      std::string conv_dtype = args[9];
+
+      DLTensor* x = args[10];
+      DLTensor* w = args[11];
+      DLTensor* z = args[12];
+      DLTensor* bias = args[13];
+      DLTensor* y = args[14];
+
+      int groups = args[15];
+
+      const void* alphas[4];
+      alphas[0] = CuDNNDataType::GetConst(CuDNNDataType::DLTypeToCuDNNType(String2DLDataType(conv_dtype)), (double)args[16]);
+      alphas[1] = CuDNNDataType::GetConst(CuDNNDataType::DLTypeToCuDNNType(String2DLDataType(conv_dtype)), (double)args[17]);
+      alphas[2] = CuDNNDataType::GetConst(CuDNNDataType::DLTypeToCuDNNType(String2DLDataType(conv_dtype)), (double)args[18]);
+      alphas[3] = CuDNNDataType::GetConst(CuDNNDataType::DLTypeToCuDNNType(String2DLDataType(conv_dtype)), (double)args[19]);
+
+      int actvMode = args[20];
+      int reluNanOpt = args[21];
+      double actvCoeff = args[22];
+
+      ConvolutionBiasActivationForward(mode, format, algo, 2, groups, pad_v, stride_v, dilation_v,
+          x, w, z, bias, y, conv_dtype, alphas, actvMode, reluNanOpt, actvCoeff);
+    });
+
+
+TVM_REGISTER_GLOBAL("tvm.contrib.cudnn.conv3d+add+activation.forward")
+    .set_body([](TVMArgs args, TVMRetValue* ret) {
+
+      int mode = args[0];
+      int format = args[1];
+      int algo = args[2];
+
+      int64_t pad_v[3], stride_v[3], dilation_v[3];
+      for (int i = 0; i < 3; i++) {
+        pad_v[i] = args[3 + i];
+        stride_v[i] = args[6 + i];
+        dilation_v[i] = args[9 + i];
+      }
+
+      std::string conv_dtype = args[12];
+
+      DLTensor* x = args[13];
+      DLTensor* w = args[14];
+      DLTensor* z = args[15];
+      DLTensor* bias = args[16];
+      DLTensor* y = args[17];
+
+      int groups = args[18];
+
+      const void* alphas[4];
+      alphas[0] = CuDNNDataType::GetConst(CuDNNDataType::DLTypeToCuDNNType(String2DLDataType(conv_dtype)), (double)args[19]);
+      alphas[1] = CuDNNDataType::GetConst(CuDNNDataType::DLTypeToCuDNNType(String2DLDataType(conv_dtype)), (double)args[20]);
+      alphas[2] = CuDNNDataType::GetConst(CuDNNDataType::DLTypeToCuDNNType(String2DLDataType(conv_dtype)), (double)args[21]);
+      alphas[3] = CuDNNDataType::GetConst(CuDNNDataType::DLTypeToCuDNNType(String2DLDataType(conv_dtype)), (double)args[22]);
+
+      int actvMode = args[23];
+      int reluNanOpt = args[24];
+      double actvCoeff = args[25];
+      
+      ConvolutionAddActivationForwardWithFE(mode, format, algo, 3, groups, pad_v, stride_v, dilation_v,
           x, w, z, bias, y, conv_dtype, alphas, actvMode, reluNanOpt, actvCoeff);
 
 
     });
+
 
 TVM_REGISTER_GLOBAL("tvm.contrib.cudnn.conv2d+activation.forward")
     .set_body([](TVMArgs args, TVMRetValue* ret) {
@@ -1357,6 +1434,44 @@ TVM_REGISTER_GLOBAL("tvm.contrib.cudnn.conv2d+activation.forward")
       double actvCoeff = args[20];
 
       ConvolutionActivationForward(mode, format, algo, 2, groups, pad_v, stride_v, dilation_v,
+          x, w, y, conv_dtype, alphas, actvMode, reluNanOpt, actvCoeff);
+    });
+
+
+TVM_REGISTER_GLOBAL("tvm.contrib.cudnn.conv3d+activation.forward")
+    .set_body([](TVMArgs args, TVMRetValue* ret) {
+      //std::cerr << "### Fused ops\n";
+
+      int mode = args[0];
+      int format = args[1];
+      int algo = args[2];
+
+      int64_t pad_v[3], stride_v[3], dilation_v[3];
+      for (int i = 0; i < 3; i++) {
+        pad_v[i] = args[3 + i];
+        stride_v[i] = args[6 + i];
+        dilation_v[i] = args[9 + i];
+      }
+
+      std::string conv_dtype = args[12];
+
+      DLTensor* x = args[13];
+      DLTensor* w = args[14];
+      DLTensor* y = args[15];
+
+      int groups = args[16];
+
+      const void* alphas[4];
+      alphas[0] = CuDNNDataType::GetConst(CuDNNDataType::DLTypeToCuDNNType(String2DLDataType(conv_dtype)), (double)args[17]);
+      alphas[1] = CuDNNDataType::GetConst(CuDNNDataType::DLTypeToCuDNNType(String2DLDataType(conv_dtype)), (double)args[18]);
+      alphas[2] = CuDNNDataType::GetConst(CuDNNDataType::DLTypeToCuDNNType(String2DLDataType(conv_dtype)), (double)args[19]);
+      alphas[3] = CuDNNDataType::GetConst(CuDNNDataType::DLTypeToCuDNNType(String2DLDataType(conv_dtype)), (double)args[20]);
+
+      int actvMode = args[21];
+      int reluNanOpt = args[22];
+      double actvCoeff = args[23];
+
+      ConvolutionActivationForward(mode, format, algo, 3, groups, pad_v, stride_v, dilation_v,
           x, w, y, conv_dtype, alphas, actvMode, reluNanOpt, actvCoeff);
     });
 

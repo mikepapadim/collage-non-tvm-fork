@@ -36,7 +36,7 @@ def get_node_color(node):
 
     return color
 
-def visualize_network(expr, file_name):
+def visualize_network(expr, file_name, expr2node=None):
 
     dot = Digraph(format='pdf')
     dot.attr(rankdir='BT')
@@ -50,6 +50,11 @@ def visualize_network(expr, file_name):
             node_idx_backend_str = f"[{node_idx}, {node.backend}]"
         else:
             node_idx_backend_str = f"[{node_idx}, NO_BACKEND]"
+
+        # Debug for DP: print node_dfs_order
+        if expr2node is not None and hash(node) in expr2node:
+            node_dfs_order = expr2node[hash(node)]._topological_order
+            node_idx_backend_str = f"[{node_dfs_order}, {node_idx}, {node.backend}]"
 
         node_color = get_node_color(node)
 

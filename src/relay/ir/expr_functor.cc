@@ -512,6 +512,25 @@ void MutateBackend(Expr op, String backend) {
   }
 }
 
+void MutateBackendCopy(Expr op, String backend) {
+  if (op.as<CallNode>()) {
+    op.as_non_const<CallNode>()->backend = backend;
+  } else if (op.as<VarNode>()) {
+    op.as_non_const<VarNode>()->backend = backend;
+  } else if (op.as<ConstantNode>()) {
+    op.as_non_const<ConstantNode>()->backend = backend;
+  } else if (op.as<TupleNode>()) {
+    op.as_non_const<TupleNode>()->backend = backend;
+  } else if (op.as<TupleGetItemNode>()) {
+    op.as_non_const<TupleGetItemNode>()->backend = backend;
+  } else if (op.as<FunctionNode>()) {
+    op.as_non_const<FunctionNode>()->backend = backend;
+  } else {
+    LOG(FATAL) << "Unexpected type for mutating backends";
+  }
+}
+
+
 // Warning(@Soo): Is it dangerous to return String instead of std::string?
 String GetBackend(Expr op) {
   String backend;

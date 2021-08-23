@@ -43,7 +43,6 @@ TVM_REGISTER_GLOBAL("tvm.contrib.cudnn.activation.forward")
       int nanOpt = args[5];
       double coeff = args[6];
 
-
       CuDNNThreadEntry* entry_ptr = CuDNNThreadEntry::ThreadLocal();
       entry_ptr->activation_entry.data_type = CuDNNDataType::DLTypeToCuDNNType(x->dtype);
 
@@ -59,7 +58,7 @@ TVM_REGISTER_GLOBAL("tvm.contrib.cudnn.activation.forward")
 
       int ndim = x->ndim;
       // cuDNN only supports 4d or 5d
-      assert(ndim == 4 or ndim == 5);
+      assert(ndim == 4 || ndim == 5);
 
       if(ndim == 4){
         CUDNN_CALL(cudnnSetTensor4dDescriptor(

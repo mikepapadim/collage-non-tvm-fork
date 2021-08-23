@@ -7,4 +7,4 @@
 
 # CUDA_VISIBLE_DEVICES=0 --> RTX3070
 # CUDA_VISIBLE_DEVICES=1 --> RTX2070
-CUDA_VISIBLE_DEVICES=1 python3 testing/plot_ops.py 
+CUDA_VISIBLE_DEVICES=1 python3 testing/plot_ops.py

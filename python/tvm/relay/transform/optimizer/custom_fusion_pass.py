@@ -12,6 +12,7 @@ class CustomFusionPass(IntEnum):
     DP = 1
     EXHAUSTIVE_SEARCH = 2
     TWO_LEVEL_OPT = 3
+    OP_MEASUREMENT = 4
 
     @classmethod
     def has_value(cls, value):

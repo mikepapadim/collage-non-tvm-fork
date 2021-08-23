@@ -25,7 +25,6 @@ from tvm.te import SpecializedCondition
 from .. import op as _op
 from .generic import *
 
-
 @schedule_injective.register(["cuda", "gpu"])
 def schedule_injective_cuda(attrs, outs, target):
     """schedule injective ops for cuda"""

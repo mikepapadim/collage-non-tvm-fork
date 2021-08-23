@@ -1,3 +1,31 @@
+from tvm.relay import *
+
+class BackendOp(object):
+  def __init__(self, backend, pattern, constraint):
+
+BackendOp(backend='tensorrt', pattern=is_op('nn.conv2d').has_attr({"TOpPattern": K_ELEMWISE}), constraint = is_op('nn.conv2d').has_attr({"data_layout": "NHWC"}))
+
+# from collections import defaultdict
+# a = defaultdict(dict)
+# a[1][2] = 0
+# print(a)
+# a.add(1)
+# a.add(2)
+# for i in a:
+#     print(i)
+# b = frozenbitarray('1110')
+# c = frozenbitarray('1000')
+# print(a|b)
+
+# dic = {}
+# dic[a] = 1
+# print(dic[b])
+#
+# # c = ['0', '0', '0']
+# # c[2] = '1'
+# # print("".join(c))
+# print('0'*10)
+
 # from tvm.relay.dataflow_pattern import *
 # from tvm import relay
 # import logging

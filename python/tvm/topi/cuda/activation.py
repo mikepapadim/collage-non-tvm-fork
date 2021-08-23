@@ -40,10 +40,17 @@ def schedule_relu(outs):
     return schedule_injective(outs)
 
 
+def sigmoid_cudnn(x):
+    """Perform softmax on the data using cudnn"""
+    return cudnn.sigmoid(x)
+
 def relu_cudnn(x):
     """Perform softmax on the data using cudnn"""
-    print("Python topi cuda cudnn relu!!")
     return cudnn.relu(x)
+
+def tanh_cudnn(x):
+    """Perform softmax on the data using cudnn"""
+    return cudnn.tanh(x)
 
 
 def schedule_relu_cudnn(outs):
