@@ -40,8 +40,10 @@ TVM_REGISTER_GLOBAL("tvm.contrib.cudnn.add")
       int axis = args[4];
 
       int ndim = x->ndim;
+      std::cerr << "Cudnn Add\n";
       assert(ndim==2);
 
+      std::cerr << "dim == 2\n";
       int64_t* shape = x->shape;
       if (axis < 0) axis += ndim;
       ICHECK(axis >= 0 && axis < ndim);
@@ -54,6 +56,7 @@ TVM_REGISTER_GLOBAL("tvm.contrib.cudnn.add")
       alpha = CuDNNDataType::GetConst(entry_ptr->bias_entry.data_type, double_alpha);
       beta = CuDNNDataType::GetConst(entry_ptr->bias_entry.data_type, double_beta);
 
+      std::cerr << "Create Descriptors\n";
       // Set mode and shape descriptor
       if (axis == ndim - 1) {
         int64_t N = 1;
@@ -83,15 +86,7 @@ TVM_REGISTER_GLOBAL("tvm.contrib.cudnn.add")
 
       }
 
-/*
-        CUDNN_CALL(cudnnSetTensor4dDescriptor(
-        entry_ptr->bias_entry.shape_desc, CUDNN_TENSOR_NCHW, 
-        entry_ptr->bias_entry.data_type,
-        static_cast<int>(x->shape[0]), static_cast<int>(x->shape[1]),
-        static_cast<int>(x->shape[2]), static_cast<int>(x->shape[3])));
-*/
-
-
+      std::cerr << "Run\n";
       CUDNN_CALL(cudnnAddTensor(entry_ptr->handle, 
             alpha,
             entry_ptr->bias_entry.shape_desc, 

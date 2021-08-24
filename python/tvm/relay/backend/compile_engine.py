@@ -275,7 +275,6 @@ def select_implementation(op, attrs, inputs, out_type, target, use_autotvm=True)
 
 @tvm._ffi.register_func("relay.backend.target_specific_lowering")
 def target_specific_lowering(func, inputMap, target_info=None):
-
     import sys
     from tvm.relay.op.contrib.tensorrt import partition_for_tensorrt
     #print("\t[Compile_engine.py] Custom lowering?", file=sys.stderr)
@@ -297,7 +296,7 @@ def target_specific_lowering(func, inputMap, target_info=None):
 
     tokens = target_info.split('_')
     target = tokens[0]
-    pattern = tokens[1]
+    pattern = '_'.join(tokens[1:])
 
     def collect_input(inputMap):
         inputs = []
@@ -308,7 +307,8 @@ def target_specific_lowering(func, inputMap, target_info=None):
 
     attrs, ret_type = None, None
     if target == "cudnn":
-        if pattern == "softmax":
+        # TODO: conv3d, avgpool, batchnorm
+        if pattern == "0-Op(nn.softmax)[*]":
             strategy.add_implementation(
                 wrap_custom_compute_softmax(topi.cuda.softmax_cudnn),
                 wrap_topi_schedule(topi.generic.schedule_extern),
@@ -319,9 +319,20 @@ def target_specific_lowering(func, inputMap, target_info=None):
             ret_type = calls[0].checked_type
             inputs = collect_input(inputMap)
 
-        elif pattern == "relu":
+        elif pattern == "0-Op(sigmoid)[*]":
             strategy.add_implementation(
-                wrap_custom_compute_relu(topi.cuda.relu_cudnn),
+                wrap_custom_compute_activation(topi.cuda.sigmoid_cudnn),
+                wrap_topi_schedule(topi.generic.schedule_extern),
+                name="sigmoid.cudnn",
+            )
+            # has single op
+            attrs = calls[0].attrs
+            ret_type = calls[0].checked_type
+            inputs = collect_input(inputMap)
+
+        elif pattern == "0-Op(nn.relu)[*]":
+            strategy.add_implementation(
+                wrap_custom_compute_activation(topi.cuda.relu_cudnn),
                 wrap_topi_schedule(topi.generic.schedule_extern),
                 name="relu.cudnn",
             )
@@ -330,8 +341,19 @@ def target_specific_lowering(func, inputMap, target_info=None):
             ret_type = calls[0].checked_type
             inputs = collect_input(inputMap)
 
+        elif pattern == "0-Op(tanh)[*]":
+            strategy.add_implementation(
+                wrap_custom_compute_activation(topi.cuda.tanh_cudnn),
+                wrap_topi_schedule(topi.generic.schedule_extern),
+                name="tanh.cudnn",
+            )
+            # has single op
+            attrs = calls[0].attrs
+            ret_type = calls[0].checked_type
+            inputs = collect_input(inputMap)
+
         # TODO: not supported yet
-        elif pattern == "biasadd":
+        elif pattern == "0-Op(nn.bias_add)[*, *]":
             strategy.add_implementation(
                 wrap_custom_compute_biasadd(topi.cuda.biasadd_cudnn),
                 wrap_topi_schedule(topi.generic.schedule_extern),
@@ -342,12 +364,11 @@ def target_specific_lowering(func, inputMap, target_info=None):
             ret_type = calls[0].checked_type
             inputs = collect_input(inputMap)
 
-        elif pattern == "conv2d":
+        elif pattern == "0-Op(nn.conv2d)[*, *]":
             strategy.add_implementation(
                 wrap_custom_compute_conv2d(
                          topi.cuda.conv2d_cudnn, need_data_layout=True, has_groups=True
                      ),
-                #wrap_topi_schedule(topi.cuda.schedule_conv2d_cudnn),
                 wrap_topi_schedule(topi.generic.schedule_extern),
                 name="conv2d.cudnn",
             )
@@ -356,19 +377,46 @@ def target_specific_lowering(func, inputMap, target_info=None):
             ret_type = calls[0].checked_type
             inputs = collect_input(inputMap)
 
-        elif pattern == "maxpool2d":
+        elif pattern == "0-Op(nn.conv3d)[*, *]":
             strategy.add_implementation(
-                wrap_custom_compute_maxpool2d(topi.cuda.maxpool2d_cudnn),
+                wrap_compute_conv3d(
+                         topi.cuda.conv3d_cudnn, need_layout=True
+                     ),
                 wrap_topi_schedule(topi.generic.schedule_extern),
-                name="maxpool2d.cudnn",
+                name="conv3d.cudnn",
             )
             # has single op
             attrs = calls[0].attrs
             ret_type = calls[0].checked_type
             inputs = collect_input(inputMap)
 
+
+        elif pattern == "0-Op(nn.max_pool2d)[*]":
+            strategy.add_implementation(
+                wrap_custom_compute_pool2d(topi.cuda.max_pool2d_cudnn),
+                wrap_topi_schedule(topi.generic.schedule_extern),
+                name="max_pool2d.cudnn",
+            )
+            # has single op
+            attrs = calls[0].attrs
+            ret_type = calls[0].checked_type
+            inputs = collect_input(inputMap)
+
+        elif pattern == "0-Op(nn.avg_pool2d)[*]":
+            strategy.add_implementation(
+                wrap_custom_compute_pool2d(topi.cuda.avg_pool2d_cudnn),
+                wrap_topi_schedule(topi.generic.schedule_extern),
+                name="avg_pool2d.cudnn",
+            )
+            # has single op
+            attrs = calls[0].attrs
+            ret_type = calls[0].checked_type
+            inputs = collect_input(inputMap)
+
+
+
         # TODO: not supported yet
-        elif pattern == "bn":
+        #elif pattern == "bn":
             #strategy.add_implementation(
             #    wrap_custom_compute_maxpool2d(topi.cuda.maxpool2d_cudnn),
             #    wrap_topi_schedule(topi.generic.schedule_extern),
@@ -376,18 +424,44 @@ def target_specific_lowering(func, inputMap, target_info=None):
             #)
 
             # has single op
-            attrs = calls[0].attrs
-            ret_type = calls[0].checked_type
-            inputs = collect_input(inputMap)
+            #attrs = calls[0].attrs
+            eret_type = calls[0].checked_type
+            #inputs = collect_input(inputMap)
 
         # fused ops
-        elif pattern == "conv2d+biasadd+relu":
+        elif pattern == "0-Op(nn.relu)[1-Op(add)[2-Op(nn.conv2d)[*, *], *]]":
             strategy.add_implementation(
-                wrap_custom_compute_conv2d_biasadd_relu(
-                    topi.cuda.conv2d_biasadd_relu_cudnn, need_data_layout=True, has_groups=True
+                wrap_custom_compute_conv2d_add_relu(
+                    topi.cuda.conv2d_add_relu_cudnn, need_data_layout=True, has_groups=True
                 ),
                 wrap_topi_schedule(topi.generic.schedule_extern),
-                name="conv2d_biasadd_relu.cudnn",
+                name="conv2d+add+relu.cudnn",
+            )
+
+            data, kernel, Z, bias = None, None, None, None
+            attrs, ret_type = None, None
+            for call in calls:
+                call_name = call.op.name
+                if "conv2d" in call_name:
+                    attrs = call.attrs
+                    ret_type = call.checked_type
+                    args = call.args
+                    data = inputMap[args[0]]
+                    kernel = inputMap[args[1]]
+                elif "add" in call_name:
+                    data2 = inputMap[args[1]]
+                elif "relu" in call_name:
+                    Z = inputMap[args[0]]
+
+            inputs = [data[0], kernel[0], Z[0], data2[0]]
+
+        elif pattern == "0-Op(nn.relu)[1-Op(nn.biad_add)[2-Op(nn.conv2d)[*, *], *]]":
+            strategy.add_implementation(
+                wrap_custom_compute_conv2d_add_relu(
+                    topi.cuda.conv2d_bias_relu_cudnn, need_data_layout=True, has_groups=True
+                ),
+                wrap_topi_schedule(topi.generic.schedule_extern),
+                name="conv2d+bias+relu.cudnn",
             )
 
             data, kernel, Z, bias = None, None, None, None
@@ -401,13 +475,43 @@ def target_specific_lowering(func, inputMap, target_info=None):
                     data = inputMap[args[0]]
                     kernel = inputMap[args[1]]
                 elif "bias_add" in call_name:
-                    bias = inputMap[args[1]]
+                    data2 = inputMap[args[1]]
                 elif "relu" in call_name:
                     Z = inputMap[args[0]]
 
-            inputs = [data[0], kernel[0], Z[0], bias[0]]
+            inputs = [data[0], kernel[0], Z[0], data2[0]]
 
-        elif pattern == "conv2d+relu":
+
+
+        elif pattern == "0-Op(nn.relu)[1-Op(add)[2-Op(nn.conv3d)[*, *], *]]":
+            strategy.add_implementation(
+                wrap_custom_compute_conv3d_add_relu(
+                    topi.cuda.conv3d_add_relu_cudnn, need_layout=True
+                ),
+                wrap_topi_schedule(topi.generic.schedule_extern),
+                name="conv3d+add+relu.cudnn",
+            )
+
+            data, kernel, Z, bias = None, None, None, None
+            attrs, ret_type = None, None
+            for call in calls:
+                call_name = call.op.name
+                if "conv3d" in call_name:
+                    attrs = call.attrs
+                    ret_type = call.checked_type
+                    args = call.args
+                    data = inputMap[args[0]]
+                    kernel = inputMap[args[1]]
+                elif "add" in call_name:
+                    data2 = inputMap[args[1]]
+                elif "relu" in call_name:
+                    Z = inputMap[args[0]]
+
+            inputs = [data[0], kernel[0], Z[0], data2[0]]
+
+
+
+        elif pattern == "0-Op(nn.relu)[1-Op(nn.conv2d)[*, *]]":
             strategy.add_implementation(
                 wrap_custom_compute_conv2d_relu(
                     topi.cuda.conv2d_relu_cudnn, need_data_layout=True, has_groups=True
@@ -426,20 +530,21 @@ def target_specific_lowering(func, inputMap, target_info=None):
                     args = call.args
                     data = inputMap[args[0]]
                     kernel = inputMap[args[1]]
-                elif "bias_add" in call_name:
+                elif "add" in call_name:
                     bias = inputMap[args[1]]
                 elif "relu" in call_name:
                     Z = inputMap[args[0]]
 
             inputs = [data[0], kernel[0]]
 
-
         else:
             # Unsupported backend op
             assert False, "{} is currently not supported in {}".format(target_info, target)
 
+
+    # TODO: matmul vs dense?
     elif target == "cublas":
-        if pattern == "dense":
+        if pattern == "0-Op(nn.dense)[*, *]":
             strategy.add_implementation(
                 wrap_compute_dense(topi.cuda.dense_cublas),
                 wrap_topi_schedule(topi.generic.schedule_extern),
@@ -452,7 +557,7 @@ def target_specific_lowering(func, inputMap, target_info=None):
 
         # NOTE: hacky solution for now
         # It would be better not to have '_' in pattern name
-        elif pattern == "batch" and tokens[2] == "matmul":
+        elif pattern == "0-Op(nn.batch_matmul)[*, *]":
             strategy.add_implementation(
                 wrap_compute_batch_matmul(topi.cuda.batch_matmul_cublas),
                 wrap_topi_schedule(topi.generic.schedule_extern),
@@ -534,6 +639,8 @@ def lower_call(call, inputs, target):
             op, call.attrs, inputs, ret_type, target, use_autotvm=False
         )
 
+    import sys
+    #print(f"{op}, {target} --> {best_impl.name}", file=sys.stderr)
     # re-enable AutoTVM tracing
     if reenable_tracing:
         env.tracing = True

@@ -64,6 +64,7 @@ def draw_plot(df, fig_name):
     this_code_path = os.path.dirname(os.path.abspath(__file__))
     # fig_name = f'{this_code_path}/../../../../../sandbox/analysis/results/plots/{fig_name}'
     fig_name = f'{this_code_path}/../analysis/results/plots/{fig_name}'
+
     if x_label_invisible:
         ax1 = plt.axes()
         x_axis = ax1.axes.get_xaxis()

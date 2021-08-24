@@ -450,3 +450,15 @@ def get_calibration_data(mod, data):
         calib_data[gvar] = value
 
     return calib_data
+
+
+# @Sung: Build Dom tree
+def construct_dom_tree(expr, post_dom = False):
+    # 1. collect parent node of each op
+    # 2. get LCA of input nodes for each op. --> Dominator
+    return _ffi_api.dominance_analysis(expr, post_dom)
+
+
+# @Sung: Check if a cycle exists
+def has_cycle(expr, matched_exprs, post_doms):
+    return _ffi_api.cycle_analysis(expr, matched_exprs, post_doms)

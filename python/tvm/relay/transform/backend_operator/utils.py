@@ -121,6 +121,9 @@ def is_call_or_tuplegetitem_node(expr):
 def is_var_node(expr):
   return type(expr) == tvm.relay.expr.Var
 
+def is_constant_or_var_node(expr):
+  return is_constant_node(expr) or is_var_node(expr)
+
 def no_constraints_func(config):
   return True
 
@@ -131,7 +134,7 @@ def get_function_body(expr):
 # given a tvm.ir.Attrs node, return list of attribute values
 def get_attr_vals(expr):
   assert is_call_node(expr)
-  attrs = expr.attrs 
+  attrs = expr.attrs
   op_name = expr.op.name
 
   if attrs == None or "keys" not in dir(attrs):
@@ -157,9 +160,9 @@ def get_attr_vals(expr):
     else:
       print(key, value, v_type)
       raise Exception(f"Unexpected tvm data type ({v_type}) for attributes")
-    
+
     values.append(value)
-  
+
   return (op_name, tuple(zip(keys, values)))
 
 # extract the node attributes of a relay expr. Use a list of tvm node attributes to represent each path (branch) in the expr.
@@ -211,7 +214,7 @@ class OptLevel():
     return self.opt_level
 
 # extract the node attributes of a relay expr. Use a list of tvm node attributes to represent each path (branch) in the expr.
-# Then use an immutable set of these lists to represent all node attributes of the expr. 
+# Then use an immutable set of these lists to represent all node attributes of the expr.
 # def extract_attrs(expr):
 #   if is_call_node(expr):
 #     attrs += get_attr_vals(expr)
@@ -233,3 +236,45 @@ class OptLevel():
 
 #   helper(expr, ())
 #   return res
+
+
+def serialize_subgraph(subgraph):
+  def _traverse(node, visited, node_list):
+    if node in visited:
+        return
+    if isinstance(node, tvm.ir.op.Op):
+        return
+
+    visited.add(node)
+    if is_constant_node(node) or is_var_node(node):
+        node_list.append("$")
+    else:
+        node_list.append(node.op.name)
+
+  visited = set()
+  node_list = []
+  relay.analysis.post_order_visit(subgraph, lambda node: _traverse(node, visited, node_list))
+  return "/".join(node_list)
+
+
+def get_op_pattern(expr):
+    if is_tuple_node(expr):
+        return 7 # kTuple: hardcoded for now
+    elif is_call_node(expr):
+        return expr.op.get_attr("TOpPattern")
+    else:
+        raise RuntimeError(f"{type(expr)} is not defined yet.")
+
+
+def get_args(node):
+    if is_tuple_node(node):
+        return node.fields
+    #elif is_tuplegetitem_node(node):
+    #    return is_tuple_get_item, 2
+    elif is_call_node(node):
+        return node.args
+    elif is_constant_node(node) or is_var_node(node):
+        return []
+    else:
+        raise Exception(f"Unsupported type ({type(node)})")
+

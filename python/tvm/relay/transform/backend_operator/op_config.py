@@ -15,6 +15,7 @@ def get_opcost_log_path(hw_name, is_readable):
 
   return f"{cur_dir_path}/../logs/operator_cost_{hw_name}.{extension}"
 
+# @Sung: [TODO] Need to check hash conflict
 # configuration includes operator name, operator type (backend operators from different targets might have the same type),
 # data shape of all free variables, and node attributes
 class Config(object):

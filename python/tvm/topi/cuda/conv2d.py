@@ -204,9 +204,9 @@ def conv2d_relu_cudnn(
     )
 
 
-@autotvm.register_topi_compute("conv2d_biasadd_relu_cudnn.cuda")
-def conv2d_biasadd_relu_cudnn(
-    cfg, data, kernel, z, bias, strides, padding, dilation, groups=1, layout="NCHW", out_dtype="float32"
+@autotvm.register_topi_compute("conv2d_add_relu_cudnn.cuda")
+def conv2d_add_relu_cudnn(
+    cfg, data, kernel, z, data2, strides, padding, dilation, groups=1, layout="NCHW", out_dtype="float32"
 ):
     """Compute conv2d using CuDNN library"""
     if layout == "NCHW":
@@ -257,11 +257,11 @@ def conv2d_biasadd_relu_cudnn(
     if cfg.is_fallback:  # Let CUDNN choose the best algo
         cfg["algo"] = OtherOptionEntity(-1)
 
-    return cudnn.conv2d_biasadd_relu(
+    return cudnn.conv2d_add_relu(
         data,
         kernel,
         z,
-        bias,
+        data2,
         [pt, pl],  # cudnn padding pt, pl on both sides of input
         [stride_h, stride_w],
         [dilation_h, dilation_w],

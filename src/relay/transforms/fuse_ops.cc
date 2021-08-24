@@ -105,7 +105,12 @@ namespace tvm {
         std::string group_id_str = pair_str.substr(0, delim_pos);
 
         // Initialization
+        if (pair_str.compare("default") == 0) {
+          ICHECK(0) << "backend for this op is not assigned; this means that a new op"
+                    << "is introduced to the Relay expression, most likely in AlterLayoutOp pass";
+        }
 //        std::cerr << "pair_str: " << pair_str << std::endl;
+//        std::cerr << "group_id_str: " << group_id_str << std::endl;
         group_id = std::stoi(group_id_str);
         backend_op_name = pair_str.substr(delim_pos+1);
 //        debug_print();
@@ -910,10 +915,16 @@ namespace tvm {
 
       // execute the fusion algorithm.
       void RunFuse(const IndexedForwardGraph& graph, const DominatorTree& post_dom_tree, int phase) {
+        //std::cerr << "<<< Running Fusion.... >>>\n";
         for (size_t nid = 0; nid < groups_.size(); ++nid) {
           // the group of current node has been specified already.
           auto* graph_node = graph.post_dfs_order[nid];
+
           auto* dom_node = post_dom_tree.nodes[nid];
+
+          assert(graph_node->ref == dom_node->gnode->ref);
+          assert(graph_node == dom_node->gnode);
+
           Group* group_node = groups_[nid];
           ICHECK(group_node != nullptr);
           // no actions for opaque nodes
@@ -922,6 +933,9 @@ namespace tvm {
           if (dom_node->parent == nullptr) continue;
           ICHECK(!graph_node->extern_ref);
           size_t dom_parent_gindex = dom_node->parent->gnode->index;
+          //std::cerr << " -- Graph node  :  " << GetRef<ObjectRef>(graph_node->ref) << "\n";
+          //std::cerr << " \t-- Dom Parent node  :  " << GetRef<ObjectRef>(dom_node->parent->gnode->ref) << "\n";
+          //std::cerr << " \t-- pattern : Group Node - " << group_node->pattern << " // Graph Node - "  << graph_node->pattern << " // Dom Parent Node - " << dom_node->parent->pattern << " // Dom Node - " << dom_node->pattern << "\n";
 
           // refuse the fusion if too many ops are going to be fused together
           if (CountFusedNodesWithNewChild(graph_node, dom_node->parent->gnode) > max_fuse_depth_)
@@ -1031,6 +1045,7 @@ namespace tvm {
       // Run the transform
       Expr Transform(const Expr& body, int fuse_opt_level, size_t max_fuse_depth,
                     bool is_custom_pass = false) {
+
         // setup the group map.
         auto graph = IndexedForwardGraph::Create(&arena_, body);
         auto groups = GraphPartitioner(&arena_, fuse_opt_level,
@@ -1040,8 +1055,9 @@ namespace tvm {
           gmap_[graph.post_dfs_order[nid]->ref] = groups[nid];
         }
         // The following line can be used for debug.
-//        this->DebugDumpGroup(body);
-        return this->Mutate(body);
+        auto ret = this->Mutate(body);
+        //this->DebugDumpGroup(ret);
+        return ret;
       }
 
     private:
@@ -1410,19 +1426,33 @@ namespace tvm {
             this->VisitType(ty_arg);
           }
 
+          // Change backend if it is default and the op is "expand_dims"
+          // Let's block other ops than expand_dims to prevent side effects
+          if (op->backend.operator std::string().compare("default") == 0) {
+            if (const OpNode* op_node = op->op.as<OpNode>()) {
+              if (op_node->name == "expand_dims") {
+                MutateBackendCopy(GetRef<Expr>(op), parent_backend_);
+              } else {
+                ICHECK(0) << "Unexpected operator type with the backend of default"
+                          << "It is likely that this op was changed in AlterOpLayout";
+              }
+            }
+          }
+
+          parent_backend_ = op->backend;
           for (auto arg : op->args) {
-            parent_backend_ = op->backend;
             this->VisitExpr(arg);
           }
         }
 
         void VisitExpr_(const ConstantNode* op) final {
-          MutateBackend(GetRef<Expr>(op), parent_backend_);
+          MutateBackendCopy(GetRef<Expr>(op), parent_backend_);
           ExprVisitor::VisitExpr_(op);
         }
       } visitor;
 
       if (is_custom_pass) visitor(expr);
+//      std::cerr << "[InferBackendForConstant] " << expr << std::endl;
 //      std::cerr << "[Done] InferBackendForConstant" << std::endl;
       return expr;
     }
@@ -1448,6 +1478,7 @@ namespace tvm {
       constexpr int kDP = 1;
       constexpr int kExhaustiveSearch = 2;
       constexpr int kTwoLevelOpt = 3;
+      constexpr int kOpMeasurement = 4;
 
       // Do nothing when it's not custom fusion pass
       if (fn_node->GetAttr<IntImm>(attr::kCustomFusionPass).defined()) {
@@ -1457,7 +1488,7 @@ namespace tvm {
         // PATCH(@Soo): Custom (DP) fusion pass for user defined fusion
         if (custom_fusion_pass_type == kUserDefinedFusion) {
           custom_fusion_pass_str = "relay.transform.optimizer.get_user_fusion";
-          // PATCH(@Soo): Custom (DP) fusion pass for end-to-end measurements
+          // PATCH(@Soo): Custom (DP) fusion pass for subprocess call during the end-to-end measurements
           // Note that if fuse_opt_level == 0, no fusion applied no matter whether it's original or DP.
         } else if (custom_fusion_pass_type == kDP) {
           custom_fusion_pass_str = "relay.transform.optimizer.run_dp";
@@ -1465,6 +1496,8 @@ namespace tvm {
           custom_fusion_pass_str = "relay.transform.optimizer.run_two_level_opt";
         } else if (custom_fusion_pass_type == kExhaustiveSearch) {
           custom_fusion_pass_str = "relay.transform.optimizer.run_exhaustive_search";
+        } else if (custom_fusion_pass_type == kOpMeasurement) {
+          custom_fusion_pass_str = "relay.transform.optimizer.assign_backend_for_op_measurement";
         } else {
           ICHECK(false) << "Fusion pass type " << fn_node->GetAttr<IntImm>(attr::kCustomFusionPass)
                         << "is not expected\n\n";
