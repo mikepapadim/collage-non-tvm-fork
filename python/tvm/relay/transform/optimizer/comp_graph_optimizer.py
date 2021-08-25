@@ -231,6 +231,7 @@ class CompGraphOptimizer:
         # print(single_op)
         # print("\n------\n")
         # print(fallback_op)
+
         group_id = 0
         matched_b_op_name = []
         while not frontier_queue.empty():

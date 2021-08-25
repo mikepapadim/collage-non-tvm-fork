@@ -188,7 +188,7 @@ if __name__ == "__main__":
     args = get_args()
     # Redirect output to log files
     log_dir = "e2e_measure_logs"
-    setup_logging(log_dir, task_name="e2e_measure", net_name=args.network, hw_name=args.hw, batch_size=args.batch_size)
+    # setup_logging(log_dir, task_name="e2e_measure", net_name=args.network, hw_name=args.hw, batch_size=args.batch_size)
 
     # NasNet-A only works for opt_level 2 (not 3 due to the avgpool2d issue)
     # if args.network == "nasneta":
@@ -204,19 +204,19 @@ if __name__ == "__main__":
     # mod, params, shape_dict, _ = get_network_from_relay("diamond", 1)
     # mod, params, shape_dict, _ = crop_network_from_torch(args.network, 1, 290)
 
-    mean_perf, std_perf, mod_ours = measure_end_to_end_perf_autotvm(mod["main"], params, args.target, shape_dict,
-                                                                    True, args.network, args.hw, args.batch_size)
-    print(f"[{args.network}] Performance of Ours on {args.hw} (mean, std) = ({mean_perf:.4f}+-{std_perf:.4f})")
+    # mean_perf, std_perf, mod_ours = measure_end_to_end_perf_autotvm(mod["main"], params, args.target, shape_dict,
+    #                                                                 True, args.network, args.hw, args.batch_size)
+    # print(f"[{args.network}] Performance of Ours on {args.hw} (mean, std) = ({mean_perf:.4f}+-{std_perf:.4f})")
 
-    # mean_perf, std_perf, mod_cud = measure_end_to_end_perf_cudnn(mod["main"], params, args.target, shape_dict,
-    #                                                              False, args.network, args.hw, args.batch_size)
+    mean_perf, std_perf, mod_cud = measure_end_to_end_perf_cudnn(mod["main"], params, args.target, shape_dict,
+                                                                 False, args.network, args.hw, args.batch_size)
 
     # mean_perf, std_perf, mod_trt = measure_end_to_end_perf_tensorrt(mod, params, args.target, shape_dict, False)
     # print(f"[{args.network}] Performance of TensorRT on {args.hw} (mean, std) = ({mean_perf:.4f}+-{std_perf:.4f})")
 
-    # mean_perf, std_perf, mod_tvm = measure_end_to_end_perf_autotvm(mod["main"], params, args.target, shape_dict,
-    #                                                                False, args.network, args.hw, args.batch_size)
-    # print(f"[{args.network}] Performance of AutoTVM on {args.hw} (mean, std) = ({mean_perf:.4f}+-{std_perf:.4f})")
+    mean_perf, std_perf, mod_tvm = measure_end_to_end_perf_autotvm(mod["main"], params, args.target, shape_dict,
+                                                                   False, args.network, args.hw, args.batch_size)
+    print(f"[{args.network}] Performance of AutoTVM on {args.hw} (mean, std) = ({mean_perf:.4f}+-{std_perf:.4f})")
 
     # print(f"[{args.network}] Performance of AutoTVM+CuDNN on {args.hw} (mean, std) = ({mean_perf:.4f}+-{std_perf:.4f})")
 

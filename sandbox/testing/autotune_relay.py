@@ -349,7 +349,7 @@ if __name__ == "__main__":
     args = get_args()
     log_dir = "autotvm_tuning_logs"
     # Setup automatic logging feature (to file)
-    setup_logging(log_dir, task_name="autotvm_tuning", net_name=args.network, hw_name=args.hw, batch_size=args.batch_size)
+    # setup_logging(log_dir, task_name="autotvm_tuning", net_name=args.network, hw_name=args.hw, batch_size=args.batch_size)
     print(args)
     # target = tvm.target.cuda()
     # #target_host = 'llvm -mtriple=aarch64-linux-gnu'

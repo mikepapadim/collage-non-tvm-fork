@@ -503,7 +503,7 @@ class BackendOpLib(object):
                   pat_and_b_op.append((pat, b_op))
                   break
 
-      pat_and_b_op.sort(key = lambda tup: tup[0].get_depth())
+      pat_and_b_op.sort(key = lambda tup: tup[0].get_depth(), reverse=True)
 
       return pat_and_b_op
 
