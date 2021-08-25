@@ -41,6 +41,7 @@ HW_FUNC_ATTR = "TargetHW"
 BATCH_SIZE_ATTR = "BatchSize"
 BACKEND_OP_ATTR = "BackendOP"
 NETWORK_FUNC_ATTR = "Network"
+SINGLE_BACKEND_ATTR = "SingleBackend"
 
 # AUTOTVM_LOG = f"{LOG_PATH}/autotvm_ops.json"
 # Temporary autoscheduler log file
@@ -103,7 +104,7 @@ class Target(Enum):
     TVM_GPU_AUTOSCH = (6, "cuda", "tvmgpu-autosch")
 
     # Intel CPU
-    TVM_CPU= (7, "llvm", "tvmcpu")
+    TVM_CPU_AUTOTVM = (7, "llvm", "tvmcpu-autotvm")
 #     ONEDNN = (8, "onednn", "onednn") # not implemented
 #     TENSORFLOWXLA = (9, "tensorflowxla") # not implemented
 
@@ -113,6 +114,9 @@ class Target(Enum):
     def name(self):
         return self.value[2]
 
+target_id_to_target = {}
+for target in Target:
+    target_id_to_target[target.value[0]] = target
 
 class TargetCostFunc:
     def __init__(self):
@@ -289,6 +293,8 @@ This cost function enable op measurement through our backend pipeline where we e
 Technically speaking, we can use that function for TensorRT (not AutoTVM due to AutoTVM schedule log) as well.
 For now, we don't use it for TensorRT just to be safe. There shouldn't be an issue though.
 """
+
+
 target_to_cost_func = {
     #GPU
     Target.TVM_GPU_AUTOTVM: TVMSubGraphCostFunc_AutoTVM(),

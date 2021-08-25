@@ -25,7 +25,7 @@ from tvm.relay.op.contrib.tensorrt import prune_tensorrt_subgraphs
 from tvm.relay import transform
 from .custom_fusion_pass import *
 
-def setup_backend_op_lib(network_expr, targets, hw_name):
+def setup_backend_op_lib(hw_name):
     backendop_lib = BackendOpLib.get(hw_name)
     # backendop_lib.measure_backend_ops(network_expr, targets, batch_size)
 
@@ -177,7 +177,7 @@ def run_op_level_opt(relay_expr):
     #targets = [Target.TVM_GPU_AUTOTVM, Target.CUDNN]
     #targets = [Target.TVM_GPU_AUTOTVM, Target.TENSORRT]#, Target.CUBLAS]
 
-    backendop_lib = setup_backend_op_lib(relay_expr, targets, hw_name)
+    backendop_lib = setup_backend_op_lib(hw_name)
 
     # Optimizing graph
     optimizer = CompGraphOptimizer(backendop_lib, targets)
@@ -343,6 +343,43 @@ def assign_backend_for_op_measurement(relay_expr):
     # printe(repr(relay_expr))
     # sys.exit(0)
 
+"""
+Run single backend baseline fusion strategy (e.g., CuDNN, OneDNN)
+- It greedily matches backend operators from the given backend.
+- If there are multiple matchings of ops from the given backend, it prioritize backend op with more ops.
+  e.g., matching fused operator (relu+conv) instead of a single op (conv)  
+- If there is no existing backend operator of the given backend, it alternatively uses AutoTVM ops; 
+  Still, it only allows matching with AutoTVM ops including only ops that can't be matched with ops from the given backend 
+"""
+@tvm._ffi.register_func("relay.transform.optimizer.run_single_backend_baseline")
+def run_single_backend_baseline(relay_expr):
+    single_backend_id = int(relay_expr.attrs[SINGLE_BACKEND_ATTR])
+    assert isinstance(single_backend_id, int)
+
+    # printe(f"single backend id: {single_backend_id, type(single_backend_id)}")
+    # printe(f"single backend: {target_id_to_target[single_backend_id]}")
+    single_backend_target = target_id_to_target[single_backend_id]
+
+    hw_name = relay_expr.attrs[HW_FUNC_ATTR]
+    relay_expr = get_function_body(relay_expr)
+
+    print(f"[Single backend baseline] Computation graph generation...")
+    comp_graph = ComputationGraph(relay_expr)
+    n_relay_nodes = comp_graph.n_relay_nodes
+    print(f"# of relay nodes in comp graph: {n_relay_nodes}")
+
+    backendop_lib = setup_backend_op_lib(hw_name)
+
+    # Optimizing graph; note that we don't need to specify target backend for single backend baseline matching
+    optimizer = CompGraphOptimizer(backendop_lib, target_backend=[])
+    optimized_match = optimizer.optimize_single_backend(comp_graph, hw_name, single_backend_target)
+    print("[Single backend baseline] It finished optimizing comp graph and assigning backend ops to Relay Expr (backend attr)")
+    backendop_lib.save_to_log(hw_name)
+
+    # printe(repr(relay_expr))
+    # sys.exit(0)
+
+
 # """
 # This is still work in progress.
 #
@@ -377,7 +414,7 @@ def assign_backend_for_op_measurement(relay_expr):
 #     # Enable all backends
 #     targets = [Target.TVM_GPU_AUTOTVM, Target.CUBLAS, Target.CUDNN, Target.TENSORRT]
 #     batch_size = 1
-#     backendop_lib = setup_backend_op_lib(relay_expr, targets, batch_size, hw_name)
+#     backendop_lib = setup_backend_op_lib(hw_name)
 #
 #     # Optimizing graph
 #     print("Computation graph created")

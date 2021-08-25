@@ -1479,6 +1479,7 @@ namespace tvm {
       constexpr int kExhaustiveSearch = 2;
       constexpr int kTwoLevelOpt = 3;
       constexpr int kOpMeasurement = 4;
+      constexpr int kSingleBackendBaseline = 5;
 
       // Do nothing when it's not custom fusion pass
       if (fn_node->GetAttr<IntImm>(attr::kCustomFusionPass).defined()) {
@@ -1498,6 +1499,8 @@ namespace tvm {
           custom_fusion_pass_str = "relay.transform.optimizer.run_exhaustive_search";
         } else if (custom_fusion_pass_type == kOpMeasurement) {
           custom_fusion_pass_str = "relay.transform.optimizer.assign_backend_for_op_measurement";
+        } else if (custom_fusion_pass_type == kSingleBackendBaseline) {
+          custom_fusion_pass_str = "relay.transform.optimizer.run_single_backend_baseline";
         } else {
           ICHECK(false) << "Fusion pass type " << fn_node->GetAttr<IntImm>(attr::kCustomFusionPass)
                         << "is not expected\n\n";

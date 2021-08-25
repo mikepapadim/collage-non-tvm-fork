@@ -22,6 +22,16 @@ def setup_attrs_ours(net, net_name, hw_name, batch_size):
 
     return net
 
+# Setup attribute for CuDNN backend baseline
+def setup_attrs_single_backend_baseline(net, net_name, hw_name, batch_size, single_backend_id):
+    net = net.with_attr("CustomFusionPass", CustomFusionPass.SINGLE_BACKEND_BASELINE)
+
+    net = net.with_attr(NETWORK_FUNC_ATTR, net_name)
+    net = net.with_attr(HW_FUNC_ATTR, hw_name)
+    net = net.with_attr(BATCH_SIZE_ATTR, batch_size)
+    net = net.with_attr(SINGLE_BACKEND_ATTR, single_backend_id)
+
+    return net
 
 def measure_end_to_end_perf_tensorrt(mod, params, target_str, shape_dict, is_ours):
     from tvm.relay.op.contrib.tensorrt import partition_for_tensorrt
@@ -46,12 +56,7 @@ def measure_end_to_end_perf_tensorrt(mod, params, target_str, shape_dict, is_our
 
     return mean_perf, std_perf, module
 
-
-def measure_end_to_end_perf_autotvm(net, params, target_str, shape_dict, is_ours, net_name, hw_name, batch_size):
-    assert is_function_node(net)
-    if is_ours:
-        net = setup_attrs_ours(net, net_name, hw_name, batch_size)
-
+def build_and_measure_autotvm(net, params, target_str, shape_dict, hw_name):
     # else:
     with autotvm.apply_history_best(get_autotvm_log_path(hw_name)):
         with tvm.transform.PassContext(opt_level=OPT_LEVEL.get()):
@@ -66,35 +71,25 @@ def measure_end_to_end_perf_autotvm(net, params, target_str, shape_dict, is_ours
             input_data = np.random.uniform(-1, 1, size=input_shape).astype("float32")
             module.set_input(input_name, input_data)
 
-
     ftimer = module.module.time_evaluator("run", dev, number=NUM_MEASUREMENTS_PER_REPEAT_E2E, repeat=NUM_REPEATS_E2E)
     mean_perf, std_perf = measure(ftimer, is_net=False)
 
     return mean_perf, std_perf, module
 
 
-def measure_end_to_end_perf_cudnn(net, params, target_str, shape_dict, is_ours, net_name, hw_name):
+def measure_end_to_end_perf_autotvm(net, params, target_str, shape_dict, is_ours, net_name, hw_name, batch_size):
     assert is_function_node(net)
+    if is_ours:
+        net = setup_attrs_ours(net, net_name, hw_name, batch_size)
 
-    with tvm.transform.PassContext(opt_level=OPT_LEVEL.get()):
-        lib = relay.build(net, target_str, params=params)
-    print(f"We successfully built the network")
+    return build_and_measure_autotvm(net, params, target_str, shape_dict, hw_name)
 
-    # Create workload
-    dev = tvm.device(target_str, 0)
-    module = runtime.GraphModule(lib["default"](dev))
+def measure_end_to_end_perf_cudnn(net, params, target_str, shape_dict, is_ours, net_name, hw_name, batch_size):
+    assert is_function_node(net)
+    single_backend_id = Target.CUDNN.value[0]
+    net = setup_attrs_single_backend_baseline(net, net_name, hw_name, batch_size, single_backend_id)
 
-    # Setup execution
-    for input_name, input_shape in shape_dict.items():
-        input_data = np.random.uniform(-1, 1, size=input_shape).astype("float32")
-        module.set_input(input_name, input_data)
-
-
-    ftimer = module.module.time_evaluator("run", dev, number=NUM_MEASUREMENTS_PER_REPEAT_E2E, repeat=NUM_REPEATS_E2E)
-    mean_perf, std_perf = measure(ftimer, is_net=False)
-
-    return mean_perf, std_perf, module
-
+    return build_and_measure_autotvm(net, params, target_str, shape_dict, hw_name)
 
 
 def measure_end_to_end_perf_autosch(net, params, target_str, shape_dict, is_ours):
@@ -209,23 +204,23 @@ if __name__ == "__main__":
     # mod, params, shape_dict, _ = get_network_from_relay("diamond", 1)
     # mod, params, shape_dict, _ = crop_network_from_torch(args.network, 1, 290)
 
-    mean_perf, std_perf, mod_ours = measure_end_to_end_perf_autotvm(mod["main"], params, 'cuda', shape_dict,
+    mean_perf, std_perf, mod_ours = measure_end_to_end_perf_autotvm(mod["main"], params, args.target, shape_dict,
                                                                     True, args.network, args.hw, args.batch_size)
     print(f"[{args.network}] Performance of Ours on {args.hw} (mean, std) = ({mean_perf:.4f}+-{std_perf:.4f})")
 
-    mean_perf, std_perf, mod_trt = measure_end_to_end_perf_tensorrt(mod, params, 'cuda', shape_dict, False)
-    print(f"[{args.network}] Performance of TensorRT on {args.hw} (mean, std) = ({mean_perf:.4f}+-{std_perf:.4f})")
-
-    mean_perf, std_perf, mod_tvm = measure_end_to_end_perf_autotvm(mod["main"], params, 'cuda', shape_dict,
-                                                                   False, args.network, args.hw, args.batch_size)
-    print(f"[{args.network}] Performance of AutoTVM on {args.hw} (mean, std) = ({mean_perf:.4f}+-{std_perf:.4f})")
-
-    # mean_perf, std_perf, mod_cud = measure_end_to_end_perf_cudnn(mod["main"], params, 'cuda -libs=cudnn', shape_dict,
+    # mean_perf, std_perf, mod_cud = measure_end_to_end_perf_cudnn(mod["main"], params, args.target, shape_dict,
     #                                                              False, args.network, args.hw, args.batch_size)
+
+    # mean_perf, std_perf, mod_trt = measure_end_to_end_perf_tensorrt(mod, params, args.target, shape_dict, False)
+    # print(f"[{args.network}] Performance of TensorRT on {args.hw} (mean, std) = ({mean_perf:.4f}+-{std_perf:.4f})")
+
+    # mean_perf, std_perf, mod_tvm = measure_end_to_end_perf_autotvm(mod["main"], params, args.target, shape_dict,
+    #                                                                False, args.network, args.hw, args.batch_size)
+    # print(f"[{args.network}] Performance of AutoTVM on {args.hw} (mean, std) = ({mean_perf:.4f}+-{std_perf:.4f})")
 
     # print(f"[{args.network}] Performance of AutoTVM+CuDNN on {args.hw} (mean, std) = ({mean_perf:.4f}+-{std_perf:.4f})")
 
     # mean_perf, std_perf = measure_end_to_end_perf_autosch(mod["main"], params, 'cuda', shape_dict, False)
     # print(f"[AutoSCH] Performance of {args.network} (mean, std) = ({mean_perf:.4f}+-{std_perf:.4f})")
 
-    verify_network_output(mod["main"], shape_dict, mod_tvm, mod_ours)
+    # verify_network_output(mod["main"], shape_dict, mod_tvm, mod_ours)

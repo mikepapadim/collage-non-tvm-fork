@@ -1,9 +1,11 @@
-from tvm.relay import *
+a = "abc"
+b = "abc"
+print(a==b)
 
-class BackendOp(object):
-  def __init__(self, backend, pattern, constraint):
-
-BackendOp(backend='tensorrt', pattern=is_op('nn.conv2d').has_attr({"TOpPattern": K_ELEMWISE}), constraint = is_op('nn.conv2d').has_attr({"data_layout": "NHWC"}))
+# class BackendOp(object):
+#   def __init__(self, backend, pattern, constraint):
+#
+# BackendOp(backend='tensorrt', pattern=is_op('nn.conv2d').has_attr({"TOpPattern": K_ELEMWISE}), constraint = is_op('nn.conv2d').has_attr({"data_layout": "NHWC"}))
 
 # from collections import defaultdict
 # a = defaultdict(dict)

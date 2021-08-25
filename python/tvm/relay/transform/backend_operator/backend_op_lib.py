@@ -291,7 +291,7 @@ class BackendOpLib(object):
     self._add_backendop_with_key(Target.CUDNN, "MAX_POOL2D")
     self._add_backendop_with_key(Target.CUDNN, "AVG_POOL2D")
     # TODO:
-    self._add_backendop_with_key(Target.CUDNN, "CONV2D_ADD_RELU") # Bug at NasnetA
+    # self._add_backendop_with_key(Target.CUDNN, "CONV2D_ADD_RELU") # Bug at NasnetA
     #self._add_backendop_with_key(Target.CUDNN, "CONV2D_BIAS_RELU")
     #self._add_backendop_with_key(Target.CUDNN, "CONV3D_ADD_RELU")
     self._add_backendop_with_key(Target.CUDNN, "CONV3D_BIAS_RELU")
@@ -472,6 +472,40 @@ class BackendOpLib(object):
   def get_backendops(self, pattern):
     return self.pattern_to_backendops[pattern]
     #return list(self.pattern_to_backendops[pattern])
+
+  """
+  Input: Target backend, backend to exclude
+  Return: the list of backend operators from the given target backend while exclude them if the pattern also matches
+  
+  This is used to find a backend op assignment for a single backend baseline    
+  """
+  def get_all_patterns_and_backend_ops_from_single_backend(self, target_backend, backend_to_exclude=None):
+      # Generate op names to exclude
+      op_names_to_exclude = set()
+      if backend_to_exclude is not None:
+          for pat, b_ops in self.pattern_to_backendops.items():
+              # Consider only the pattern with the depth of 1
+              # We assume that fused op always include at least one of single ops supported by target single backend.
+              if pat.get_depth() > 1:
+                  continue
+
+              for b_op in b_ops:
+                  if b_op.get_target() == backend_to_exclude:
+                      op_names_to_exclude |= pat.get_op_name_set()
+                      break
+
+      # Generate all patterns and backends ops from single backend while excluding ops any part of which can be matched
+      # with backend_to_exclude
+      pat_and_b_op = []
+      for pat, b_ops in self.pattern_to_backendops.items():
+          for b_op in b_ops:
+              if b_op.get_target() == target_backend and op_names_to_exclude.isdisjoint(pat.get_op_name_set()):
+                  pat_and_b_op.append((pat, b_op))
+                  break
+
+      pat_and_b_op.sort(key = lambda tup: tup[0].get_depth())
+
+      return pat_and_b_op
 
   # return list of all patterns for backend operators
   def get_all_patterns(self):

@@ -1,5 +1,8 @@
 from tvm.relay.dataflow_pattern import *
 
+VAR_CONST_STR = "Var/Const"
+WILDCARD_STR = "*"
+
 def find_depth(relay_pattern):
     if relay_pattern is None:
         return 0
@@ -23,11 +26,98 @@ def find_depth(relay_pattern):
     return depth+1
 
 
+def get_name_and_children_relay_pattern(pattern, node_str):
+    goDeeper = True
+
+    if isinstance(pattern, TuplePattern):
+        node_str += "Tuple"
+        children = pattern.fields
+    elif isinstance(pattern, TupleGetItemPattern):
+        node_str += "TupleGetItem"
+        children = [ pattern.tuple ]
+    elif isinstance(pattern, WildcardPattern):
+        node_str += WILDCARD_STR
+        goDeeper = False
+        children = []
+    elif isinstance(pattern, VarPattern) or isinstance(pattern, ConstantPattern):
+        node_str += VAR_CONST_STR
+        goDeeper = False
+        children = []
+    elif isinstance(pattern, CallPattern):
+        if isinstance(pattern.op, VarPattern) or isinstance(pattern.op, ConstantPattern):
+            node_str += VAR_CONST_STR
+            goDeeper = False
+            children = []
+        else:
+            node_str += str(pattern.op)
+            children = pattern.args
+    else:
+        raise Exception(f"{type(pattern)} is not handled yet.")
+
+    return node_str, children, goDeeper
+
+
+"""
+This is used to extract names of Relay pattern;
+Specifically, it is needed for single backend baseline execution to see if any part of the pattern can't be supported by 
+the given single backend. If it is supported by the given single backend, we shouldn't consider it as a fallback backend op.
+"""
+def get_name_set_relay_pattern(pattern):
+    node_str = ""
+    node_str, children, goDeeper = get_name_and_children_relay_pattern(pattern, node_str)
+
+    name_set = set()
+    if node_str not in [VAR_CONST_STR, WILDCARD_STR]:
+        name_set.add(node_str)
+
+    if goDeeper:
+        for i, child in enumerate(children):
+            child_names = get_name_set_relay_pattern(child)
+            name_set |= child_names
+
+    return name_set
+
+# [Deprecated] Note that pat is Relay pattern (not Pattern object)
+# def is_subset_of(sub_set_pat, super_set_pat):
+#     is_subset = True
+#
+#     sub_set_pat_node_name = ""
+#     sub_set_pat_node_name, sub_children, sub_goDeeper = get_name_and_children_relay_pattern(sub_set_pat,
+#                                                                                             sub_set_pat_node_name)
+#
+#     super_set_pat_node_name = ""
+#     super_set_pat_node_name, super_children, super_goDeeper = get_name_and_children_relay_pattern(super_set_pat,
+#                                                                                                   super_set_pat_node_name)
+#     if sub_set_pat_node_name == super_set_pat_node_name or sub_set_pat_node_name == WILDCARD_STR:
+#         assert len(sub_children) == len(super_children)
+#         if not sub_goDeeper:
+#             return True
+#         else:
+#             if not super_goDeeper:
+#                 return False
+#             else: # Both can go deeper
+#                 for i in range(len(sub_children)):
+#                     is_subset &= is_subset_of(sub_children[i], super_children[i])
+#     else:
+#         if not sub_goDeeper:
+#             return False
+#         else:
+#             if not super_goDeeper:
+#                 return False
+#             else:  # Both can go deeper
+#                 for i, super_child in enumerate(super_children):
+#                     is_subset &= is_subset_of(sub_set_pat, super_child)
+#
+#     return is_subset
+
+
+
+
+
 def name_relay_pattern(pattern, idMap = None, cnt = 0):
     if idMap is None:
         idMap = dict()
 
-    goDeeper = True
     if isinstance(pattern, WildcardPattern):
         node_str = ""
     else:
@@ -38,31 +128,7 @@ def name_relay_pattern(pattern, idMap = None, cnt = 0):
         uid = idMap[pattern]
         node_str = f"{uid}-"
 
-    if isinstance(pattern, TuplePattern):
-        node_str += "Tuple"
-        children = pattern.fields
-    elif isinstance(pattern, TupleGetItemPattern):
-        node_str += "TupleGetItem"
-        children = [ pattern.tuple ]
-    elif isinstance(pattern, WildcardPattern):
-        node_str += "*"
-        goDeeper = False
-        children = []
-    elif isinstance(pattern, VarPattern) or isinstance(pattern, ConstantPattern):
-        node_str += "Var/Const"
-        goDeeper = False
-        children = []
-    elif isinstance(pattern, CallPattern):
-        if isinstance(pattern.op, VarPattern) or isinstance(pattern.op, ConstantPattern):
-            node_str += "Var/Const"
-            goDeeper = False
-            children = []
-        else:
-            node_str += str(pattern.op)
-            children = pattern.args
-
-    else:
-        raise Exception(f"{type(relay_pattern)} is not handled yet.")
+    node_str, children, goDeeper = get_name_and_children_relay_pattern(pattern, node_str)
 
     if goDeeper:
         name = node_str + "["
@@ -111,6 +177,20 @@ class Pattern(object):
 
     def get_depth(self):
         return self._depth
+
+    # Deprecated
+    # def is_subset_of(self, super_set_pat): # super_set_pat has larger depth
+
+    """
+    Get name of ops included in this pattern
+    
+    For sinlge backend baseline, we need this to see if the fallback pattern (e.g., AutoTVM) can be used to match;
+    To be specific, if this fallback pattern does not include pattern from the target single backend, it can be used.
+    e.g., For CuDNN baseline measurement, Conv + Relu (AutoTVM) can't be used because CuDNN supports Conv and RELU.
+    However, we have to use Add from TVM because we can't support CuDNN Add in TVM (due to the PackedFunc issue).  
+    """
+    def get_op_name_set(self):
+        return get_name_set_relay_pattern(self._relay_pattern)
 
 #     def get_relay_pattern_tree(self):
 #         return self._relay_pattern_tree

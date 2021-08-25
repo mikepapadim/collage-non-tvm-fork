@@ -48,8 +48,6 @@ class CompGraphOptimizer:
         extractor = MatchInfoExtractor(comp_graph)
         dp_table = DPTable(self._backendop_lib, self._target_backend, hw_name, comp_graph)
 
-        pair2match = {}
-
         root_expr = comp_graph.get_root().get_relay_expr()
         dom_tree = relay.analysis.construct_dom_tree(root_expr, post_dom = False)
         post_dom_tree = relay.analysis.construct_dom_tree(root_expr, post_dom = True)
@@ -87,8 +85,6 @@ class CompGraphOptimizer:
         #         hash_to_op[hash(node)] = node.get_relay_expr().op
         #     else:
         #         hash_to_op[hash(node)] = "var"
-
-        # self.loc2match = {hash(comp_graph.get_root()): {"match":[], "cost":0, "string":""}}
         while not frontier_queue.empty():
             # Facilitate the debugging process
             self._backendop_lib.save_to_log(hw_name)
@@ -140,6 +136,135 @@ class CompGraphOptimizer:
 
         # Assign backend operator annotation (group_id + backend_op_name) to Relay expr (backend attribute)
         dp_table.assign_backend_op_to_expr()
+
+    def match_pat_from_list(self, f_expr, backend_pats_ops, extractor, frontier_queue, group_id):
+        # Match operators with target backend ops
+        n_match_frontier = 0
+        is_matched = False
+        backend_annotation = "default"
+        for pat, b_op in backend_pats_ops:
+            # print("Checking... ", pat)
+
+            if self._ordered_pattern_matcher.match(f_expr, pat.get_relay_pattern()):
+                # if pat.get_relay_pattern().match(f_expr):
+                assert pat.get_depth() >= 1  # 0 depth doesn't make sense
+                # print("The following pattern is matched:", pat.get_relay_pattern())
+
+                # Extract match information; refer to detailed explanation in the MatchInfoExtractor
+                is_matched, b_op_name = True, repr(b_op)
+                matched_nodes, match_dic, new_frontiers = extractor.extract(f_expr, pat.get_relay_pattern(), b_op_name)
+
+                # Add new frontiers to the queue
+                prev_qsize = frontier_queue._frontiers.qsize()
+                frontier_queue.put(new_frontiers)
+                n_match_frontier += frontier_queue._frontiers.qsize() - prev_qsize
+
+                # Update backend in the Relay expression directly
+                for expr, op_name in match_dic.items():
+                    backend_annotation = create_backend_op_annotation(group_id, op_name)
+                    # printe(f"Pair of type and annotation: {backend_annotation}")
+                    # printe(repr(expr), backend_annotation)
+                    relay.analysis.update_backend(expr, backend_annotation)
+
+                # We match the longest possible backend ops, thus we stop here;
+                # Note that patterns are sorted in the decreasing order of pattern depth
+                break
+
+        return is_matched, frontier_queue, backend_annotation
+
+    def optimize_single_backend(self, comp_graph, hw_name, single_backend):
+        # HACKY: Reset matched_expr
+        comp_graph.reset()
+
+        frontier_queue = FrontierQueue()
+        frontier_queue.put(comp_graph.get_root())
+
+        extractor = MatchInfoExtractor(comp_graph)
+
+        root_expr = comp_graph.get_root().get_relay_expr()
+        dom_tree = relay.analysis.construct_dom_tree(root_expr, post_dom = False)
+        post_dom_tree = relay.analysis.construct_dom_tree(root_expr, post_dom = True)
+        self._ordered_pattern_matcher.add_dom_tree(dom_tree)
+
+        # @Sung: run all pattern generators
+        all_exprs = []
+        def _traverse_expr(node, node_list):
+            if not is_call_node(node):
+                return
+            if node in node_list:
+                return
+            if isinstance(node, tvm.ir.op.Op):
+                return
+            node_list.append(node)
+
+        relay.analysis.post_order_visit(root_expr, lambda expr: _traverse_expr(expr, all_exprs))
+
+        for expr in all_exprs:
+            for generator in self._backendop_lib.get_all_pattern_generators():
+                 generator.run(post_dom_tree, expr)
+
+
+        # for pat in self._backendop_lib.get_all_patterns():
+        #     print("Checking... ", pat)
+
+        """
+        Run single backend baseline fusion strategy (e.g., CuDNN, OneDNN)
+        - It greedily matches backend operators from the given backend.
+        - If there are multiple matchings of ops from the given backend, it prioritize backend op with more ops.
+          e.g., matching fused operator (relu+conv) instead of a single op (conv)  
+        - If there is no existing backend operator of the given backend, it alternatively uses AutoTVM ops; 
+          Still, it only allows matching with AutoTVM ops including only ops that can't be matched with ops from the given backend 
+        """
+
+        # Separate out patterns of the given backend and sort them in the decreasing order of depth
+        # Output
+        # - patterns from the given backend
+        # - patterns of AutoTVM ops that do not include patterns of the given backend
+        single_backend_pats_ops = self._backendop_lib.get_all_patterns_and_backend_ops_from_single_backend(single_backend)
+        fallback_backend = Target.TVM_GPU_AUTOTVM
+        fallback_backend_pats_ops = self._backendop_lib.get_all_patterns_and_backend_ops_from_single_backend(fallback_backend, single_backend)
+
+        # Debug
+        # single_op = [tup[0] for tup in single_backend_pats_ops]
+        # fallback_op = [tup[0] for tup in fallback_backend_pats_ops]
+        # print("Pat & Ops")
+        # print(single_op)
+        # print("\n------\n")
+        # print(fallback_op)
+        group_id = 0
+        matched_b_op_name = []
+        while not frontier_queue.empty():
+            # Facilitate the debugging process
+            self._backendop_lib.save_to_log(hw_name)
+            f = frontier_queue.get()
+            f_expr = f.get_relay_expr()
+
+            # print("="*45)
+            # if is_call_node(f_expr):
+            #     print(f"(topo_order, op_type) : {f._topological_order}, {f_expr.op}")
+            # else:
+            #     print(f"(topo_order, op_type) : {f._topological_order}, {type(f_expr)}, Non-call node")
+
+            is_matched, frontier_queue, backend_anno = self.match_pat_from_list(f_expr, single_backend_pats_ops,
+                                                                                extractor, frontier_queue, group_id)
+            if not is_matched:
+                is_matched, frontier_queue, backend_anno = self.match_pat_from_list(f_expr, fallback_backend_pats_ops,
+                                                                                    extractor, frontier_queue, group_id)
+                if not is_matched:
+                    raise Exception(f"At least one backend op should have been matched")
+
+            group_id += 1
+            matched_b_op_name.append(backend_anno)
+
+            # if n_match_frontier == 0:
+            #     printe("[Debug!] This frontier didn't match!!")
+            # else:
+            #     printe(f"n_match_froniter : {n_match_frontier}")
+
+        # Print out matched operators
+        printe("Matched operators (from the last node of comp graph to the root, which is data node)")
+        for anno in matched_b_op_name:
+            printe(anno)
 
 
 class AssignBackendExprVisitor:
