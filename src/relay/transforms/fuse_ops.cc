@@ -1553,7 +1553,7 @@ namespace tvm {
         auto ex_op_call = tvm::runtime::Registry::Get("relay.transform.optimizer.apply_external_compiler_op");
         // Warning(@Soo): Doublecheck if module is updated.
         module = (*ex_op_call)(module);
-        std::cerr << "[Done] PlanFusionWithExtCompiler" << std::endl;
+//        std::cerr << "[Done] PlanFusionWithExtCompiler" << std::endl;
       }
 
 //      std::cerr << "[Done] AlterOpLayout for TVM ops after PlanFusionWithExtCompiler" << std::endl;
