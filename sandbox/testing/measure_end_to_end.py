@@ -205,14 +205,15 @@ if __name__ == "__main__":
 
     # Assign build target based on a given hw
     args.target = get_build_target(args.hw)
-    mean_perf, std_perf, mod_ours = measure_end_to_end_perf_autotvm(mod["main"], params, args.target, shape_dict,
-                                                                    True, args.network, args.hw, args.batch_size)
-    print(f"[{args.network}] Performance of Ours on {args.hw} (mean, std) = ({mean_perf:.4f}+-{std_perf:.4f})")
 
-    mean_perf, std_perf, mod_cud = measure_end_to_end_perf_cudnn(mod["main"], params, args.target, shape_dict,
-                                                                 False, args.network, args.hw, args.batch_size)
-    print(f"[{args.network}] Performance of CuDNN on {args.hw} (mean, std) = ({mean_perf:.4f}+-{std_perf:.4f})")
-
+    # mean_perf, std_perf, mod_ours = measure_end_to_end_perf_autotvm(mod["main"], params, args.target, shape_dict,
+    #                                                                 True, args.network, args.hw, args.batch_size)
+    # print(f"[{args.network}] Performance of Ours on {args.hw} (mean, std) = ({mean_perf:.4f}+-{std_perf:.4f})")
+    #
+    # mean_perf, std_perf, mod_cud = measure_end_to_end_perf_cudnn(mod["main"], params, args.target, shape_dict,
+    #                                                              False, args.network, args.hw, args.batch_size)
+    # print(f"[{args.network}] Performance of CuDNN on {args.hw} (mean, std) = ({mean_perf:.4f}+-{std_perf:.4f})")
+    #
     mean_perf, std_perf, mod_trt = measure_end_to_end_perf_tensorrt(mod, params, args.target, shape_dict, args.hw)
     print(f"[{args.network}] Performance of TensorRT on {args.hw} (mean, std) = ({mean_perf:.4f}+-{std_perf:.4f})")
 
@@ -223,4 +224,4 @@ if __name__ == "__main__":
     # mean_perf, std_perf = measure_end_to_end_perf_autosch(mod["main"], params, 'cuda', shape_dict, False, args.hw)
     # print(f"[AutoSCH] Performance of {args.network} (mean, std) = ({mean_perf:.4f}+-{std_perf:.4f})")
 
-    # verify_network_output(mod["main"], shape_dict, mod_tvm, mod_ours)
+    verify_network_output(mod["main"], shape_dict, mod_tvm, mod_trt)
