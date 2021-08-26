@@ -5,7 +5,7 @@ import tvm.driver
 
 # from ..backend_operator.record import backendop_lib
 from ..backend_operator.op_config import MeasuredConfigs
-from ..backend_operator.target import Target, USER_DEFINED_MATCH_LOG
+from ..backend_operator.target import *
 from ..backend_operator.backend_op_lib import BackendOpLib
 from ..backend_operator.utils import *
 
@@ -45,6 +45,13 @@ def visualize_network_debug(relay_expr, name):
 
 @tvm._ffi.register_func("relay.transform.optimizer.apply_external_compiler_op")
 def apply_external_compiler_op(mod):
+
+    # Skip this pass if the hw is not NVIDIA GPU
+    hw_name = mod["main"].attrs[HW_FUNC_ATTR]
+    if hw_name not in NVIDIA_GPUS:
+        printe("Skip external compiler op pass because the hw is not NVIDIA GPU.")
+        return mod
+
     printe("External compiler op pass")
 
     # Get best op match info
@@ -348,9 +355,9 @@ def assign_backend_for_op_measurement(relay_expr):
 Run single backend baseline fusion strategy (e.g., CuDNN, OneDNN)
 - It greedily matches backend operators from the given backend.
 - If there are multiple matchings of ops from the given backend, it prioritize backend op with more ops.
-  e.g., matching fused operator (relu+conv) instead of a single op (conv)  
-- If there is no existing backend operator of the given backend, it alternatively uses AutoTVM ops; 
-  Still, it only allows matching with AutoTVM ops including only ops that can't be matched with ops from the given backend 
+  e.g., matching fused operator (relu+conv) instead of a single op (conv)
+- If there is no existing backend operator of the given backend, it alternatively uses AutoTVM ops;
+  Still, it only allows matching with AutoTVM ops including only ops that can't be matched with ops from the given backend
 """
 @tvm._ffi.register_func("relay.transform.optimizer.run_single_backend_baseline")
 def run_single_backend_baseline(relay_expr):
