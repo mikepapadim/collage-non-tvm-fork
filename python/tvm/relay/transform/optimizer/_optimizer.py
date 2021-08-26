@@ -130,14 +130,14 @@ def apply_external_compiler_op(mod):
     # return mod, config
 
 # For annotate_test
-def get_temp_opt_match(relay_expr):
-    printe("update backend from Python side")
-    relay.analysis.update_backend(relay_expr, "0-tvmgpu-autotvm_add")
-    relay.analysis.update_backend(relay_expr.args[0], "1-tvmgpu-autotvm_relu")
-    relay.analysis.update_backend(relay_expr.args[1], "2-tensorrt_tanh")
-    relay.analysis.update_backend(relay_expr.args[0].args[0],"3-tvmgpu-autotvm_relu")
-    relay.analysis.update_backend(relay_expr.args[0].args[0].args[0], "3-tvmgpu-autotvm_relu")
-    return relay_expr
+# def get_temp_opt_match(relay_expr):
+#     printe("update backend from Python side")
+#     relay.analysis.update_backend(relay_expr, "0-autotvm_add")
+#     relay.analysis.update_backend(relay_expr.args[0], "1-autotvm_relu")
+#     relay.analysis.update_backend(relay_expr.args[1], "2-tensorrt_tanh")
+#     relay.analysis.update_backend(relay_expr.args[0].args[0],"3-autotvm_relu")
+#     relay.analysis.update_backend(relay_expr.args[0].args[0].args[0], "3-autotvm_relu")
+#     return relay_expr
 
 @tvm._ffi.register_func("relay.transform.optimizer.get_user_fusion")
 def get_user_fusion(relay_expr):
@@ -165,17 +165,18 @@ def run_op_level_opt(relay_expr):
     print(f"# of relay nodes in comp graph: {n_relay_nodes}")
 
     # Sanity check: Only AutoTVM
-    # targets = [Target.TVM_GPU_AUTOTVM]
+    # targets = [Target.AUTOTVM]
     # targets = [Target.TENSORRT]
 
     # Sanity check: Enable all backends except for TensorRT
-    # targets = [Target.TVM_GPU_AUTOTVM, Target.CUDNN, Target.CUBLAS]
+    # targets = [Target.AUTOTVM, Target.CUDNN, Target.CUBLAS]
     # We coudln't figure out how to support CUBLAS in Jetson yet
     # It shouldn't be a big deal though given TensorRT uses CuBLAS internally
-    # targets = [Target.TVM_GPU_AUTOTVM, Target.CUDNN, Target.TENSORRT]
-    targets = [Target.TVM_GPU_AUTOTVM, Target.CUDNN, Target.TENSORRT, Target.CUBLAS]
-    #targets = [Target.TVM_GPU_AUTOTVM, Target.CUDNN]
-    #targets = [Target.TVM_GPU_AUTOTVM, Target.TENSORRT]#, Target.CUBLAS]
+    # targets = [Target.AUTOTVM, Target.CUDNN, Target.TENSORRT]
+    #targets = [Target.AUTOTVM, Target.CUDNN]
+    #targets = [Target.AUTOTVM, Target.TENSORRT]#, Target.CUBLAS]
+
+    targets = get_backends(hw_name)
 
     backendop_lib = setup_backend_op_lib(hw_name)
 
@@ -246,6 +247,9 @@ def run_two_level_opt(relay_expr):
     optimized_match, relay_expr, backendop_lib, n_relay_nodes = run_op_level_opt(relay_expr)
     print("[Python side] Op-level optimization is done")
 
+    net_name, hw_name, batch_size = get_opt_info_from_func(func_expr)
+    printe(f"Hw name, Network name, batch_size: {hw_name}, {net_name}, {batch_size}")
+
     # Debug
     # OpMatchLogger().save(relay_expr, optimized_match)
     # print(OpMatchReader().read(relay_expr))
@@ -256,7 +260,7 @@ def run_two_level_opt(relay_expr):
 
     # Prepare OpStateToMatchTranslator
     # This translates Op State to optimized_match with the following two dictionaries
-    op_state_to_match_translator = OpStateToMatchTranslator(optimized_match, group_id_to_exprs_anno)
+    op_state_to_match_translator = OpStateToMatchTranslator(optimized_match, group_id_to_exprs_anno, hw_name)
 
     # Run evolutionary search
     n_ops_after_first_level = len(group_id_to_exprs_anno.keys())
@@ -269,10 +273,6 @@ def run_two_level_opt(relay_expr):
 
     # On the second level, Consider only ops that are not assigned to TensorRT
     # Extract ops that are not assigned to TensorRT
-
-    # Warning(@soo): Network name is hardcoded for now. We can fix it later
-    net_name, hw_name, batch_size = get_opt_info_from_func(func_expr)
-    printe(f"Hw name, Network name, batch_size: {hw_name}, {net_name}, {batch_size}")
 
     # if net_name == "nasneta":
     #     OPT_LEVEL.set(2)
@@ -309,7 +309,8 @@ def run_two_level_opt(relay_expr):
                                            batch_size=batch_size, n_ops=n_ops,
                                            # pop_size=10, max_iter=2)  # For simpler debugging
                                            # pop_size=10, max_iter=5) # For debugging
-                                           pop_size=50,   max_iter=100000) # For experiment
+                                           pop_size=30,   max_iter=100000) # when n_hours == 3
+                                           # pop_size=50,   max_iter=100000) # when n_hours == 6
         second_opt_match = ev_searcher.search(rnd_seed=64)
     else:
         second_opt_match = optimized_match
@@ -406,13 +407,13 @@ def run_single_backend_baseline(relay_expr):
 #     # target_backend = None # Consider all targets
 #
 #     # Sanity check: AutoTVM
-#     # targets = [Target.TVM_GPU_AUTOTVM]
+#     # targets = [Target.AUTOTVM]
 #
 #     # Sanity check: Only CuDNN
-#     # targets = [Target.TVM_GPU_AUTOTVM, Target.CUDNN]
+#     # targets = [Target.AUTOTVM, Target.CUDNN]
 #
 #     # Enable all backends
-#     targets = [Target.TVM_GPU_AUTOTVM, Target.CUBLAS, Target.CUDNN, Target.TENSORRT]
+#     targets = [Target.AUTOTVM, Target.CUBLAS, Target.CUDNN, Target.TENSORRT]
 #     batch_size = 1
 #     backendop_lib = setup_backend_op_lib(hw_name)
 #
@@ -476,21 +477,21 @@ def run_single_backend_baseline(relay_expr):
 #     optimize_comp_graph(relay_expr)
 
 # Deprecated get_user_fusion
-# fusion_dic[relay_expr] = "0-tvmgpu-autotvm_relu"  # Relu
-# fusion_dic[relay_expr.args[0]] = "1-tvmgpu-autotvm_conv2d"  # Conv
-# fusion_dic[relay_expr.args[0].args[0]] = "1-tvmgpu-autotvm_conv2d"  # Relu
-# fusion_dic[relay_expr.args[0].args[1]] = "1-tvmgpu-autotvm_conv2d"  # Param
+# fusion_dic[relay_expr] = "0-autotvm_relu"  # Relu
+# fusion_dic[relay_expr.args[0]] = "1-autotvm_conv2d"  # Conv
+# fusion_dic[relay_expr.args[0].args[0]] = "1-autotvm_conv2d"  # Relu
+# fusion_dic[relay_expr.args[0].args[1]] = "1-autotvm_conv2d"  # Param
 # fusion_dic[relay_expr.args[0].args[0].args[0]] = "3-cudnn_conv2d"  #
 # fusion_dic[relay_expr.args[0].args[0].args[0].args[1]] = "3-cudnn_conv2d"  # Param
 # fusion_dic[relay_expr.args[0].args[0].args[0].args[0]] = "3-cudnn_conv2d"  # Data
 
-# fusion_dic[relay_expr] = "0-tvmgpu-no-tuning_relu" # Relu
-# fusion_dic[relay_expr.args[0]] = "1-tvmgpu-no-tuning_conv2d" # Conv
-# fusion_dic[relay_expr.args[0].args[0]] = "2-tvmgpu-no-tuning_relu"  # Relu
-# fusion_dic[relay_expr.args[0].args[1]] = "1-tvmgpu-no-tuning_conv2d" # Param
-# fusion_dic[relay_expr.args[0].args[0].args[0]] = "3-tvmgpu-no-tuning_conv2d"  #
-# fusion_dic[relay_expr.args[0].args[0].args[0].args[1]] = "3-tvmgpu-no-tuning_conv2d" # Param
-# fusion_dic[relay_expr.args[0].args[0].args[0].args[0]]= "3-tvmgpu-no-tuning_conv2d" # Data
+# fusion_dic[relay_expr] = "0-tvm-default_relu" # Relu
+# fusion_dic[relay_expr.args[0]] = "1-tvm-default_conv2d" # Conv
+# fusion_dic[relay_expr.args[0].args[0]] = "2-tvm-default_relu"  # Relu
+# fusion_dic[relay_expr.args[0].args[1]] = "1-tvm-default_conv2d" # Param
+# fusion_dic[relay_expr.args[0].args[0].args[0]] = "3-tvm-default_conv2d"  #
+# fusion_dic[relay_expr.args[0].args[0].args[0].args[1]] = "3-tvm-default_conv2d" # Param
+# fusion_dic[relay_expr.args[0].args[0].args[0].args[0]]= "3-tvm-default_conv2d" # Data
 
 # Enable External compiler merging or not
 # print(f"fusion dic (before merge): {fusion_dic}")

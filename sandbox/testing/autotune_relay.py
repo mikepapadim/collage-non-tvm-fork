@@ -69,10 +69,11 @@ from tvm import relay, autotvm, auto_scheduler
 import tvm.relay.testing
 from tvm.autotvm.tuner import XGBTuner, GATuner, RandomTuner, GridSearchTuner
 from tvm.contrib import graph_executor
-from tvm.relay.transform.backend_operator.target import OPT_LEVEL
+from tvm.relay.transform.backend_operator.target import OPT_LEVEL, XEON_BUILD_TARGET
 from tvm.relay.transform.utility.json_logger import *
 import time
 from tvm.relay.transform.utility.debug_helper import *
+
 # import tvm.contrib.graph_runtime as runtime
 
 # import tensorflow as tf
@@ -307,7 +308,7 @@ def args_checker(args, parser):
         args.target = tvm.target.cuda()
     elif args.target == 'llvm':
         if args.hw == 'xeon':
-            args.target = 'llvm -mcpu=skylake-avx512'
+            args.target = XEON_BUILD_TARGET
         else:
             parser.error(f"Unsupported CPU: {args.hw}")
     else:

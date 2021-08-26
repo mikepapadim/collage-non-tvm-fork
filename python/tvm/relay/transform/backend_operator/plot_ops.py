@@ -89,12 +89,12 @@ def draw_plot(df, fig_name):
 def plot_resnet50():
     # Conv GPU plots
     conv_df = filter_df_with_regex(df=df, regex = 'conv2d_\d{1,2}',
-                                   cols_to_exclude=['tvmcpu', 'cublas'])#, 'cudnn', 'tensorrt'])#'tvmgpu-no-tuning'])
+                                   cols_to_exclude=['cublas'])#, 'cudnn', 'tensorrt'])#'tvmgpu-no-tuning'])
     draw_plot(df=conv_df, fig_name=f'rtx_{network_name}_bn{target_batch_size}_conv.png')
 
     # # Fused ops
     fused_df = df.filter(like='+', axis=0)
-    fused_df = fused_df[fused_df.columns.difference(['cudnn', 'tvmcpu'])]
+    fused_df = fused_df[fused_df.columns.difference(['cudnn'])]
     draw_plot(df=fused_df, fig_name=f'rtx_{network_name}_bn{target_batch_size}_fused.png')
 
     # Other ops
@@ -102,7 +102,7 @@ def plot_resnet50():
     # re_str = '|'.join(forbidden_str)
     drop_str = [f"conv2d_{i}" for i in range(1, 23)] + [val for val in df.index.values if "+" in val]# + ['dense_1']
     other_df = df.drop(index=drop_str)
-    other_df = other_df[other_df.columns.difference(['cublas', 'tvmcpu'])]
+    other_df = other_df[other_df.columns.difference(['cublas'])]
     draw_plot(df=other_df, fig_name=f'rtx_{network_name}_bn{target_batch_size}_others.png')
 
 def plot_bert():

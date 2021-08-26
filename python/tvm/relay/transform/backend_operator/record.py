@@ -13,7 +13,7 @@ from .op_type import OpType
 if __name__ == "__main__":
     networks = ['resnet50']
     # targets = [Target.TVM_GPU, Target.TENSORRT, Target.CUDNN, Target.CUBLAS, Target.TVM_GPU_NO_TUNING, Target.TVM_CPU]
-    targets = [Target.TVM_GPU_NO_TUNING]
+    targets = [Target.TVM_DEFAULT]
     batch_size = 1
 
     # backendop_lib = BackendOpLib.get()

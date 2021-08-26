@@ -11,7 +11,7 @@ import os
 import matplotlib.pyplot as plt
 
 STR_TO_TARGET = {
-    "autotvm": Target.TVM_GPU_AUTOTVM,
+    "autotvm": Target.AUTOTVM,
     "tensorrt": Target.TENSORRT,
 }
 

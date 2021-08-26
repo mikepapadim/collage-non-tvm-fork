@@ -76,7 +76,7 @@ def draw_plot(df, fig_name):
 
 def gen_new_dataframe_for_paper_figure(df):
     # Rename columns
-    df = df.rename(columns={'tvmgpu-autotvm': 'AutoTVM', 'cudnn': 'CuDNN', 'tensorrt': 'TensorRT'}, inplace=False)
+    df = df.rename(columns={'autotvm': 'AutoTVM', 'cudnn': 'CuDNN', 'tensorrt': 'TensorRT'}, inplace=False)
 
     # Rename indices
     idx_to_op_idx = {}
@@ -169,7 +169,7 @@ def plot_nasrnn(df, network_name, target_batch_size):
 def plot_nasneta(df, network_name, target_batch_size):
     # Conv GPU plots
     conv_df = filter_df_with_regex(df=df, regex='conv2d_\d{1,2}',
-                                   cols_to_exclude=['tvmcpu'])  # , 'cudnn', 'tensorrt'])#'tvmgpu-no-tuning'])
+                                   cols_to_exclude=['tvmcpu'])  # , 'cudnn', 'tensorrt'])
     draw_plot(df=conv_df, fig_name=f'rtx_{network_name}_bn{target_batch_size}_conv.png')
 
     # # Fused ops

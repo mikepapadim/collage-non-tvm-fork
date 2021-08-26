@@ -135,7 +135,9 @@ class CompGraphOptimizer:
             #     printe(f"n_match_froniter : {n_match_frontier}")
 
         # Assign backend operator annotation (group_id + backend_op_name) to Relay expr (backend attribute)
-        dp_table.assign_backend_op_to_expr()
+        optimized_match = dp_table.assign_backend_op_to_expr()
+
+        return optimized_match
 
     def match_pat_from_list(self, f_expr, backend_pats_ops, extractor, frontier_queue, group_id):
         # Match operators with target backend ops
@@ -221,7 +223,7 @@ class CompGraphOptimizer:
         # - patterns from the given backend
         # - patterns of AutoTVM ops that do not include patterns of the given backend
         single_backend_pats_ops = self._backendop_lib.get_all_patterns_and_backend_ops_from_single_backend(single_backend)
-        fallback_backend = Target.TVM_GPU_AUTOTVM
+        fallback_backend = Target.AUTOTVM
         fallback_backend_pats_ops = self._backendop_lib.get_all_patterns_and_backend_ops_from_single_backend(fallback_backend, single_backend)
 
         # Debug
@@ -263,6 +265,7 @@ class CompGraphOptimizer:
             #     printe(f"n_match_froniter : {n_match_frontier}")
 
         # Print out matched operators
+        printe("=" * 50)
         printe("Matched operators (from the last node of comp graph to the root, which is data node)")
         for anno in matched_b_op_name:
             printe(anno)

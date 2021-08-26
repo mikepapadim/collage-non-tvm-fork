@@ -403,7 +403,7 @@ class DPTable:
         printe("="*50)
         printe("Matched operators (in post-dfs-order, from the root of comp graph to the last node)")
         group_id, backend_annotation = 0, None
-
+        optimized_match = {}
         # Note that we have one dummy cell, and that's why it's opt_match_cell.prev_cell instead of opt_match_cell
         while opt_match_cell.prev_cell is not None:
             # Warning(@Soo): It might be important which backend to assign to data node
@@ -414,6 +414,7 @@ class DPTable:
                 # printe(f"Pair of type and annotation: {backend_annotation}")
                 # printe(repr(expr), backend_annotation)
                 relay.analysis.update_backend(expr, backend_annotation)
+                optimized_match[expr] = backend_annotation
 
             printe(f"{backend_annotation}")
 
@@ -423,3 +424,5 @@ class DPTable:
             group_id += 1
 
         printe("=" * 50)
+
+        return optimized_match

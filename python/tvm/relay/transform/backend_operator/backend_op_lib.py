@@ -314,7 +314,7 @@ class BackendOpLib(object):
     self._add_backendop_with_key(Target.CUBLAS, "BATCH_MATMUL")
 
     # @Sung: add TVM pattern rule
-    def tvm_pattern_rule(expr, dom_tree, verify, target=Target.TVM_GPU_AUTOTVM, optype2enum = None, enum2optype = None):
+    def tvm_pattern_rule(expr, dom_tree, verify, target=Target.AUTOTVM, optype2enum = None, enum2optype = None):
         def run_fuse(src, sink, cur_pattern_type = None, cur_num_op = 0, nodeToPatternMap = dict()):
             assert(src is not None)
             if cur_pattern_type == optype2enum["kOpaque"] or cur_num_op > NUM_MAX_OP:
@@ -393,12 +393,12 @@ class BackendOpLib(object):
     # defined at include/tvm/relay/op_attr_types.h
     tvm_enum2optype = {0:"kElemWise", 1:"kBroadcast", 2:"kInjective", 3:"kCommReduce", 4:"kOutEWiseFusable", 7:"kTuple", 8:"kOpaque"}
     tvm_optype2enum = {"kElemWise":0, "kBroadcast":1, "kInjective":2, "kCommReduce":3, "kOutEWiseFusable":4, "kTuple":7, "kOpaque":8}
-    tvm_pattern_generator = BasePatternGenerator(Target.TVM_GPU_AUTOTVM, tvm_pattern_rule, None, tvm_optype2enum, tvm_enum2optype)
+    tvm_pattern_generator = BasePatternGenerator(Target.AUTOTVM, tvm_pattern_rule, None, tvm_optype2enum, tvm_enum2optype)
     self._add_backend_pattern_rule(tvm_pattern_generator)
 
     # TVM_GPU
-    # add_all_backend_ops_to_lib(self, Target.TVM_GPU_AUTOSCH)
-    add_all_backend_ops_to_lib(self, Target.TVM_GPU_AUTOTVM)
+    # add_all_backend_ops_to_lib(self, Target.AUTOSCH)
+    add_all_backend_ops_to_lib(self, Target.AUTOTVM)
     # add_all_backend_ops_to_lib_except_fused(backendop_lib, Target.TVM_GPU)
 
     # TVM_GPU_NO_TUNING

@@ -86,7 +86,7 @@ def measure_end_to_end_perf_autotvm(net, params, target_str, shape_dict, is_ours
 
 def measure_end_to_end_perf_cudnn(net, params, target_str, shape_dict, is_ours, net_name, hw_name, batch_size):
     assert is_function_node(net)
-    single_backend_id = Target.CUDNN.value[0]
+    single_backend_id = Target.CUDNN.id()
     net = setup_attrs_single_backend_baseline(net, net_name, hw_name, batch_size, single_backend_id)
 
     return build_and_measure_autotvm(net, params, target_str, shape_dict, hw_name)
@@ -152,23 +152,22 @@ def verify_network_output(net, shape_dict, mod_tvm, mod_ours):
 def args_checker(args, parser):
     is_missing_arg = not args.network
     is_missing_arg |= not args.hw
-    is_missing_arg |= not args.target
+    # is_missing_arg |= not args.target
     # is_missing_arg |= not args.dtype
     # is_missing_arg |= not args.batch_size
 
     if is_missing_arg:
         parser.error('Make sure you input all arguments')
 
-    if args.target == 'cuda':
-        pass
-    elif args.target == 'llvm':
-        if args.hw == 'xeon':
-            # pass
-            args.target = 'llvm -mcpu=skylake-avx512'
-        else:
-            parser.error(f"Unsupported CPU: {args.hw}")
-    else:
-        parser.error(f"Unsupported target: {args.target}")
+    # if args.target == 'cuda':
+    #     pass
+    # elif args.target == 'llvm':
+    #     if args.hw == 'xeon':
+    #         args.target = XEON_BUILD_TARGET
+    #     else:
+    #         parser.error(f"Unsupported CPU: {args.hw}")
+    # else:
+    #     parser.error(f"Unsupported target: {args.target}")
 
 def get_args():
     parser = argparse.ArgumentParser()
@@ -176,7 +175,7 @@ def get_args():
     parser.add_argument("-n", "--network", help="name of a neural network")
     parser.add_argument("-hw", "--hw", help="target hardware")
     parser.add_argument("-bs", "--batch-size", default=1, type=int, help="batch size")
-    parser.add_argument("-t", "--target", help="target device")
+    # parser.add_argument("-t", "--target", help="target device")
     # parser.add_argument("-dt", "--dtype", help="data type")
 
     args = parser.parse_args()
@@ -197,28 +196,29 @@ if __name__ == "__main__":
     # We can't test this because this network include batch norm.
     print(f"batch size: {args.batch_size}")
 
-    mod, params, shape_dict, _ = get_network_from_torch(args.network, args.batch_size)
+    # mod, params, shape_dict, _ = get_network_from_torch(args.network, args.batch_size)
     # mod, params, shape_dict, _ = get_network_from_torch("nasneta", 1)
     # mod, params, shape_dict, _ = get_network_from_relay("conv2d", 1)
     # mod, params, shape_dict, _ = get_network_from_relay("conv2d+relu_x2", 1)
-    # mod, params, shape_dict, _ = get_network_from_relay("diamond", 1)
+    mod, params, shape_dict, _ = get_network_from_relay("diamond", 1)
     # mod, params, shape_dict, _ = crop_network_from_torch(args.network, 1, 290)
 
-    # mean_perf, std_perf, mod_ours = measure_end_to_end_perf_autotvm(mod["main"], params, args.target, shape_dict,
-    #                                                                 True, args.network, args.hw, args.batch_size)
-    # print(f"[{args.network}] Performance of Ours on {args.hw} (mean, std) = ({mean_perf:.4f}+-{std_perf:.4f})")
+    # Assign build target based on a given hw
+    args.target = get_build_target(args.hw)
+    mean_perf, std_perf, mod_ours = measure_end_to_end_perf_autotvm(mod["main"], params, args.target, shape_dict,
+                                                                    True, args.network, args.hw, args.batch_size)
+    print(f"[{args.network}] Performance of Ours on {args.hw} (mean, std) = ({mean_perf:.4f}+-{std_perf:.4f})")
 
-    mean_perf, std_perf, mod_cud = measure_end_to_end_perf_cudnn(mod["main"], params, args.target, shape_dict,
-                                                                 False, args.network, args.hw, args.batch_size)
-
+    # mean_perf, std_perf, mod_cud = measure_end_to_end_perf_cudnn(mod["main"], params, args.target, shape_dict,
+    #                                                              False, args.network, args.hw, args.batch_size)
+    # print(f"[{args.network}] Performance of CuDNN on {args.hw} (mean, std) = ({mean_perf:.4f}+-{std_perf:.4f})")
+    #
     # mean_perf, std_perf, mod_trt = measure_end_to_end_perf_tensorrt(mod, params, args.target, shape_dict, False)
     # print(f"[{args.network}] Performance of TensorRT on {args.hw} (mean, std) = ({mean_perf:.4f}+-{std_perf:.4f})")
 
     mean_perf, std_perf, mod_tvm = measure_end_to_end_perf_autotvm(mod["main"], params, args.target, shape_dict,
                                                                    False, args.network, args.hw, args.batch_size)
     print(f"[{args.network}] Performance of AutoTVM on {args.hw} (mean, std) = ({mean_perf:.4f}+-{std_perf:.4f})")
-
-    # print(f"[{args.network}] Performance of AutoTVM+CuDNN on {args.hw} (mean, std) = ({mean_perf:.4f}+-{std_perf:.4f})")
 
     # mean_perf, std_perf = measure_end_to_end_perf_autosch(mod["main"], params, 'cuda', shape_dict, False)
     # print(f"[AutoSCH] Performance of {args.network} (mean, std) = ({mean_perf:.4f}+-{std_perf:.4f})")

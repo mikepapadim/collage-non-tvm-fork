@@ -55,7 +55,7 @@ int NEW_BACKEND_GROUP_ID_EXT_COMPILER = 20000000;
 
 template <typename T>
 void UpdateBackendWithNewGroup(tvm::relay::Expr op) {
-  std::string new_backend = std::to_string(NEW_BACKEND_GROUP_ID++) + "-tvmgpu-autotvm";
+  std::string new_backend = std::to_string(NEW_BACKEND_GROUP_ID++) + "-autotvm";
   op.as_non_const<T>()->backend = new_backend;
 }
 
@@ -297,7 +297,7 @@ class Partitioner : public MixedModeMutator {
 
     // Warning(@Soo)
     // This is kind of hacky; we exploit the fact that field[0] is always like
-    // e.g., CallNode(Op(nn.relu), 3-tvmgpu-autotvm_relu, ...
+    // e.g., CallNode(Op(nn.relu), 3-autotvm_relu, ...
     String region_backend = GetBackend(fields[0]);
 
     Array<Var> params;

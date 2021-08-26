@@ -2,6 +2,7 @@ from tvm.relay.expr_functor import ExprVisitor
 from collections import defaultdict
 from ..backend_operator.utils import *
 from ..backend_operator.op_type import *
+from ..backend_operator.target import *
 from tvm.ir import Op
 import copy
 from enum import IntEnum
@@ -65,10 +66,11 @@ into optimized_match (Key: expression / Value: annotation (group_id + op_name))
 """
 
 class OpStateToMatchTranslator():
-    def __init__(self, optimized_match, group_id_to_exprs_anno):
+    def __init__(self, optimized_match, group_id_to_exprs_anno, hw_name):
         self.optimized_match = optimized_match
         self.group_id_to_exprs_anno = group_id_to_exprs_anno
         self.state_id_to_group_id = self.get_valid_op_state_by_filtering()
+        self.graph_opt_backend_name = get_graph_level_opt_backend_name(hw_name)
 
     def is_valid_ext_compiler_op(self, expr):
         is_not_valid = False
@@ -132,7 +134,7 @@ class OpStateToMatchTranslator():
     def gen_trt_annotation(self, anno):
         group_id = int(get_group_id_from_backend_op_annotation(anno))
         op_name = get_op_name_from_backend_op_annotation(anno)
-        backend_name = 'tensorrt'
+        backend_name = self.graph_opt_backend_name
 
         return f"{group_id}-{backend_name}_{op_name}"
 

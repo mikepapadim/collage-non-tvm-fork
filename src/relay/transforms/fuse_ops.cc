@@ -77,7 +77,14 @@ namespace tvm {
   - CommitFuse: mark all the nodes between source and post-dominator as the same group.
   - We use an Union-Find data structure to manage the groups.
 */
-    using support::LinkedList;
+    int NEW_BACKEND_GROUP_ID_FUSE_PASS = 30000000;
+    template <typename T>
+    void UpdateBackendWithNewGroup(tvm::relay::Expr op) {
+      std::string new_backend = std::to_string(NEW_BACKEND_GROUP_ID_FUSE_PASS++) + "-autotvm";
+      op.as_non_const<T>()->backend = new_backend;
+    }
+
+  using support::LinkedList;
     using support::LinkNode;
 
     constexpr uint32_t kMaxFusedOps = 256;
@@ -97,7 +104,7 @@ namespace tvm {
       /*! \brief The backend operator name */
       std::string backend_op_name;
 
-      // Example pair_str: "0-tvmgpu-no-tuning_batchflatten"
+      // Example pair_str: "0-tvm-default_batchflatten"
       // First number before '-' is the group id
       GroupIdOpNamePair(const std::string pair_str) {
         std::string delimiter = "-";
@@ -1056,7 +1063,7 @@ namespace tvm {
         }
         // The following line can be used for debug.
         auto ret = this->Mutate(body);
-        //this->DebugDumpGroup(ret);
+//        this->DebugDumpGroup(ret);
         return ret;
       }
 
@@ -1432,9 +1439,25 @@ namespace tvm {
             if (const OpNode* op_node = op->op.as<OpNode>()) {
               if (op_node->name == "expand_dims") {
                 MutateBackendCopy(GetRef<Expr>(op), parent_backend_);
+              } else if (op_node->name == "layout_transform") {
+                if (parent_backend_.operator std::string().compare("default") == 0) {
+                  // If layout_transform is a parent of Call, then we shouldn't fuse it with
+                  // the following Call function; that's what TVM does.
+                  // It is also faster without fusion.
+                  UpdateBackendWithNewGroup<CallNode>(GetRef<Expr>(op));
+                  // We can safely assume that the input of layout transformation is always call node
+//                  const CallNode* child_call = op->args[0].as<CallNode>();
+//                  auto child_backend = child_call->backend;
+//                  MutateBackendCopy(GetRef<Expr>(op), child_backend);
+                } else {
+                  // In one convolution test, it seems that fusion is slower than non-fusion case.
+                  UpdateBackendWithNewGroup<CallNode>(GetRef<Expr>(op));
+//                  MutateBackendCopy(GetRef<Expr>(op), parent_backend_);
+                }
               } else {
-                ICHECK(0) << "Unexpected operator type with the backend of default"
-                          << "It is likely that this op was changed in AlterOpLayout";
+                  ICHECK(0) << "Unexpected operator type (" << op_node->name << ") "
+                            << "with the backend of default"
+                            << "It is likely that this op was changed in AlterOpLayout";
               }
             }
           }

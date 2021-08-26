@@ -58,7 +58,7 @@ class EvolutionarySearcher:
         self.net_name = net_name
         self.hw_name = hw_name
         self.batch_size = batch_size
-        self.target_str = 'cuda'
+        self.target_str = get_build_target(hw_name)
 
         self.mod, self.params, self.shape_dict, _ = get_network_from_torch(net_name, batch_size)
         # self.mod, self.params = get_network_from_relay(net_name, 1)
@@ -419,7 +419,7 @@ class EvolutionarySearcher:
             self.save_time_perf_log(time_perf_dic, total_search_time, best_perf)
 
             # End the program if the time passes;
-            n_hours = 6
+            n_hours = 3 # It was 6 before; however, 3 is enough.
             if total_search_time > n_hours * 3600:
                 printe(f"It exceeds search time limit ({n_hours} hrs), so it stops.")
                 break

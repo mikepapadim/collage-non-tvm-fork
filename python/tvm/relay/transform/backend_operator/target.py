@@ -32,6 +32,10 @@ NUM_REPEATS_E2E = 3
 NUM_MEASUREMENTS_PER_REPEAT_E2E = 20
 OPT_LEVEL = OptLevel(3)
 EXTERNAL_COMPILERS = ['tensorrt']
+# XEON_BUILD_TARGET = 'llvm'
+XEON_BUILD_TARGET = 'llvm -mcpu=skylake-avx512'
+NVIDIA_GPUS = ['rtx2070', 'rtx3070', 'jetson']
+INTEL_CPUS = ['xeon']
 
 cur_dir_path = Path(__file__).parent.absolute()
 LOG_PATH = f"{cur_dir_path}/../logs"
@@ -59,6 +63,44 @@ measure
 
 def get_autotvm_log_path(hw_name):
     return f"{LOG_PATH}/autotvm_ops_{hw_name}.json"
+
+def get_build_target(hw_name):
+    build_target = None
+
+    if hw_name in NVIDIA_GPUS:
+        build_target = 'cuda'
+    elif hw_name in INTEL_CPUS:
+        build_target = XEON_BUILD_TARGET
+    else:
+        raise Exception(f"{hw_name} is unexpected hw, we need to set build target for this hw.")
+
+    return build_target
+
+def get_backends(hw_name):
+    backends = []
+
+    if hw_name in NVIDIA_GPUS:
+        backends = [Target.AUTOTVM, Target.CUDNN, Target.TENSORRT, Target.CUBLAS]
+    elif hw_name in INTEL_CPUS:
+        backends = [Target.AUTOTVM, Target.ONEDNN]
+    else:
+        raise Exception(f"{hw_name} is unexpected hw, we need to set default backends for this hw.")
+
+    return backends
+
+# For example, it is TensorRT for NVIDIA GPUs, and OpenVINO (For now, OneDNN) for Intel CPU.
+def get_graph_level_opt_backend_name(hw_name):
+    backend_name = ""
+
+    if hw_name in NVIDIA_GPUS:
+        backend_name = Target.TENSORRT.name()
+    elif hw_name in INTEL_CPUS:
+        backend_name = Target.ONEDNN.name()
+    else:
+        raise Exception(f"{hw_name} is unexpected hw, we need to set default backends for this hw.")
+
+    return backend_name
+
 
 def measure(ftimer, is_net, *args):
     # Dummy run to check whether it runs correctly e.g., segfault due to large workspace
@@ -96,27 +138,29 @@ def measure(ftimer, is_net, *args):
 # (id, parameter, name)
 class Target(Enum):
     # NVIDIA GPU
-    CUDNN = (1, "cuda -libs=cudnn", "cudnn")
-    TENSORRT = (2, "tensorrt", "tensorrt")
-    CUBLAS = (3, "cuda -libs=cublas", "cublas")
-    TVM_GPU_NO_TUNING = (4, "cuda", "tvmgpu-no-tuning")
-    TVM_GPU_AUTOTVM = (5, "cuda", "tvmgpu-autotvm")
-    TVM_GPU_AUTOSCH = (6, "cuda", "tvmgpu-autosch")
+    CUDNN = (1, "cudnn")
+    TENSORRT = (2, "tensorrt")
+    CUBLAS = (3, "cublas")
+    TVM_DEFAULT = (4, "tvm-default")
+    AUTOTVM = (5, "autotvm")
+    AUTOSCH = (6, "autosch")
 
     # Intel CPU
-    TVM_CPU_AUTOTVM = (7, "llvm", "tvmcpu-autotvm")
-#     ONEDNN = (8, "onednn", "onednn") # not implemented
-#     TENSORFLOWXLA = (9, "tensorflowxla") # not implemented
+    ONEDNN = (7, "onednn") # not implemented
+#     TENSORFLOWXLA = (8, "tensorflowxla") # not implemented
 
-    def __str__(self):
-        return self.value[1]
+    def id(self):
+        return self.value[0]
 
     def name(self):
-        return self.value[2]
+        return self.value[1]
+
+    def __str__(self):
+        return self.name()
 
 target_id_to_target = {}
 for target in Target:
-    target_id_to_target[target.value[0]] = target
+    target_id_to_target[target.id()] = target
 
 class TargetCostFunc:
     def __init__(self):
@@ -144,7 +188,7 @@ class TVMSubGraphCostFunc_AutoSch(TargetCostFunc):
 
         # AutoScheduler codes
         # FIXME(@Soo): We should redesign Target class to deal with new TVM build interface
-        target_str = target.__str__()
+        target_str = get_build_target(hw_name)
         with auto_scheduler.ApplyHistoryBest(AUTOSCH_LOG):
             with tvm.transform.PassContext(opt_level=OPT_LEVEL.get(), config={"relay.backend.use_auto_scheduler": True}):
                 lib = relay.build(net, target_str, params=params)
@@ -180,11 +224,11 @@ class TVMSubGraphCostFunc_AutoTVM(TargetCostFunc):
         # AutoTVM codes
         # Compile kernels with history best records
         with autotvm.apply_history_best(get_autotvm_log_path(hw_name)):
-            target_str = target.__str__()
+            target_str = get_build_target(hw_name)
             with tvm.transform.PassContext(opt_level=OPT_LEVEL.get()):
                 lib = relay.build_module.build(net, target=target_str, params=params)
 
-            dev = tvm.device(str(target), 0)
+            dev = tvm.device(target_str, 0)
             module = runtime.GraphModule(lib["default"](dev))
 
             # Setup execution
@@ -217,12 +261,12 @@ class TVMSubGraphCostFunc_OpMeasurement(TargetCostFunc):
         net, params = testing.create_workload(expr_func)
 
         # Build the subgraph
-        target_str = target.__str__()
+        target_str = get_build_target(hw_name)
 
         with tvm.transform.PassContext(opt_level=OPT_LEVEL.get()):
             lib = relay.build_module.build(net, target=target_str, params=params)
 
-        dev = tvm.device(str(target), 0)
+        dev = tvm.device(target_str, 0)
         module = runtime.GraphModule(lib["default"](dev))
 
         # Setup execution
@@ -269,9 +313,9 @@ class TensorRTCostFunc(TargetCostFunc):
         #     print(name, mod["main"])
         #     sys.exit(0)
 
-        target = "cuda"
+        target_str = get_build_target(hw_name)
         with tvm.transform.PassContext(opt_level=OPT_LEVEL.get(), config={'relay.ext.tensorrt.options': config}):
-            lib = relay.build(mod, target=target, params=params)
+            lib = relay.build(mod, target=target_str, params=params)
 
         lib.export_library('compiled.so')
 
@@ -297,13 +341,13 @@ For now, we don't use it for TensorRT just to be safe. There shouldn't be an iss
 
 target_to_cost_func = {
     #GPU
-    Target.TVM_GPU_AUTOTVM: TVMSubGraphCostFunc_AutoTVM(),
-    Target.TVM_GPU_AUTOSCH: TVMSubGraphCostFunc_AutoSch(),
+    Target.AUTOTVM: TVMSubGraphCostFunc_AutoTVM(),
+    Target.AUTOSCH: TVMSubGraphCostFunc_AutoSch(),
     #Target.CUDNN: CuDNNCostFunc(),
     Target.TENSORRT: TensorRTCostFunc(),
     Target.CUDNN: TVMSubGraphCostFunc_OpMeasurement(),
     Target.CUBLAS: TVMSubGraphCostFunc_OpMeasurement(),
-    Target.TVM_GPU_NO_TUNING: TVMSubGraphCostFunc_OpMeasurement(),
+    Target.TVM_DEFAULT: TVMSubGraphCostFunc_OpMeasurement(),
 
     # CPU
     # Target.TVM_CPU: TVMSubGraphCostFunc_NoTuning(),
