@@ -691,7 +691,6 @@ namespace tvm {
       std::unordered_map<int, IndexedForwardGraph::Node*> b_op_to_last_node_;
       /*! \brief Whether current op is from tensorrt or not to allow wider variety of fusion */
       bool is_tensorrt_op_ = false;
-      bool is_custom_fusion_pass_ = false;
 
 
       /*! \brief The internal arena for temporary space. */
@@ -700,6 +699,8 @@ namespace tvm {
       int opt_level_;
       /*! \brief The maximum number of operations in one fused function */
       size_t max_fuse_depth_;
+      /*! \brief Whether it is our custom fusion pass or not */
+      bool is_custom_fusion_pass_ = false;
       /*! \brief The internal groups. */
       std::vector<Group*> groups_;
       /*! \brief internal field used for deduplication */
@@ -914,10 +915,10 @@ namespace tvm {
         }
 
 //        std::cerr << "------------------------------------" << std::endl;
-        for (size_t nid = 0; nid < groups_.size(); ++nid) {
-          Group* group_node = groups_[nid];
+//        for (size_t nid = 0; nid < groups_.size(); ++nid) {
+//          Group* group_node = groups_[nid];
 //          std::cerr << "\tGroup " << nid << " (root_group): " << GetRef<ObjectRef>(group_node->FindRoot()->root_ref) << std::endl;
-        }
+//        }
       }
 
       // execute the fusion algorithm.

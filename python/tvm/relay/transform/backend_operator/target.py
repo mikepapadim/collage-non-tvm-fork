@@ -16,8 +16,9 @@ from tvm.contrib import graph_executor as runtime
 from ..utility.debug_helper import printe
 
 # only collect results whose standard deviation is below this
-MAX_STANDARD_DEVIATION = 5E-04
-# MAX_STANDARD_DEVIATION = 5E-03
+MAX_STD_MEASURE_RTX = 5E-04
+MAX_STD_MEASURE_XEON = 0.005 # 0.0025
+# MAX_STD_MEASURE_GPU = 5E-03
 
 # This is for operator measurement
 # NUM_REPEATS = 1 # Debug / This lead to the best end-to-end perf of DP on ResNet-50
@@ -65,8 +66,6 @@ def get_autotvm_log_path(hw_name):
     return f"{LOG_PATH}/autotvm_ops_{hw_name}.json"
 
 def get_build_target(hw_name):
-    build_target = None
-
     if hw_name in NVIDIA_GPUS:
         build_target = 'cuda'
     elif hw_name in INTEL_CPUS:
@@ -77,8 +76,6 @@ def get_build_target(hw_name):
     return build_target
 
 def get_backends(hw_name):
-    backends = []
-
     if hw_name in NVIDIA_GPUS:
         backends = [Target.AUTOTVM, Target.CUDNN, Target.TENSORRT, Target.CUBLAS]
     elif hw_name in INTEL_CPUS:
@@ -90,8 +87,6 @@ def get_backends(hw_name):
 
 # For example, it is TensorRT for NVIDIA GPUs, and OpenVINO (For now, OneDNN) for Intel CPU.
 def get_graph_level_opt_backend_name(hw_name):
-    backend_name = ""
-
     if hw_name in NVIDIA_GPUS:
         backend_name = Target.TENSORRT.name()
     elif hw_name in INTEL_CPUS:
@@ -101,8 +96,17 @@ def get_graph_level_opt_backend_name(hw_name):
 
     return backend_name
 
+def get_max_std_for_measurement(hw_name, mean_perf):
+    if hw_name in NVIDIA_GPUS:
+        max_std = max(MAX_STD_MEASURE_RTX, MAX_STD_MEASURE_RTX*mean_perf)
+    elif hw_name in INTEL_CPUS:
+        max_std = max(MAX_STD_MEASURE_XEON, MAX_STD_MEASURE_XEON*mean_perf)
+    else:
+        raise Exception(f"{hw_name} is unexpected hw, we need to set default backends for this hw.")
 
-def measure(ftimer, is_net, *args):
+    return max_std
+
+def measure(ftimer, is_net, hw_name, *args):
     # Dummy run to check whether it runs correctly e.g., segfault due to large workspace
     import sys
 
@@ -126,10 +130,10 @@ def measure(ftimer, is_net, *args):
 
         # If mean_perf is more than 1 ms, then we should reduce threshold not to take too long,
         # e.g., BERT or Conv3D ops
-        # Otherwise, we keep MAX_STANDARD_DEVIATION no matter how small the mean_perf is.
-        # MAX_STANDARD_DEVIATION much of variance shouldn't matter anyway for end-to-end perf.
-        threshold = max(MAX_STANDARD_DEVIATION, MAX_STANDARD_DEVIATION*mean_perf)
-        # if is_net or std_perf <= MAX_STANDARD_DEVIATION:
+        # Otherwise, we keep MAX_STD_MEASURE_RTX no matter how small the mean_perf is.
+        # MAX_STD_MEASURE_RTX much of variance shouldn't matter anyway for end-to-end perf.
+        threshold = get_max_std_for_measurement(hw_name, mean_perf)
+        # if is_net or std_perf <= MAX_STD_MEASURE_RTX:
         if std_perf <= threshold:
             break
 
@@ -203,7 +207,7 @@ class TVMSubGraphCostFunc_AutoSch(TargetCostFunc):
         # module.set_input("data", data)
         ftimer = module.module.time_evaluator("run", dev, number=NUM_MEASUREMENTS_PER_REPEAT, repeat=NUM_REPEATS)
 
-        return measure(ftimer, is_net=False)
+        return measure(ftimer, False, hw_name)
 
 class TVMSubGraphCostFunc_AutoTVM(TargetCostFunc):
     def __init__(self):
@@ -237,7 +241,8 @@ class TVMSubGraphCostFunc_AutoTVM(TargetCostFunc):
             # data = np.random.uniform(-1, 1, size=data_shape).astype("float32")
             # module.set_input("data", data)
             ftimer = module.module.time_evaluator("run", dev, number=NUM_MEASUREMENTS_PER_REPEAT, repeat=NUM_REPEATS)
-        return measure(ftimer, is_net=False)
+
+        return measure(ftimer, False, hw_name)
 
 class TVMSubGraphCostFunc_OpMeasurement(TargetCostFunc):
     def __init__(self):
@@ -257,6 +262,7 @@ class TVMSubGraphCostFunc_OpMeasurement(TargetCostFunc):
         default_op_group_id = 0
         annotation = create_backend_op_annotation(default_op_group_id, name)
         expr_func = expr_func.with_attr(BACKEND_OP_ATTR, annotation)
+        expr_func = expr_func.with_attr(HW_FUNC_ATTR, hw_name)
 
         net, params = testing.create_workload(expr_func)
 
@@ -276,7 +282,7 @@ class TVMSubGraphCostFunc_OpMeasurement(TargetCostFunc):
         # module.set_input("data", data)
         ftimer = module.module.time_evaluator("run", dev, number=NUM_MEASUREMENTS_PER_REPEAT, repeat=NUM_REPEATS)
 
-        return measure(ftimer, is_net=False)
+        return measure(ftimer, False, hw_name)
 
 # def get_conv_attr(expr):
 #     assert (is_call_node(expr))
@@ -328,7 +334,8 @@ class TensorRTCostFunc(TargetCostFunc):
         # input_data = np.random.uniform(0, 1, input_shape).astype("float32")
         # module.set_input("data", input_data)
         ftimer = module.module.time_evaluator("run", dev, number=NUM_MEASUREMENTS_PER_REPEAT, repeat=NUM_REPEATS)
-        measure_info = measure(ftimer, is_net=False)
+
+        measure_info = measure(ftimer, False, hw_name)
         return measure_info
 
 """

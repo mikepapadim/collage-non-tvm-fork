@@ -1,7 +1,6 @@
-a = "abc"
-b = "abc"
-print(a==b)
-
+if 0 == 0:
+    a = 1
+print(a)
 # class BackendOp(object):
 #   def __init__(self, backend, pattern, constraint):
 #

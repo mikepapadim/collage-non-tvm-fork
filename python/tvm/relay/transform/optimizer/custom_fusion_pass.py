@@ -73,7 +73,7 @@ def measure_end_to_end_user_defined(net, params, shape_dict, target_str, net_nam
 
         ftimer = module.module.time_evaluator("run", dev, number=NUM_MEASUREMENTS_PER_REPEAT, repeat=NUM_REPEATS)
 
-    perf, std = measure(ftimer, is_net=True)
+    perf, std = measure(ftimer, True, hw_name)
 
     #del dev
     #del lib

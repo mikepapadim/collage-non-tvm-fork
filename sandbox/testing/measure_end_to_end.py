@@ -33,7 +33,7 @@ def setup_attrs_single_backend_baseline(net, net_name, hw_name, batch_size, sing
 
     return net
 
-def measure_end_to_end_perf_tensorrt(mod, params, target_str, shape_dict, is_ours):
+def measure_end_to_end_perf_tensorrt(mod, params, target_str, shape_dict, hw_name):
     from tvm.relay.op.contrib.tensorrt import partition_for_tensorrt
     mod, config = partition_for_tensorrt(mod, params)
 
@@ -52,7 +52,7 @@ def measure_end_to_end_perf_tensorrt(mod, params, target_str, shape_dict, is_our
         module.set_input(input_name, input_data)
 
     ftimer = module.module.time_evaluator("run", dev, number=NUM_MEASUREMENTS_PER_REPEAT_E2E, repeat=NUM_REPEATS_E2E)
-    mean_perf, std_perf = measure(ftimer, is_net=False)
+    mean_perf, std_perf = measure(ftimer, True, hw_name)
 
     return mean_perf, std_perf, module
 
@@ -72,7 +72,7 @@ def build_and_measure_autotvm(net, params, target_str, shape_dict, hw_name):
             module.set_input(input_name, input_data)
 
     ftimer = module.module.time_evaluator("run", dev, number=NUM_MEASUREMENTS_PER_REPEAT_E2E, repeat=NUM_REPEATS_E2E)
-    mean_perf, std_perf = measure(ftimer, is_net=False)
+    mean_perf, std_perf = measure(ftimer, True, hw_name)
 
     return mean_perf, std_perf, module
 
@@ -92,7 +92,7 @@ def measure_end_to_end_perf_cudnn(net, params, target_str, shape_dict, is_ours, 
     return build_and_measure_autotvm(net, params, target_str, shape_dict, hw_name)
 
 
-def measure_end_to_end_perf_autosch(net, params, target_str, shape_dict, is_ours):
+def measure_end_to_end_perf_autosch(net, params, target_str, shape_dict, is_ours, hw_name):
     assert is_function_node(net)
     if is_ours:
         net = net.with_attr("CustomFusionPass", CustomFusionPass.DP)
@@ -111,7 +111,7 @@ def measure_end_to_end_perf_autosch(net, params, target_str, shape_dict, is_ours
         module.set_input(input_name, input_data)
 
     ftimer = module.module.time_evaluator("run", dev, number=NUM_MEASUREMENTS_PER_REPEAT_E2E, repeat=NUM_REPEATS_E2E)
-    mean_perf, std_perf = measure(ftimer, is_net=False)
+    mean_perf, std_perf = measure(ftimer, True, hw_name)
 
     return mean_perf, std_perf, module
 
@@ -213,14 +213,14 @@ if __name__ == "__main__":
     #                                                              False, args.network, args.hw, args.batch_size)
     # print(f"[{args.network}] Performance of CuDNN on {args.hw} (mean, std) = ({mean_perf:.4f}+-{std_perf:.4f})")
     #
-    # mean_perf, std_perf, mod_trt = measure_end_to_end_perf_tensorrt(mod, params, args.target, shape_dict, False)
+    # mean_perf, std_perf, mod_trt = measure_end_to_end_perf_tensorrt(mod, params, args.target, shape_dict, args.hw)
     # print(f"[{args.network}] Performance of TensorRT on {args.hw} (mean, std) = ({mean_perf:.4f}+-{std_perf:.4f})")
 
     mean_perf, std_perf, mod_tvm = measure_end_to_end_perf_autotvm(mod["main"], params, args.target, shape_dict,
                                                                    False, args.network, args.hw, args.batch_size)
     print(f"[{args.network}] Performance of AutoTVM on {args.hw} (mean, std) = ({mean_perf:.4f}+-{std_perf:.4f})")
 
-    # mean_perf, std_perf = measure_end_to_end_perf_autosch(mod["main"], params, 'cuda', shape_dict, False)
+    # mean_perf, std_perf = measure_end_to_end_perf_autosch(mod["main"], params, 'cuda', shape_dict, False, args.hw)
     # print(f"[AutoSCH] Performance of {args.network} (mean, std) = ({mean_perf:.4f}+-{std_perf:.4f})")
 
     # verify_network_output(mod["main"], shape_dict, mod_tvm, mod_ours)
