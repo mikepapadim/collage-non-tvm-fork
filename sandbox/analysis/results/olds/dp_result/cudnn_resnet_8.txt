@@ -1,0 +1,28 @@
+ResNet-8 / CuDNN
+
+Graph : bn-conv-bn-relu-conv-bn-relu-conv-add-bn-relu-conv-bn-relu-conv-add-bn-relu-conv-bn-relu-conv-add-bn-relu-global_avg_pool-flatten-dense-bias_add-softmax- (hash: 94385116648032)
+Total Cost:0.17
+
+Matched backend ops (op, cost)
+(cudnn_bn, 0.0025)
+(cudnn_conv2d, 0.014)
+(cudnn_bn+relu, 0.0025)
+(cudnn_conv2d, 0.014)
+(cudnn_bn+relu, 0.0025)
+(cudnn_conv2d, 0.014)
+(cudnn_add, 0.0024)
+(cudnn_bn+relu, 0.0025)
+(cudnn_conv2d, 0.014)
+(cudnn_bn+relu, 0.0025)
+(cudnn_conv2d, 0.019)
+(cudnn_add, 0.0024)
+(cudnn_bn+relu, 0.0025)
+(cudnn_conv2d+bn+relu, 0.021)
+(cudnn_conv2d, 0.034)
+(cudnn_add, 0.0025)
+(cudnn_bn+relu, 0.0026)
+(cudnn_globalavgpool2d, 0.0024)
+(cudnn_batchflatten, 0.0024)
+(cudnn_dense, 0.0041)
+(cudnn_biasadd, 0.0025)
+(cudnn_softmax, 0.0033)

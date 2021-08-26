@@ -1,0 +1,411 @@
+digraph {
+	rankdir=BT
+	0 [label="input0 (0):
+Tensor[(1, 64, 56, 56), float32]" shape=rectangle]
+	1 [label="Constant (1):
+Tensor[(128, 64, 1, 1), float32]" shape=rectangle]
+	2 [label="Call (2)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	0 -> 2
+	1 -> 2
+	3 [label="Call (3)(op=nn.relu)" color=greenyellow shape=ellipse style=filled]
+	2 -> 3
+	4 [label="Constant (4):
+Tensor[(128, 4, 3, 3), float32]" shape=rectangle]
+	5 [label="Call (5)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	3 -> 5
+	4 -> 5
+	6 [label="Call (6)(op=nn.relu)" color=greenyellow shape=ellipse style=filled]
+	5 -> 6
+	7 [label="Constant (7):
+Tensor[(256, 128, 1, 1), float32]" shape=rectangle]
+	8 [label="Call (8)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	6 -> 8
+	7 -> 8
+	9 [label="Constant (9):
+Tensor[(256, 64, 1, 1), float32]" shape=rectangle]
+	10 [label="Call (10)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	0 -> 10
+	9 -> 10
+	11 [label="Call (11)(op=add)" color=greenyellow shape=ellipse style=filled]
+	8 -> 11
+	10 -> 11
+	12 [label="Call (12)(op=nn.relu)" color=greenyellow shape=ellipse style=filled]
+	11 -> 12
+	13 [label="Constant (13):
+Tensor[(128, 256, 1, 1), float32]" shape=rectangle]
+	14 [label="Call (14)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	12 -> 14
+	13 -> 14
+	15 [label="Call (15)(op=nn.relu)" color=greenyellow shape=ellipse style=filled]
+	14 -> 15
+	16 [label="Constant (16):
+Tensor[(128, 4, 3, 3), float32]" shape=rectangle]
+	17 [label="Call (17)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	15 -> 17
+	16 -> 17
+	18 [label="Call (18)(op=nn.relu)" color=greenyellow shape=ellipse style=filled]
+	17 -> 18
+	19 [label="Constant (19):
+Tensor[(256, 128, 1, 1), float32]" shape=rectangle]
+	20 [label="Call (20)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	18 -> 20
+	19 -> 20
+	21 [label="Call (21)(op=add)" color=greenyellow shape=ellipse style=filled]
+	20 -> 21
+	12 -> 21
+	22 [label="Call (22)(op=nn.relu)" color=greenyellow shape=ellipse style=filled]
+	21 -> 22
+	23 [label="Constant (23):
+Tensor[(128, 256, 1, 1), float32]" shape=rectangle]
+	24 [label="Call (24)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	22 -> 24
+	23 -> 24
+	25 [label="Call (25)(op=nn.relu)" color=greenyellow shape=ellipse style=filled]
+	24 -> 25
+	26 [label="Constant (26):
+Tensor[(128, 4, 3, 3), float32]" shape=rectangle]
+	27 [label="Call (27)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	25 -> 27
+	26 -> 27
+	28 [label="Call (28)(op=nn.relu)" color=greenyellow shape=ellipse style=filled]
+	27 -> 28
+	29 [label="Constant (29):
+Tensor[(256, 128, 1, 1), float32]" shape=rectangle]
+	30 [label="Call (30)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	28 -> 30
+	29 -> 30
+	31 [label="Call (31)(op=add)" color=greenyellow shape=ellipse style=filled]
+	30 -> 31
+	22 -> 31
+	32 [label="Call (32)(op=nn.relu)" color=greenyellow shape=ellipse style=filled]
+	31 -> 32
+	33 [label="Constant (33):
+Tensor[(256, 256, 1, 1), float32]" shape=rectangle]
+	34 [label="Call (34)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	32 -> 34
+	33 -> 34
+	35 [label="Call (35)(op=nn.relu)" color=greenyellow shape=ellipse style=filled]
+	34 -> 35
+	36 [label="Constant (36):
+Tensor[(256, 8, 3, 3), float32]" shape=rectangle]
+	37 [label="Call (37)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	35 -> 37
+	36 -> 37
+	38 [label="Call (38)(op=nn.relu)" color=greenyellow shape=ellipse style=filled]
+	37 -> 38
+	39 [label="Constant (39):
+Tensor[(512, 256, 1, 1), float32]" shape=rectangle]
+	40 [label="Call (40)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	38 -> 40
+	39 -> 40
+	41 [label="Constant (41):
+Tensor[(512, 256, 1, 1), float32]" shape=rectangle]
+	42 [label="Call (42)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	32 -> 42
+	41 -> 42
+	43 [label="Call (43)(op=add)" color=greenyellow shape=ellipse style=filled]
+	40 -> 43
+	42 -> 43
+	44 [label="Call (44)(op=nn.relu)" color=greenyellow shape=ellipse style=filled]
+	43 -> 44
+	45 [label="Constant (45):
+Tensor[(256, 512, 1, 1), float32]" shape=rectangle]
+	46 [label="Call (46)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	44 -> 46
+	45 -> 46
+	47 [label="Call (47)(op=nn.relu)" color=greenyellow shape=ellipse style=filled]
+	46 -> 47
+	48 [label="Constant (48):
+Tensor[(256, 8, 3, 3), float32]" shape=rectangle]
+	49 [label="Call (49)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	47 -> 49
+	48 -> 49
+	50 [label="Call (50)(op=nn.relu)" color=greenyellow shape=ellipse style=filled]
+	49 -> 50
+	51 [label="Constant (51):
+Tensor[(512, 256, 1, 1), float32]" shape=rectangle]
+	52 [label="Call (52)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	50 -> 52
+	51 -> 52
+	53 [label="Call (53)(op=add)" color=greenyellow shape=ellipse style=filled]
+	52 -> 53
+	44 -> 53
+	54 [label="Call (54)(op=nn.relu)" color=greenyellow shape=ellipse style=filled]
+	53 -> 54
+	55 [label="Constant (55):
+Tensor[(256, 512, 1, 1), float32]" shape=rectangle]
+	56 [label="Call (56)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	54 -> 56
+	55 -> 56
+	57 [label="Call (57)(op=nn.relu)" color=greenyellow shape=ellipse style=filled]
+	56 -> 57
+	58 [label="Constant (58):
+Tensor[(256, 8, 3, 3), float32]" shape=rectangle]
+	59 [label="Call (59)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	57 -> 59
+	58 -> 59
+	60 [label="Call (60)(op=nn.relu)" color=greenyellow shape=ellipse style=filled]
+	59 -> 60
+	61 [label="Constant (61):
+Tensor[(512, 256, 1, 1), float32]" shape=rectangle]
+	62 [label="Call (62)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	60 -> 62
+	61 -> 62
+	63 [label="Call (63)(op=add)" color=greenyellow shape=ellipse style=filled]
+	62 -> 63
+	54 -> 63
+	64 [label="Call (64)(op=nn.relu)" color=greenyellow shape=ellipse style=filled]
+	63 -> 64
+	65 [label="Constant (65):
+Tensor[(256, 512, 1, 1), float32]" shape=rectangle]
+	66 [label="Call (66)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	64 -> 66
+	65 -> 66
+	67 [label="Call (67)(op=nn.relu)" color=greenyellow shape=ellipse style=filled]
+	66 -> 67
+	68 [label="Constant (68):
+Tensor[(256, 8, 3, 3), float32]" shape=rectangle]
+	69 [label="Call (69)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	67 -> 69
+	68 -> 69
+	70 [label="Call (70)(op=nn.relu)" color=greenyellow shape=ellipse style=filled]
+	69 -> 70
+	71 [label="Constant (71):
+Tensor[(512, 256, 1, 1), float32]" shape=rectangle]
+	72 [label="Call (72)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	70 -> 72
+	71 -> 72
+	73 [label="Call (73)(op=add)" color=greenyellow shape=ellipse style=filled]
+	72 -> 73
+	64 -> 73
+	74 [label="Call (74)(op=nn.relu)" color=greenyellow shape=ellipse style=filled]
+	73 -> 74
+	75 [label="Constant (75):
+Tensor[(512, 512, 1, 1), float32]" shape=rectangle]
+	76 [label="Call (76)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	74 -> 76
+	75 -> 76
+	77 [label="Call (77)(op=nn.relu)" color=greenyellow shape=ellipse style=filled]
+	76 -> 77
+	78 [label="Constant (78):
+Tensor[(512, 16, 3, 3), float32]" shape=rectangle]
+	79 [label="Call (79)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	77 -> 79
+	78 -> 79
+	80 [label="Call (80)(op=nn.relu)" color=greenyellow shape=ellipse style=filled]
+	79 -> 80
+	81 [label="Constant (81):
+Tensor[(1024, 512, 1, 1), float32]" shape=rectangle]
+	82 [label="Call (82)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	80 -> 82
+	81 -> 82
+	83 [label="Constant (83):
+Tensor[(1024, 512, 1, 1), float32]" shape=rectangle]
+	84 [label="Call (84)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	74 -> 84
+	83 -> 84
+	85 [label="Call (85)(op=add)" color=greenyellow shape=ellipse style=filled]
+	82 -> 85
+	84 -> 85
+	86 [label="Call (86)(op=nn.relu)" color=greenyellow shape=ellipse style=filled]
+	85 -> 86
+	87 [label="Constant (87):
+Tensor[(512, 1024, 1, 1), float32]" shape=rectangle]
+	88 [label="Call (88)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	86 -> 88
+	87 -> 88
+	89 [label="Call (89)(op=nn.relu)" color=greenyellow shape=ellipse style=filled]
+	88 -> 89
+	90 [label="Constant (90):
+Tensor[(512, 16, 3, 3), float32]" shape=rectangle]
+	91 [label="Call (91)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	89 -> 91
+	90 -> 91
+	92 [label="Call (92)(op=nn.relu)" color=greenyellow shape=ellipse style=filled]
+	91 -> 92
+	93 [label="Constant (93):
+Tensor[(1024, 512, 1, 1), float32]" shape=rectangle]
+	94 [label="Call (94)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	92 -> 94
+	93 -> 94
+	95 [label="Call (95)(op=add)" color=greenyellow shape=ellipse style=filled]
+	94 -> 95
+	86 -> 95
+	96 [label="Call (96)(op=nn.relu)" color=greenyellow shape=ellipse style=filled]
+	95 -> 96
+	97 [label="Constant (97):
+Tensor[(512, 1024, 1, 1), float32]" shape=rectangle]
+	98 [label="Call (98)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	96 -> 98
+	97 -> 98
+	99 [label="Call (99)(op=nn.relu)" color=greenyellow shape=ellipse style=filled]
+	98 -> 99
+	100 [label="Constant (100):
+Tensor[(512, 16, 3, 3), float32]" shape=rectangle]
+	101 [label="Call (101)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	99 -> 101
+	100 -> 101
+	102 [label="Call (102)(op=nn.relu)" color=greenyellow shape=ellipse style=filled]
+	101 -> 102
+	103 [label="Constant (103):
+Tensor[(1024, 512, 1, 1), float32]" shape=rectangle]
+	104 [label="Call (104)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	102 -> 104
+	103 -> 104
+	105 [label="Call (105)(op=add)" color=greenyellow shape=ellipse style=filled]
+	104 -> 105
+	96 -> 105
+	106 [label="Call (106)(op=nn.relu)" color=greenyellow shape=ellipse style=filled]
+	105 -> 106
+	107 [label="Constant (107):
+Tensor[(512, 1024, 1, 1), float32]" shape=rectangle]
+	108 [label="Call (108)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	106 -> 108
+	107 -> 108
+	109 [label="Call (109)(op=nn.relu)" color=greenyellow shape=ellipse style=filled]
+	108 -> 109
+	110 [label="Constant (110):
+Tensor[(512, 16, 3, 3), float32]" shape=rectangle]
+	111 [label="Call (111)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	109 -> 111
+	110 -> 111
+	112 [label="Call (112)(op=nn.relu)" color=greenyellow shape=ellipse style=filled]
+	111 -> 112
+	113 [label="Constant (113):
+Tensor[(1024, 512, 1, 1), float32]" shape=rectangle]
+	114 [label="Call (114)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	112 -> 114
+	113 -> 114
+	115 [label="Call (115)(op=add)" color=greenyellow shape=ellipse style=filled]
+	114 -> 115
+	106 -> 115
+	116 [label="Call (116)(op=nn.relu)" color=greenyellow shape=ellipse style=filled]
+	115 -> 116
+	117 [label="Constant (117):
+Tensor[(512, 1024, 1, 1), float32]" shape=rectangle]
+	118 [label="Call (118)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	116 -> 118
+	117 -> 118
+	119 [label="Call (119)(op=nn.relu)" color=greenyellow shape=ellipse style=filled]
+	118 -> 119
+	120 [label="Constant (120):
+Tensor[(512, 16, 3, 3), float32]" shape=rectangle]
+	121 [label="Call (121)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	119 -> 121
+	120 -> 121
+	122 [label="Call (122)(op=nn.relu)" color=greenyellow shape=ellipse style=filled]
+	121 -> 122
+	123 [label="Constant (123):
+Tensor[(1024, 512, 1, 1), float32]" shape=rectangle]
+	124 [label="Call (124)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	122 -> 124
+	123 -> 124
+	125 [label="Call (125)(op=add)" color=greenyellow shape=ellipse style=filled]
+	124 -> 125
+	116 -> 125
+	126 [label="Call (126)(op=nn.relu)" color=greenyellow shape=ellipse style=filled]
+	125 -> 126
+	127 [label="Constant (127):
+Tensor[(512, 1024, 1, 1), float32]" shape=rectangle]
+	128 [label="Call (128)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	126 -> 128
+	127 -> 128
+	129 [label="Call (129)(op=nn.relu)" color=greenyellow shape=ellipse style=filled]
+	128 -> 129
+	130 [label="Constant (130):
+Tensor[(512, 16, 3, 3), float32]" shape=rectangle]
+	131 [label="Call (131)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	129 -> 131
+	130 -> 131
+	132 [label="Call (132)(op=nn.relu)" color=greenyellow shape=ellipse style=filled]
+	131 -> 132
+	133 [label="Constant (133):
+Tensor[(1024, 512, 1, 1), float32]" shape=rectangle]
+	134 [label="Call (134)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	132 -> 134
+	133 -> 134
+	135 [label="Call (135)(op=add)" color=greenyellow shape=ellipse style=filled]
+	134 -> 135
+	126 -> 135
+	136 [label="Call (136)(op=nn.relu)" color=greenyellow shape=ellipse style=filled]
+	135 -> 136
+	137 [label="Constant (137):
+Tensor[(1024, 1024, 1, 1), float32]" shape=rectangle]
+	138 [label="Call (138)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	136 -> 138
+	137 -> 138
+	139 [label="Call (139)(op=nn.relu)" color=greenyellow shape=ellipse style=filled]
+	138 -> 139
+	140 [label="Constant (140):
+Tensor[(1024, 32, 3, 3), float32]" shape=rectangle]
+	141 [label="Call (141)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	139 -> 141
+	140 -> 141
+	142 [label="Call (142)(op=nn.relu)" color=greenyellow shape=ellipse style=filled]
+	141 -> 142
+	143 [label="Constant (143):
+Tensor[(2048, 1024, 1, 1), float32]" shape=rectangle]
+	144 [label="Call (144)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	142 -> 144
+	143 -> 144
+	145 [label="Constant (145):
+Tensor[(2048, 1024, 1, 1), float32]" shape=rectangle]
+	146 [label="Call (146)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	136 -> 146
+	145 -> 146
+	147 [label="Call (147)(op=add)" color=greenyellow shape=ellipse style=filled]
+	144 -> 147
+	146 -> 147
+	148 [label="Call (148)(op=nn.relu)" color=greenyellow shape=ellipse style=filled]
+	147 -> 148
+	149 [label="Constant (149):
+Tensor[(1024, 2048, 1, 1), float32]" shape=rectangle]
+	150 [label="Call (150)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	148 -> 150
+	149 -> 150
+	151 [label="Call (151)(op=nn.relu)" color=greenyellow shape=ellipse style=filled]
+	150 -> 151
+	152 [label="Constant (152):
+Tensor[(1024, 32, 3, 3), float32]" shape=rectangle]
+	153 [label="Call (153)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	151 -> 153
+	152 -> 153
+	154 [label="Call (154)(op=nn.relu)" color=greenyellow shape=ellipse style=filled]
+	153 -> 154
+	155 [label="Constant (155):
+Tensor[(2048, 1024, 1, 1), float32]" shape=rectangle]
+	156 [label="Call (156)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	154 -> 156
+	155 -> 156
+	157 [label="Call (157)(op=add)" color=greenyellow shape=ellipse style=filled]
+	156 -> 157
+	148 -> 157
+	158 [label="Call (158)(op=nn.relu)" color=greenyellow shape=ellipse style=filled]
+	157 -> 158
+	159 [label="Constant (159):
+Tensor[(1024, 2048, 1, 1), float32]" shape=rectangle]
+	160 [label="Call (160)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	158 -> 160
+	159 -> 160
+	161 [label="Call (161)(op=nn.relu)" color=greenyellow shape=ellipse style=filled]
+	160 -> 161
+	162 [label="Constant (162):
+Tensor[(1024, 32, 3, 3), float32]" shape=rectangle]
+	163 [label="Call (163)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	161 -> 163
+	162 -> 163
+	164 [label="Call (164)(op=nn.relu)" color=greenyellow shape=ellipse style=filled]
+	163 -> 164
+	165 [label="Constant (165):
+Tensor[(2048, 1024, 1, 1), float32]" shape=rectangle]
+	166 [label="Call (166)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	164 -> 166
+	165 -> 166
+	167 [label="Call (167)(op=add)" color=greenyellow shape=ellipse style=filled]
+	166 -> 167
+	158 -> 167
+	168 [label="Call (168)(op=nn.relu)" color=greenyellow shape=ellipse style=filled]
+	167 -> 168
+	169 [label="Function (169)" shape=doubleoctagon]
+	168 -> 169
+}

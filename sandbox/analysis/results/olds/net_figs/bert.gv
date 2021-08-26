@@ -1,0 +1,511 @@
+digraph {
+	rankdir=BT
+	0 [label="input0 (0):
+Tensor[(64, 1024), float32]" shape=rectangle]
+	1 [label="nodes.0.q (1):
+Tensor[(1024, 1024), float32]" shape=rectangle]
+	2 [label="nodes.0.k (2):
+Tensor[(1024, 1024), float32]" shape=rectangle]
+	3 [label="nodes.0.v (3):
+Tensor[(1024, 1024), float32]" shape=rectangle]
+	4 [label="nodes.0.up (4):
+Tensor[(1024, 4096), float32]" shape=rectangle]
+	5 [label="nodes.0.final (5):
+Tensor[(4096, 1024), float32]" shape=rectangle]
+	6 [label="nodes.1.q (6):
+Tensor[(1024, 1024), float32]" shape=rectangle]
+	7 [label="nodes.1.k (7):
+Tensor[(1024, 1024), float32]" shape=rectangle]
+	8 [label="nodes.1.v (8):
+Tensor[(1024, 1024), float32]" shape=rectangle]
+	9 [label="nodes.1.up (9):
+Tensor[(1024, 4096), float32]" shape=rectangle]
+	10 [label="nodes.1.final (10):
+Tensor[(4096, 1024), float32]" shape=rectangle]
+	11 [label="nodes.2.q (11):
+Tensor[(1024, 1024), float32]" shape=rectangle]
+	12 [label="nodes.2.k (12):
+Tensor[(1024, 1024), float32]" shape=rectangle]
+	13 [label="nodes.2.v (13):
+Tensor[(1024, 1024), float32]" shape=rectangle]
+	14 [label="nodes.2.up (14):
+Tensor[(1024, 4096), float32]" shape=rectangle]
+	15 [label="nodes.2.final (15):
+Tensor[(4096, 1024), float32]" shape=rectangle]
+	16 [label="nodes.3.q (16):
+Tensor[(1024, 1024), float32]" shape=rectangle]
+	17 [label="nodes.3.k (17):
+Tensor[(1024, 1024), float32]" shape=rectangle]
+	18 [label="nodes.3.v (18):
+Tensor[(1024, 1024), float32]" shape=rectangle]
+	19 [label="nodes.3.up (19):
+Tensor[(1024, 4096), float32]" shape=rectangle]
+	20 [label="nodes.3.final (20):
+Tensor[(4096, 1024), float32]" shape=rectangle]
+	21 [label="nodes.4.q (21):
+Tensor[(1024, 1024), float32]" shape=rectangle]
+	22 [label="nodes.4.k (22):
+Tensor[(1024, 1024), float32]" shape=rectangle]
+	23 [label="nodes.4.v (23):
+Tensor[(1024, 1024), float32]" shape=rectangle]
+	24 [label="nodes.4.up (24):
+Tensor[(1024, 4096), float32]" shape=rectangle]
+	25 [label="nodes.4.final (25):
+Tensor[(4096, 1024), float32]" shape=rectangle]
+	26 [label="nodes.5.q (26):
+Tensor[(1024, 1024), float32]" shape=rectangle]
+	27 [label="nodes.5.k (27):
+Tensor[(1024, 1024), float32]" shape=rectangle]
+	28 [label="nodes.5.v (28):
+Tensor[(1024, 1024), float32]" shape=rectangle]
+	29 [label="nodes.5.up (29):
+Tensor[(1024, 4096), float32]" shape=rectangle]
+	30 [label="nodes.5.final (30):
+Tensor[(4096, 1024), float32]" shape=rectangle]
+	31 [label="nodes.6.q (31):
+Tensor[(1024, 1024), float32]" shape=rectangle]
+	32 [label="nodes.6.k (32):
+Tensor[(1024, 1024), float32]" shape=rectangle]
+	33 [label="nodes.6.v (33):
+Tensor[(1024, 1024), float32]" shape=rectangle]
+	34 [label="nodes.6.up (34):
+Tensor[(1024, 4096), float32]" shape=rectangle]
+	35 [label="nodes.6.final (35):
+Tensor[(4096, 1024), float32]" shape=rectangle]
+	36 [label="nodes.7.q (36):
+Tensor[(1024, 1024), float32]" shape=rectangle]
+	37 [label="nodes.7.k (37):
+Tensor[(1024, 1024), float32]" shape=rectangle]
+	38 [label="nodes.7.v (38):
+Tensor[(1024, 1024), float32]" shape=rectangle]
+	39 [label="nodes.7.up (39):
+Tensor[(1024, 4096), float32]" shape=rectangle]
+	40 [label="nodes.7.final (40):
+Tensor[(4096, 1024), float32]" shape=rectangle]
+	41 [label="Call (41)(op=transpose)" color=greenyellow shape=ellipse style=filled]
+	1 -> 41
+	42 [label="Call (42)(op=nn.dense)" color=greenyellow shape=ellipse style=filled]
+	0 -> 42
+	41 -> 42
+	43 [label="Call (43)(op=reshape)" color=greenyellow shape=ellipse style=filled]
+	42 -> 43
+	44 [label="Call (44)(op=transpose)" color=greenyellow shape=ellipse style=filled]
+	43 -> 44
+	45 [label="Call (45)(op=transpose)" color=greenyellow shape=ellipse style=filled]
+	2 -> 45
+	46 [label="Call (46)(op=nn.dense)" color=greenyellow shape=ellipse style=filled]
+	0 -> 46
+	45 -> 46
+	47 [label="Call (47)(op=reshape)" color=greenyellow shape=ellipse style=filled]
+	46 -> 47
+	48 [label="Call (48)(op=transpose)" color=greenyellow shape=ellipse style=filled]
+	47 -> 48
+	49 [label="Call (49)(op=transpose)" color=greenyellow shape=ellipse style=filled]
+	48 -> 49
+	50 [label="Call (50)(op=nn.batch_matmul)" color=greenyellow shape=ellipse style=filled]
+	44 -> 50
+	49 -> 50
+	51 [label="Call (51)(op=transpose)" color=greenyellow shape=ellipse style=filled]
+	3 -> 51
+	52 [label="Call (52)(op=nn.dense)" color=greenyellow shape=ellipse style=filled]
+	0 -> 52
+	51 -> 52
+	53 [label="Call (53)(op=reshape)" color=greenyellow shape=ellipse style=filled]
+	52 -> 53
+	54 [label="Call (54)(op=transpose)" color=greenyellow shape=ellipse style=filled]
+	53 -> 54
+	55 [label="Call (55)(op=transpose)" color=greenyellow shape=ellipse style=filled]
+	54 -> 55
+	56 [label="Call (56)(op=nn.batch_matmul)" color=greenyellow shape=ellipse style=filled]
+	50 -> 56
+	55 -> 56
+	57 [label="Call (57)(op=transpose)" color=greenyellow shape=ellipse style=filled]
+	56 -> 57
+	58 [label="Call (58)(op=reshape)" color=greenyellow shape=ellipse style=filled]
+	57 -> 58
+	59 [label="Call (59)(op=transpose)" color=greenyellow shape=ellipse style=filled]
+	4 -> 59
+	60 [label="Call (60)(op=nn.dense)" color=greenyellow shape=ellipse style=filled]
+	58 -> 60
+	59 -> 60
+	61 [label="Call (61)(op=nn.relu)" color=greenyellow shape=ellipse style=filled]
+	60 -> 61
+	62 [label="Call (62)(op=transpose)" color=greenyellow shape=ellipse style=filled]
+	5 -> 62
+	63 [label="Call (63)(op=nn.dense)" color=greenyellow shape=ellipse style=filled]
+	61 -> 63
+	62 -> 63
+	64 [label="Call (64)(op=transpose)" color=greenyellow shape=ellipse style=filled]
+	6 -> 64
+	65 [label="Call (65)(op=nn.dense)" color=greenyellow shape=ellipse style=filled]
+	63 -> 65
+	64 -> 65
+	66 [label="Call (66)(op=reshape)" color=greenyellow shape=ellipse style=filled]
+	65 -> 66
+	67 [label="Call (67)(op=transpose)" color=greenyellow shape=ellipse style=filled]
+	66 -> 67
+	68 [label="Call (68)(op=transpose)" color=greenyellow shape=ellipse style=filled]
+	7 -> 68
+	69 [label="Call (69)(op=nn.dense)" color=greenyellow shape=ellipse style=filled]
+	63 -> 69
+	68 -> 69
+	70 [label="Call (70)(op=reshape)" color=greenyellow shape=ellipse style=filled]
+	69 -> 70
+	71 [label="Call (71)(op=transpose)" color=greenyellow shape=ellipse style=filled]
+	70 -> 71
+	72 [label="Call (72)(op=transpose)" color=greenyellow shape=ellipse style=filled]
+	71 -> 72
+	73 [label="Call (73)(op=nn.batch_matmul)" color=greenyellow shape=ellipse style=filled]
+	67 -> 73
+	72 -> 73
+	74 [label="Call (74)(op=transpose)" color=greenyellow shape=ellipse style=filled]
+	8 -> 74
+	75 [label="Call (75)(op=nn.dense)" color=greenyellow shape=ellipse style=filled]
+	63 -> 75
+	74 -> 75
+	76 [label="Call (76)(op=reshape)" color=greenyellow shape=ellipse style=filled]
+	75 -> 76
+	77 [label="Call (77)(op=transpose)" color=greenyellow shape=ellipse style=filled]
+	76 -> 77
+	78 [label="Call (78)(op=transpose)" color=greenyellow shape=ellipse style=filled]
+	77 -> 78
+	79 [label="Call (79)(op=nn.batch_matmul)" color=greenyellow shape=ellipse style=filled]
+	73 -> 79
+	78 -> 79
+	80 [label="Call (80)(op=transpose)" color=greenyellow shape=ellipse style=filled]
+	79 -> 80
+	81 [label="Call (81)(op=reshape)" color=greenyellow shape=ellipse style=filled]
+	80 -> 81
+	82 [label="Call (82)(op=transpose)" color=greenyellow shape=ellipse style=filled]
+	9 -> 82
+	83 [label="Call (83)(op=nn.dense)" color=greenyellow shape=ellipse style=filled]
+	81 -> 83
+	82 -> 83
+	84 [label="Call (84)(op=nn.relu)" color=greenyellow shape=ellipse style=filled]
+	83 -> 84
+	85 [label="Call (85)(op=transpose)" color=greenyellow shape=ellipse style=filled]
+	10 -> 85
+	86 [label="Call (86)(op=nn.dense)" color=greenyellow shape=ellipse style=filled]
+	84 -> 86
+	85 -> 86
+	87 [label="Call (87)(op=transpose)" color=greenyellow shape=ellipse style=filled]
+	11 -> 87
+	88 [label="Call (88)(op=nn.dense)" color=greenyellow shape=ellipse style=filled]
+	86 -> 88
+	87 -> 88
+	89 [label="Call (89)(op=reshape)" color=greenyellow shape=ellipse style=filled]
+	88 -> 89
+	90 [label="Call (90)(op=transpose)" color=greenyellow shape=ellipse style=filled]
+	89 -> 90
+	91 [label="Call (91)(op=transpose)" color=greenyellow shape=ellipse style=filled]
+	12 -> 91
+	92 [label="Call (92)(op=nn.dense)" color=greenyellow shape=ellipse style=filled]
+	86 -> 92
+	91 -> 92
+	93 [label="Call (93)(op=reshape)" color=greenyellow shape=ellipse style=filled]
+	92 -> 93
+	94 [label="Call (94)(op=transpose)" color=greenyellow shape=ellipse style=filled]
+	93 -> 94
+	95 [label="Call (95)(op=transpose)" color=greenyellow shape=ellipse style=filled]
+	94 -> 95
+	96 [label="Call (96)(op=nn.batch_matmul)" color=greenyellow shape=ellipse style=filled]
+	90 -> 96
+	95 -> 96
+	97 [label="Call (97)(op=transpose)" color=greenyellow shape=ellipse style=filled]
+	13 -> 97
+	98 [label="Call (98)(op=nn.dense)" color=greenyellow shape=ellipse style=filled]
+	86 -> 98
+	97 -> 98
+	99 [label="Call (99)(op=reshape)" color=greenyellow shape=ellipse style=filled]
+	98 -> 99
+	100 [label="Call (100)(op=transpose)" color=greenyellow shape=ellipse style=filled]
+	99 -> 100
+	101 [label="Call (101)(op=transpose)" color=greenyellow shape=ellipse style=filled]
+	100 -> 101
+	102 [label="Call (102)(op=nn.batch_matmul)" color=greenyellow shape=ellipse style=filled]
+	96 -> 102
+	101 -> 102
+	103 [label="Call (103)(op=transpose)" color=greenyellow shape=ellipse style=filled]
+	102 -> 103
+	104 [label="Call (104)(op=reshape)" color=greenyellow shape=ellipse style=filled]
+	103 -> 104
+	105 [label="Call (105)(op=transpose)" color=greenyellow shape=ellipse style=filled]
+	14 -> 105
+	106 [label="Call (106)(op=nn.dense)" color=greenyellow shape=ellipse style=filled]
+	104 -> 106
+	105 -> 106
+	107 [label="Call (107)(op=nn.relu)" color=greenyellow shape=ellipse style=filled]
+	106 -> 107
+	108 [label="Call (108)(op=transpose)" color=greenyellow shape=ellipse style=filled]
+	15 -> 108
+	109 [label="Call (109)(op=nn.dense)" color=greenyellow shape=ellipse style=filled]
+	107 -> 109
+	108 -> 109
+	110 [label="Call (110)(op=transpose)" color=greenyellow shape=ellipse style=filled]
+	16 -> 110
+	111 [label="Call (111)(op=nn.dense)" color=greenyellow shape=ellipse style=filled]
+	109 -> 111
+	110 -> 111
+	112 [label="Call (112)(op=reshape)" color=greenyellow shape=ellipse style=filled]
+	111 -> 112
+	113 [label="Call (113)(op=transpose)" color=greenyellow shape=ellipse style=filled]
+	112 -> 113
+	114 [label="Call (114)(op=transpose)" color=greenyellow shape=ellipse style=filled]
+	17 -> 114
+	115 [label="Call (115)(op=nn.dense)" color=greenyellow shape=ellipse style=filled]
+	109 -> 115
+	114 -> 115
+	116 [label="Call (116)(op=reshape)" color=greenyellow shape=ellipse style=filled]
+	115 -> 116
+	117 [label="Call (117)(op=transpose)" color=greenyellow shape=ellipse style=filled]
+	116 -> 117
+	118 [label="Call (118)(op=transpose)" color=greenyellow shape=ellipse style=filled]
+	117 -> 118
+	119 [label="Call (119)(op=nn.batch_matmul)" color=greenyellow shape=ellipse style=filled]
+	113 -> 119
+	118 -> 119
+	120 [label="Call (120)(op=transpose)" color=greenyellow shape=ellipse style=filled]
+	18 -> 120
+	121 [label="Call (121)(op=nn.dense)" color=greenyellow shape=ellipse style=filled]
+	109 -> 121
+	120 -> 121
+	122 [label="Call (122)(op=reshape)" color=greenyellow shape=ellipse style=filled]
+	121 -> 122
+	123 [label="Call (123)(op=transpose)" color=greenyellow shape=ellipse style=filled]
+	122 -> 123
+	124 [label="Call (124)(op=transpose)" color=greenyellow shape=ellipse style=filled]
+	123 -> 124
+	125 [label="Call (125)(op=nn.batch_matmul)" color=greenyellow shape=ellipse style=filled]
+	119 -> 125
+	124 -> 125
+	126 [label="Call (126)(op=transpose)" color=greenyellow shape=ellipse style=filled]
+	125 -> 126
+	127 [label="Call (127)(op=reshape)" color=greenyellow shape=ellipse style=filled]
+	126 -> 127
+	128 [label="Call (128)(op=transpose)" color=greenyellow shape=ellipse style=filled]
+	19 -> 128
+	129 [label="Call (129)(op=nn.dense)" color=greenyellow shape=ellipse style=filled]
+	127 -> 129
+	128 -> 129
+	130 [label="Call (130)(op=nn.relu)" color=greenyellow shape=ellipse style=filled]
+	129 -> 130
+	131 [label="Call (131)(op=transpose)" color=greenyellow shape=ellipse style=filled]
+	20 -> 131
+	132 [label="Call (132)(op=nn.dense)" color=greenyellow shape=ellipse style=filled]
+	130 -> 132
+	131 -> 132
+	133 [label="Call (133)(op=transpose)" color=greenyellow shape=ellipse style=filled]
+	21 -> 133
+	134 [label="Call (134)(op=nn.dense)" color=greenyellow shape=ellipse style=filled]
+	132 -> 134
+	133 -> 134
+	135 [label="Call (135)(op=reshape)" color=greenyellow shape=ellipse style=filled]
+	134 -> 135
+	136 [label="Call (136)(op=transpose)" color=greenyellow shape=ellipse style=filled]
+	135 -> 136
+	137 [label="Call (137)(op=transpose)" color=greenyellow shape=ellipse style=filled]
+	22 -> 137
+	138 [label="Call (138)(op=nn.dense)" color=greenyellow shape=ellipse style=filled]
+	132 -> 138
+	137 -> 138
+	139 [label="Call (139)(op=reshape)" color=greenyellow shape=ellipse style=filled]
+	138 -> 139
+	140 [label="Call (140)(op=transpose)" color=greenyellow shape=ellipse style=filled]
+	139 -> 140
+	141 [label="Call (141)(op=transpose)" color=greenyellow shape=ellipse style=filled]
+	140 -> 141
+	142 [label="Call (142)(op=nn.batch_matmul)" color=greenyellow shape=ellipse style=filled]
+	136 -> 142
+	141 -> 142
+	143 [label="Call (143)(op=transpose)" color=greenyellow shape=ellipse style=filled]
+	23 -> 143
+	144 [label="Call (144)(op=nn.dense)" color=greenyellow shape=ellipse style=filled]
+	132 -> 144
+	143 -> 144
+	145 [label="Call (145)(op=reshape)" color=greenyellow shape=ellipse style=filled]
+	144 -> 145
+	146 [label="Call (146)(op=transpose)" color=greenyellow shape=ellipse style=filled]
+	145 -> 146
+	147 [label="Call (147)(op=transpose)" color=greenyellow shape=ellipse style=filled]
+	146 -> 147
+	148 [label="Call (148)(op=nn.batch_matmul)" color=greenyellow shape=ellipse style=filled]
+	142 -> 148
+	147 -> 148
+	149 [label="Call (149)(op=transpose)" color=greenyellow shape=ellipse style=filled]
+	148 -> 149
+	150 [label="Call (150)(op=reshape)" color=greenyellow shape=ellipse style=filled]
+	149 -> 150
+	151 [label="Call (151)(op=transpose)" color=greenyellow shape=ellipse style=filled]
+	24 -> 151
+	152 [label="Call (152)(op=nn.dense)" color=greenyellow shape=ellipse style=filled]
+	150 -> 152
+	151 -> 152
+	153 [label="Call (153)(op=nn.relu)" color=greenyellow shape=ellipse style=filled]
+	152 -> 153
+	154 [label="Call (154)(op=transpose)" color=greenyellow shape=ellipse style=filled]
+	25 -> 154
+	155 [label="Call (155)(op=nn.dense)" color=greenyellow shape=ellipse style=filled]
+	153 -> 155
+	154 -> 155
+	156 [label="Call (156)(op=transpose)" color=greenyellow shape=ellipse style=filled]
+	26 -> 156
+	157 [label="Call (157)(op=nn.dense)" color=greenyellow shape=ellipse style=filled]
+	155 -> 157
+	156 -> 157
+	158 [label="Call (158)(op=reshape)" color=greenyellow shape=ellipse style=filled]
+	157 -> 158
+	159 [label="Call (159)(op=transpose)" color=greenyellow shape=ellipse style=filled]
+	158 -> 159
+	160 [label="Call (160)(op=transpose)" color=greenyellow shape=ellipse style=filled]
+	27 -> 160
+	161 [label="Call (161)(op=nn.dense)" color=greenyellow shape=ellipse style=filled]
+	155 -> 161
+	160 -> 161
+	162 [label="Call (162)(op=reshape)" color=greenyellow shape=ellipse style=filled]
+	161 -> 162
+	163 [label="Call (163)(op=transpose)" color=greenyellow shape=ellipse style=filled]
+	162 -> 163
+	164 [label="Call (164)(op=transpose)" color=greenyellow shape=ellipse style=filled]
+	163 -> 164
+	165 [label="Call (165)(op=nn.batch_matmul)" color=greenyellow shape=ellipse style=filled]
+	159 -> 165
+	164 -> 165
+	166 [label="Call (166)(op=transpose)" color=greenyellow shape=ellipse style=filled]
+	28 -> 166
+	167 [label="Call (167)(op=nn.dense)" color=greenyellow shape=ellipse style=filled]
+	155 -> 167
+	166 -> 167
+	168 [label="Call (168)(op=reshape)" color=greenyellow shape=ellipse style=filled]
+	167 -> 168
+	169 [label="Call (169)(op=transpose)" color=greenyellow shape=ellipse style=filled]
+	168 -> 169
+	170 [label="Call (170)(op=transpose)" color=greenyellow shape=ellipse style=filled]
+	169 -> 170
+	171 [label="Call (171)(op=nn.batch_matmul)" color=greenyellow shape=ellipse style=filled]
+	165 -> 171
+	170 -> 171
+	172 [label="Call (172)(op=transpose)" color=greenyellow shape=ellipse style=filled]
+	171 -> 172
+	173 [label="Call (173)(op=reshape)" color=greenyellow shape=ellipse style=filled]
+	172 -> 173
+	174 [label="Call (174)(op=transpose)" color=greenyellow shape=ellipse style=filled]
+	29 -> 174
+	175 [label="Call (175)(op=nn.dense)" color=greenyellow shape=ellipse style=filled]
+	173 -> 175
+	174 -> 175
+	176 [label="Call (176)(op=nn.relu)" color=greenyellow shape=ellipse style=filled]
+	175 -> 176
+	177 [label="Call (177)(op=transpose)" color=greenyellow shape=ellipse style=filled]
+	30 -> 177
+	178 [label="Call (178)(op=nn.dense)" color=greenyellow shape=ellipse style=filled]
+	176 -> 178
+	177 -> 178
+	179 [label="Call (179)(op=transpose)" color=greenyellow shape=ellipse style=filled]
+	31 -> 179
+	180 [label="Call (180)(op=nn.dense)" color=greenyellow shape=ellipse style=filled]
+	178 -> 180
+	179 -> 180
+	181 [label="Call (181)(op=reshape)" color=greenyellow shape=ellipse style=filled]
+	180 -> 181
+	182 [label="Call (182)(op=transpose)" color=greenyellow shape=ellipse style=filled]
+	181 -> 182
+	183 [label="Call (183)(op=transpose)" color=greenyellow shape=ellipse style=filled]
+	32 -> 183
+	184 [label="Call (184)(op=nn.dense)" color=greenyellow shape=ellipse style=filled]
+	178 -> 184
+	183 -> 184
+	185 [label="Call (185)(op=reshape)" color=greenyellow shape=ellipse style=filled]
+	184 -> 185
+	186 [label="Call (186)(op=transpose)" color=greenyellow shape=ellipse style=filled]
+	185 -> 186
+	187 [label="Call (187)(op=transpose)" color=greenyellow shape=ellipse style=filled]
+	186 -> 187
+	188 [label="Call (188)(op=nn.batch_matmul)" color=greenyellow shape=ellipse style=filled]
+	182 -> 188
+	187 -> 188
+	189 [label="Call (189)(op=transpose)" color=greenyellow shape=ellipse style=filled]
+	33 -> 189
+	190 [label="Call (190)(op=nn.dense)" color=greenyellow shape=ellipse style=filled]
+	178 -> 190
+	189 -> 190
+	191 [label="Call (191)(op=reshape)" color=greenyellow shape=ellipse style=filled]
+	190 -> 191
+	192 [label="Call (192)(op=transpose)" color=greenyellow shape=ellipse style=filled]
+	191 -> 192
+	193 [label="Call (193)(op=transpose)" color=greenyellow shape=ellipse style=filled]
+	192 -> 193
+	194 [label="Call (194)(op=nn.batch_matmul)" color=greenyellow shape=ellipse style=filled]
+	188 -> 194
+	193 -> 194
+	195 [label="Call (195)(op=transpose)" color=greenyellow shape=ellipse style=filled]
+	194 -> 195
+	196 [label="Call (196)(op=reshape)" color=greenyellow shape=ellipse style=filled]
+	195 -> 196
+	197 [label="Call (197)(op=transpose)" color=greenyellow shape=ellipse style=filled]
+	34 -> 197
+	198 [label="Call (198)(op=nn.dense)" color=greenyellow shape=ellipse style=filled]
+	196 -> 198
+	197 -> 198
+	199 [label="Call (199)(op=nn.relu)" color=greenyellow shape=ellipse style=filled]
+	198 -> 199
+	200 [label="Call (200)(op=transpose)" color=greenyellow shape=ellipse style=filled]
+	35 -> 200
+	201 [label="Call (201)(op=nn.dense)" color=greenyellow shape=ellipse style=filled]
+	199 -> 201
+	200 -> 201
+	202 [label="Call (202)(op=transpose)" color=greenyellow shape=ellipse style=filled]
+	36 -> 202
+	203 [label="Call (203)(op=nn.dense)" color=greenyellow shape=ellipse style=filled]
+	201 -> 203
+	202 -> 203
+	204 [label="Call (204)(op=reshape)" color=greenyellow shape=ellipse style=filled]
+	203 -> 204
+	205 [label="Call (205)(op=transpose)" color=greenyellow shape=ellipse style=filled]
+	204 -> 205
+	206 [label="Call (206)(op=transpose)" color=greenyellow shape=ellipse style=filled]
+	37 -> 206
+	207 [label="Call (207)(op=nn.dense)" color=greenyellow shape=ellipse style=filled]
+	201 -> 207
+	206 -> 207
+	208 [label="Call (208)(op=reshape)" color=greenyellow shape=ellipse style=filled]
+	207 -> 208
+	209 [label="Call (209)(op=transpose)" color=greenyellow shape=ellipse style=filled]
+	208 -> 209
+	210 [label="Call (210)(op=transpose)" color=greenyellow shape=ellipse style=filled]
+	209 -> 210
+	211 [label="Call (211)(op=nn.batch_matmul)" color=greenyellow shape=ellipse style=filled]
+	205 -> 211
+	210 -> 211
+	212 [label="Call (212)(op=transpose)" color=greenyellow shape=ellipse style=filled]
+	38 -> 212
+	213 [label="Call (213)(op=nn.dense)" color=greenyellow shape=ellipse style=filled]
+	201 -> 213
+	212 -> 213
+	214 [label="Call (214)(op=reshape)" color=greenyellow shape=ellipse style=filled]
+	213 -> 214
+	215 [label="Call (215)(op=transpose)" color=greenyellow shape=ellipse style=filled]
+	214 -> 215
+	216 [label="Call (216)(op=transpose)" color=greenyellow shape=ellipse style=filled]
+	215 -> 216
+	217 [label="Call (217)(op=nn.batch_matmul)" color=greenyellow shape=ellipse style=filled]
+	211 -> 217
+	216 -> 217
+	218 [label="Call (218)(op=transpose)" color=greenyellow shape=ellipse style=filled]
+	217 -> 218
+	219 [label="Call (219)(op=reshape)" color=greenyellow shape=ellipse style=filled]
+	218 -> 219
+	220 [label="Call (220)(op=transpose)" color=greenyellow shape=ellipse style=filled]
+	39 -> 220
+	221 [label="Call (221)(op=nn.dense)" color=greenyellow shape=ellipse style=filled]
+	219 -> 221
+	220 -> 221
+	222 [label="Call (222)(op=nn.relu)" color=greenyellow shape=ellipse style=filled]
+	221 -> 222
+	223 [label="Call (223)(op=transpose)" color=greenyellow shape=ellipse style=filled]
+	40 -> 223
+	224 [label="Call (224)(op=nn.dense)" color=greenyellow shape=ellipse style=filled]
+	222 -> 224
+	223 -> 224
+	225 [label="Function (225)" shape=doubleoctagon]
+	224 -> 225
+}
