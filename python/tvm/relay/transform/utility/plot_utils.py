@@ -9,8 +9,8 @@ def set_plt_font_size():
     plt.rc('font', size=BIGGER_SIZE)  # controls default text sizes
     plt.rc('axes', titlesize=BIGGER_SIZE)  # fontsize of the axes title
     plt.rc('axes', labelsize=BIGGER_SIZE)  # fontsize of the x and y labels
-    plt.rc('xtick', labelsize=MEDIUM_SIZE)  # fontsize of the tick labels
-    plt.rc('ytick', labelsize=MEDIUM_SIZE)  # fontsize of the tick labels
+    plt.rc('xtick', labelsize=BIGGER_SIZE)  # fontsize of the tick labels
+    plt.rc('ytick', labelsize=BIGGER_SIZE)  # fontsize of the tick labels
     plt.rc('legend', fontsize=BIGGER_SIZE)  # legend fontsize
     plt.rc('figure', titlesize=BIGGER_SIZE)  # fontsize of the figure title
     plt.rc('axes', linewidth=2)
