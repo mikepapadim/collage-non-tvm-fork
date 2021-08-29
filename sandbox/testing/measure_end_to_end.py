@@ -187,7 +187,7 @@ if __name__ == "__main__":
     args = get_args()
     # Redirect output to log files
     log_dir = "e2e_measure_logs"
-    setup_logging(log_dir, task_name="e2e_measure", net_name=args.network, hw_name=args.hw, batch_size=args.batch_size)
+    # setup_logging(log_dir, task_name="e2e_measure", net_name=args.network, hw_name=args.hw, batch_size=args.batch_size)
 
     # NasNet-A only works for opt_level 2 (not 3 due to the avgpool2d issue)
     # if args.network == "nasneta":
@@ -212,11 +212,11 @@ if __name__ == "__main__":
     # print(f"[{args.network}] Performance of DP on {args.hw} (mean, std) = ({mean_perf:.4f}+-{std_perf:.4f})")
     # E2EPerfLogger().log_perf(args.hw, args.network, 'DP', mean_perf, std_perf)
 
-    mean_perf, std_perf, mod_two_level = measure_end_to_end_perf_autotvm(mod["main"], params, args.target, shape_dict,
-                                                                    CustomFusionPass.TWO_LEVEL_OPT,
-                                                                    args.network, args.hw, args.batch_size)
-    print(f"[{args.network}] Performance of Two-level opt on {args.hw} (mean, std) = ({mean_perf:.4f}+-{std_perf:.4f})")
-    E2EPerfLogger().log_perf(args.hw, args.network, 'Two-level', mean_perf, std_perf)
+    # mean_perf, std_perf, mod_two_level = measure_end_to_end_perf_autotvm(mod["main"], params, args.target, shape_dict,
+    #                                                                 CustomFusionPass.TWO_LEVEL_OPT,
+    #                                                                 args.network, args.hw, args.batch_size)
+    # print(f"[{args.network}] Performance of Two-level opt on {args.hw} (mean, std) = ({mean_perf:.4f}+-{std_perf:.4f})")
+    # E2EPerfLogger().log_perf(args.hw, args.network, 'Two-level', mean_perf, std_perf)
 
     mean_perf, std_perf, mod_tvm = measure_end_to_end_perf_autotvm(mod["main"], params, args.target, shape_dict,
                                                                    None,
@@ -236,5 +236,5 @@ if __name__ == "__main__":
     # mean_perf, std_perf = measure_end_to_end_perf_autosch(mod["main"], params, 'cuda', shape_dict, False, args.hw)
     # print(f"[AutoSCH] Performance of {args.network} (mean, std) = ({mean_perf:.4f}+-{std_perf:.4f})")
 
-    verify_network_output(mod["main"], shape_dict, mod_tvm, mod_two_level)
+    # verify_network_output(mod["main"], shape_dict, mod_tvm, mod_two_level)
     # verify_network_output(mod["main"], shape_dict, mod_tvm, mod_dp)
