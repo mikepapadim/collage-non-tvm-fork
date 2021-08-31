@@ -25,6 +25,8 @@ WORKLOADS_DIC = {
     "mobilenet_v2": {1: {"input0": [1, 32, 224, 224]},
                      8: {"input0": [8, 32, 224, 224]}},
     # "mobilenet_v2": {"input0": [1, 32, 56, 56]},
+    "dcgan": {1: {"input0": [1, 100]},
+              8: {"input0": [8, 100]}},
 }
 
 def create_relay_workload(expr):

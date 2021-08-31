@@ -112,5 +112,8 @@ relayop_to_varnames = {
   "nn.softmax" : ["data"],
   "nn.batch_flatten" : ["data"],
   "nn.global_avg_pool2d" : ["data"],
+
+  # DCGAN
+  "image.resize": ["data"]
 }
 
