@@ -413,6 +413,8 @@ class BackendOpLib(object):
     # TENSORRT
     # NOTE: Current TensorRT pattern follows TVM fusion rule for simplicity.
     # But, since BATCH_MATMUL and TRANSPOSE are not supported, we are going to exclude the patterns if they contain those illegal operators by passing verify function.
+    ops_to_exclude_trt = ["transpose", "nn.batch_matmul", "image.resize"]
+
     def trt_verify(pattern):
         q = [ pattern ]
         while len(q):
@@ -426,7 +428,7 @@ class BackendOpLib(object):
                     pass
                 else:
                     op_name = cur.op.expr.name
-                    if op_name == "transpose" or op_name == "nn.batch_matmul":
+                    if op_name in ops_to_exclude_trt:
                         return False
                     q.extend(cur.args)
             elif isinstance(cur, TuplePattern):

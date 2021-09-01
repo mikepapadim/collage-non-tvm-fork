@@ -81,9 +81,11 @@ class OpStateToMatchTranslator():
         # Patterns that TensorRT can't afford
         transpose_pat = is_op("transpose")(wildcard())
         batch_matmul_pat = is_op("nn.batch_matmul")(wildcard(),wildcard())
+        image_resize_pat = is_op("image.resize")(wildcard())
 
         is_not_valid |= transpose_pat.match(expr)
         is_not_valid |= batch_matmul_pat.match(expr)
+        is_not_valid |= image_resize_pat.match(expr)
 
         return is_not_valid
 
