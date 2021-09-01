@@ -2,6 +2,40 @@ from tvm import relay
 import tvm.relay.testing as testing
 from tvm.relay.transform.backend_operator.utils import *
 
+# TF2 model loading
+from baselines.tf2.bert import bert_tf2, bert_tf2_xla
+from baselines.tf2.mobilenetv2 import mobilenetv2_tf2, mobilenetv2_tf2_xla
+from baselines.tf2.nasrnn import nasrnn_tf2, nasrnn_tf2_xla
+from baselines.tf2.nasnet_a import nasneta_tf2, nasneta_tf2_xla
+from baselines.tf2.resnet50 import resnet50_tf2, resnet50_tf2_xla
+from baselines.tf2.resnext50 import resnext50_tf2, resnext50_tf2_xla
+from baselines.tf2.resnet50_3d import resnet50_3d_tf2, resnet50_3d_tf2_xla
+
+# TF2 Model
+
+NETWORK_TO_TF2_MODEL = {
+    "bert": bert_tf2,
+    "bert_xla": bert_tf2_xla,
+
+    "mobilenet_v2": mobilenetv2_tf2,
+    "mobilenet_v2_xla": mobilenetv2_tf2_xla,
+
+    "nasrnn": nasrnn_tf2,
+    "nasrnn_xla": nasrnn_tf2_xla,
+
+    "nasneta": nasneta_tf2,
+    "nasneta_xla": nasneta_tf2_xla,
+
+    "resnet50": resnet50_tf2,
+    "resnet50_xla": resnet50_tf2_xla,
+
+    "resnext50_32x4d": resnext50_tf2,
+    "resnext50_32x4d_xla": resnext50_tf2_xla,
+
+    "resnet50_3d": resnet50_3d_tf2,
+    "resnet50_3d_xla": resnet50_3d_tf2_xla,
+}
+
 # Key is network name and batch size
 # Value is shape dict
 WORKLOADS_DIC = {

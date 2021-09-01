@@ -3,7 +3,7 @@ import tensorflow as tf
 import numpy as np
 import time
 import timeit
-from shared_functions import make_activation, make_conv2d, make_conv2d_bn
+from .shared_functions import make_activation, make_conv2d, make_conv2d_bn
 
 inverted_residual_setting = [
             # t, c, n, s
@@ -16,11 +16,11 @@ inverted_residual_setting = [
             [6, 320, 1, 1],
         ]
 
-tf.config.run_functions_eagerly(False)
-
-config = tf.compat.v1.ConfigProto()
-config.gpu_options.allow_growth = True
-session = tf.compat.v1.Session(config=config)
+# tf.config.run_functions_eagerly(False)
+#
+# config = tf.compat.v1.ConfigProto()
+# config.gpu_options.allow_growth = True
+# session = tf.compat.v1.Session(config=config)
 
 def block(tensor, inp, oup, stride, expand_ratio):
     convd = tensor
@@ -73,19 +73,18 @@ def block(tensor, inp, oup, stride, expand_ratio):
 
     return tensor
 
-parser = argparse.ArgumentParser()
-parser.add_argument("--xla", help="Whether to run with TensorFlowXLA optimizations", action="store_true")
-parser.add_argument("--print_tensorboard", help="Name of folder to output the tensorboard information")
-parser.add_argument("--iterations", help="How many iterations to average for timing (default 5000)", type=int, default=5000)
-parser.add_argument("--discard_iter", help="How many iterations to not time during warm up (default 1000)", type=int, default=1000)
-args = parser.parse_args()
+# parser = argparse.ArgumentParser()
+# parser.add_argument("--xla", help="Whether to run with TensorFlowXLA optimizations", action="store_true")
+# parser.add_argument("--print_tensorboard", help="Name of folder to output the tensorboard information")
+# parser.add_argument("--iterations", help="How many iterations to average for timing (default 5000)", type=int, default=5000)
+# parser.add_argument("--discard_iter", help="How many iterations to not time during warm up (default 1000)", type=int, default=1000)
+# args = parser.parse_args()
 
 def make_divisible(x, divisible_by=8):
     import numpy as np
     return int(np.ceil(x * 1. / divisible_by) * divisible_by)
 
-@tf.function(experimental_compile=args.xla)
-def mobilenetv2(input):    
+def mobilenetv2_tf2_model(input):
     tensor = input
     input_channel = 32
     for t, c, n, s in inverted_residual_setting:
@@ -98,20 +97,28 @@ def mobilenetv2(input):
             input_channel = output_channel
     tensor = make_conv2d(input_tensor=tensor, filter_shape=(1,1,input_channel,1280), strides=(1,1,1,1), padding="SAME", actimode="RELU", name="last_conv")
     return tensor
-    
 
-times = []
-for i in range(args.discard_iter + args.iterations):
-    inputs = tf.constant(np.random.random_sample((1,32,56,56)).astype(np.float32))
+@tf.function(jit_compile=False)
+def mobilenetv2_tf2(input):
+    return mobilenetv2_tf2_model(input)
 
-    t0 = timeit.default_timer()
-    mobilenetv2(inputs)
-    t1 = timeit.default_timer()
-    times.append(t1 - t0)
+@tf.function(jit_compile=True)
+def mobilenetv2_tf2_xla(input):
+    return mobilenetv2_tf2_model(input)
 
-total = 0
-for i in range(args.discard_iter, len(times)):
-    total += times[i]
-avg = total / (args.iterations) * 1000.0
-print("Average inference time of the last " + str(args.iterations) + " iterations: " + str(avg) + " ms")
+
+# times = []
+# for i in range(args.discard_iter + args.iterations):
+#     inputs = tf.constant(np.random.random_sample((1,32,56,56)).astype(np.float32))
+#
+#     t0 = timeit.default_timer()
+#     mobilenetv2(inputs)
+#     t1 = timeit.default_timer()
+#     times.append(t1 - t0)
+#
+# total = 0
+# for i in range(args.discard_iter, len(times)):
+#     total += times[i]
+# avg = total / (args.iterations) * 1000.0
+# print("Average inference time of the last " + str(args.iterations) + " iterations: " + str(avg) + " ms")
 

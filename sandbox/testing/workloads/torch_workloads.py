@@ -29,6 +29,17 @@ NETWORK_TO_TORCH_MODEL = {
     "dcgan": DCGAN,
 }
 
+
+def get_torch_input_data(name, batch_size):
+    # Create the input data
+    shape_dict = WORKLOADS_DIC[name][batch_size]
+    assert len(shape_dict) == 1
+    for shape in shape_dict.values():
+        input_shape = tuple(shape)
+    input_data = torch.from_numpy(np.random.uniform(-1, 1, size=input_shape).astype("float32"))
+
+    return input_data
+
 # Warning(@Soo): It does not work for NasRNN
 def load_torch_model_from_pth(name, batch_size):
     # Get the model
@@ -37,11 +48,7 @@ def load_torch_model_from_pth(name, batch_size):
     model.eval()
 
     # Create the input data
-    shape_dict = WORKLOADS_DIC[name][batch_size]
-    assert len(shape_dict) == 1
-    for shape in shape_dict.values():
-        input_shape = shape
-    input_data = torch.randn(input_shape)
+    input_data = get_torch_input_data(name, batch_size)
 
     scripted_model = torch.jit.trace(model.cpu(), input_data).eval()
     return scripted_model
@@ -54,13 +61,8 @@ def load_torch_model_from_code(name, batch_size):
         model = NETWORK_TO_TORCH_MODEL[name]()  # .cuda()
 
     model.eval()
+    input_data = get_torch_input_data(name, batch_size)
 
-    # Create the input data
-    shape_dict = WORKLOADS_DIC[name][batch_size]
-    assert len(shape_dict) == 1
-    for shape in shape_dict.values():
-        input_shape = shape
-    input_data = torch.randn(input_shape)
     # print(f"Input data: {input_shape}")
     scripted_model = torch.jit.trace(model.cpu(), input_data).eval()
     return scripted_model

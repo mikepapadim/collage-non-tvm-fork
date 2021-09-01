@@ -152,22 +152,12 @@ def verify_network_output(net, shape_dict, mod_tvm, mod_ours):
 def args_checker(args, parser):
     is_missing_arg = not args.network
     is_missing_arg |= not args.hw
+    # is_missing_arg |= not args.batch_size
     # is_missing_arg |= not args.target
     # is_missing_arg |= not args.dtype
-    # is_missing_arg |= not args.batch_size
 
     if is_missing_arg:
         parser.error('Make sure you input all arguments')
-
-    # if args.target == 'cuda':
-    #     pass
-    # elif args.target == 'llvm':
-    #     if args.hw == 'xeon':
-    #         args.target = XEON_BUILD_TARGET
-    #     else:
-    #         parser.error(f"Unsupported CPU: {args.hw}")
-    # else:
-    #     parser.error(f"Unsupported target: {args.target}")
 
 def get_args():
     parser = argparse.ArgumentParser()

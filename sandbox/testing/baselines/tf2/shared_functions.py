@@ -1,5 +1,7 @@
 import tensorflow as tf
 import numpy as np
+import argparse
+import time
 
 def make_activation(input, actimode, name):
     if actimode == "NONE":
@@ -69,3 +71,51 @@ def make_matmul(input_tensor, out_channels):
     weight_shape = (input_tensor.shape[1], out_channels)
     weight = tf.constant(np.random.random_sample(weight_shape), dtype=tf.float32)
     return tf.matmul(input_tensor, weight)
+
+def tf2_args_checker(args, parser):
+    is_missing_arg = not args.network
+    is_missing_arg |= not args.hw
+    # is_missing_arg |= not args.batch_size
+    # is_missing_arg |= not args.target
+    # is_missing_arg |= not args.dtype
+
+    if is_missing_arg:
+        parser.error('Make sure you input all arguments')
+
+def get_tf2_args():
+    parser = argparse.ArgumentParser()
+    # Default type is string for argparse
+    parser.add_argument("-n", "--network", help="name of a neural network")
+    parser.add_argument("-hw", "--hw", help="target hardware")
+    parser.add_argument("-bs", "--batch-size", default=1, type=int, help="batch size")
+
+    # Measurement related parameters
+    parser.add_argument("--iterations", help="How many iterations to average for timing", type=int, default=50)
+    parser.add_argument("--discard_iter", help="How many iterations to not time during warm up", type=int, default=10)
+    # parser.add_argument("--iterations", help="How many iterations to average for timing", type=int, default=10000)
+    # parser.add_argument("--discard_iter", help="How many iterations to not time during warm up", type=int, default=2000)
+    args = parser.parse_args()
+
+    tf2_args_checker(args, parser)
+    return args
+
+
+# Note that inputs are numpy array, not tf.constant
+def measure_tf2_gpu(model):
+    args = get_tf2_args()
+    times = []
+
+    # Load inputs
+    input_shape = tuple(get_torch_input_data(args.network, args.batch_size).shape)
+    inputs = np.random.uniform(-1, 1, size=input_shape).astype("float32")
+
+    for i in range(args.discard_iter + args.iterations):
+        t0 = time.time()
+        model(tf.constant(inputs))
+        t1 = time.time()
+        times.append(t1 - t0)
+
+    times = 1000.0 * np.array(times)[args.discard_iter:]
+    mean_perf, std_perf = np.mean(times), np.std(times)
+    print(f"[{args.network}] Performance of TensorFlow 2 on {args.hw} (mean, std) = ({mean_perf:.4f}+-{std_perf:.4f})")
+    # E2EPerfLogger().log_perf(args.hw, args.network, 'TF', mean_perf, std_perf)

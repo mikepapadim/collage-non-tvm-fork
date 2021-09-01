@@ -1,6 +1,6 @@
-if 0 == 0:
-    a = 1
-print(a)
+from baselines.tf2 import nasrnn
+
+print("imported")
 # class BackendOp(object):
 #   def __init__(self, backend, pattern, constraint):
 #

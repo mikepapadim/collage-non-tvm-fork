@@ -3,15 +3,15 @@ import tensorflow as tf
 import numpy as np
 import time
 import torch
-import pretrainedmodels
-import tensorflow_hub as hub
-from shared_functions import make_activation, make_conv2d, make_seperable_conv2d, make_avgpool2d, make_maxpool2d
+# import pretrainedmodels
+# import tensorflow_hub as hub
+from .shared_functions import make_activation, make_conv2d, make_seperable_conv2d, make_avgpool2d, make_maxpool2d
 
-tf.config.run_functions_eagerly(False)
-
-config = tf.compat.v1.ConfigProto()
-config.gpu_options.allow_growth = True
-session = tf.compat.v1.Session(config=config)
+# tf.config.run_functions_eagerly(False)
+#
+# config = tf.compat.v1.ConfigProto()
+# config.gpu_options.allow_growth = True
+# session = tf.compat.v1.Session(config=config)
 
 def squeeze(out_channels, input):
     return make_conv2d(input_tensor=input, filter_shape=(1,1,input.shape[1],out_channels), strides=(1,1,1,1), padding="SAME", actimode="RELU", name="squeeze")
@@ -61,15 +61,14 @@ def reduction_cell(prev, cur, out_channels):
     outputs.append(tf.add(ts[8], ts[9]))
     return tf.concat(outputs, axis=1, name="concat2")
 
-parser = argparse.ArgumentParser()
-parser.add_argument("--xla", help="Whether to run with TensorFlowXLA optimizations", action="store_true")
-parser.add_argument("--print_tensorboard", help="Name of folder to output the tensorboard information")
-parser.add_argument("--iterations", help="How many iterations to average for timing (default 5000)", type=int, default=200)
-parser.add_argument("--discard_iter", help="How many iterations to not time during warm up (default 1000)", type=int, default=1000)
-args = parser.parse_args()
+# parser = argparse.ArgumentParser()
+# parser.add_argument("--xla", help="Whether to run with TensorFlowXLA optimizations", action="store_true")
+# parser.add_argument("--print_tensorboard", help="Name of folder to output the tensorboard information")
+# parser.add_argument("--iterations", help="How many iterations to average for timing (default 5000)", type=int, default=200)
+# parser.add_argument("--discard_iter", help="How many iterations to not time during warm up (default 1000)", type=int, default=1000)
+# args = parser.parse_args()
 
-@tf.function(experimental_compile=args.xla)
-def nasneta(input0):
+def nasneta_tf2_model(input0):
     input = input0
     out_channels = 64
     for i in range(3):
@@ -85,17 +84,26 @@ def nasneta(input0):
     return cur
 
 
-times = []
-for i in range(args.discard_iter + args.iterations):
-    inputs = tf.constant(np.random.random_sample((1,64,56,56)).astype(np.float32))
+@tf.function(jit_compile=False)
+def nasneta_tf2(input0):
+    return nasneta_tf2_model(input0)
 
-    t0 = time.time()
-    nasneta(inputs)
-    t1 = time.time()
-    times.append(t1 - t0)
+@tf.function(jit_compile=True)
+def nasneta_tf2_xla(input0):
+    return nasneta_tf2_model(input0)
 
-total = 0
-for i in range(args.discard_iter, len(times)):
-    total += times[i]
-avg = total / (args.iterations) * 1000.0
-print("Average inference time of the last " + str(args.iterations) + " iterations: " + str(avg) + " ms")
+
+# times = []
+# for i in range(args.discard_iter + args.iterations):
+#     inputs = tf.constant(np.random.random_sample((1,64,56,56)).astype(np.float32))
+#
+#     t0 = time.time()
+#     nasneta(inputs)
+#     t1 = time.time()
+#     times.append(t1 - t0)
+#
+# total = 0
+# for i in range(args.discard_iter, len(times)):
+#     total += times[i]
+# avg = total / (args.iterations) * 1000.0
+# print("Average inference time of the last " + str(args.iterations) + " iterations: " + str(avg) + " ms")
