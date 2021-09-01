@@ -13,6 +13,11 @@ from tvm.relay.transform.utility.debug_helper import *
 from workloads.torch_workloads import *
 from e2e_perf_logger import *
 
+import time
+import os
+
+from tvm.relay.transform.backend_operator.backend_op_lib import BackendOpLib
+
 def setup_attrs_ours(net, net_name, hw_name, batch_size):
     net = net.with_attr(NETWORK_FUNC_ATTR, net_name)
     net = net.with_attr(HW_FUNC_ATTR, hw_name)
@@ -176,6 +181,97 @@ def get_args():
     args_checker(args, parser)
     return args
 
+def measure_dp_and_baselines(mod, params, shape_dict, args):
+    mean_perf, std_perf, mod_dp = measure_end_to_end_perf_autotvm(mod["main"], params, args.target, shape_dict,
+                                                                  CustomFusionPass.DP,
+                                                                  args.network, args.hw, args.batch_size)
+    print(f"[{args.network}] Performance of DP on {args.hw} (mean, std) = ({mean_perf:.4f}+-{std_perf:.4f})")
+    E2EPerfLogger().log_perf(args.hw, args.network, 'DP', mean_perf, std_perf)
+
+    mean_perf, std_perf, mod_tvm = measure_end_to_end_perf_autotvm(mod["main"], params, args.target, shape_dict,
+                                                                   None,
+                                                                   args.network, args.hw, args.batch_size)
+    print(f"[{args.network}] Performance of AutoTVM on {args.hw} (mean, std) = ({mean_perf:.4f}+-{std_perf:.4f})")
+    E2EPerfLogger().log_perf(args.hw, args.network, 'AutoTVM', mean_perf, std_perf)
+
+    mean_perf, std_perf, mod_trt = measure_end_to_end_perf_tensorrt(mod, params, args.target, shape_dict, args.hw)
+    print(f"[{args.network}] Performance of TensorRT on {args.hw} (mean, std) = ({mean_perf:.4f}+-{std_perf:.4f})")
+    E2EPerfLogger().log_perf(args.hw, args.network, 'TensorRT', mean_perf, std_perf)
+
+    mean_perf, std_perf, mod_cud = measure_end_to_end_perf_cudnn(mod["main"], params, args.target, shape_dict,
+                                                                 False, args.network, args.hw, args.batch_size)
+    print(f"[{args.network}] Performance of cuDNN on {args.hw} (mean, std) = ({mean_perf:.4f}+-{std_perf:.4f})")
+    E2EPerfLogger().log_perf(args.hw, args.network, 'cuDNN', mean_perf, std_perf)
+
+    # mean_perf, std_perf = measure_end_to_end_perf_autosch(mod["main"], params, 'cuda', shape_dict, False, args.hw)
+    # print(f"[AutoSCH] Performance of {args.network} (mean, std) = ({mean_perf:.4f}+-{std_perf:.4f})")
+
+    verify_network_output(mod["main"], shape_dict, mod_tvm, mod_dp)
+
+def measure_two_level(mod, params, shape_dict, args):
+    mean_perf, std_perf, mod_two_level = measure_end_to_end_perf_autotvm(mod["main"], params, args.target, shape_dict,
+                                                                    CustomFusionPass.TWO_LEVEL_OPT,
+                                                                    args.network, args.hw, args.batch_size)
+    print(f"[{args.network}] Performance of Two-level opt on {args.hw} (mean, std) = ({mean_perf:.4f}+-{std_perf:.4f})")
+    E2EPerfLogger().log_perf(args.hw, args.network, 'Two-level', mean_perf, std_perf)
+
+    mean_perf, std_perf, mod_tvm = measure_end_to_end_perf_autotvm(mod["main"], params, args.target, shape_dict,
+                                                                   None,
+                                                                   args.network, args.hw, args.batch_size)
+    print(f"[{args.network}] Performance of AutoTVM on {args.hw} (mean, std) = ({mean_perf:.4f}+-{std_perf:.4f})")
+    E2EPerfLogger().log_perf(args.hw, args.network, 'AutoTVM', mean_perf, std_perf)
+
+    verify_network_output(mod["main"], shape_dict, mod_tvm, mod_two_level)
+
+def build_dp(net, params, target_str, shape_dict, net_name, hw_name, batch_size):
+    net = net.with_attr("CustomFusionPass", CustomFusionPass.DP)
+    net = setup_attrs_ours(net, net_name, hw_name, batch_size)
+
+    with autotvm.apply_history_best(get_autotvm_log_path(hw_name)):
+        with tvm.transform.PassContext(opt_level=OPT_LEVEL.get()):
+            lib = relay.build(net, target_str, params=params)
+
+    print(f"We successfully built the network")
+
+"""
+Measure time spent for DP algorithm (dp) and op measurement (measurement)
+"""
+def measure_dp_tuning_time(mod, params, shape_dict, args):
+    n_trial = 1
+    dp_time_arr = []
+    measurement_time_arr = []
+
+    for i in range(n_trial):
+        # Delete operator_cost log
+        print("Delete operator cost for measurement")
+        os.system(f"rm /home/byungsoj/tvm/python/tvm/relay/transform/logs/operator_cost_{args.hw}.*")
+
+        # Measure dp + measurement time
+        start_time = time.time()
+        build_dp(mod["main"], params, args.target, shape_dict, args.network, args.hw, args.batch_size)
+
+        dp_and_measurement_time = time.time() - start_time
+        print(f"[{args.network}] Elapsed time of DP + Measurement on {args.hw} = {dp_and_measurement_time:.4f}s")
+
+
+        # Measure DP time
+        start_time = time.time()
+        build_dp(mod["main"], params, args.target, shape_dict, args.network, args.hw, args.batch_size)
+
+        dp_time = time.time() - start_time
+        print(f"[{args.network}] Elapsed time of DP on {args.hw} = {dp_time:.4f}s")
+
+        # Get measurement time
+        measurement_time = dp_and_measurement_time - dp_time
+        print(f"[{args.network}] Elapsed time of Measurement on {args.hw} = {measurement_time:.4f}s")
+
+        dp_time_arr.append(dp_time)
+        measurement_time_arr.append(measurement_time)
+
+    DPTuningTimeLogger().log_perf(args.hw, args.network, "DP", np.mean(dp_time_arr), np.std(dp_time_arr))
+    DPTuningTimeLogger().log_perf(args.hw, args.network, "Op Profiling", np.mean(measurement_time_arr),
+                                  np.std(measurement_time_arr))
+
 if __name__ == "__main__":
     args = get_args()
     # Redirect output to log files
@@ -199,35 +295,9 @@ if __name__ == "__main__":
     # Assign build target based on a given hw
     args.target = get_build_target(args.hw)
 
-    # mean_perf, std_perf, mod_dp = measure_end_to_end_perf_autotvm(mod["main"], params, args.target, shape_dict,
-    #                                                                 CustomFusionPass.DP,
-    #                                                                 args.network, args.hw, args.batch_size)
-    # print(f"[{args.network}] Performance of DP on {args.hw} (mean, std) = ({mean_perf:.4f}+-{std_perf:.4f})")
-    # E2EPerfLogger().log_perf(args.hw, args.network, 'DP', mean_perf, std_perf)
+    # measure_dp_and_baselines(mod, params, shape_dict, args)
+    # measure_two_level(mod, params, shape_dict, args)
+    measure_dp_tuning_time(mod, params, shape_dict, args)
 
-    mean_perf, std_perf, mod_two_level = measure_end_to_end_perf_autotvm(mod["main"], params, args.target, shape_dict,
-                                                                    CustomFusionPass.TWO_LEVEL_OPT,
-                                                                    args.network, args.hw, args.batch_size)
-    print(f"[{args.network}] Performance of Two-level opt on {args.hw} (mean, std) = ({mean_perf:.4f}+-{std_perf:.4f})")
-    E2EPerfLogger().log_perf(args.hw, args.network, 'Two-level', mean_perf, std_perf)
 
-    mean_perf, std_perf, mod_tvm = measure_end_to_end_perf_autotvm(mod["main"], params, args.target, shape_dict,
-                                                                   None,
-                                                                   args.network, args.hw, args.batch_size)
-    print(f"[{args.network}] Performance of AutoTVM on {args.hw} (mean, std) = ({mean_perf:.4f}+-{std_perf:.4f})")
-    E2EPerfLogger().log_perf(args.hw, args.network, 'AutoTVM', mean_perf, std_perf)
-    #
-    # mean_perf, std_perf, mod_trt = measure_end_to_end_perf_tensorrt(mod, params, args.target, shape_dict, args.hw)
-    # print(f"[{args.network}] Performance of TensorRT on {args.hw} (mean, std) = ({mean_perf:.4f}+-{std_perf:.4f})")
-    # E2EPerfLogger().log_perf(args.hw, args.network, 'TensorRT', mean_perf, std_perf)
-    #
-    # mean_perf, std_perf, mod_cud = measure_end_to_end_perf_cudnn(mod["main"], params, args.target, shape_dict,
-    #                                                              False, args.network, args.hw, args.batch_size)
-    # print(f"[{args.network}] Performance of cuDNN on {args.hw} (mean, std) = ({mean_perf:.4f}+-{std_perf:.4f})")
-    # E2EPerfLogger().log_perf(args.hw, args.network, 'cuDNN', mean_perf, std_perf)
 
-    # mean_perf, std_perf = measure_end_to_end_perf_autosch(mod["main"], params, 'cuda', shape_dict, False, args.hw)
-    # print(f"[AutoSCH] Performance of {args.network} (mean, std) = ({mean_perf:.4f}+-{std_perf:.4f})")
-
-    verify_network_output(mod["main"], shape_dict, mod_tvm, mod_two_level)
-    # verify_network_output(mod["main"], shape_dict, mod_tvm, mod_dp)

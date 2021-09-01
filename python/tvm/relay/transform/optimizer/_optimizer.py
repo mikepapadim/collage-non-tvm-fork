@@ -220,6 +220,9 @@ def run_op_level_opt(relay_expr):
 
     backendop_lib.save_to_log(hw_name)
 
+    # For DP tuning time measurement, we have to reset backend op library to measure DP with op measurement every time
+    BackendOpLib.destroy()
+
     return optimized_match, relay_expr, backendop_lib, n_relay_nodes
 
 

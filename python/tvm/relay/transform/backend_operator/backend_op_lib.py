@@ -245,6 +245,11 @@ class BackendOpLib(object):
       BackendOpLib(hw_name)
     return BackendOpLib.__instance
 
+  @staticmethod
+  def destroy():
+      """ Static access method. """
+      BackendOpLib.__instance = None
+
   def __init__(self, hw_name):
     """ Virtually private constructor. """
     if BackendOpLib.__instance != None:
@@ -253,6 +258,7 @@ class BackendOpLib(object):
     # list of all backend operators
     self._measured_configs = MeasuredConfigs()
     self._measured_configs.load_from_log(hw_name)
+    # print("BACKEND OP LIG GET")
 
     self.all_backendops = set()
     self.all_pattern_generators = []
