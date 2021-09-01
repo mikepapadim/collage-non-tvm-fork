@@ -84,11 +84,11 @@ def nasneta_tf2_model(input0):
     return cur
 
 
-@tf.function(jit_compile=False)
+@tf.function(experimental_compile=False)
 def nasneta_tf2(input0):
     return nasneta_tf2_model(input0)
 
-@tf.function(jit_compile=True)
+@tf.function(experimental_compile=True)
 def nasneta_tf2_xla(input0):
     return nasneta_tf2_model(input0)
 

@@ -10,7 +10,6 @@ from workloads.workloads import *
 from e2e_perf_logger import *
 import tensorflow as tf
 import time
-from baselines.tf2.bert import bert_tf2
 
 def args_checker(args, parser):
     is_missing_arg = not args.network

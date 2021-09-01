@@ -44,11 +44,11 @@ def resnet50_tf2_model(input):
         strides=(1,1,1,1)
     return t
 
-@tf.function(jit_compile=False)
+@tf.function(experimental_compile=False)
 def resnet50_tf2(input):
     return resnet50_tf2_model(input)
 
-@tf.function(jit_compile=True)
+@tf.function(experimental_compile=True)
 def resnet50_tf2_xla(input):
     return resnet50_tf2_model(input)
 
