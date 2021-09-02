@@ -3,8 +3,11 @@ import pandas as pd
 from e2e_perf_logger import *
 from tvm.relay.transform.utility.plot_utils import set_plt_font_size
 
-set_plt_font_size()
+NET_NAME_TO_OFFICIAL = {'bert': 'BERT', 'nasneta':"NasNet-A", 'resnet50': 'ResNet50',
+                      'resnext50_32x4d':"ResNeXt50", 'resnet50_3d':"3D-ResNet50",
+                      'mobilenet_v2':"Mobilenet V2", 'nasrnn':"NasRNN", 'dcgan':'DCGAN'}
 
+FINAL_NETWORKS = ["resnext50_32x4d", "bert", "dcgan", "nasneta", 'resnet50_3d']
 
 def setup_df_for_perf_plot(df):
     # Make sure column order is following before we normalize perf
@@ -72,21 +75,22 @@ def draw_e2e_perf_inf_engine_vs_op_lib_plot(df):
     plt.savefig(f"{EXP_RESULT_PATH}/plots/e2e_perf_inf_eng_vs_op_lib.png", bbox_inches='tight')
 
 
-df = pd.read_csv(E2E_PERF_LOG_PATH, header=None)
-df.columns = E2E_PERF_COLS
-df = df.drop(columns=['HW', 'Std Perf'])
-df = df.set_index('Network')
-df = df.pivot_table(values='Mean Perf', index=df.index, columns='Method', aggfunc='first')
-df = df.rename(index={'bert': 'BERT', 'nasneta':"NasNet-A", 'resnet50': 'ResNet50',
-                      'resnext50_32x4d':"ResNeXt50", 'resnet50_3d':"3D-ResNet50",
-                      'mobilenet_v2':"Mobilenet V2", 'nasrnn':"NasRNN"})
+if __name__ == "__main__":
+    set_plt_font_size()
 
-# df = setup_df_for_perf_inf_engine_vs_op_lib_plot(df)
-# print(df)
-# draw_e2e_perf_inf_engine_vs_op_lib_plot(df)
+    df = pd.read_csv(E2E_PERF_LOG_PATH, header=None)
+    df.columns = E2E_PERF_COLS
+    df = df.drop(columns=['HW', 'Std Perf'])
+    df = df.set_index('Network')
+    df = df.pivot_table(values='Mean Perf', index=df.index, columns='Method', aggfunc='first')
+    df = df.rename(index=NET_NAME_TO_OFFICIAL)
 
-df = setup_df_for_perf_plot(df)
-print(df)
-draw_e2e_perf_plot(df)
+    # df = setup_df_for_perf_inf_engine_vs_op_lib_plot(df)
+    # print(df)
+    # draw_e2e_perf_inf_engine_vs_op_lib_plot(df)
+
+    df = setup_df_for_perf_plot(df)
+    print(df)
+    draw_e2e_perf_plot(df)
 
 
