@@ -159,8 +159,10 @@ def get_user_fusion(relay_expr):
     # # printe(repr(relay_expr))
     # if relay_expr.backend == 'default':
     #     opt_match = get_temp_opt_match(relay_expr)
-    # visualize_network(relay_expr, "notepad")
-    # return relay_expr
+
+    # visualize backend placement
+    # opt_info_tag = get_opt_info_tag(net_name, hw_name, batch_size)
+    # visualize_network(relay_expr, opt_info_tag)
 
 def run_op_level_opt(relay_expr):
     hw_name = relay_expr.attrs[HW_FUNC_ATTR]

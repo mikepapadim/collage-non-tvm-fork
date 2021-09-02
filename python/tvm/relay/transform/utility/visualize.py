@@ -118,5 +118,5 @@ def visualize_network(expr, file_name, expr2node=None):
             raise RuntimeError(f'Unknown node type. node_idx: {node_idx}, node: {type(node)}')
 
     # this_code_path = os.path.dirname(os.path.abspath(__file__))
-    dot.render(f'analysis/results/net_figs/{file_name}.gv')
+    dot.render(f'analysis/results/backend_placement/{file_name}.gv')
 
