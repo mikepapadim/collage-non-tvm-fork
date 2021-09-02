@@ -47,6 +47,7 @@ class E2EPerfLogger:
         self.log_all_perf(memo_dic)
 
 DP_TUNING_TIME_LOG_PATH = f"{EXP_RESULT_PATH}/dp_tuning_time.csv"
+DP_TUNING_TIME_COLS = ["HW", "Network", "Method", "Mean Perf", "Std Perf"]
 
 class DPTuningTimeLogger:
     def __init__(self):
