@@ -11,12 +11,15 @@ FINAL_NETWORKS = ["resnext50_32x4d", "bert", "dcgan", "nasneta", 'resnet50_3d']
 
 def setup_df_for_perf_plot(df):
     # Make sure column order is following before we normalize perf
-    df = df[['cuDNN', 'AutoTVM', 'TensorRT', 'DP', 'Two-level']]
+    df = df[['PyTorch', 'cuDNN', 'AutoTVM', 'TensorRT', 'DP', 'Two-level']]
+    df = df.drop(columns=['DP'])
+    df = df.rename(columns={'Two-level': 'Collage'})
+    df = df.drop(['Mobilenet V2', 'ResNet50', 'NasRNN'])
 
     # Normalize the performance
     for method in df:
         print(method)
-        df[method] = df['Two-level'] / df[method]
+        df[method] = df['Collage'] / df[method]
 
     return df
 
