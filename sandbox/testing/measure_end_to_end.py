@@ -330,7 +330,7 @@ if __name__ == "__main__":
     args.target = get_build_target(args.hw)
     is_perf_logging = False
 
-    # measure_dp_and_baselines(mod, params, shape_dict, args, is_perf_logging)
+    measure_dp_and_baselines(mod, params, shape_dict, args, is_perf_logging)
     # measure_two_level(mod, params, shape_dict, args, is_perf_logging)
     # measure_dp_tuning_time(mod, params, shape_dict, args, is_perf_logging)
 
