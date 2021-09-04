@@ -319,10 +319,10 @@ def run_two_level_opt(relay_expr):
     if n_ops > 0:
         ev_searcher = EvolutionarySearcher(op_state_to_match_translator, relay_expr, net_name, hw_name,
                                            batch_size=batch_size, n_ops=n_ops,
-                                           # pop_size=10, max_iter=2)  # For simpler debugging
+                                           # pop_size=4, max_iter=2)  # For simpler debugging
                                            # pop_size=10, max_iter=5) # For debugging
-                                           pop_size=30,   max_iter=100000) # when n_hours == 3
-                                           # pop_size=50,   max_iter=100000) # when n_hours == 6
+                                           # pop_size=30,   max_iter=100000) # when n_hours == 3
+                                           pop_size=50,   max_iter=100000) # when n_hours == 6
         second_opt_match = ev_searcher.search(rnd_seed=64)
     else:
         second_opt_match = optimized_match

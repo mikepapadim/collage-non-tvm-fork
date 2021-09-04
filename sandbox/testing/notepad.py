@@ -1,6 +1,8 @@
 from baselines.tf2 import nasrnn
-
-print("imported")
+# from deap import base
+# toolbox = base.Toolbox()
+# toolbox.mate()
+# print("imported")
 # class BackendOp(object):
 #   def __init__(self, backend, pattern, constraint):
 #

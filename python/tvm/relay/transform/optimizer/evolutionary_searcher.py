@@ -295,10 +295,27 @@ class EvolutionarySearcher:
         df.index.name = "search time (secs)"
         df.to_csv(time_perf_log_path)
 
+    def update_best_ind_and_time_perf(self, best_ind, pop, search_start_time, time_perf_dic):
+        cur_pop_best_ind = tools.selBest(pop, 1)[0]
+        # cur_pop_best_ind = tools.selWorst(pop, 1)[0]
+
+        cur_pop_best_ind = (cur_pop_best_ind, cur_pop_best_ind.fitness.values)
+        best_ind, best_opt_match, best_perf = self.log_best_match_and_perf(best_ind, cur_pop_best_ind)
+        printe(f"Best individual up to this generation is {best_ind}")
+
+        # Logging search time and best perf so far
+        total_search_time = time.time() - search_start_time
+        self.save_time_perf_log(time_perf_dic, total_search_time, best_perf)
+
+        return best_ind, best_opt_match, time_perf_dic, total_search_time
+
     def search(self, rnd_seed = 64):
         # Initialize
         search_start_time = time.time()
         random.seed(rnd_seed)
+
+        # For logging search time and best perf
+        time_perf_dic = {}
 
         # Pair of individual and fitness score (negative inference time)
         best_ind = None
@@ -323,8 +340,13 @@ class EvolutionarySearcher:
 
         # Evaluate the entire population
         fitnesses = list(map(self.toolbox.evaluate, pop))
+        is_first = True
         for ind, fit in zip(pop, fitnesses):
             ind.fitness.values = fit
+            if is_first:
+                # Log best op-level performance to show the trend
+                self.save_time_perf_log(time_perf_dic, 0, -fit[0])
+                is_first = False
 
         printe("  Evaluated %i individuals" % len(pop))
 
@@ -334,8 +356,6 @@ class EvolutionarySearcher:
         # Variable keeping track of the number of generations
         g = 0
 
-        # For logging search time and best perf
-        time_perf_dic = {}
         # Begin the evolution
         while g < self.max_iter:
             # A new generation
@@ -401,25 +421,10 @@ class EvolutionarySearcher:
 
             # Best will choose individual with the biggest negative inference time
             # Warning(@Soo): Note that best_ind is a pair of individual and its perf (negative inference time)
-            cur_pop_best_ind = tools.selBest(pop, 1)[0]
-            # cur_pop_best_ind = tools.selWorst(pop, 1)[0]
-            cur_pop_best_ind = (cur_pop_best_ind, cur_pop_best_ind.fitness.values)
-            best_ind, best_opt_match, best_perf = self.log_best_match_and_perf(best_ind, cur_pop_best_ind)
-
-
-            # Deallocate memory for useless space
-            # if g < self.max_iter:
-            #     del best_opt_match
-            #     gc.collect()
-
-            printe(f"Best individual up to this generation is {best_ind}")
-
-            # Logging search time and best perf so far
-            total_search_time = time.time() - search_start_time
-            self.save_time_perf_log(time_perf_dic, total_search_time, best_perf)
+            best_ind, best_opt_match, time_perf_dic, total_search_time = self.update_best_ind_and_time_perf(best_ind, pop, search_start_time, time_perf_dic)
 
             # End the program if the time passes;
-            n_hours = 3 # It was 6 before; however, 3 is enough.
+            n_hours = 8 # It was 6 before; however, 3 is enough.
             if total_search_time > n_hours * 3600:
                 printe(f"It exceeds search time limit ({n_hours} hrs), so it stops.")
                 break
