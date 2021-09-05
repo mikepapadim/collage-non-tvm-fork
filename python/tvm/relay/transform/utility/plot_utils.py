@@ -6,6 +6,7 @@ def set_plt_font_size():
     BIGGER_SIZE = 22
 
     plt.style.use('seaborn-paper')
+    plt.rc('axes', axisbelow=True)
     plt.rc('font', size=BIGGER_SIZE)  # controls default text sizes
     plt.rc('axes', titlesize=BIGGER_SIZE)  # fontsize of the axes title
     plt.rc('axes', labelsize=BIGGER_SIZE)  # fontsize of the x and y labels

@@ -11,11 +11,12 @@ FINAL_NETWORKS = ["resnext50_32x4d", "bert", "dcgan", "nasneta", 'resnet50_3d']
 
 def setup_df_with_baselines_and_method(df):
     # Make sure column order is following before we normalize perf
-    df = df[['PyTorch', 'AutoTVM-libs', 'cuDNN', 'AutoTVM', 'TensorRT', 'DP', 'Two-level']]
+    df = df[['cuDNN', 'AutoTVM', 'TensorRT', 'PyTorch', 'AutoTVM-libs', 'DP', 'Two-level']]
     df = df.rename(columns={'AutoTVM-libs': 'TVM', 'Two-level': 'Collage'})
     df = df.drop(columns=['DP'])
     df = df.drop(['Mobilenet V2', 'ResNet50', 'NasRNN'])#, '3D-ResNet50', 'DCGAN', 'NasNet-A', 'ResNeXt50'])
 
+    print(df)
     return df
 
 def setup_df_for_normalized_perf_plot(df):
@@ -30,7 +31,6 @@ def setup_df_for_normalized_perf_plot(df):
 
 def draw_e2e_perf_plot_normalized(df):
     df = setup_df_for_normalized_perf_plot(df)
-
     df.plot.bar(figsize=(24, 5), width=0.7)
 
     # Save figures
@@ -38,20 +38,20 @@ def draw_e2e_perf_plot_normalized(df):
     plt.ylabel('Normalized Performance')
     # plt.ylabel('Inference Time (ms)')
 
+    plt.grid(axis='y', zorder=-2.0)
     plt.xticks(rotation=0)
     plt.legend(ncol=6, loc='upper center', bbox_to_anchor=(0.5, 1.2))
     plt.savefig(f"{EXP_RESULT_PATH}/plots/e2e_perf.png", bbox_inches='tight')
 
 def draw_e2e_perf_plot_ms(df):
     df = setup_df_with_baselines_and_method(df)
-    print(df)
-
     df.plot.bar(figsize=(24, 5), width=0.7)
 
     # Save figures
     plt.xlabel("")
     plt.ylabel('Inference Time (ms)')
 
+    plt.grid(axis='y', zorder=-2.0)
     plt.xticks(rotation=0)
     plt.legend(ncol=6, loc='upper center', bbox_to_anchor=(0.5, 1.2))
     plt.savefig(f"{EXP_RESULT_PATH}/plots/e2e_perf.png", bbox_inches='tight')
