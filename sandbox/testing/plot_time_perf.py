@@ -35,13 +35,25 @@ def plot_single_net(net_name):
     # plt.xticks(rotation=45)
     plt.savefig(fig_name, bbox_inches='tight')
 
-def load_dp_perf(net_name, hw):
-    perf_dic = E2EPerfLogger().read_dict_from_csv()
-    key = E2EPerfLogger().gen_dic_key(hw, net_name, 'DP')
-    mean_perf, _ = perf_dic[key]
+def fill_up_missing_first_val(tuning_time, inf_time, net_df, net_name, hw):
+    def load_dp_perf(net_name, hw):
+        perf_dic = E2EPerfLogger().read_dict_from_csv()
+        key = E2EPerfLogger().gen_dic_key(hw, net_name, 'DP')
+        mean_perf, _ = perf_dic[key]
 
-    return float(mean_perf)
+        return float(mean_perf)
 
+    # If there is a missing first dp perf
+    tuning_time.insert(0, 0)
+    dp_inf_time = load_dp_perf(net_name, hw)
+    if inf_time[0] > dp_inf_time:
+        dp_inf_time = inf_time[0]
+        print(
+            f"[{net_name}] DP inf time is longer than best inf time of two-level after first iteration, measurement error")
+
+    inf_time.insert(0, dp_inf_time)
+
+    return tuning_time, inf_time, dp_inf_time
 
 def plot_all_nets(networks, hw, batch_size):
     plot_file_name = "time_perf_all_networks"
@@ -51,24 +63,24 @@ def plot_all_nets(networks, hw, batch_size):
 
     for net_name in networks:
         file_name = f"time_perf_{net_name}_{hw}_bs{batch_size}"
+        # net_df = pd.read_csv(f"{LOG_PATH}/eval_results/rtx2070_bs1/210905/{file_name}.log", index_col=0)
         net_df = pd.read_csv(f"{LOG_PATH}/eval_results/rtx2070_bs1/{file_name}.log", index_col=0)
+
         tuning_time = net_df.index.tolist()
-        tuning_time.insert(0, 0)
+        inf_time = net_df.iloc[:, 0].tolist()
 
-        dp_inf_time = load_dp_perf(net_name, hw)
-        inf_time = net_df.iloc[:,0].tolist()
-        if inf_time[0] > dp_inf_time:
-            dp_inf_time = inf_time[0]
-            print(f"[{net_name}] DP inf time is longer than best inf time of two-level after first iteration, measurement error")
+        tuning_time, inf_time, dp_inf_time = fill_up_missing_first_val(tuning_time, inf_time, net_df, net_name, hw)
+        # dp_inf_time = inf_time[0]
+        tuning_time, inf_time = np.array(tuning_time) / 60.0, np.array(inf_time)
 
-        inf_time.insert(0, dp_inf_time)
-        inf_time = np.array(inf_time)
         rel_speed_up = dp_inf_time/inf_time
 
         net_name = NET_NAME_TO_OFFICIAL[net_name]
         plt.plot(tuning_time, rel_speed_up, label=net_name)
 
-    plt.xlabel('Tuning time (secs)')
+    # plt.xlabel('Tuning time (secs)')
+    plt.xticks(range(60, 181, 60))
+    plt.xlabel('Tuning time (mins)')
     plt.ylabel('Relative Speedup')
     plt.legend(ncol=3, loc='upper center', bbox_to_anchor=(0.45, 1.25), labelspacing=0.3, columnspacing=1.0)
 
