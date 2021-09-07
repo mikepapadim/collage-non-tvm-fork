@@ -15,34 +15,33 @@ def generator(input, channels):
     t = input
     init_size = img_size // 4
     l1 = make_matmul(t, 128 * init_size ** 2)
+    t = tf.reshape(l1, (l1.shape[0], 128, init_size, init_size) )
 
-    new_height = int(round(img_size * 2))
-    new_width = int(round(img_size * 2))
-    resized = tf.image.resize_images(l1, [new_height, new_width])
+    new_height = int(round(init_size * 2))
+    new_width = int(round(init_size * 2))
+    resized = tf.image.resize_images(t, [new_height, new_width])
 
     t = make_conv2d(input_tensor=resized, filter_shape=(3,3,128,128), strides=(1,1,1,1), padding="SAME", actimode="RELU", name="conv")
     t = tf.nn.relu(t)
 
-    new_height = int(round(img_size * 2 * 2))
-    new_width = int(round(img_size * 2 * 2))
+    new_height = int(round(init_size * 2 * 2))
+    new_width = int(round(init_size * 2 * 2))
     resized = tf.image.resize_images(t, [new_height, new_width])
     t = make_conv2d(input_tensor=resized, filter_shape=(3,3,64,64), strides=(1,1,1,1), padding="SAME", actimode="RELU", name="conv")
-    
-    t = make_conv2d(input_tensor=resized, filter_shape=(3,3,channels,channels), strides=(1,1,1,1), padding="SAME", actimode="RELU", name="conv")
-
     t = tf.nn.relu(t)
+    t = make_conv2d(input_tensor=t, filter_shape=(3,3,channels,channels), strides=(1,1,1,1), padding="SAME", actimode="RELU", name="conv")
     t = tf.nn.tanh(t)
     return t 
 
 def discriminator(input, channels):
     t = input
-    t = make_conv2d(input_tensor=t, filter_shape=(3,3,16,16), strides=(1,1,1,1), padding="SAME", actimode="RELU", name="conv")
+    t = make_conv2d(input_tensor=t, filter_shape=(3,3,16,16), strides=(1,1,2,2), padding="SAME", actimode="RELU", name="conv")
     t = tf.nn.relu(t)
-    t = make_conv2d(input_tensor=t, filter_shape=(3,3,32,32), strides=(1,1,1,1), padding="SAME", actimode="RELU", name="conv")
+    t = make_conv2d(input_tensor=t, filter_shape=(3,3,32,32), strides=(1,1,2,2), padding="SAME", actimode="RELU", name="conv")
     t = tf.nn.relu(t)
-    t = make_conv2d(input_tensor=t, filter_shape=(3,3,64,64), strides=(1,1,1,1), padding="SAME", actimode="RELU", name="conv")
+    t = make_conv2d(input_tensor=t, filter_shape=(3,3,64,64), strides=(1,1,2,2), padding="SAME", actimode="RELU", name="conv")
     t = tf.nn.relu(t)
-    t = make_conv2d(input_tensor=t, filter_shape=(3,3,128,128), strides=(1,1,1,1), padding="SAME", actimode="RELU", name="conv")
+    t = make_conv2d(input_tensor=t, filter_shape=(3,3,128,128), strides=(1,1,2,2), padding="SAME", actimode="RELU", name="conv")
     t = tf.nn.relu(t)
 
     #ds_size = img_size // 2 ** 4
