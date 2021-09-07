@@ -3,7 +3,8 @@ import tensorflow as tf
 import numpy as np
 import time
 import timeit
-from .shared_functions import make_activation, make_conv2d, make_conv2d_bn, make_matmul
+from .shared_functions import make_activation, make_conv2d_bn, make_matmul
+from .shared_functions import make_conv2d_nhwc as make_conv2d
 
 NAME = 'dcgan'
 batch_size = 1
@@ -17,7 +18,7 @@ def generator(input):
     l1 = make_matmul(t, 128 * init_size ** 2)
     print(l1.shape)
 
-    t = tf.reshape(l1, (l1.shape[0], 128, init_size, init_size) )
+    t = tf.reshape(l1, (l1.shape[0], init_size, init_size, 128) )
 
     print(t.shape)
 
@@ -26,7 +27,7 @@ def generator(input):
     resized = tf.image.resize(t, [new_height, new_width])
 
     print(resized.shape)
-    
+
     t = make_conv2d(input_tensor=resized, filter_shape=(3,3,128,128), strides=(1,1,1,1), padding="SAME", actimode="RELU", name="conv")
     t = tf.nn.relu(t)
 
