@@ -62,11 +62,11 @@ def dcgan_tf2_model(input):
     t = discriminator(t)
     return t
 
-@tf.function(experimental_compile=False)
+@tf.function(jit_compile=False)
 def dcgan_tf2(input):
     return dcgan_tf2_model(input)
 
-@tf.function(experimental_compile=False)
+@tf.function(jit_compile=False)
 def dcgan_tf2_xla(input):
     return dcgan_tf2_model(input)
 

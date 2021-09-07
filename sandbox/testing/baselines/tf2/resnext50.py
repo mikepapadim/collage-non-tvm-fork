@@ -48,11 +48,11 @@ def resnext50_tf2_model(input):
         strides=(1,1,1,1)
     return t
 
-@tf.function(experimental_compile=False)
+@tf.function(jit_compile=False)
 def resnext50_tf2(input):
     return resnext50_tf2_model(input)
 
-@tf.function(experimental_compile=True)
+@tf.function(jit_compile=True)
 def resnext50_tf2_xla(input):
     return resnext50_tf2_model(input)
 
