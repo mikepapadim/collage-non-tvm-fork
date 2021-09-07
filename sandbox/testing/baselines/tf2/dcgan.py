@@ -25,6 +25,8 @@ def generator(input):
     new_width = int(round(init_size * 2))
     resized = tf.image.resize(t, [new_height, new_width])
 
+    print(resized.shape)
+    
     t = make_conv2d(input_tensor=resized, filter_shape=(3,3,128,128), strides=(1,1,1,1), padding="SAME", actimode="RELU", name="conv")
     t = tf.nn.relu(t)
 
