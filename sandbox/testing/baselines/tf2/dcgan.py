@@ -16,17 +16,17 @@ def generator(input):
     t = input
     init_size = img_size // 4
     l1 = make_matmul(t, 128 * init_size ** 2)
-    print(l1.shape)
+    #print(l1.shape)
 
     t = tf.reshape(l1, (l1.shape[0], init_size, init_size, 128) )
 
-    print(t.shape)
+    #print(t.shape)
 
     new_height = int(round(init_size * 2))
     new_width = int(round(init_size * 2))
     resized = tf.image.resize(t, [new_height, new_width])
 
-    print(resized.shape)
+    #print(resized.shape)
 
     t = make_conv2d(input_tensor=resized, filter_shape=(3,3,128,128), strides=(1,1,1,1), padding="SAME", actimode="RELU", name="conv")
     t = tf.nn.relu(t)
