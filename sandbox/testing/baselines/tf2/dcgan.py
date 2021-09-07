@@ -19,14 +19,14 @@ def generator(input):
 
     new_height = int(round(init_size * 2))
     new_width = int(round(init_size * 2))
-    resized = tf.image.resize_images(t, [new_height, new_width])
+    resized = tf.image.resize(t, [new_height, new_width])
 
     t = make_conv2d(input_tensor=resized, filter_shape=(3,3,128,128), strides=(1,1,1,1), padding="SAME", actimode="RELU", name="conv")
     t = tf.nn.relu(t)
 
     new_height = int(round(init_size * 2 * 2))
     new_width = int(round(init_size * 2 * 2))
-    resized = tf.image.resize_images(t, [new_height, new_width])
+    resized = tf.image.resize(t, [new_height, new_width])
     t = make_conv2d(input_tensor=resized, filter_shape=(3,3,64,64), strides=(1,1,1,1), padding="SAME", actimode="RELU", name="conv")
     t = tf.nn.relu(t)
     t = make_conv2d(input_tensor=t, filter_shape=(3,3,channels,channels), strides=(1,1,1,1), padding="SAME", actimode="RELU", name="conv")
