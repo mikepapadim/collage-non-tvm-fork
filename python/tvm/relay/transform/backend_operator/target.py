@@ -12,6 +12,7 @@ from pathlib import Path
 from .utils import *
 
 from tvm.contrib import graph_executor as runtime
+import logging
 # from tvm.contrib import graph_executor
 from ..utility.debug_helper import printe
 
@@ -126,7 +127,7 @@ def measure(ftimer, is_net, hw_name, *args):
     while True:
         perfs = np.array(ftimer(*args).results) * 1000  # convert to millisecond
         mean_perf, std_perf = np.mean(perfs), np.std(perfs)
-        printe(f"Mean, std of perf : {mean_perf}, {std_perf}")
+        logging.info(f"Mean, std of perf : {mean_perf}, {std_perf}")
 
         # If mean_perf is more than 1 ms, then we should reduce threshold not to take too long,
         # e.g., BERT or Conv3D ops

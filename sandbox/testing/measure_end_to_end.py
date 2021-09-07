@@ -67,7 +67,7 @@ def build_and_measure_autotvm(net, params, target_str, shape_dict, hw_name):
     with autotvm.apply_history_best(get_autotvm_log_path(hw_name)):
         with tvm.transform.PassContext(opt_level=OPT_LEVEL.get()):
             lib = relay.build(net, target_str, params=params)
-        print(f"We successfully built the network")
+        logging.info(f"We successfully built the network")
         # Create workload
         dev = tvm.device(target_str, 0)
         module = runtime.GraphModule(lib["default"](dev))
@@ -86,7 +86,7 @@ def measure_end_to_end_tvm_no_tuning(net, params, target_str, shape_dict, method
     with tvm.transform.PassContext(opt_level=OPT_LEVEL.get()):
         lib = relay.build(net, target_str, params=params)
 
-    print(f"We successfully built the network")
+    logging.info(f"We successfully built the network")
     # Create workload
     dev = tvm.device(target_str, 0)
     module = runtime.GraphModule(lib["default"](dev))
@@ -259,6 +259,13 @@ def measure_tvm_strategy_cudnn_cublas(mod, params, shape_dict, args, is_perf_log
 
     verify_network_output(mod["main"], shape_dict, mod_tvm1, mod_tvm2)
 
+def measure_autotvm(mod, params, shape_dict, args, is_perf_logging):
+    mean_perf, std_perf, mod_tvm = measure_end_to_end_perf_autotvm(mod["main"], params, args.target, shape_dict,
+                                                                   None,
+                                                                   args.network, args.hw, args.batch_size)
+    print(f"[{args.network}] Performance of AutoTVM on {args.hw} (mean, std) = ({mean_perf:.4f}+-{std_perf:.4f})")
+    log_e2e_perf(args.hw, args.network, 'AutoTVM', mean_perf, std_perf, is_perf_logging)
+
 
 def build_dp(net, params, target_str, shape_dict, net_name, hw_name, batch_size):
     net = net.with_attr("CustomFusionPass", CustomFusionPass.DP)
@@ -268,7 +275,7 @@ def build_dp(net, params, target_str, shape_dict, net_name, hw_name, batch_size)
         with tvm.transform.PassContext(opt_level=OPT_LEVEL.get()):
             lib = relay.build(net, target_str, params=params)
 
-    print(f"We successfully built the network")
+    logging.info(f"We successfully built the network")
 
 """
 Measure time spent for DP algorithm (dp) and op measurement (measurement)
@@ -314,10 +321,15 @@ if __name__ == "__main__":
     args = get_args()
     # Redirect output to log files
     log_dir = "e2e_measure_logs"
-    setup_logging(log_dir, task_name="e2e_measure", net_name=args.network, hw_name=args.hw, batch_size=args.batch_size)
+
+    # For DP,
+    # setup_logging(log_dir, task_name="e2e_measure", net_name=args.network, hw_name=args.hw, batch_size=args.batch_size)
+
+    # For tuning time measurement, comment setup_logging above and uncomment the following codes
+    logging.basicConfig(level=logging.ERROR)
 
     # We can't test this because this network include batch norm.
-    print(f"batch size: {args.batch_size}")
+    logging.info(f"batch size: {args.batch_size}")
 
     mod, params, shape_dict, _ = get_network_from_torch(args.network, args.batch_size)
     # mod, params, shape_dict, _ = get_network_from_torch("nasneta", 1)
@@ -329,10 +341,12 @@ if __name__ == "__main__":
     # Assign build target based on a given hw
     args.target = get_build_target(args.hw)
     is_perf_logging = True
+    # is_perf_logging = False
 
     # measure_dp_and_baselines(mod, params, shape_dict, args, is_perf_logging)
-    measure_two_level(mod, params, shape_dict, args, is_perf_logging)
-    # measure_dp_tuning_time(mod, params, shape_dict, args, is_perf_logging)
+    # measure_autotvm(mod, params, shape_dict, args, is_perf_logging)
+    # measure_two_level(mod, params, shape_dict, args, is_perf_logging)
+    measure_dp_tuning_time(mod, params, shape_dict, args, is_perf_logging)
 
     # Note that this one do not use AutoTVM because cudnn and cublas will be used only if AutoTVM is disabled
     # measure_tvm_strategy_cudnn_cublas(mod, params, shape_dict, args, is_perf_logging)

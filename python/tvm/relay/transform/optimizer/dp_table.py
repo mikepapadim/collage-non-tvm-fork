@@ -3,6 +3,7 @@ from bitarray import frozenbitarray
 from ..backend_operator.backend_op import get_optimal_backendop
 from .comp_graph import *
 from collections import defaultdict
+import logging
 
 try:
     import Queue as Q  # ver. < 3.0
@@ -211,7 +212,7 @@ class DPTable:
         self._comp_graph = comp_graph
 
         self._n_nodes = comp_graph.get_n_nodes() - 1
-        printe(f"# of nodes in comp graph: {self._n_nodes}")
+        logging.info(f"# of nodes in comp graph: {self._n_nodes}")
         root_node = comp_graph.get_root()
         default_key_str = ''.join(self.gen_default_node_key_list())
         self._zero_key = frozenbitarray(default_key_str)
@@ -400,8 +401,8 @@ class DPTable:
         opt_match_cell = self._dp_table[all_matched_key]
 
         # Note that last prev_cell is always None
-        printe("="*50)
-        printe("Matched operators (in post-dfs-order, from the root of comp graph to the last node)")
+        logging.info("="*50)
+        logging.info("Matched operators (in post-dfs-order, from the root of comp graph to the last node)")
         group_id, backend_annotation = 0, None
         optimized_match = {}
         # Note that we have one dummy cell, and that's why it's opt_match_cell.prev_cell instead of opt_match_cell
@@ -416,13 +417,13 @@ class DPTable:
                 relay.analysis.update_backend(expr, backend_annotation)
                 optimized_match[expr] = backend_annotation
 
-            printe(f"{backend_annotation}")
+            logging.info(f"{backend_annotation}")
 
             opt_match_cell = opt_match_cell.prev_cell
             # if opt_match_cell is not None:
             #     printe(opt_match_cell.best_b_op_name)
             group_id += 1
 
-        printe("=" * 50)
+        logging.info("=" * 50)
 
         return optimized_match

@@ -25,6 +25,8 @@ from tvm.relay.op.contrib.tensorrt import prune_tensorrt_subgraphs
 from tvm.relay import transform
 from .custom_fusion_pass import *
 
+import logging
+
 def setup_backend_op_lib(hw_name):
     backendop_lib = BackendOpLib.get(hw_name)
     # backendop_lib.measure_backend_ops(network_expr, targets, batch_size)
@@ -52,7 +54,7 @@ def apply_external_compiler_op(mod):
         printe("Skip external compiler op pass because the hw is not NVIDIA GPU.")
         return mod
 
-    printe("External compiler op pass")
+    logging.info("External compiler op pass")
 
     # Get best op match info
     fn_body = mod["main"].body
@@ -168,10 +170,10 @@ def run_op_level_opt(relay_expr):
     hw_name = relay_expr.attrs[HW_FUNC_ATTR]
     relay_expr = get_function_body(relay_expr)
 
-    print(f"[Op-Level: DP] Computation graph generation...")
+    logging.info(f"[Op-Level: DP] Computation graph generation...")
     comp_graph = ComputationGraph(relay_expr)
     n_relay_nodes = comp_graph.n_relay_nodes
-    print(f"# of relay nodes in comp graph: {n_relay_nodes}")
+    logging.info(f"# of relay nodes in comp graph: {n_relay_nodes}")
 
     # Sanity check: Only AutoTVM
     # targets = [Target.AUTOTVM]
@@ -207,7 +209,7 @@ def run_op_level_opt(relay_expr):
     """
     optimized_match = optimizer.optimize(comp_graph, hw_name)
 
-    print("[Op-Level: DP] It finished optimizing comp graph and assigning backend ops to Relay Expr (backend attr)")
+    logging.info("[Op-Level: DP] It finished optimizing comp graph and assigning backend ops to Relay Expr (backend attr)")
 
     # optimized_match, post_order_match_result = optimizer.get_optimized_match(comp_graph)
 
@@ -376,17 +378,17 @@ def run_single_backend_baseline(relay_expr):
     hw_name = relay_expr.attrs[HW_FUNC_ATTR]
     relay_expr = get_function_body(relay_expr)
 
-    print(f"[Single backend baseline] Computation graph generation...")
+    logging.info(f"[Single backend baseline] Computation graph generation...")
     comp_graph = ComputationGraph(relay_expr)
     n_relay_nodes = comp_graph.n_relay_nodes
-    print(f"# of relay nodes in comp graph: {n_relay_nodes}")
+    logging.info(f"# of relay nodes in comp graph: {n_relay_nodes}")
 
     backendop_lib = setup_backend_op_lib(hw_name)
 
     # Optimizing graph; note that we don't need to specify target backend for single backend baseline matching
     optimizer = CompGraphOptimizer(backendop_lib, target_backend=[])
     optimized_match = optimizer.optimize_single_backend(comp_graph, hw_name, single_backend_target)
-    print("[Single backend baseline] It finished optimizing comp graph and assigning backend ops to Relay Expr (backend attr)")
+    logging.info("[Single backend baseline] It finished optimizing comp graph and assigning backend ops to Relay Expr (backend attr)")
     backendop_lib.save_to_log(hw_name)
 
     # printe(repr(relay_expr))

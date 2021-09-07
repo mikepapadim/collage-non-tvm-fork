@@ -1041,7 +1041,7 @@ namespace tvm {
           this->RunFuse(graph, post_dom_tree, phase);
         }
       } else {
-        std::cerr << "Custom fusion pass" << std::endl;
+//        std::cerr << "Custom fusion pass" << std::endl;
         this->RunFuseWithMap(graph, post_dom_tree);
       }
 

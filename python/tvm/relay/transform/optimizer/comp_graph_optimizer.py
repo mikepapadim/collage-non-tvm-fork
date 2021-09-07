@@ -7,6 +7,7 @@ from .optimizer_utils import *
 from ..backend_operator.target import *
 from .ordered_pattern_matcher import OrderedPatternMatcher
 from .dp_table import *
+import logging
 
 class CompGraphOptimizer:
     def __init__(self, backendop_lib, target_backend=None):
@@ -72,7 +73,7 @@ class CompGraphOptimizer:
 
 
         for pat in self._backendop_lib.get_all_patterns():
-            print("Checking... ", pat)
+            logging.info("Checking... ", pat)
 
         # for node, dom in post_dom_tree.items():
         #    print(f"{repr(node)} --> {repr(dom)}\n")
@@ -91,11 +92,11 @@ class CompGraphOptimizer:
             f = frontier_queue.get()
             f_expr = f.get_relay_expr()
 
-            print("="*45)
+            logging.info("="*45)
             if is_call_node(f_expr):
-                print(f"(topo_order, op_type) : {f._topological_order}, {f_expr.op}")
+                logging.info(f"(topo_order, op_type) : {f._topological_order}, {f_expr.op}")
             else:
-                print(f"(topo_order, op_type) : {f._topological_order}, {type(f_expr)}, Non-call node")
+                logging.info(f"(topo_order, op_type) : {f._topological_order}, {type(f_expr)}, Non-call node")
 
             n_match_frontier = 0
             for pat in self._backendop_lib.get_all_patterns():
@@ -107,7 +108,7 @@ class CompGraphOptimizer:
                 if self._ordered_pattern_matcher.match(f_expr, pat.get_relay_pattern()):
                 # if pat.get_relay_pattern().match(f_expr):
                     assert pat.get_depth() >= 1 # 0 depth doesn't make sense
-                    print("The following pattern is matched:", pat.get_relay_pattern())
+                    logging.info("The following pattern is matched:", pat.get_relay_pattern())
 
                     # Get best backend op and its cost for matched nodes
                     best_backend_op, min_cost = get_optimal_backendop(self._backendop_lib, f_expr,
@@ -265,10 +266,10 @@ class CompGraphOptimizer:
             #     printe(f"n_match_froniter : {n_match_frontier}")
 
         # Print out matched operators
-        printe("=" * 50)
-        printe("Matched operators (from the last node of comp graph to the root, which is data node)")
+        logging.info("=" * 50)
+        logging.info("Matched operators (from the last node of comp graph to the root, which is data node)")
         for anno in matched_b_op_name:
-            printe(anno)
+            logging.info(anno)
 
 
 class AssignBackendExprVisitor:

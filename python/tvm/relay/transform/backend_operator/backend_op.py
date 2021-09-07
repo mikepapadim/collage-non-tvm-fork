@@ -20,6 +20,7 @@ from .op_config import Config, MeasuredConfigs
 from .target import get_target_cost_func
 from .op_type import optype_to_pattern, relayop_to_varnames
 from ..utility.debug_helper import printe
+import logging
 
 # It gives the path of backend_op.py no matter where you import this file
 # cur_dir_path = Path(__file__).parent.absolute()
@@ -85,11 +86,11 @@ class BackendOp(object):
 
     if cost_info != None:
       # pass
-      printe("REUSED RESULT!!!!")
+      logging.info("REUSED RESULT!!!!")
     else:
         # print("!!!Warning!!! Random cost!")
         # cost_info = (-1, -1)
-      printe("NOT REUSED!!!!")
+      logging.info("NOT REUSED!!!!")
 
       cost_func = get_target_cost_func(self._target)
       cost_info = cost_func(self._name, expr, self._target, hw_name)
@@ -236,15 +237,15 @@ def get_optimal_backendop(b_op_lib, expr, pattern, target = None, hw_name = "INV
     #   eprint(f"subgraph expr: {repr(subgraph)}")
 
     # Print the useful logs
-    print("-" * 45)
+    logging.info("-" * 45)
     # Warning(@Soo): there is a bug in printing repr of tuple in TVM.
     if is_tuple_node(subgraph):
-      print(f"Subgraph to measure (target: {str(op._target.name())}):", subgraph)
+      logging.info(f"Subgraph to measure (target: {str(op._target.name())}):", subgraph)
     else:
-      print(f"Subgraph to measure (target: {str(op._target.name())}):", repr(subgraph))
+      logging.info(f"Subgraph to measure (target: {str(op._target.name())}):", repr(subgraph))
     cost = op.get_cost(subgraph, hw_name)
-    print(f"Cost of subgraph : {cost:4f}")
-    print("-" * 45)
+    logging.info(f"Cost of subgraph : {cost:4f}")
+    logging.info("-" * 45)
 
     assert cost != None
     if cost < min_cost:
