@@ -1,16 +1,16 @@
-rtx2070,bert,DP,2.4408,0.0000
-rtx2070,bert,Op Profiling,25.0057,0.0000
-rtx2070,dcgan,DP,8.5330,0.0000
-rtx2070,dcgan,Op Profiling,75.4508,0.0000
+rtx2070,bert,DP,2.4264,0.0000
+rtx2070,bert,Op Profiling,16.4763,0.0000
+rtx2070,dcgan,DP,8.7271,0.0000
+rtx2070,dcgan,Op Profiling,78.4485,0.0000
 rtx2070,mobilenet_v2,DP,11.4935,0.0000
 rtx2070,mobilenet_v2,Op Profiling,69.9977,0.0000
-rtx2070,nasneta,DP,38.1735,0.0000
-rtx2070,nasneta,Op Profiling,57.9816,0.0000
+rtx2070,nasneta,DP,36.2989,0.0000
+rtx2070,nasneta,Op Profiling,58.8395,0.0000
 rtx2070,nasrnn,DP,40.9583,0.0000
 rtx2070,nasrnn,Op Profiling,355.5462,0.0000
 rtx2070,resnet50,DP,14.0167,0.0000
 rtx2070,resnet50,Op Profiling,75.1171,0.0000
-rtx2070,resnet50_3d,DP,15.7166,0.0000
-rtx2070,resnet50_3d,Op Profiling,94.6057,0.0000
-rtx2070,resnext50_32x4d,DP,13.7309,0.0000
-rtx2070,resnext50_32x4d,Op Profiling,79.9389,0.0000
+rtx2070,resnet50_3d,DP,16.1693,0.0000
+rtx2070,resnet50_3d,Op Profiling,89.3902,0.0000
+rtx2070,resnext50_32x4d,DP,15.0336,0.0000
+rtx2070,resnext50_32x4d,Op Profiling,74.6353,0.0000
