@@ -11,7 +11,7 @@ latent_dim = 100
 img_size = 256
 channels = 3
 
-def generator(input, channels):
+def generator(input):
     t = input
     init_size = img_size // 4
     l1 = make_matmul(t, 128 * init_size ** 2)
@@ -33,7 +33,7 @@ def generator(input, channels):
     t = tf.nn.tanh(t)
     return t 
 
-def discriminator(input, channels):
+def discriminator(input):
     t = input
     t = make_conv2d(input_tensor=t, filter_shape=(3,3,16,16), strides=(1,1,2,2), padding="SAME", actimode="RELU", name="conv")
     t = tf.nn.relu(t)
