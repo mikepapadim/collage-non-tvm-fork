@@ -127,8 +127,8 @@ if __name__ == '__main__':
     args = get_args()
 
     # PyTorch measurement
-    # model, inputs = get_torch_model_and_input(args)
-    # measure_torch(model, inputs, args)
+    model, inputs = get_torch_model_and_input(args)
+    measure_torch(model, inputs, args)
 
     # Adjust experiment parameters for TF
     args.iterations = 5000
