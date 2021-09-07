@@ -42,13 +42,13 @@ def generator(input):
 
 def discriminator(input):
     t = input
-    t = make_conv2d(input_tensor=t, filter_shape=(3,3,channels,16), strides=(1,1,2,2), padding="SAME", actimode="RELU", name="conv")
+    t = make_conv2d(input_tensor=t, filter_shape=(3,3,channels,16), strides=2, padding="SAME", actimode="RELU", name="conv")
     t = tf.nn.relu(t)
-    t = make_conv2d(input_tensor=t, filter_shape=(3,3,16,32), strides=(1,1,2,2), padding="SAME", actimode="RELU", name="conv")
+    t = make_conv2d(input_tensor=t, filter_shape=(3,3,16,32), strides=2, padding="SAME", actimode="RELU", name="conv")
     t = tf.nn.relu(t)
-    t = make_conv2d(input_tensor=t, filter_shape=(3,3,32,64), strides=(1,1,2,2), padding="SAME", actimode="RELU", name="conv")
+    t = make_conv2d(input_tensor=t, filter_shape=(3,3,32,64), strides=2, padding="SAME", actimode="RELU", name="conv")
     t = tf.nn.relu(t)
-    t = make_conv2d(input_tensor=t, filter_shape=(3,3,64,128), strides=(1,1,2,2), padding="SAME", actimode="RELU", name="conv")
+    t = make_conv2d(input_tensor=t, filter_shape=(3,3,64,128), strides=2, padding="SAME", actimode="RELU", name="conv")
     t = tf.nn.relu(t)
 
     #ds_size = img_size // 2 ** 4
