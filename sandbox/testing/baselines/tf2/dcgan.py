@@ -36,7 +36,7 @@ def generator(input):
     resized = tf.image.resize(t, [new_height, new_width])
     t = make_conv2d(input_tensor=resized, filter_shape=(3,3,64,64), strides=(1,1,1,1), padding="SAME", actimode="RELU", name="conv")
     t = tf.nn.relu(t)
-    t = make_conv2d(input_tensor=t, filter_shape=(3,3,channels,channels), strides=(1,1,1,1), padding="SAME", actimode="RELU", name="conv")
+    t = make_conv2d(input_tensor=t, filter_shape=(3,3,channels,channels), strides=(1,1,1,1), padding="VALID", actimode="RELU", name="conv")
     t = tf.nn.tanh(t)
     return t 
 
