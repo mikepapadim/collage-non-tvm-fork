@@ -2,6 +2,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 from e2e_perf_logger import *
 from tvm.relay.transform.utility.plot_utils import set_plt_font_size
+from scipy import stats
 
 NET_NAME_TO_OFFICIAL = {'bert': 'BERT', 'nasneta':"NasNet-A", 'resnet50': 'ResNet50',
                       'resnext50_32x4d':"ResNeXt50", 'resnet50_3d':"3D-ResNet50",
@@ -26,7 +27,11 @@ def setup_df_for_normalized_perf_plot(df):
         print(method)
         df[method] = df['Collage'] / df[method]
 
+    print(df.iloc[0:5, :])
+    # Add Geomean
+    df.loc['GeoMean'] = stats.gmean(df.iloc[0:5, :], axis=0)
     print(df)
+
     return df
 
 def draw_e2e_perf_plot_normalized(df):
