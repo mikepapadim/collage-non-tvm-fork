@@ -10,6 +10,7 @@ from baselines.tf2.nasnet_a import nasneta_tf2, nasneta_tf2_xla
 from baselines.tf2.resnet50 import resnet50_tf2, resnet50_tf2_xla
 from baselines.tf2.resnext50 import resnext50_tf2, resnext50_tf2_xla
 from baselines.tf2.resnet50_3d import resnet50_3d_tf2, resnet50_3d_tf2_xla
+from baselines.tf2.dcgan import dcgan_tf2, dcgan_tf2_xla
 
 # TF2 Model
 
@@ -34,6 +35,9 @@ NETWORK_TO_TF2_MODEL = {
 
     "resnet50_3d": resnet50_3d_tf2,
     "resnet50_3d_xla": resnet50_3d_tf2_xla,
+
+    "dcgan": dcgan_tf2,
+    "dcgan_xla": dcgan_tf2_xla,
 }
 
 # Key is network name and batch size
