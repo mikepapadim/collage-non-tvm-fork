@@ -17,6 +17,8 @@ def generator(input):
     l1 = make_matmul(t, 128 * init_size ** 2)
     t = tf.reshape(l1, (l1.shape[0], 128, init_size, init_size) )
 
+    print(t.shape)
+    
     new_height = int(round(init_size * 2))
     new_width = int(round(init_size * 2))
     resized = tf.image.resize(t, [new_height, new_width])
