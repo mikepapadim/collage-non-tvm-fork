@@ -51,7 +51,8 @@ def discriminator(input):
     t = make_conv2d(input_tensor=t, filter_shape=(3,3,64,128), strides=2, padding="SAME", actimode="RELU", name="conv")
     t = tf.nn.relu(t)
 
-    #ds_size = img_size // 2 ** 4
+    ds_size = img_size // 2 ** 4
+    t = tf.reshape(t, (t.shape[0], 128 * ds_size ** 2))
     adv_layer = make_matmul(t, 1)
     t = tf.nn.sigmoid(adv_layer)
     return t
