@@ -66,7 +66,7 @@ def dcgan_tf2_model(input):
 def dcgan_tf2(input):
     return dcgan_tf2_model(input)
 
-@tf.function(experimental_compile=True)
+@tf.function(experimental_compile=False)
 def dcgan_tf2_xla(input):
     return dcgan_tf2_model(input)
 
