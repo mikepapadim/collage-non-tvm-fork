@@ -15,8 +15,8 @@ def generator(input):
     t = input
     init_size = img_size // 4
     l1 = make_matmul(t, 128 * init_size ** 2)
-    print(t.shape)
-    
+    print(l1.shape)
+
     t = tf.reshape(l1, (l1.shape[0], 128, init_size, init_size) )
 
     print(t.shape)
