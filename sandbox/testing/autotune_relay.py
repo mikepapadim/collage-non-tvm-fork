@@ -304,16 +304,6 @@ def args_checker(args, parser):
     if args.tuner not in ['autotvm', 'autoscheduler']:
         parser.error('Wrong tuner input')
 
-    if args.target == 'cuda':
-        args.target = tvm.target.cuda()
-    elif args.target == 'llvm':
-        if args.hw == 'xeon':
-            args.target = XEON_BUILD_TARGET
-        else:
-            parser.error(f"Unsupported CPU: {args.hw}")
-    else:
-        parser.error('Unsupported target')
-
     this_code_path = os.path.dirname(os.path.abspath(__file__))
     args.log_file = f"{this_code_path}/../../python/tvm/relay/transform/logs/{args.log_file}_{args.hw}.json"
 
@@ -351,7 +341,11 @@ if __name__ == "__main__":
     log_dir = "autotvm_tuning_logs"
     # Setup automatic logging feature (to file)
     setup_logging(log_dir, task_name="autotvm_tuning", net_name=args.network, hw_name=args.hw, batch_size=args.batch_size)
+
+    from tvm.relay.transform.backend_operator.target import get_build_target
+    args.target = get_build_target(args.hw)
     print(args)
+
     # target = tvm.target.cuda()
     # #target_host = 'llvm -mtriple=aarch64-linux-gnu'
     # target_host = 'llvm'
