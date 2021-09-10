@@ -45,11 +45,13 @@ def nasrnn_tf2_model(xs):
         state = nas_node(state, xs)#[i])
     return state
 
-@tf.function(jit_compile=False)
+# @tf.function(jit_compile=False)
+@tf.function(experimental_compile=False)
 def nasrnn_tf2(xs):
     return nasrnn_tf2_model(xs)
 
-@tf.function(jit_compile=True)
+# @tf.function(jit_compile=True)
+@tf.function(experimental_compile=True)
 def nasrnn_tf2_xla(xs):
     return nasrnn_tf2_model(xs)
 

@@ -98,11 +98,13 @@ def mobilenetv2_tf2_model(input):
     tensor = make_conv2d(input_tensor=tensor, filter_shape=(1,1,input_channel,1280), strides=(1,1,1,1), padding="SAME", actimode="RELU", name="last_conv")
     return tensor
 
-@tf.function(jit_compile=False)
+# @tf.function(jit_compile=False)
+@tf.function(experimental_compile=False)
 def mobilenetv2_tf2(input):
     return mobilenetv2_tf2_model(input)
 
-@tf.function(jit_compile=True)
+# @tf.function(jit_compile=True)
+@tf.function(experimental_compile=True)
 def mobilenetv2_tf2_xla(input):
     return mobilenetv2_tf2_model(input)
 

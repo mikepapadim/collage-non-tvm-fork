@@ -10,6 +10,7 @@ from workloads.workloads import *
 from e2e_perf_logger import *
 import tensorflow as tf
 import time
+from measure_end_to_end import log_e2e_perf
 
 def args_checker(args, parser):
     is_missing_arg = not args.network
@@ -70,7 +71,7 @@ def get_torch_model_and_input(args):
     return model, inputs
 
 
-def measure_torch(model, inputs, args):
+def measure_torch(model, inputs, args, is_perf_logging):
     times = []
     with torch.no_grad():
         for i in tqdm(range(args.discard_iter + args.iterations)):
@@ -89,7 +90,7 @@ def measure_torch(model, inputs, args):
     times = np.array(times)[args.discard_iter:]
     mean_perf, std_perf = np.mean(times), np.std(times)
     print(f"[{args.network}] Performance of PyTorch on {args.hw} (mean, std) = ({mean_perf:.4f}+-{std_perf:.4f})")
-    E2EPerfLogger().log_perf(args.hw, args.network, 'PyTorch', mean_perf, std_perf)
+    log_e2e_perf(args.hw, args.network, 'PyTorch', mean_perf, std_perf, is_perf_logging)
 
 # Note that inputs are numpy array because graph mode requires different tf.constant for every execution
 def get_tf2_model_and_input(args, is_xla = False):
@@ -104,13 +105,21 @@ def get_tf2_model_and_input(args, is_xla = False):
     return model, inputs
 
 # Note that inputs are numpy array, not tf.constant
-def measure_tf2(model, inputs, args, method_name):
+def measure_tf2(model, inputs, args, method_name, is_perf_logging):
     # Enable graph mode instead of eager execution
     # Graph mode performs better, so it is fairer to compare against ours
-    tf.compat.v1.disable_eager_execution()
-    tf.debugging.set_log_device_placement(True)
+    tf.config.run_functions_eagerly(False)
+
+    config = tf.compat.v1.ConfigProto()
+    config.gpu_options.allow_growth = True
+    session = tf.compat.v1.Session(config=config)
+
+    # Warning(@Soo): It has an issue of executing CPU only for TF2.4.0 or TF2.6.0
+    # tf.compat.v1.disable_eager_execution()
 
     with tf.device('/device:GPU:0'):
+    # with tf.device('/device:CPU:0'):
+    # with tf.device('/physical_device:GPU:0'):
         times = []
         for i in tqdm(range(args.discard_iter + args.iterations)):
             t0 = time.time()
@@ -121,23 +130,32 @@ def measure_tf2(model, inputs, args, method_name):
     times = 1000.0 * np.array(times)[args.discard_iter:]
     mean_perf, std_perf = np.mean(times), np.std(times)
     print(f"[{args.network}] Performance of {method_name} on {args.hw} (mean, std) = ({mean_perf:.4f}+-{std_perf:.4f})")
-    # E2EPerfLogger().log_perf(args.hw, args.network, method_name, mean_perf, std_perf)
+    log_e2e_perf(args.hw, args.network, 'PyTorch', mean_perf, std_perf, is_perf_logging)
 
 if __name__ == '__main__':
     args = get_args()
 
+    is_perf_logging = False
+
     # PyTorch measurement
-    model, inputs = get_torch_model_and_input(args)
-    measure_torch(model, inputs, args)
+    # model, inputs = get_torch_model_and_input(args)
+    # measure_torch(model, inputs, args, is_perf_logging)
 
     # Adjust experiment parameters for TF
-    args.iterations = 5000
-    args.discard_iter = 1000
+    args.iterations = 100
+    args.discard_iter = 10
+
+    # Check if TF2 is using GPU
+    # tf.debugging.set_log_device_placement(True)
+
+    # is_gpu = len(tf.config.list_physical_devices('GPU')) > 0
+    # print(tf.config.list_physical_devices('GPU'))
+    # print(tf.config.list_physical_devices())
 
     # TF2 measurement
-    model, inputs = get_tf2_model_and_input(args, is_xla=False)
-    measure_tf2(model, inputs, args, "TF")
+    # model, inputs = get_tf2_model_and_input(args, is_xla=False)
+    # measure_tf2(model, inputs, args, "TF", is_perf_logging)
 
     # TF2-XLA measurement
     model, inputs = get_tf2_model_and_input(args, is_xla=True)
-    measure_tf2(model, inputs, args, "TF-XLA")
+    measure_tf2(model, inputs, args, "TF-XLA", is_perf_logging)

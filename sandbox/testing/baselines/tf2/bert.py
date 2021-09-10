@@ -48,11 +48,13 @@ def bert_tf2_model(input):
         t = attention(t, 16)
     return t
 
-@tf.function(jit_compile=False)
+# @tf.function(jit_compile=False)
+@tf.function(experimental_compile=False)
 def bert_tf2(input):
     return bert_tf2_model(input)
 
-@tf.function(jit_compile=True)
+# @tf.function(jit_compile=True)
+@tf.function(experimental_compile=True)
 def bert_tf2_xla(input):
     return bert_tf2_model(input)
 
