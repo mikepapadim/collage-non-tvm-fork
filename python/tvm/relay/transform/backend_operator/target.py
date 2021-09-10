@@ -36,7 +36,7 @@ OPT_LEVEL = OptLevel(3)
 EXTERNAL_COMPILERS = ['tensorrt']
 # XEON_BUILD_TARGET = 'llvm'
 XEON_BUILD_TARGET = 'llvm -mcpu=skylake-avx512'
-NVIDIA_GPUS = ['rtx2070', 'rtx3070', 'jetson']
+NVIDIA_GPUS = ['rtx2070', 'rtx3070', 'jetson', 'v100']
 INTEL_CPUS = ['xeon']
 
 cur_dir_path = Path(__file__).parent.absolute()
