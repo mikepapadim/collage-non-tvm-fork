@@ -2,7 +2,7 @@ import argparse
 import tensorflow as tf
 import numpy as np
 import time
-from .shared_functions import make_matmul, measure_tf2_gpu
+from shared_functions import make_matmul, measure_tf2_gpu
 
 # tf.config.run_functions_eagerly(False)
 #
@@ -58,18 +58,13 @@ def bert_tf2(input):
 def bert_tf2_xla(input):
     return bert_tf2_model(input)
 
-# measure_tf2_gpu(bert_tf2)
+if __name__ == '__main__':
+    hw, network = 'rtx2070', 'bert'
+    input_shape = (64, 1024)
+    inputs = np.random.uniform(-1, 1, size=input_shape).astype("float32")
 
-# times = []
-# for i in range(args.discard_iter + args.iterations):
-#     t0 = time.time()
-#     res = bert_tf2(
-#     tf.constant(np.random.random_sample((64,1024)).astype(np.float32))
-#         )
-#     t1 = time.time()
-#     times.append(t1 - t0)
-# total = 0
-# for i in range(args.discard_iter, len(times)):
-#     total += times[i]
-# avg = total / (args.iterations) * 1000.0
-# print("Average inference time of the last " + str(args.iterations) + " iterations: " + str(avg) + " ms")
+    method_name = 'TF'
+    measure_tf2_gpu(bert_tf2, inputs, method_name, hw, network)
+
+    method_name = 'TF-XLA'
+    measure_tf2_gpu(bert_tf2_xla, inputs, method_name, hw, network)

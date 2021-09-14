@@ -2,6 +2,8 @@ rtx2070,bert,AutoTVM,10.0273,0.0015
 rtx2070,bert,AutoTVM-libs,2.4281,0.0005
 rtx2070,bert,DP,2.5951,0.0011
 rtx2070,bert,PyTorch,2.7112,0.0162
+rtx2070,bert,TF,1.7438,0.0882
+rtx2070,bert,TF-XLA,1.6168,0.0495
 rtx2070,bert,TensorRT,2.7704,0.0009
 rtx2070,bert,Two-level,2.4400,0.0010
 rtx2070,bert,cuDNN,10.0196,0.0030
@@ -9,6 +11,7 @@ rtx2070,dcgan,AutoTVM,3.2788,0.0008
 rtx2070,dcgan,AutoTVM-libs,2.9731,0.0006
 rtx2070,dcgan,DP,2.0101,0.0008
 rtx2070,dcgan,PyTorch,2.9186,0.0133
+rtx2070,dcgan,TF,3.1637,0.0918
 rtx2070,dcgan,TensorRT,2.3837,0.0006
 rtx2070,dcgan,Two-level,2.0101,0.0010
 rtx2070,dcgan,cuDNN,3.3650,0.0006
@@ -23,6 +26,8 @@ rtx2070,nasneta,AutoTVM,4.0943,0.0005
 rtx2070,nasneta,AutoTVM-libs,4.7704,0.0005
 rtx2070,nasneta,DP,3.7770,0.0009
 rtx2070,nasneta,PyTorch,8.9020,0.2165
+rtx2070,nasneta,TF,10.7200,1.5650
+rtx2070,nasneta,TF-XLA,5.8286,0.5504
 rtx2070,nasneta,TensorRT,3.7792,0.0007
 rtx2070,nasneta,Two-level,3.6436,0.0011
 rtx2070,nasneta,cuDNN,4.3435,0.0000
@@ -44,6 +49,7 @@ rtx2070,resnet50_3d,AutoTVM,11.3267,0.0019
 rtx2070,resnet50_3d,AutoTVM-libs,9.9318,0.0027
 rtx2070,resnet50_3d,DP,8.4353,0.0003
 rtx2070,resnet50_3d,PyTorch,8.2365,0.1565
+rtx2070,resnet50_3d,TF,15.1233,2.4840
 rtx2070,resnet50_3d,TensorRT,9.4949,0.0000
 rtx2070,resnet50_3d,Two-level,8.4080,0.0003
 rtx2070,resnet50_3d,cuDNN,9.7017,0.0009
@@ -51,6 +57,8 @@ rtx2070,resnext50_32x4d,AutoTVM,3.1741,0.0003
 rtx2070,resnext50_32x4d,AutoTVM-libs,4.6696,0.0004
 rtx2070,resnext50_32x4d,DP,2.2844,0.0003
 rtx2070,resnext50_32x4d,PyTorch,5.1495,0.0846
+rtx2070,resnext50_32x4d,TF,26.5700,2.1419
+rtx2070,resnext50_32x4d,TF-XLA,21.9156,0.5763
 rtx2070,resnext50_32x4d,TensorRT,3.3121,0.0015
 rtx2070,resnext50_32x4d,Two-level,2.2188,0.0002
 rtx2070,resnext50_32x4d,cuDNN,3.5582,0.0006

@@ -12,7 +12,7 @@ FINAL_NETWORKS = ["resnext50_32x4d", "bert", "dcgan", "nasneta", 'resnet50_3d']
 
 def setup_df_with_baselines_and_method(df):
     # Make sure column order is following before we normalize perf
-    df = df[['cuDNN', 'AutoTVM', 'TensorRT', 'PyTorch', 'AutoTVM-libs', 'DP', 'Two-level']]
+    df = df[['cuDNN', 'AutoTVM', 'TensorRT', 'TF', 'TF-XLA', 'PyTorch', 'AutoTVM-libs', 'DP', 'Two-level']]
     df = df.rename(columns={'AutoTVM-libs': 'TVM', 'Two-level': 'Collage'})
     df = df.drop(columns=['DP'])
     df = df.drop(['Mobilenet V2', 'ResNet50', 'NasRNN'])#, '3D-ResNet50', 'DCGAN', 'NasNet-A', 'ResNeXt50'])
@@ -27,7 +27,7 @@ def setup_df_for_normalized_perf_plot(df):
         print(method)
         df[method] = df['Collage'] / df[method]
 
-    print(df.iloc[0:5, :])
+    # print(df.iloc[0:5, :])
     # Add Geomean
     df.loc['GeoMean'] = stats.gmean(df.iloc[0:5, :], axis=0)
     print(df)
@@ -40,12 +40,12 @@ def draw_e2e_perf_plot_normalized(df):
 
     # Save figures
     plt.xlabel("")
-    plt.ylabel('Normalized Performance')
+    plt.ylabel('Normalized Throughput')
     # plt.ylabel('Inference Time (ms)')
 
     plt.grid(axis='y', zorder=-2.0)
     plt.xticks(rotation=0)
-    plt.legend(ncol=6, loc='upper center', bbox_to_anchor=(0.5, 1.2))
+    plt.legend(ncol=8, loc='upper center', bbox_to_anchor=(0.48, 1.2), handletextpad=0.3, borderpad=0.3)
     plt.savefig(f"{EXP_RESULT_PATH}/plots/e2e_perf.png", bbox_inches='tight')
 
 def draw_e2e_perf_plot_ms(df):

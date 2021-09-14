@@ -2,7 +2,7 @@ import argparse
 import tensorflow as tf
 import numpy as np
 import time
-from .shared_functions import make_matmul
+from shared_functions import make_matmul, measure_tf2_gpu
 
 # tf.config.run_functions_eagerly(False)
 #
@@ -55,19 +55,14 @@ def nasrnn_tf2(xs):
 def nasrnn_tf2_xla(xs):
     return nasrnn_tf2_model(xs)
 
-# times = []
-# for i in range(args.discard_iter + args.iterations):
-#     xs = []
-#     for i in range(length):
-#         xs.append(
-#             tf.constant(np.random.random_sample((1,hidden_size)).astype(np.float32))
-#         )
-#     t0 = time.time()
-#     out = nasrnn(xs)
-#     t1 = time.time()
-#     times.append(t1 - t0)
-# total = 0
-# for i in range(args.discard_iter, len(times)):
-#     total += times[i]
-# avg = total / (args.iterations) * 1000.0
-# print("Average inference time of the last " + str(args.iterations) + " iterations: " + str(avg) + " ms")
+if __name__ == '__main__':
+    hw, network = 'rtx2070', 'nasrnn'
+    input_shape = (1, 2560)
+    inputs = np.random.uniform(-1, 1, size=input_shape).astype("float32")
+
+    method_name = 'TF'
+    measure_tf2_gpu(nasrnn_tf2, inputs, method_name, hw, network)
+
+    # This errors out; resize kernel is not supported even by the most recent XLA
+    method_name = 'TF-XLA'
+    measure_tf2_gpu(nasrnn_tf2_xla, inputs, method_name, hw, network)

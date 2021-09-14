@@ -3,8 +3,8 @@ import tensorflow as tf
 import numpy as np
 import time
 import timeit
-from .shared_functions import make_activation, make_conv2d_bn, make_matmul
-from .shared_functions import make_conv2d_nhwc as make_conv2d
+from shared_functions import make_activation, make_conv2d_bn, make_matmul, measure_tf2_gpu
+from shared_functions import make_conv2d_nhwc as make_conv2d
 
 NAME = 'dcgan'
 batch_size = 1
@@ -72,10 +72,14 @@ def dcgan_tf2(input):
 def dcgan_tf2_xla(input):
     return dcgan_tf2_model(input)
 
-# parser = argparse.ArgumentParser()
-# parser.add_argument("--xla", help="Whether to run with TensorFlowXLA optimizations", action="store_true")
-# parser.add_argument("--print_tensorboard", help="Name of folder to output the tensorboard information")
-# parser.add_argument("--iterations", help="How many iterations to average for timing (default 5000)", type=int, default=5000)
-# parser.add_argument("--discard_iter", help="How many iterations to not time during warm up (default 1000)", type=int, default=1000)
-# args = parser.parse_args()
+if __name__ == '__main__':
+    hw, network = 'rtx2070', 'dcgan'
+    input_shape = (1, 100)
+    inputs = np.random.uniform(-1, 1, size=input_shape).astype("float32")
 
+    method_name = 'TF'
+    measure_tf2_gpu(dcgan_tf2, inputs, method_name, hw, network)
+
+    # This errors out; resize kernel is not supported even by the most recent XLA
+    method_name = 'TF-XLA'
+    measure_tf2_gpu(dcgan_tf2_xla, inputs, method_name, hw, network)
