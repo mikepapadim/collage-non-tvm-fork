@@ -323,10 +323,10 @@ if __name__ == "__main__":
     log_dir = "e2e_measure_logs"
 
     # For DP,
-    # setup_logging(log_dir, task_name="e2e_measure", net_name=args.network, hw_name=args.hw, batch_size=args.batch_size)
+    setup_logging(log_dir, task_name="e2e_measure", net_name=args.network, hw_name=args.hw, batch_size=args.batch_size)
 
     # For tuning time measurement, comment setup_logging above and uncomment the following codes
-    logging.basicConfig(level=logging.ERROR)
+    # logging.basicConfig(level=logging.ERROR)
 
     # We can't test this because this network include batch norm.
     logging.info(f"batch size: {args.batch_size}")
@@ -345,8 +345,8 @@ if __name__ == "__main__":
 
     # measure_dp_and_baselines(mod, params, shape_dict, args, is_perf_logging)
     # measure_autotvm(mod, params, shape_dict, args, is_perf_logging)
-    # measure_two_level(mod, params, shape_dict, args, is_perf_logging)
-    measure_dp_tuning_time(mod, params, shape_dict, args, is_perf_logging)
+    measure_two_level(mod, params, shape_dict, args, is_perf_logging)
+    # measure_dp_tuning_time(mod, params, shape_dict, args, is_perf_logging)
 
     # Note that this one do not use AutoTVM because cudnn and cublas will be used only if AutoTVM is disabled
     # measure_tvm_strategy_cudnn_cublas(mod, params, shape_dict, args, is_perf_logging)

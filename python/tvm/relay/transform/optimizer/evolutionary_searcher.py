@@ -29,7 +29,7 @@ from workloads.relay_workloads import get_network_from_relay
 from workloads.torch_workloads import *
 
 from .op_match_logger import OpMatchLogger
-from ..backend_operator.target import BEST_MATCH_LOG, LOG_PATH
+from ..backend_operator.target import BEST_MATCH_LOG, EVAL_RESULT_LOG_PATH
 import time
 from functools import lru_cache
 
@@ -290,7 +290,7 @@ class EvolutionarySearcher:
 
         # For better printing
         opt_info_tag = get_opt_info_tag(self.net_name, self.hw_name, self.batch_size)
-        time_perf_log_path = f"{LOG_PATH}/time_perf_{opt_info_tag}.log"
+        time_perf_log_path = f"{EVAL_RESULT_LOG_PATH}/time_perf_{opt_info_tag}.log"
         df.columns = ["best performance (ms)"]
         df.index.name = "search time (secs)"
         df.to_csv(time_perf_log_path)

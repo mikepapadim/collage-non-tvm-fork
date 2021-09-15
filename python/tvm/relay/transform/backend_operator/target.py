@@ -41,7 +41,8 @@ INTEL_CPUS = ['xeon']
 
 cur_dir_path = Path(__file__).parent.absolute()
 LOG_PATH = f"{cur_dir_path}/../logs"
-BEST_MATCH_LOG = f"{LOG_PATH}/best_match"
+EVAL_RESULT_LOG_PATH = f"{LOG_PATH}/eval_results"
+BEST_MATCH_LOG = f"{EVAL_RESULT_LOG_PATH}/best_match"
 USER_DEFINED_MATCH_LOG = f"{LOG_PATH}/user_defined_match.log"
 HW_FUNC_ATTR = "TargetHW"
 BATCH_SIZE_ATTR = "BatchSize"

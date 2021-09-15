@@ -52,7 +52,7 @@ if __name__ == "__main__":
 
     for net_name in net_name_arr:
         opt_info_tag = get_opt_info_tag(net_name, hw_name, batch_size)
-        match_path = f"{LOG_PATH}/eval_results/{hw_name}_bs{batch_size}/best_match_{opt_info_tag}.log"
+        match_path = f"{EVAL_RESULT_LOG_PATH}/{hw_name}_bs{batch_size}/best_match_{opt_info_tag}.log"
         df = pd.read_csv(match_path)
         annos = df['annotation'].tolist()
         get_stats_from_annos(annos)
