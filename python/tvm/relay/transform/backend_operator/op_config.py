@@ -1,5 +1,5 @@
 from pathlib import Path
-from .utils import extract_attrs, get_data_shape
+from .utils import extract_attrs, get_input_shape
 import json
 import pickle
 from os import path
@@ -25,7 +25,9 @@ class Config(object):
     self._op_type = op_type
 
     if expr != None:
-      self._data_shape = tuple(get_data_shape(expr))
+      # self._data_shape = tuple(get_data_shape(expr))
+      # _data_shape should be shape of all the inputs not only including data variable, but also parameters (constant)
+      self._data_shape = get_input_shape(expr)
       self._attrs = extract_attrs(expr)
     else:
       # Debugging purpose

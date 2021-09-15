@@ -1,5 +1,5 @@
 import pandas as pd
-from tvm.relay.transform.backend_operator.target import BEST_MATCH_LOG, LOG_PATH
+from tvm.relay.transform.backend_operator.target import BEST_MATCH_LOG, EVAL_RESULT_LOG_PATH
 from tvm.relay.transform.utility.plot_utils import set_plt_font_size
 
 import os
@@ -12,7 +12,7 @@ import numpy as np
 
 def plot_single_net(net_name):
     file_name = f"time_perf_{net_name}"
-    df = pd.read_csv(f"{LOG_PATH}/{file_name}.log", index_col=0)
+    df = pd.read_csv(f"{EVAL_RESULT_LOG_PATH}/{file_name}.log", index_col=0)
     print(df)
 
     fw, fh = 15, 4
@@ -64,7 +64,7 @@ def plot_all_nets(networks, hw, batch_size):
     for net_name in networks:
         file_name = f"time_perf_{net_name}_{hw}_bs{batch_size}"
         # net_df = pd.read_csv(f"{LOG_PATH}/eval_results/rtx2070_bs1/210905/{file_name}.log", index_col=0)
-        net_df = pd.read_csv(f"{LOG_PATH}/eval_results/rtx2070_bs1/{file_name}.log", index_col=0)
+        net_df = pd.read_csv(f"{EVAL_RESULT_LOG_PATH}/rtx2070_bs1/{file_name}.log", index_col=0)
 
         tuning_time = net_df.index.tolist()
         inf_time = net_df.iloc[:, 0].tolist()

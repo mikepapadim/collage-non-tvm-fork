@@ -15,7 +15,7 @@ from measure_end_to_end import setup_attrs_ours, get_args
 def plot_backend_placement(net, params, target_str, shape_dict, net_name, hw_name, batch_size):
     # Copy best backend placement
     opt_info_tag = get_opt_info_tag(net_name, hw_name, batch_size)
-    source_match_path = f"{LOG_PATH}/eval_results/{hw_name}_bs{batch_size}/best_match_{opt_info_tag}.log"
+    source_match_path = f"{EVAL_RESULT_LOG_PATH}/{hw_name}_bs{batch_size}/best_match_{opt_info_tag}.log"
     target_match_path = get_user_defined_match_path(net_name, hw_name, batch_size)
     os.system(f"cp {source_match_path} {target_match_path}")
 

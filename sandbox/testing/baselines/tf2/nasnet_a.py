@@ -5,7 +5,7 @@ import time
 import torch
 # import pretrainedmodels
 # import tensorflow_hub as hub
-from .shared_functions import make_activation, make_conv2d, make_seperable_conv2d, make_avgpool2d, make_maxpool2d
+from shared_functions import make_activation, make_conv2d, make_seperable_conv2d, make_avgpool2d, make_maxpool2d, measure_tf2_gpu
 
 # tf.config.run_functions_eagerly(False)
 #
@@ -95,17 +95,14 @@ def nasneta_tf2_xla(input0):
     return nasneta_tf2_model(input0)
 
 
-# times = []
-# for i in range(args.discard_iter + args.iterations):
-#     inputs = tf.constant(np.random.random_sample((1,64,56,56)).astype(np.float32))
-#
-#     t0 = time.time()
-#     nasneta(inputs)
-#     t1 = time.time()
-#     times.append(t1 - t0)
-#
-# total = 0
-# for i in range(args.discard_iter, len(times)):
-#     total += times[i]
-# avg = total / (args.iterations) * 1000.0
-# print("Average inference time of the last " + str(args.iterations) + " iterations: " + str(avg) + " ms")
+if __name__ == '__main__':
+    hw, network = 'rtx2070', 'nasneta'
+    input_shape = (1, 64, 56, 56)
+    inputs = np.random.uniform(-1, 1, size=input_shape).astype("float32")
+
+    method_name = 'TF'
+    measure_tf2_gpu(nasneta_tf2, inputs, method_name, hw, network)
+
+    # This errors out; resize kernel is not supported even by the most recent XLA
+    method_name = 'TF-XLA'
+    measure_tf2_gpu(nasneta_tf2_xla, inputs, method_name, hw, network)

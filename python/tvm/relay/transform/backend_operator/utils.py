@@ -32,27 +32,53 @@ def setup_mod_inputs(mod):
       logging.info("Data shape: ", i, input_shape)
       mod.set_input(i, np.random.uniform(-1, 1, size=input_shape).astype("float32"))
 
-def get_data_shape(expr):
-  inputs = relay.analysis.free_vars(expr)
-  # if is_call_node(expr):
-  #   print(f"Input for expr ({expr.op}) {[inputs[0].type_annotation]}, {expr.attrs.axis}")
+def convert_shape_imm_to_tuple(shape_imm):
+  return tuple(map(lambda x: x.value, shape_imm))
 
-  # for add, shape of lhs and rhs should be identical. for all other backend ops, we take shape of "data" input arg
-  # inputs[0] corresponds to Var(name_hint='data')
-  # We consider two different types for that: TupleTypeNode, TensorTypeNode
-  if type(inputs[0].type_annotation) == relay.TensorType:
-    data_shape_imm = inputs[0].type_annotation.shape
-    data_shape = list(map(lambda x: x.value, data_shape_imm))
-  elif type(inputs[0].type_annotation) == relay.TupleType:
-    data_shape = []
-    for tup_item in inputs[0].type_annotation.fields:
-      data_shape.append(tuple((map(lambda x: x.value, tup_item.shape))))
-    data_shape = tuple(data_shape)
-    print("data shape", data_shape)
+def extract_input_shape(node, input_shape_arr, memo):
+  # Prevent it from vising same node more than once
+  if node in memo:
+    return
   else:
-    raise Exception(f"Unsupported Var type ({type(inputs[0].type_annotation)})")
+    memo[node] = True
 
-  return data_shape
+  # Update expensive operator stats
+  if is_var_node(node):
+    input_shape_arr.append(convert_shape_imm_to_tuple(node.type_annotation.shape))
+  elif is_constant_node(node):
+    input_shape_arr.append(convert_shape_imm_to_tuple(node.data.shape))
+
+# Note that this expr is always subgraph used for operator measurement
+def get_input_shape(expr):
+  input_shape_arr, memo = [], {}
+  relay.analysis.post_order_visit(expr, lambda node: extract_input_shape(node, input_shape_arr, memo))
+  return tuple(input_shape_arr)
+
+# Deprecated(@Soo): This one doesn't include the parameter shape
+# However, we need parameter shape too to decide whether configuration of op 1 and op 2 are same or not.
+# e.g., conv doesn't have attribute of output channel size / matmul doesn't have output shape
+
+# def get_data_shape(expr):
+#   inputs = relay.analysis.free_vars(expr)
+#   # if is_call_node(expr):
+#   #   print(f"Input for expr ({expr.op}) {[inputs[0].type_annotation]}, {expr.attrs.axis}")
+#
+#   # for add, shape of lhs and rhs should be identical. for all other backend ops, we take shape of "data" input arg
+#   # inputs[0] corresponds to Var(name_hint='data')
+#   # We consider two different types for that: TupleTypeNode, TensorTypeNode
+#   if type(inputs[0].type_annotation) == relay.TensorType:
+#     data_shape_imm = inputs[0].type_annotation.shape
+#     data_shape = list(map(lambda x: x.value, data_shape_imm))
+#   elif type(inputs[0].type_annotation) == relay.TupleType:
+#     data_shape = []
+#     for tup_item in inputs[0].type_annotation.fields:
+#       data_shape.append(tuple((map(lambda x: x.value, tup_item.shape))))
+#     data_shape = tuple(data_shape)
+#     print("data shape", data_shape)
+#   else:
+#     raise Exception(f"Unsupported Var type ({type(inputs[0].type_annotation)})")
+#
+#   return data_shape
 
 # Deprecated (@Soo)
 # def get_data(expr):

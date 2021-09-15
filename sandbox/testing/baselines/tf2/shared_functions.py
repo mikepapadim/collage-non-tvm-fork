@@ -2,6 +2,13 @@ import tensorflow as tf
 import numpy as np
 import argparse
 import time
+from tqdm import tqdm
+
+import sys
+# Hacky way to include function from parent scripts
+sys.path.insert(0,'/home/byungsoj/tvm/sandbox/testing')
+
+from measure_end_to_end import log_e2e_perf
 
 def make_activation(input, actimode, name):
     if actimode == "NONE":
@@ -106,23 +113,32 @@ def get_tf2_args():
     tf2_args_checker(args, parser)
     return args
 
+# Don't forget to sync this code with
+def measure_tf2_gpu(model, inputs, method_name, hw, network):
+    discard_iter, iterations = 2000, 10000
+    is_perf_logging = True
 
-# Note that inputs are numpy array, not tf.constant
-def measure_tf2_gpu(model):
-    args = get_tf2_args()
-    times = []
+    # Enable graph mode instead of eager execution
+    # Graph mode performs better, so it is fairer to compare against ours
+    tf.config.run_functions_eagerly(False)
 
-    # Load inputs
-    input_shape = tuple(get_torch_input_data(args.network, args.batch_size).shape)
-    inputs = np.random.uniform(-1, 1, size=input_shape).astype("float32")
+    config = tf.compat.v1.ConfigProto()
+    config.gpu_options.allow_growth = True
+    session = tf.compat.v1.Session(config=config)
 
-    for i in range(args.discard_iter + args.iterations):
-        t0 = time.time()
-        model(tf.constant(inputs))
-        t1 = time.time()
-        times.append(t1 - t0)
+    # Warning(@Soo): It has an issue of executing CPU only for TF2.4.0 or TF2.6.0
+    # tf.compat.v1.disable_eager_execution()
 
-    times = 1000.0 * np.array(times)[args.discard_iter:]
+    with tf.device('/device:GPU:0'):
+        # with tf.device('/device:CPU:0'):
+        times = []
+        for i in tqdm(range(discard_iter + iterations)):
+            t0 = time.time()
+            model(inputs)
+            t1 = time.time()
+            times.append(t1 - t0)
+
+    times = 1000.0 * np.array(times)[discard_iter:]
     mean_perf, std_perf = np.mean(times), np.std(times)
-    print(f"[{args.network}] Performance of TensorFlow 2 on {args.hw} (mean, std) = ({mean_perf:.4f}+-{std_perf:.4f})")
-    # E2EPerfLogger().log_perf(args.hw, args.network, 'TF', mean_perf, std_perf)
+    print(f"[{network}] Performance of {method_name} on {hw} (mean, std) = ({mean_perf:.4f}+-{std_perf:.4f})")
+    log_e2e_perf(hw, network, method_name, mean_perf, std_perf, is_perf_logging)

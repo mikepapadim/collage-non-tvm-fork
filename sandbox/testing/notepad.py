@@ -1,4 +1,10 @@
-from baselines.tf2 import nasrnn
+# arr = tuple()
+# arr.append((1,2))
+# arr.append((3,4,5))
+arr = tuple([(1,2), (1,2,3)])
+print(arr)
+print(type(arr))
+
 # from deap import base
 # toolbox = base.Toolbox()
 # toolbox.mate()
