@@ -1,12 +1,12 @@
-rtx2070,bert,AutoTVM,10.0273,0.0015
+rtx2070,bert,AutoTVM,10.0863,0.0029
 rtx2070,bert,AutoTVM-libs,2.4281,0.0005
-rtx2070,bert,DP,2.5951,0.0011
+rtx2070,bert,DP,2.4027,0.0003
 rtx2070,bert,PyTorch,2.7112,0.0162
 rtx2070,bert,TF,1.7438,0.0882
 rtx2070,bert,TF-XLA,1.6168,0.0495
-rtx2070,bert,TensorRT,2.7704,0.0009
-rtx2070,bert,Two-level,2.4400,0.0010
-rtx2070,bert,cuDNN,10.0196,0.0030
+rtx2070,bert,TensorRT,2.7454,0.0011
+rtx2070,bert,Two-level,2.3902,0.0003
+rtx2070,bert,cuDNN,10.0113,0.0024
 rtx2070,dcgan,AutoTVM,3.2788,0.0008
 rtx2070,dcgan,AutoTVM-libs,2.9731,0.0006
 rtx2070,dcgan,DP,2.0101,0.0008
