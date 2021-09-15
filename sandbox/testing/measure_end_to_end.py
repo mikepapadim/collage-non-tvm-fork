@@ -327,6 +327,7 @@ if __name__ == "__main__":
 
     # For tuning time measurement, comment setup_logging above and uncomment the following codes
     # logging.basicConfig(level=logging.ERROR)
+    logging.basicConfig(level=logging.INFO)
 
     # We can't test this because this network include batch norm.
     logging.info(f"batch size: {args.batch_size}")
@@ -343,9 +344,9 @@ if __name__ == "__main__":
     is_perf_logging = True
     # is_perf_logging = False
 
-    # measure_dp_and_baselines(mod, params, shape_dict, args, is_perf_logging)
+    measure_dp_and_baselines(mod, params, shape_dict, args, is_perf_logging)
     # measure_autotvm(mod, params, shape_dict, args, is_perf_logging)
-    measure_two_level(mod, params, shape_dict, args, is_perf_logging)
+    # measure_two_level(mod, params, shape_dict, args, is_perf_logging)
     # measure_dp_tuning_time(mod, params, shape_dict, args, is_perf_logging)
 
     # Note that this one do not use AutoTVM because cudnn and cublas will be used only if AutoTVM is disabled
