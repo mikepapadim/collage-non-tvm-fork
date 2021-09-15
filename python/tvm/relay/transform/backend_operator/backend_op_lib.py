@@ -313,6 +313,12 @@ class BackendOpLib(object):
     # NOTE: BatchNorm is currently not supported. If you need it, please contact @Sung
     # self._add_backendop_with_key(Target.CUDNN, "BN")
 
+    # DNNL, MKL, MKLDNN
+    # TODO: Add patterns. matmul, batch matmul
+    self._add_backendop_with_key(Target.MKL, "DENSE")
+    self._add_backendop_with_key(Target.MKLDNN, "DENSE")
+    self._add_backendop_with_key(Target.DNNL, "DENSE")
+
 
     # CUBLAS
     # TODO: Add patterns. matmul, batch matmul

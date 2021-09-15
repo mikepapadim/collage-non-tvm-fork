@@ -81,7 +81,7 @@ def get_backends(hw_name):
     if hw_name in NVIDIA_GPUS:
         backends = [Target.AUTOTVM, Target.CUDNN, Target.TENSORRT, Target.CUBLAS]
     elif hw_name in INTEL_CPUS:
-        backends = [Target.AUTOTVM, Target.ONEDNN]
+        backends = [Target.AUTOTVM, Target.MKL, Target.MKLDNN, Target.DNNL]
     else:
         raise Exception(f"{hw_name} is unexpected hw, we need to set default backends for this hw.")
 
@@ -92,7 +92,7 @@ def get_graph_level_opt_backend_name(hw_name):
     if hw_name in NVIDIA_GPUS:
         backend_name = Target.TENSORRT.name()
     elif hw_name in INTEL_CPUS:
-        backend_name = Target.ONEDNN.name()
+        backend_name = Target.DNNL.name()
     else:
         raise Exception(f"{hw_name} is unexpected hw, we need to set default backends for this hw.")
 
@@ -152,8 +152,10 @@ class Target(Enum):
     AUTOSCH = (6, "autosch")
 
     # Intel CPU
-    ONEDNN = (7, "onednn") # not implemented
-#     TENSORFLOWXLA = (8, "tensorflowxla") # not implemented
+    DNNL = (7, "dnnl") # not implemented
+    MKL = (8, "mkl")  # not implemented
+    MKLDNN = (9, "mkldnn")  # not implemented
+#     TENSORFLOWXLA = (10, "tensorflowxla") # not implemented
 
     def id(self):
         return self.value[0]
@@ -349,7 +351,7 @@ For now, we don't use it for TensorRT just to be safe. There shouldn't be an iss
 
 
 target_to_cost_func = {
-    #GPU
+    # GPU
     Target.AUTOTVM: TVMSubGraphCostFunc_AutoTVM(),
     Target.AUTOSCH: TVMSubGraphCostFunc_AutoSch(),
     #Target.CUDNN: CuDNNCostFunc(),
@@ -359,7 +361,9 @@ target_to_cost_func = {
     Target.TVM_DEFAULT: TVMSubGraphCostFunc_OpMeasurement(),
 
     # CPU
-    # Target.TVM_CPU: TVMSubGraphCostFunc_NoTuning(),
+    Target.DNNL: TVMSubGraphCostFunc_OpMeasurement(),
+    Target.MKL: TVMSubGraphCostFunc_OpMeasurement(),
+    Target.MKLDNN: TVMSubGraphCostFunc_OpMeasurement(),
 }
 
 def get_target_cost_func(target):
