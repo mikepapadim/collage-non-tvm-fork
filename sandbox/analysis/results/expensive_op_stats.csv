@@ -1,5 +1,5 @@
 number of expensive ops: bert, {'nn.dense': 40, 'nn.batch_matmul': 16}
-number of expensive op types: bert, {'nn.dense': 2, 'nn.batch_matmul': 1}
+number of expensive op types: bert, {'nn.dense': 3, 'nn.batch_matmul': 1}
 number of expensive ops: resnet50, {'nn.conv2d': 52}
 number of expensive op types: resnet50, {'nn.conv2d': 22}
 number of expensive ops: resnext50_32x4d, {'nn.conv2d': 52}

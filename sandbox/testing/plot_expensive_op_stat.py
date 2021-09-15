@@ -35,6 +35,7 @@ def extract_expensive_op_info(node, op_info_dic, op_type_info_dic, memo, memo_ty
         # Extract op configuration
         extracted_node = extract_subgraph(node, EXPENSIVE_OP_TO_PATTERN[op_name])
         op_config = Config(op_name, op_name, extracted_node)
+        # print(op_config)
 
         if op_config not in memo_type:
             op_type_info_dic[op_name] += 1
