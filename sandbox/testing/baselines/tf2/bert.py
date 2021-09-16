@@ -35,12 +35,9 @@ def attention(input, heads):
     output = make_matmul(tf.nn.relu(make_matmul(input, 4*d_model)), d_model)
     return output
 
-# parser = argparse.ArgumentParser()
-# parser.add_argument("--xla", help="Whether to run with TensorFlowXLA optimizations", default=False)
-# parser.add_argument("--print_tensorboard", help="Name of folder to output the tensorboard information")
-# parser.add_argument("--iterations", help="How many iterations to average for timing (default 5000)", type=int, default=50)
-# parser.add_argument("--discard_iter", help="How many iterations to not time during warm up (default 1000)", type=int, default=10)
-# args = parser.parse_args()
+parser = argparse.ArgumentParser()
+parser.add_argument("-hw", "--hw", help="target hardware")
+args = parser.parse_args()
 
 def bert_tf2_model(input):
     t = input
@@ -59,7 +56,7 @@ def bert_tf2_xla(input):
     return bert_tf2_model(input)
 
 if __name__ == '__main__':
-    hw, network = 'rtx2070', 'bert'
+    hw, network = args.hw, 'bert'
     input_shape = (64, 1024)
     inputs = np.random.uniform(-1, 1, size=input_shape).astype("float32")
 

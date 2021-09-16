@@ -31,13 +31,6 @@ def nas_node(input, x):
     midt.append(tf.multiply(tf.nn.tanh(midt[4]), tf.nn.tanh(midt[5])))
     return tf.nn.tanh(midt[6])
 
-# parser = argparse.ArgumentParser()
-# parser.add_argument("--xla", help="Whether to run with TensorFlowXLA optimizations", action="store_true")
-# parser.add_argument("--print_tensorboard", help="Name of folder to output the tensorboard information")
-# parser.add_argument("--iterations", help="How many iterations to average for timing (default 5000)", type=int, default=5000)
-# parser.add_argument("--discard_iter", help="How many iterations to not time during warm up (default 1000)", type=int, default=1000)
-# args = parser.parse_args()
-
 def nasrnn_tf2_model(xs):
     input_dictionary = {}
     state = tf.constant(np.random.random_sample((1, hidden_size)), dtype=tf.float32)
@@ -55,8 +48,12 @@ def nasrnn_tf2(xs):
 def nasrnn_tf2_xla(xs):
     return nasrnn_tf2_model(xs)
 
+parser = argparse.ArgumentParser()
+parser.add_argument("-hw", "--hw", help="target hardware")
+args = parser.parse_args()
+
 if __name__ == '__main__':
-    hw, network = 'rtx2070', 'nasrnn'
+    hw, network = args.hw, 'nasrnn'
     input_shape = (1, 2560)
     inputs = np.random.uniform(-1, 1, size=input_shape).astype("float32")
 

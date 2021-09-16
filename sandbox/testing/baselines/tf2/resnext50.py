@@ -23,13 +23,6 @@ def resnext_block(input, strides, out_channels, groups, name):
         input = make_conv2d(input_tensor=input, filter_shape=(1,1,input.shape[1],out_channels*2), strides=strides, padding="SAME", actimode="RELU", name=name+"_conv4")
     return tf.nn.relu(tf.add(input, t))
 
-# parser = argparse.ArgumentParser()
-# parser.add_argument("--xla", help="Whether to run with TensorFlowXLA optimizations", action="store_true")
-# parser.add_argument("--print_tensorboard", help="Name of folder to output the tensorboard information")
-# parser.add_argument("--iterations", help="How many iterations to average for timing (default 5000)", type=int, default=5000)
-# parser.add_argument("--discard_iter", help="How many iterations to not time during warm up (default 1000)", type=int, default=1000)
-# args = parser.parse_args()
-
 def resnext50_tf2_model(input):
     t = input
     for i in range(3):
@@ -58,8 +51,12 @@ def resnext50_tf2(input):
 def resnext50_tf2_xla(input):
     return resnext50_tf2_model(input)
 
+parser = argparse.ArgumentParser()
+parser.add_argument("-hw", "--hw", help="target hardware")
+args = parser.parse_args()
+
 if __name__ == '__main__':
-    hw, network = 'rtx2070', 'resnext50_32x4d'
+    hw, network = args.hw, 'resnext50_32x4d'
     input_shape = (1, 64, 56, 56)
     inputs = np.random.uniform(-1, 1, size=input_shape).astype("float32")
 

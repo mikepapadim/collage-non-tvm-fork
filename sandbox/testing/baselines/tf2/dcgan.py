@@ -38,7 +38,7 @@ def generator(input):
     t = tf.nn.relu(t)
     t = make_conv2d(input_tensor=t, filter_shape=(3,3,64,channels), strides=(1,1,1,1), padding="SAME", actimode="RELU", name="conv")
     t = tf.nn.tanh(t)
-    return t 
+    return t
 
 def discriminator(input):
     t = input
@@ -72,8 +72,12 @@ def dcgan_tf2(input):
 def dcgan_tf2_xla(input):
     return dcgan_tf2_model(input)
 
+parser = argparse.ArgumentParser()
+parser.add_argument("-hw", "--hw", help="target hardware")
+args = parser.parse_args()
+
 if __name__ == '__main__':
-    hw, network = 'rtx2070', 'dcgan'
+    hw, network = args.hw, 'dcgan'
     input_shape = (1, 100)
     inputs = np.random.uniform(-1, 1, size=input_shape).astype("float32")
 

@@ -67,18 +67,11 @@ def block(tensor, inp, oup, stride, expand_ratio):
         )
         """
         tensor = convd
-    
+
     if use_res_connect:
         tensor = tensor + convd
 
     return tensor
-
-# parser = argparse.ArgumentParser()
-# parser.add_argument("--xla", help="Whether to run with TensorFlowXLA optimizations", action="store_true")
-# parser.add_argument("--print_tensorboard", help="Name of folder to output the tensorboard information")
-# parser.add_argument("--iterations", help="How many iterations to average for timing (default 5000)", type=int, default=5000)
-# parser.add_argument("--discard_iter", help="How many iterations to not time during warm up (default 1000)", type=int, default=1000)
-# args = parser.parse_args()
 
 def make_divisible(x, divisible_by=8):
     import numpy as np
@@ -108,8 +101,12 @@ def mobilenetv2_tf2(input):
 def mobilenetv2_tf2_xla(input):
     return mobilenetv2_tf2_model(input)
 
+parser = argparse.ArgumentParser()
+parser.add_argument("-hw", "--hw", help="target hardware")
+args = parser.parse_args()
+
 if __name__ == '__main__':
-    hw, network = 'rtx2070', 'mobilenet_v2'
+    hw, network = args.hw, 'mobilenet_v2'
     input_shape = (1, 32, 224, 224)
     inputs = np.random.uniform(-1, 1, size=input_shape).astype("float32")
 

@@ -94,9 +94,12 @@ def nasneta_tf2(input0):
 def nasneta_tf2_xla(input0):
     return nasneta_tf2_model(input0)
 
+parser = argparse.ArgumentParser()
+parser.add_argument("-hw", "--hw", help="target hardware")
+args = parser.parse_args()
 
 if __name__ == '__main__':
-    hw, network = 'rtx2070', 'nasneta'
+    hw, network = args.hw, 'nasneta'
     input_shape = (1, 64, 56, 56)
     inputs = np.random.uniform(-1, 1, size=input_shape).astype("float32")
 
