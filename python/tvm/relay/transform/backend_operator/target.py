@@ -112,10 +112,11 @@ def measure(ftimer, is_net, hw_name, *args):
     # Dummy run to check whether it runs correctly e.g., segfault due to large workspace
     import sys
 
-    #try:
-    #    ftimer(*args)
-    #except:
-    #    return float('inf'), 0
+    try:
+        ftimer(*args)
+    except:
+        printe("It errors out when measuring; likely during op measurement")
+        return sys.maxsize, 0
 
     # Warm-up Phase: Run without measurement
     # TimeEvaluator itself come with the warmup,

@@ -14,7 +14,7 @@
 #CUDA_VISIBLE_DEVICES=0 python3 testing/measure_end_to_end.py -n nasneta -hw v100
 #CUDA_VISIBLE_DEVICES=0 python3 testing/measure_end_to_end.py -n resnet50_3d -hw v100
 #CUDA_VISIBLE_DEVICES=0 python3 testing/measure_end_to_end.py -n bert -hw v100
-#CUDA_VISIBLE_DEVICES=0 python3 testing/measure_end_to_end.py -n dcgan -hw v100
+CUDA_VISIBLE_DEVICES=0 python3 testing/measure_end_to_end.py -n dcgan -hw v100
 #CUDA_VISIBLE_DEVICES=0 python3 testing/measure_end_to_end.py -n resnet50 -hw v100
 #CUDA_VISIBLE_DEVICES=0 python3 testing/measure_end_to_end.py -n nasrnn -hw v100
 #CUDA_VISIBLE_DEVICES=0 python3 testing/measure_end_to_end.py -n mobilenet_v2 -hw v100
@@ -31,11 +31,11 @@
 
 # TF, TF-XLA measurement
 #XLA_FLAGS=--xla_gpu_cuda_data_dir=/usr/local/cuda TF_XLA_FLAGS="--tf_xla_auto_jit=2"
-XLA_FLAGS=--xla_gpu_cuda_data_dir=/usr/local/cuda CUDA_VISIBLE_DEVICES=0 python3 testing/baselines/tf2/bert.py -hw v100
-XLA_FLAGS=--xla_gpu_cuda_data_dir=/usr/local/cuda CUDA_VISIBLE_DEVICES=0 python3 testing/baselines/tf2/dcgan.py -hw v100
-XLA_FLAGS=--xla_gpu_cuda_data_dir=/usr/local/cuda CUDA_VISIBLE_DEVICES=0 python3 testing/baselines/tf2/resnext50.py -hw v100
-XLA_FLAGS=--xla_gpu_cuda_data_dir=/usr/local/cuda CUDA_VISIBLE_DEVICES=0 python3 testing/baselines/tf2/nasnet_a.py -hw v100
-XLA_FLAGS=--xla_gpu_cuda_data_dir=/usr/local/cuda CUDA_VISIBLE_DEVICES=0 python3 testing/baselines/tf2/resnet50_3d.py -hw v100
+#XLA_FLAGS=--xla_gpu_cuda_data_dir=/usr/local/cuda CUDA_VISIBLE_DEVICES=0 python3 testing/baselines/tf2/bert.py -hw v100
+#XLA_FLAGS=--xla_gpu_cuda_data_dir=/usr/local/cuda CUDA_VISIBLE_DEVICES=0 python3 testing/baselines/tf2/dcgan.py -hw v100
+#XLA_FLAGS=--xla_gpu_cuda_data_dir=/usr/local/cuda CUDA_VISIBLE_DEVICES=0 python3 testing/baselines/tf2/resnext50.py -hw v100
+#XLA_FLAGS=--xla_gpu_cuda_data_dir=/usr/local/cuda CUDA_VISIBLE_DEVICES=0 python3 testing/baselines/tf2/nasnet_a.py -hw v100
+#XLA_FLAGS=--xla_gpu_cuda_data_dir=/usr/local/cuda CUDA_VISIBLE_DEVICES=0 python3 testing/baselines/tf2/resnet50_3d.py -hw v100
 
 
 # Batch size of 8
