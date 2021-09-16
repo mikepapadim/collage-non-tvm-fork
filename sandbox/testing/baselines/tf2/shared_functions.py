@@ -5,8 +5,10 @@ import time
 from tqdm import tqdm
 
 import sys
+import os
 # Hacky way to include function from parent scripts
-sys.path.insert(0,'/home/byungsoj/tvm/sandbox/testing')
+this_code_path = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0,f'{this_code_path}/../../')
 
 from measure_end_to_end import log_e2e_perf
 

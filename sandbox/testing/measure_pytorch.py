@@ -139,7 +139,7 @@ def measure_torch(model, inputs, args, is_perf_logging):
 if __name__ == '__main__':
     args = get_args()
 
-    is_perf_logging = False
+    is_perf_logging = True
 
     # PyTorch measurement
     model, inputs = get_torch_model_and_input(args)

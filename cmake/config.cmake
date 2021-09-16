@@ -230,7 +230,8 @@ set(USE_ETHOSN_HW OFF)
 # USE_TENSORRT_RUNTIME - Support for running TensorRT compiled modules, requires presense of
 #                        TensorRT library. OFF/ON/"path/to/TensorRT"
 set(USE_TENSORRT_CODEGEN ON)
-set(USE_TENSORRT_RUNTIME ON)
+set(USE_TENSORRT_RUNTIME /home/ubuntu/TensorRT-7.2.2.3)
+#set(USE_TENSORRT_RUNTIME ON)
 
 # Whether use VITIS-AI codegen
 set(USE_VITIS_AI OFF)

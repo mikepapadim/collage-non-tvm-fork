@@ -351,20 +351,20 @@ if __name__ == "__main__":
 
     # Assign build target based on a given hw
     args.target = get_build_target(args.hw)
-    # is_perf_logging = True
-    is_perf_logging = False
+    is_perf_logging = True
+    # is_perf_logging = False
 
-    measure_dp_and_baselines(mod, params, shape_dict, args, is_perf_logging)
+    # measure_dp_and_baselines(mod, params, shape_dict, args, is_perf_logging)
     # measure_autotvm(mod, params, shape_dict, args, is_perf_logging)
     # measure_two_level(mod, params, shape_dict, args, is_perf_logging)
     # measure_dp_tuning_time(mod, params, shape_dict, args, is_perf_logging)
 
     # Debug: test single backend pipeline that offloads ops to single backend whenever possible
-    single_backend = Target.CUDNN
-    measure_single_backend_debug(mod, params, shape_dict, args, is_perf_logging, single_backend)
+    # single_backend = Target.CUDNN
+    # measure_single_backend_debug(mod, params, shape_dict, args, is_perf_logging, single_backend)
 
     # Note that this one do not use AutoTVM because cudnn and cublas will be used only if AutoTVM is disabled
-    # measure_tvm_strategy_cudnn_cublas(mod, params, shape_dict, args, is_perf_logging)
+    measure_tvm_strategy_cudnn_cublas(mod, params, shape_dict, args, is_perf_logging)
 
     # NasNet-A only works for opt_level 2 (not 3 due to the avgpool2d issue)
     # if args.network == "nasneta":
