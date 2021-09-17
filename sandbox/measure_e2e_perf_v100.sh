@@ -37,6 +37,15 @@ CUDA_VISIBLE_DEVICES=0 python3 testing/measure_end_to_end.py -n dcgan -hw v100
 #XLA_FLAGS=--xla_gpu_cuda_data_dir=/usr/local/cuda CUDA_VISIBLE_DEVICES=0 python3 testing/baselines/tf2/nasnet_a.py -hw v100
 #XLA_FLAGS=--xla_gpu_cuda_data_dir=/usr/local/cuda CUDA_VISIBLE_DEVICES=0 python3 testing/baselines/tf2/resnet50_3d.py -hw v100
 
+# Batch size of 16
+#CUDA_VISIBLE_DEVICES=0 python3 testing/measure_end_to_end.py -n bert -hw v100 -bs 16
+CUDA_VISIBLE_DEVICES=0 python3 testing/measure_end_to_end.py -n resnext50_32x4d -hw v100 -bs 16
+CUDA_VISIBLE_DEVICES=0 python3 testing/measure_end_to_end.py -n nasneta -hw v100 -bs 16
+CUDA_VISIBLE_DEVICES=0 python3 testing/measure_end_to_end.py -n resnet50_3d -hw v100 -bs 16
+CUDA_VISIBLE_DEVICES=0 python3 testing/measure_end_to_end.py -n dcgan -hw v100 -bs 16
+#CUDA_VISIBLE_DEVICES=0 python3 testing/measure_end_to_end.py -n mobilenet_v2 -hw v100 -bs 16
+#CUDA_VISIBLE_DEVICES=0 python3 testing/measure_end_to_end.py -n resnet50 -hw v100 -bs 16
+#CUDA_VISIBLE_DEVICES=0 python3 testing/measure_end_to_end.py -n nasrnn -hw v100 -bs 16
 
 # Batch size of 8
 #CUDA_VISIBLE_DEVICES=0 python3 testing/measure_end_to_end.py -n resnet50 -hw v100 -bs 8
