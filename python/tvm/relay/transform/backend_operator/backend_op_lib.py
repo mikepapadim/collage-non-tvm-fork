@@ -291,8 +291,8 @@ class BackendOpLib(object):
         dim = len(config._data_shape)
         return dim == 4 or dim == 5
 
-    self._add_backendop_with_key(Target.CUDNN, "SIGMOID", check_activation_constraints)
-    self._add_backendop_with_key(Target.CUDNN, "TANH", check_activation_constraints)
+    #self._add_backendop_with_key(Target.CUDNN, "SIGMOID", check_activation_constraints)
+    #self._add_backendop_with_key(Target.CUDNN, "TANH", check_activation_constraints)
     self._add_backendop_with_key(Target.CUDNN, "SOFTMAX")
     self._add_backendop_with_key(Target.CUDNN, "MAX_POOL2D")
     self._add_backendop_with_key(Target.CUDNN, "AVG_POOL2D")
@@ -490,8 +490,8 @@ class BackendOpLib(object):
   """
   Input: Target backend, backend to exclude
   Return: the list of backend operators from the given target backend while exclude them if the pattern also matches
-  
-  This is used to find a backend op assignment for a single backend baseline    
+
+  This is used to find a backend op assignment for a single backend baseline
   """
   def get_all_patterns_and_backend_ops_from_single_backend(self, target_backend, backend_to_exclude=None):
       # Generate op names to exclude
