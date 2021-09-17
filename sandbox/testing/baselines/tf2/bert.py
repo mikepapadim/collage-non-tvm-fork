@@ -35,10 +35,6 @@ def attention(input, heads):
     output = make_matmul(tf.nn.relu(make_matmul(input, 4*d_model)), d_model)
     return output
 
-parser = argparse.ArgumentParser()
-parser.add_argument("-hw", "--hw", help="target hardware")
-args = parser.parse_args()
-
 def bert_tf2_model(input):
     t = input
     for i in range(8):
@@ -56,12 +52,17 @@ def bert_tf2_xla(input):
     return bert_tf2_model(input)
 
 if __name__ == '__main__':
-    hw, network = args.hw, 'bert'
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-hw", "--hw", help="target hardware")
+    parser.add_argument("-bs", "--batch-size", default=1, type=int, help="batch size")
+    args = parser.parse_args()
+
+    args.network = 'bert'
     input_shape = (64, 1024)
     inputs = np.random.uniform(-1, 1, size=input_shape).astype("float32")
 
     method_name = 'TF'
-    measure_tf2_gpu(bert_tf2, inputs, method_name, hw, network)
+    measure_tf2_gpu(bert_tf2, inputs, method_name, args)
 
     method_name = 'TF-XLA'
-    measure_tf2_gpu(bert_tf2_xla, inputs, method_name, hw, network)
+    measure_tf2_gpu(bert_tf2_xla, inputs, method_name, args)

@@ -116,7 +116,7 @@ def get_tf2_args():
     return args
 
 # Don't forget to sync this code with
-def measure_tf2_gpu(model, inputs, method_name, hw, network):
+def measure_tf2_gpu(model, inputs, method_name, args):
     discard_iter, iterations = 2000, 10000
     is_perf_logging = True
 
@@ -142,5 +142,5 @@ def measure_tf2_gpu(model, inputs, method_name, hw, network):
 
     times = 1000.0 * np.array(times)[discard_iter:]
     mean_perf, std_perf = np.mean(times), np.std(times)
-    print(f"[{network}] Performance of {method_name} on {hw} (mean, std) = ({mean_perf:.4f}+-{std_perf:.4f})")
-    log_e2e_perf(hw, network, method_name, mean_perf, std_perf, is_perf_logging)
+    print(f"[{args.network}] Performance of {method_name} on {args.hw} (mean, std) = ({mean_perf:.4f}+-{std_perf:.4f})")
+    log_e2e_perf(args, method_name, mean_perf, std_perf, is_perf_logging)

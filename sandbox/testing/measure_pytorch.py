@@ -89,7 +89,7 @@ def measure_torch(model, inputs, args, is_perf_logging):
     times = np.array(times)[args.discard_iter:]
     mean_perf, std_perf = np.mean(times), np.std(times)
     print(f"[{args.network}] Performance of PyTorch on {args.hw} (mean, std) = ({mean_perf:.4f}+-{std_perf:.4f})")
-    log_e2e_perf(args.hw, args.network, 'PyTorch', mean_perf, std_perf, is_perf_logging)
+    log_e2e_perf(args, 'PyTorch', mean_perf, std_perf, is_perf_logging)
 
 #######################################################################
 # Warning(@Soo): Deprecated; It turns out that we need to run model code as a main (e.g., bert.py)
@@ -134,7 +134,7 @@ def measure_torch(model, inputs, args, is_perf_logging):
 #     times = 1000.0 * np.array(times)[args.discard_iter:]
 #     mean_perf, std_perf = np.mean(times), np.std(times)
 #     print(f"[{args.network}] Performance of {method_name} on {args.hw} (mean, std) = ({mean_perf:.4f}+-{std_perf:.4f})")
-#     log_e2e_perf(args.hw, args.network, 'PyTorch', mean_perf, std_perf, is_perf_logging)
+#     log_e2e_perf(args, 'PyTorch', mean_perf, std_perf, is_perf_logging)
 
 if __name__ == '__main__':
     args = get_args()
