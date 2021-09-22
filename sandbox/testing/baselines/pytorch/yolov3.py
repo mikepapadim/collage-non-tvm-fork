@@ -32,7 +32,7 @@ def predict_transform(prediction, inp_dim, anchors, num_classes, CUDA = True):
     x_offset = torch.FloatTensor(a).view(-1,1)
     y_offset = torch.FloatTensor(b).view(-1,1)
 
-    if CUDA:
+    if True:
         x_offset = x_offset.cuda()
         y_offset = y_offset.cuda()
 
@@ -43,7 +43,7 @@ def predict_transform(prediction, inp_dim, anchors, num_classes, CUDA = True):
     #log space transform height and the width
     anchors = torch.FloatTensor(anchors)
 
-    if CUDA:
+    if True:
         anchors = anchors.cuda()
 
     anchors = anchors.repeat(grid_size*grid_size, 1).unsqueeze(0)
@@ -68,10 +68,10 @@ class EmptyLayer(nn.Module):
     def __init__(self):
         super(EmptyLayer, self).__init__()
 
-class Darknet(nn.Module):
+class YoloV3(nn.Module):
 
     def __init__(self):
-        super(Darknet, self).__init__()
+        super(YoloV3, self).__init__()
         self.image_size = 416
         self.module_list = nn.ModuleList()
         self.blocks = []
@@ -756,7 +756,7 @@ class Darknet(nn.Module):
         self.blocks.append({'type': 'yolo', 'anchors': '10,13,  16,30,  33,23'})
 
 
-    def forward(self, x, CUDA):
+    def forward(self, x):
 
         modules = self.blocks
         outputs = {}  # cache the outputs for the route layer
@@ -802,7 +802,7 @@ class Darknet(nn.Module):
 
                 # Transform
                 x = x.data
-                x = predict_transform(x, inp_dim, anchors, num_classes, CUDA)
+                x = predict_transform(x, inp_dim, anchors, num_classes, True)
                 if not write:  # if no collector has been intialised.
                     detections = x
                     write = 1
@@ -818,7 +818,7 @@ class Darknet(nn.Module):
 
 if __name__ == '__main__':
 
-    model = Darknet()
+    model = YoloV3()
     print(model)
     inp = get_test_input()
     pred, _, _, _ = model(inp, False)
