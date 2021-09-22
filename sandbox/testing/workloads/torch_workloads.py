@@ -14,7 +14,7 @@ from baselines.pytorch.bert_full import BERTFULL
 from baselines.pytorch.resnets_3d import resnet50_3d
 from baselines.pytorch.mobilenetv2 import mobilenet_v2
 from baselines.pytorch.dcgan import DCGAN
-from baselines.pytorch.yolov3 import YoloV3
+#from baselines.pytorch.yolov3 import YoloV3
 
 import logging
 from tvm.relay.transform.utility.debug_helper import printe
@@ -32,7 +32,7 @@ NETWORK_TO_TORCH_MODEL = {
     "resnet50_3d": resnet50_3d,
     "mobilenet_v2": mobilenet_v2,
     "dcgan": DCGAN,
-    "yolov3": YoloV3
+    #"yolov3": YoloV3
 }
 
 
