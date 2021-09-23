@@ -24,7 +24,13 @@ def predict_transform(prediction, inp_dim, anchors, num_classes, CUDA = True):
     prediction[:,:,0] = torch.sigmoid(prediction[:,:,0])
     prediction[:,:,1] = torch.sigmoid(prediction[:,:,1])
     prediction[:,:,4] = torch.sigmoid(prediction[:,:,4])
-    
+
+    # We may need inplace operators because copy above causes an error when translating it into TVM IR.
+    # i.e., aten::copy_ is not supported by TVM
+    # torch.sigmoid_(prediction[:, :, 0])
+    # torch.sigmoid_(prediction[:, :, 1])
+    # torch.sigmoid_(prediction[:, :, 4])
+
     #Add the center offsets
     grid = np.arange(grid_size)
     a,b = np.meshgrid(grid, grid)
@@ -47,6 +53,7 @@ def predict_transform(prediction, inp_dim, anchors, num_classes, CUDA = True):
     #     anchors = anchors.cuda()
 
     anchors = anchors.repeat(grid_size*grid_size, 1).unsqueeze(0)
+
     prediction[:,:,2:4] = torch.exp(prediction[:,:,2:4])*anchors
     
     prediction[:,:,5: 5 + num_classes] = torch.sigmoid((prediction[:,:, 5 : 5 + num_classes]))
@@ -812,7 +819,7 @@ class YoloV3(nn.Module):
 
             outputs[i] = x
 
-        return detections, outputs[105], outputs[93], outputs[81]
+        return detections#, outputs[105], outputs[93], outputs[81]
 
 
 
@@ -820,6 +827,9 @@ if __name__ == '__main__':
 
     model = YoloV3()
     print(model)
-    inp = get_test_input()
-    pred, _, _, _ = model(inp, False)
+    # inp = get_test_input()
+    inp = torch.randn((1,3,416,416))
+    pred = model(inp)
+    # pred = model(inp, False)
+    # pred, _, _, _ = model(inp, False)
     print(pred.shape)

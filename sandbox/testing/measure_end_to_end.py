@@ -345,6 +345,11 @@ if __name__ == "__main__":
     logging.info(f"batch size: {args.batch_size}")
 
     mod, params, shape_dict, _ = get_network_from_torch(args.network, args.batch_size)
+
+    # Debugging Yolo-v3
+    # from tvm.relay.transform.utility.visualize import visualize_network
+    # visualize_network(mod["main"], "o3_yolov3")
+
     # mod, params, shape_dict, _ = get_network_from_torch("nasneta", 1)
     # mod, params, shape_dict, _ = get_network_from_relay("conv2d", 1)
     # mod, params, shape_dict, _ = get_network_from_relay("conv2d+relu_x2", 1)
