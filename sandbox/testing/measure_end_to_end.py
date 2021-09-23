@@ -213,11 +213,11 @@ def measure_single_backend_debug(mod, params, shape_dict, args, is_perf_logging,
     print(f"[{args.network}] Performance of {single_backend_name} on {args.hw} (mean, std) = ({mean_perf:.4f}+-{std_perf:.4f})")
 
 def measure_dp_and_baselines(mod, params, shape_dict, args, is_perf_logging):
-    mean_perf, std_perf, mod_dp = measure_end_to_end_perf_autotvm(mod["main"], params, args.target, shape_dict,
-                                                                  CustomFusionPass.DP,
-                                                                  args.network, args.hw, args.batch_size)
-    print(f"[{args.network}] Performance of DP on {args.hw} (mean, std) = ({mean_perf:.4f}+-{std_perf:.4f})")
-    log_e2e_perf(args, 'DP', mean_perf, std_perf, is_perf_logging)
+    # mean_perf, std_perf, mod_dp = measure_end_to_end_perf_autotvm(mod["main"], params, args.target, shape_dict,
+    #                                                               CustomFusionPass.DP,
+    #                                                               args.network, args.hw, args.batch_size)
+    # print(f"[{args.network}] Performance of DP on {args.hw} (mean, std) = ({mean_perf:.4f}+-{std_perf:.4f})")
+    # log_e2e_perf(args, 'DP', mean_perf, std_perf, is_perf_logging)
 
     mean_perf, std_perf, mod_tvm = measure_end_to_end_perf_autotvm(mod["main"], params, args.target, shape_dict,
                                                                    None,
@@ -331,14 +331,15 @@ if __name__ == "__main__":
     log_dir = "e2e_measure_logs"
 
     # For DP,
-    setup_logging(log_dir, task_name="e2e_measure", net_name=args.network, hw_name=args.hw, batch_size=args.batch_size,
-                  logging_level=logging.INFO)
+    # setup_logging(log_dir, task_name="e2e_measure", net_name=args.network, hw_name=args.hw, batch_size=args.batch_size,
+    #               # logging_level=logging.INFO)
+    #               logging_level=logging.WARNING)
 
     # For tuning time measurement, comment setup_logging above and uncomment the following codes
-    logging.basicConfig(level=logging.ERROR)
+    # logging.basicConfig(level=logging.ERROR)
 
     # It shows all logs. Still, it is too messy though cuz TVM logs are interrupting with our logs
-    # logging.basicConfig(level=logging.INFO)
+    logging.basicConfig(level=logging.INFO)
 
     # We can't test this because this network include batch norm.
     logging.info(f"batch size: {args.batch_size}")
