@@ -7,7 +7,6 @@ rtx2070,1,bert,TF-XLA,1.6168,0.0495
 rtx2070,1,bert,TensorRT,2.7454,0.0011
 rtx2070,1,bert,Two-level,2.3902,0.0003
 rtx2070,1,bert,cuDNN,10.0113,0.0024
-rtx2070,1,bert_full,AutoTVM,1.5367,0.0006
 rtx2070,1,bert_full,AutoTVM,1.5531,0.0002
 rtx2070,1,bert_full,AutoTVM-libs,1.0116,0.0004
 rtx2070,1,bert_full,DP,1.0088,0.0001
