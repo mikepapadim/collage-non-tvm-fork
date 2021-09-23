@@ -55,6 +55,7 @@ class SublayerConnection(nn.Module):
         "Apply residual connection to any sublayer with the same size."
         # return x + self.dropout(sublayer(self.norm(x)))
         return x + sublayer(self.norm(x))
+        # return x + sublayer(x)
 
 class SegmentEmbedding(nn.Embedding):
     def __init__(self, embed_size=512):

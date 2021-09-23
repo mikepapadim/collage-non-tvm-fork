@@ -412,8 +412,8 @@ class DPTable:
             # Let's keep that in mind
             for expr, op_name in opt_match_cell.match_dic.items():
                 backend_annotation = create_backend_op_annotation(group_id, op_name)
-                # printe(f"Pair of type and annotation: {backend_annotation}")
-                # printe(repr(expr), backend_annotation)
+                # logging.info(f"Pair of type and annotation: {backend_annotation}")
+                # logging.info(f"Expr: {repr(expr)}")
                 relay.analysis.update_backend(expr, backend_annotation)
                 optimized_match[expr] = backend_annotation
 

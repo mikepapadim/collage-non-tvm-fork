@@ -1,7 +1,10 @@
-from e2e_perf_logger import *
-
-memo_dic = E2EPerfLogger().read_dict_from_csv()
-E2EPerfLogger().log_all_perf(memo_dic)
+# from e2e_perf_logger import *
+#
+# memo_dic = E2EPerfLogger().read_dict_from_csv()
+# E2EPerfLogger().log_all_perf(memo_dic)
+#
+from tvm import relay
+relay.variance()
 
 # from deap import base
 # toolbox = base.Toolbox()

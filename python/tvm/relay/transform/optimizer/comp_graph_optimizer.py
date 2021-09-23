@@ -71,9 +71,8 @@ class CompGraphOptimizer:
             for generator in self._backendop_lib.get_all_pattern_generators():
                  generator.run(post_dom_tree, expr)
 
-
         for pat in self._backendop_lib.get_all_patterns():
-            logging.info("Checking... ", pat)
+            logging.info(f"Checking... {repr(pat)}")
 
         # for node, dom in post_dom_tree.items():
         #    print(f"{repr(node)} --> {repr(dom)}\n")
@@ -94,7 +93,7 @@ class CompGraphOptimizer:
 
             logging.info("="*45)
             if is_call_node(f_expr):
-                logging.info(f"(topo_order, op_type) : {f._topological_order}, {f_expr.op}")
+                logging.info(f"(topo_order, op_type) : {f._topological_order}, {str(f_expr.op)}")
             else:
                 logging.info(f"(topo_order, op_type) : {f._topological_order}, {type(f_expr)}, Non-call node")
 
@@ -108,7 +107,7 @@ class CompGraphOptimizer:
                 if self._ordered_pattern_matcher.match(f_expr, pat.get_relay_pattern()):
                 # if pat.get_relay_pattern().match(f_expr):
                     assert pat.get_depth() >= 1 # 0 depth doesn't make sense
-                    logging.info("The following pattern is matched:", pat.get_relay_pattern())
+                    logging.info(f"The following pattern is matched: {pat.get_relay_pattern()}")
 
                     # Get best backend op and its cost for matched nodes
                     best_backend_op, min_cost = get_optimal_backendop(self._backendop_lib, f_expr,

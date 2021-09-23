@@ -329,8 +329,9 @@ class RelayBuildModule : public runtime::ModuleNode {
     pass_seqs.push_back(transform::FoldConstant());
 
     // InferBackendForConstant is to assign backend to newly created Constant from FoldConstant
+//    pass_seqs.push_back(transform::VisualizeIR("before_InferBackendForConstant"));
     pass_seqs.push_back(transform::InferBackendForConstant());
-//    pass_seqs.push_back(transform::VisualizeIR("after_FoldConstant"));
+//    pass_seqs.push_back(transform::VisualizeIR("after_InferBackendForConstant"));
 
     // Create a sequential pass and perform optimizations.
     transform::Pass seq = transform::Sequential(pass_seqs);
