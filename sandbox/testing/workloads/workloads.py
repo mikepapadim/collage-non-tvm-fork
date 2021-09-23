@@ -79,6 +79,7 @@ WORKLOADS_DIC = {
     "dcgan": {1: {"input0": [1, 100]},
               8: {"input0": [8, 100]},
               16: {"input0": [16, 100]}},
+    "yolov3": {1: {"input0": [1,3,416,416]}}
 }
 
 def create_relay_workload(expr):
