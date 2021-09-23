@@ -8,7 +8,7 @@ from .op_config import Config, MeasuredConfigs
 from .utils import no_constraints_func, get_op_pattern, get_args
 from .target import Target
 from .op_type import optype_to_pattern
-from .pattern import Pattern
+from .pattern import Pattern, name_relay_pattern
 
 from tvm.relay.dataflow_pattern import *
 from tvm.relay.transform.backend_operator.utils import *
@@ -340,12 +340,12 @@ class BackendOpLib(object):
 
             sink_type = get_op_pattern(sink)
             # NOTE: This is current assumption. May not be true all the time.
-            assert(sink_type != optype2enum["kOpaque"])
+            # assert(sink_type != optype2enum["kOpaque"])
             num_nodes = 0
             cur_relay_pattern = None
 
             if src == sink:
-                # Hanlde single op
+                # Handle single op
                 cur_relay_pattern, cur_pattern_type, num_nodes = generate_relay_pattern(src, sink)
             else:
                 #print(f"num: {cur_num_op}, cur_pattern: {enum2optype[cur_pattern_type]}, sink_type: {enum2optype[sink_type]}\nsrc: {src}\nsink: {sink}")
@@ -372,9 +372,10 @@ class BackendOpLib(object):
                     def fcheck(node, is_sink):
                         return get_op_pattern(node) <= optype2enum["kInjective"]
                     cur_relay_pattern, cur_pattern_type, num_nodes = check_and_generate_pattern(src, sink, fcheck, cur_pattern_type, nodeToPatternMap)
-
+                elif cur_pattern_type == optype2enum["kCommReduce"] or cur_pattern_type == optype2enum["kOpaque"]:
+                    pass
                 else:
-                    raise Exception(f"Unsupported type ({type(sink)})")
+                    raise Exception(f"Unsupported type ({type(sink)}, {enum2optype[cur_pattern_type]}, {src})")
 
 
             # Invalid pattern
@@ -387,7 +388,22 @@ class BackendOpLib(object):
             if verify(cur_relay_pattern):
                 # Register
                 #print(f"\t----- Register {cur_relay_pattern}")
+
                 self._add_backendop(target, Pattern(cur_relay_pattern))
+
+                # [Deprecated - this wasn't an issue] Do not register if it is errorneous patterns
+                # e.g., for bert_full, these are errorneous patterns
+                # errorneous_patterns = ['0-Op(reshape)[1-Op(transpose)[2-Op(reshape)[3-Op(add)[*, *]]]]',
+                #                        "0-Op(add)[1-Var/Const, 2-Op(add)[*, *]]",
+                #                        "0-Op(add)[1-Op(add)[*, *], *]",
+                #                        "0-Op(add)[*, 1-Op(add)[*, *]]",
+                #                        "0-Op(transpose)[1-Op(reshape)[2-Op(add)[*, *]]]",
+                #                        "0-Op(reshape)[1-Op(add)[*, *]]"]
+                #
+                # if not name_relay_pattern(cur_relay_pattern)[0] in errorneous_patterns:
+                #     self._add_backendop(target, Pattern(cur_relay_pattern))
+                # else:
+                #     logging.info(f"The following pattern is excluded: {name_relay_pattern(cur_relay_pattern)[0]}")
 
             # We may be able to expand
             #if sink in dom_tree and src_type != optype2enum["kTuple"]:

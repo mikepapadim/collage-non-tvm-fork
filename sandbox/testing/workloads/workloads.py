@@ -67,6 +67,9 @@ WORKLOADS_DIC = {
     "nasrnn": {1: {'x.1': [1, 2560]}},
     # "nasrnn": {'x.1': [1, 512], 'x.2': [1, 512], 'x.3': [1, 512], 'x.4': [1, 512], 'x': [1, 512]},
     "bert": {1: {"input0": [64, 1024]}},
+    "bert_full": {1: {"input0": [1, 64, 256]}, # (batch_size, max_seq_len, n_hidden)
+                  8: {"input0": [8, 64, 256]},
+                  16: {"input0": [16, 64, 256]}},
     "resnet50_3d": {1: {"input0": [1, 64, 3, 56, 56]},
                     8: {"input0": [8, 64, 3, 56, 56]},
                     16: {"input0": [16, 64, 3, 56, 56]}},
@@ -77,6 +80,7 @@ WORKLOADS_DIC = {
     "dcgan": {1: {"input0": [1, 100]},
               8: {"input0": [8, 100]},
               16: {"input0": [16, 100]}},
+    "yolov3": {1: {"input0": [1,3,416,416]}}
 }
 
 def create_relay_workload(expr):

@@ -114,6 +114,13 @@ relayop_to_varnames = {
   "nn.global_avg_pool2d" : ["data"],
 
   # DCGAN
-  "image.resize": ["data"]
+  "image.resize": ["data"],
+
+  # BERT_FULL
+  "divide": ["data", "data"],
+  "subtract": ["data", "data"],
+  "sqrt": ["data"],
+  "variance": ["data", "data"],
+  "mean": ["data"],
 }
 
