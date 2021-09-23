@@ -83,9 +83,18 @@ class OpStateToMatchTranslator():
         batch_matmul_pat = is_op("nn.batch_matmul")(wildcard(),wildcard())
         image_resize_pat = is_op("image.resize")(wildcard())
 
+        variance_pat = is_op("variance")(wildcard(), wildcard())
+        reshape_pat = is_op("reshape")(wildcard())
+        divide_pat = is_op("divide")(wildcard(), wildcard())
+
         is_not_valid |= transpose_pat.match(expr)
         is_not_valid |= batch_matmul_pat.match(expr)
         is_not_valid |= image_resize_pat.match(expr)
+
+        # For BERT full version
+        is_not_valid |= variance_pat.match(expr)
+        is_not_valid |= reshape_pat.match(expr)
+        is_not_valid |= divide_pat.match(expr)
 
         return is_not_valid
 
