@@ -23,12 +23,22 @@ if __name__ == '__main__':
     input_data = torch.randn(input_shape)
 
     this_code_path = os.path.dirname(os.path.abspath(__file__))
+    onnx_path = f"{this_code_path}/baselines/onnx/{args.network}.onnx"
 
     torch.onnx.export(scripted_model, input_data,
-                      f"{this_code_path}/baselines/onnx/{args.network}.onnx", verbose=False,
+                      onnx_path, verbose=False,
                       export_params=True,
                       do_constant_folding=True,
                       input_names=input_names, output_names=output_names,
                       training=torch.onnx.TrainingMode.EVAL,
                       example_outputs=torch.randn(net_to_output_shape[args.network]),
                       opset_version=12)
+
+    import onnx
+    from onnx_tf.backend import prepare
+
+    onnx_model = onnx.load(onnx_path)
+    tf_rep = prepare(onnx_model)
+
+    onnx_tf_path = f"{this_code_path}/baselines/onnx/{args.network}.pb"
+    tf_rep.export_graph(onnx_tf_path)
