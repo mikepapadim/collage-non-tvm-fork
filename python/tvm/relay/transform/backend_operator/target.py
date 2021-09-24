@@ -18,7 +18,7 @@ from ..utility.debug_helper import printe
 
 # only collect results whose standard deviation is below this
 MAX_STD_MEASURE_RTX = 5E-04
-MAX_STD_MEASURE_XEON = 0.005 # 0.0025
+MAX_STD_MEASURE_XEON = 0.01 # 0.005 # Too small
 # MAX_STD_MEASURE_GPU = 5E-03
 
 # This is for operator measurement
