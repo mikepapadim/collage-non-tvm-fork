@@ -62,7 +62,7 @@ optype_to_pattern = {
 
   # Others
   "DIAMOND" : get_diamond(),
-  "BN" : Pattern(is_tuple_get_item(is_op("nn.batch_norm")(wildcard(), wildcard(), wildcard(), wildcard(), wildcard()), 0)),
+  #"BATCHNORM" : Pattern(is_tuple_get_item(is_op("nn.batch_norm")(wildcard(), wildcard(), wildcard(), wildcard(), wildcard()), 0)),
   "SOFTMAX" : Pattern(is_op("nn.softmax")(wildcard())),
   "BATCH_FLATTEN" : Pattern(is_op("nn.batch_flatten")(wildcard())),
   "GLOBAL_AVG_POOL2D" : Pattern(is_op("nn.global_avg_pool2d")(wildcard())),
@@ -72,6 +72,7 @@ optype_to_pattern = {
   "CONV2D_BN": Pattern(is_tuple_get_item(is_op("nn.batch_norm")(is_op("nn.conv2d")(wildcard(), wildcard()), wildcard(), wildcard(), wildcard(), wildcard()), 0)),
   "BN_RELU" : Pattern(is_op("nn.relu")(is_tuple_get_item(is_op("nn.batch_norm")(wildcard(), wildcard(), wildcard(), wildcard(), wildcard()), 0))),
   "CONV2D_BN_RELU" : Pattern(is_op("nn.relu")(is_tuple_get_item(is_op("nn.batch_norm")(is_op("nn.conv2d")(wildcard(), wildcard()), wildcard(), wildcard(), wildcard(), wildcard()), 0))),
+  "SUBTRACT" : Pattern(is_op("subtract")(wildcard(), wildcard())),
 }
 
 
