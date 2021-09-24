@@ -19,7 +19,8 @@
 #CUDA_VISIBLE_DEVICES=1 python3 testing/autotune_relay.py -tu autotvm -t cuda -th llvm -dt float32 -n resnet50_3d -l autotvm_ops -bs 1 -hw rtx2070
 #CUDA_VISIBLE_DEVICES=1 python3 testing/autotune_relay.py -tu autotvm -t cuda -th llvm -dt float32 -n mobilenet_v2 -l autotvm_ops -bs 1 -hw rtx2070
 #CUDA_VISIBLE_DEVICES=1 python3 testing/autotune_relay.py -tu autotvm -t cuda -th llvm -dt float32 -n dcgan -l autotvm_ops -bs 1 -hw rtx2070
-CUDA_VISIBLE_DEVICES=1 python3 testing/autotune_relay.py -tu autotvm -t cuda -th llvm -dt float32 -n bert_full -l autotvm_ops -bs 1 -hw rtx2070
+#CUDA_VISIBLE_DEVICES=1 python3 testing/autotune_relay.py -tu autotvm -t cuda -th llvm -dt float32 -n bert_full -l autotvm_ops -bs 1 -hw rtx2070
+CUDA_VISIBLE_DEVICES=1 python3 testing/autotune_relay.py -tu autotvm -t cuda -th llvm -dt float32 -n yolov3 -l autotvm_ops -bs 1 -hw rtx2070
 
 # Batch size of 8
 # Note: Only mobilenet has the measurement issue of single operator (e.g., relu); weirdly, not on the fused operator thought.

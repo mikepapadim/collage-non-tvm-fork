@@ -108,6 +108,7 @@ def batch_matmul(lhs, rhs, transa=False, transb=False, iterative=False, **kwargs
     b = lhs.shape[0]
     n = lhs.shape[2] if transa else lhs.shape[1]
     m = rhs.shape[1] if transb else rhs.shape[2]
+
     return te.extern(
         (b, n, m),
         [lhs, rhs],

@@ -70,6 +70,7 @@ def load_torch_model_from_code(name, batch_size):
 
     # print(f"Input data: {input_shape}")
     scripted_model = torch.jit.trace(model.cpu(), input_data).eval()
+    # print(scripted_model.graph)
     return scripted_model
 
 # NOTE: Make sure that you executed codes in "baselines/pytorch_new" to have the most recent onnx files

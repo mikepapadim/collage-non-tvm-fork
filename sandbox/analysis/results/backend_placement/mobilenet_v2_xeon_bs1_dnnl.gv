@@ -1,0 +1,197 @@
+digraph {
+	rankdir=BT
+	0 [label="input0 [0, default]:
+Tensor[(1, 32, 224, 224), float32]" shape=rectangle]
+	1 [label="features.0.conv.0.weight [1, default]:
+Tensor[(32, 1, 3, 3), float32]" shape=rectangle]
+	2 [label="features.0.conv.2.weight [2, default]:
+Tensor[(16, 32, 1, 1), float32]" shape=rectangle]
+	3 [label="features.1.conv.0.weight [3, default]:
+Tensor[(96, 16, 1, 1), float32]" shape=rectangle]
+	4 [label="features.1.conv.2.weight [4, default]:
+Tensor[(96, 1, 3, 3), float32]" shape=rectangle]
+	5 [label="features.1.conv.4.weight [5, default]:
+Tensor[(24, 96, 1, 1), float32]" shape=rectangle]
+	6 [label="features.2.conv.0.weight [6, default]:
+Tensor[(144, 24, 1, 1), float32]" shape=rectangle]
+	7 [label="features.2.conv.2.weight [7, default]:
+Tensor[(144, 1, 3, 3), float32]" shape=rectangle]
+	8 [label="features.2.conv.4.weight [8, default]:
+Tensor[(24, 144, 1, 1), float32]" shape=rectangle]
+	9 [label="features.3.conv.0.weight [9, default]:
+Tensor[(144, 24, 1, 1), float32]" shape=rectangle]
+	10 [label="features.3.conv.2.weight [10, default]:
+Tensor[(144, 1, 3, 3), float32]" shape=rectangle]
+	11 [label="features.3.conv.4.weight [11, default]:
+Tensor[(32, 144, 1, 1), float32]" shape=rectangle]
+	12 [label="features.4.conv.0.weight [12, default]:
+Tensor[(192, 32, 1, 1), float32]" shape=rectangle]
+	13 [label="features.4.conv.2.weight [13, default]:
+Tensor[(192, 1, 3, 3), float32]" shape=rectangle]
+	14 [label="features.4.conv.4.weight [14, default]:
+Tensor[(32, 192, 1, 1), float32]" shape=rectangle]
+	15 [label="features.5.conv.0.weight [15, default]:
+Tensor[(192, 32, 1, 1), float32]" shape=rectangle]
+	16 [label="features.5.conv.2.weight [16, default]:
+Tensor[(192, 1, 3, 3), float32]" shape=rectangle]
+	17 [label="features.5.conv.4.weight [17, default]:
+Tensor[(32, 192, 1, 1), float32]" shape=rectangle]
+	18 [label="features.6.conv.0.weight [18, default]:
+Tensor[(192, 32, 1, 1), float32]" shape=rectangle]
+	19 [label="features.6.conv.2.weight [19, default]:
+Tensor[(192, 1, 3, 3), float32]" shape=rectangle]
+	20 [label="features.6.conv.4.weight [20, default]:
+Tensor[(64, 192, 1, 1), float32]" shape=rectangle]
+	21 [label="features.7.conv.0.weight [21, default]:
+Tensor[(384, 64, 1, 1), float32]" shape=rectangle]
+	22 [label="features.7.conv.2.weight [22, default]:
+Tensor[(384, 1, 3, 3), float32]" shape=rectangle]
+	23 [label="features.7.conv.4.weight [23, default]:
+Tensor[(64, 384, 1, 1), float32]" shape=rectangle]
+	24 [label="features.8.conv.0.weight [24, default]:
+Tensor[(384, 64, 1, 1), float32]" shape=rectangle]
+	25 [label="features.8.conv.2.weight [25, default]:
+Tensor[(384, 1, 3, 3), float32]" shape=rectangle]
+	26 [label="features.8.conv.4.weight [26, default]:
+Tensor[(64, 384, 1, 1), float32]" shape=rectangle]
+	27 [label="features.9.conv.0.weight [27, default]:
+Tensor[(384, 64, 1, 1), float32]" shape=rectangle]
+	28 [label="features.9.conv.2.weight [28, default]:
+Tensor[(384, 1, 3, 3), float32]" shape=rectangle]
+	29 [label="features.9.conv.4.weight [29, default]:
+Tensor[(64, 384, 1, 1), float32]" shape=rectangle]
+	30 [label="features.10.conv.0.weight [30, default]:
+Tensor[(384, 64, 1, 1), float32]" shape=rectangle]
+	31 [label="features.10.conv.2.weight [31, default]:
+Tensor[(384, 1, 3, 3), float32]" shape=rectangle]
+	32 [label="features.10.conv.4.weight [32, default]:
+Tensor[(96, 384, 1, 1), float32]" shape=rectangle]
+	33 [label="features.11.conv.0.weight [33, default]:
+Tensor[(576, 96, 1, 1), float32]" shape=rectangle]
+	34 [label="features.11.conv.2.weight [34, default]:
+Tensor[(576, 1, 3, 3), float32]" shape=rectangle]
+	35 [label="features.11.conv.4.weight [35, default]:
+Tensor[(96, 576, 1, 1), float32]" shape=rectangle]
+	36 [label="features.12.conv.0.weight [36, default]:
+Tensor[(576, 96, 1, 1), float32]" shape=rectangle]
+	37 [label="features.12.conv.2.weight [37, default]:
+Tensor[(576, 1, 3, 3), float32]" shape=rectangle]
+	38 [label="features.12.conv.4.weight [38, default]:
+Tensor[(96, 576, 1, 1), float32]" shape=rectangle]
+	39 [label="features.13.conv.0.weight [39, default]:
+Tensor[(576, 96, 1, 1), float32]" shape=rectangle]
+	40 [label="features.13.conv.2.weight [40, default]:
+Tensor[(576, 1, 3, 3), float32]" shape=rectangle]
+	41 [label="features.13.conv.4.weight [41, default]:
+Tensor[(160, 576, 1, 1), float32]" shape=rectangle]
+	42 [label="features.14.conv.0.weight [42, default]:
+Tensor[(960, 160, 1, 1), float32]" shape=rectangle]
+	43 [label="features.14.conv.2.weight [43, default]:
+Tensor[(960, 1, 3, 3), float32]" shape=rectangle]
+	44 [label="features.14.conv.4.weight [44, default]:
+Tensor[(160, 960, 1, 1), float32]" shape=rectangle]
+	45 [label="features.15.conv.0.weight [45, default]:
+Tensor[(960, 160, 1, 1), float32]" shape=rectangle]
+	46 [label="features.15.conv.2.weight [46, default]:
+Tensor[(960, 1, 3, 3), float32]" shape=rectangle]
+	47 [label="features.15.conv.4.weight [47, default]:
+Tensor[(160, 960, 1, 1), float32]" shape=rectangle]
+	48 [label="features.16.conv.0.weight [48, default]:
+Tensor[(960, 160, 1, 1), float32]" shape=rectangle]
+	49 [label="features.16.conv.2.weight [49, default]:
+Tensor[(960, 1, 3, 3), float32]" shape=rectangle]
+	50 [label="features.16.conv.4.weight [50, default]:
+Tensor[(320, 960, 1, 1), float32]" shape=rectangle]
+	51 [label="features.17.0.weight [51, default]:
+Tensor[(1280, 320, 1, 1), float32]" shape=rectangle]
+	52 [label="dnnl_0 [52, default]" shape=rectangle]
+	53 [label="Call [53, default](op=reshape)" color=greenyellow shape=ellipse style=filled]
+	1 -> 53
+	54 [label="Call [54, default](op=reshape)" color=greenyellow shape=ellipse style=filled]
+	4 -> 54
+	55 [label="Call [55, default](op=reshape)" color=greenyellow shape=ellipse style=filled]
+	7 -> 55
+	56 [label="Call [56, default](op=reshape)" color=greenyellow shape=ellipse style=filled]
+	10 -> 56
+	57 [label="Call [57, default](op=reshape)" color=greenyellow shape=ellipse style=filled]
+	13 -> 57
+	58 [label="Call [58, default](op=reshape)" color=greenyellow shape=ellipse style=filled]
+	16 -> 58
+	59 [label="Call [59, default](op=reshape)" color=greenyellow shape=ellipse style=filled]
+	19 -> 59
+	60 [label="Call [60, default](op=reshape)" color=greenyellow shape=ellipse style=filled]
+	22 -> 60
+	61 [label="Call [61, default](op=reshape)" color=greenyellow shape=ellipse style=filled]
+	25 -> 61
+	62 [label="Call [62, default](op=reshape)" color=greenyellow shape=ellipse style=filled]
+	28 -> 62
+	63 [label="Call [63, default](op=reshape)" color=greenyellow shape=ellipse style=filled]
+	31 -> 63
+	64 [label="Call [64, default](op=reshape)" color=greenyellow shape=ellipse style=filled]
+	34 -> 64
+	65 [label="Call [65, default](op=reshape)" color=greenyellow shape=ellipse style=filled]
+	37 -> 65
+	66 [label="Call [66, default](op=reshape)" color=greenyellow shape=ellipse style=filled]
+	40 -> 66
+	67 [label="Call [67, default](op=reshape)" color=greenyellow shape=ellipse style=filled]
+	43 -> 67
+	68 [label="Call [68, default](op=reshape)" color=greenyellow shape=ellipse style=filled]
+	46 -> 68
+	69 [label="Call [69, default](op=reshape)" color=greenyellow shape=ellipse style=filled]
+	49 -> 69
+	70 [label="Call[70, 20000000-tensorrt](GlobalVar=dnnl_0)" color=orange shape=ellipse style=filled]
+	0 -> 70
+	53 -> 70
+	2 -> 70
+	3 -> 70
+	54 -> 70
+	5 -> 70
+	6 -> 70
+	55 -> 70
+	8 -> 70
+	9 -> 70
+	56 -> 70
+	11 -> 70
+	12 -> 70
+	57 -> 70
+	14 -> 70
+	15 -> 70
+	58 -> 70
+	17 -> 70
+	18 -> 70
+	59 -> 70
+	20 -> 70
+	21 -> 70
+	60 -> 70
+	23 -> 70
+	24 -> 70
+	61 -> 70
+	26 -> 70
+	27 -> 70
+	62 -> 70
+	29 -> 70
+	30 -> 70
+	63 -> 70
+	32 -> 70
+	33 -> 70
+	64 -> 70
+	35 -> 70
+	36 -> 70
+	65 -> 70
+	38 -> 70
+	39 -> 70
+	66 -> 70
+	41 -> 70
+	42 -> 70
+	67 -> 70
+	44 -> 70
+	45 -> 70
+	68 -> 70
+	47 -> 70
+	48 -> 70
+	69 -> 70
+	50 -> 70
+	51 -> 70
+	71 [label="Function (71)" shape=doubleoctagon]
+	70 -> 71
+}

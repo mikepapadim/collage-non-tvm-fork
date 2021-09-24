@@ -808,18 +808,20 @@ class YoloV3(nn.Module):
                 num_classes = 20
 
                 # Transform
-                x = x.data
-                x = predict_transform(x, inp_dim, anchors, num_classes, True)
-                if not write:  # if no collector has been intialised.
-                    detections = x
-                    write = 1
-
-                else:
-                    detections = torch.cat((detections, x), 1)
+                # x = x.data
+                # print("x-data", x.shape)
+                # x = predict_transform(x, inp_dim, anchors, num_classes, True)
+                # if not write:  # if no collector has been intialised.
+                #     detections = x
+                #     write = 1
+                #
+                # else:
+                #     detections = torch.cat((detections, x), 1)
+                # print("transformed", x.shape)
 
             outputs[i] = x
-
-        return detections#, outputs[105], outputs[93], outputs[81]
+        return x
+        # return detections#, outputs[105], outputs[93], outputs[81]
 
 
 

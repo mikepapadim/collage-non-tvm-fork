@@ -555,8 +555,6 @@ def target_specific_lowering(func, inputMap, target_info=None):
             ret_type = calls[0].checked_type
             inputs = collect_input(inputMap)
 
-        # NOTE: hacky solution for now
-        # It would be better not to have '_' in pattern name
         elif pattern == "0-Op(nn.batch_matmul)[*, *]":
             strategy.add_implementation(
                 wrap_compute_batch_matmul(topi.cuda.batch_matmul_cublas),
@@ -572,8 +570,46 @@ def target_specific_lowering(func, inputMap, target_info=None):
             # Unsupported backend op
             assert False, "{} is currently not supported in {}".format(target_info, target)
 
+    elif target == "mkl":
+        if pattern == "0-Op(nn.dense)[*, *]":
+            from tvm.te import SpecializedCondition
+            # has single op
+            attrs = calls[0].attrs
+            ret_type = calls[0].checked_type
+            inputs = collect_input(inputMap)
+
+            same_type = inputs[0].dtype == inputs[1].dtype == ret_type.dtype
+            dtype = inputs[0].dtype
+
+            with SpecializedCondition(same_type and dtype in ["float32", "float64"] or u8s8s32):
+                strategy.add_implementation(
+                    wrap_compute_dense(topi.x86.dense_mkl),
+                    wrap_topi_schedule(topi.x86.schedule_dense_mkl),
+                    name="dense.mkl",
+                )
+        elif pattern == "0-Op(nn.batch_matmul)[*, *]":
+            strategy.add_implementation(
+                wrap_compute_batch_matmul(topi.x86.batch_matmul_mkl),
+                wrap_topi_schedule(topi.x86.schedule_batch_matmul_mkl),
+                name="batch_matmul.mkl",
+            )
+            # has single op
+            attrs = calls[0].attrs
+            ret_type = calls[0].checked_type
+            inputs = collect_input(inputMap)
+
+        else:
+            # Unsupported backend op
+            assert False, "{} is currently not supported in {}".format(target_info, target)
+
     elif target == "tensorrt":
-        assert False, "tensorrt should be passed to the external compiler"
+        assert False, f"{target} should be passed to the external compiler"
+
+    elif target == "dnnl":
+        assert False, f"{target} should be passed to the external compiler"
+
+
+
     else:
         # Unsupported target
         assert False, "Unsupported target"
@@ -589,6 +625,7 @@ def target_specific_lowering(func, inputMap, target_info=None):
 
     impl, outputs = None, None
     for spec in strategy.specializations:
+        #if spec.condition:
         for impl in spec.implementations:
             # attribute, inputs, output_type
             outputs = impl.compute(attrs, inputs, ret_type)

@@ -315,9 +315,16 @@ class BackendOpLib(object):
 
     # DNNL, MKL, MKLDNN
     # TODO: Add patterns. matmul, batch matmul
-    self._add_backendop_with_key(Target.MKL, "DENSE")
-    self._add_backendop_with_key(Target.MKLDNN, "DENSE")
-    self._add_backendop_with_key(Target.DNNL, "DENSE")
+    def check_tensor_constraints(config):
+        dim1 = len(config._data_shape[0])
+        dim2 = len(config._data_shape[1])
+        print(f"{dim1}, {dim2}, {config._data_shape}", file=sys.stderr)
+        return dim1 == 2 and dim2 == 2
+
+    self._add_backendop_with_key(Target.MKL, "DENSE", check_tensor_constraints)
+    self._add_backendop_with_key(Target.MKL, "BATCH_MATMUL")
+    #self._add_backendop_with_key(Target.MKLDNN, "DENSE")
+    #self._add_backendop_with_key(Target.DNNL, "DENSE")
 
 
     # CUBLAS
