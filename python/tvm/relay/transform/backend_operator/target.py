@@ -114,8 +114,9 @@ def measure(ftimer, is_net, hw_name, *args):
 
     try:
         ftimer(*args)
-    except:
-        printe("It errors out when measuring; likely during op measurement")
+    except Exception as E:
+        #printe("It errors out when measuring; likely during op measurement")
+        printe(E)
         return sys.maxsize, 0
 
     # Warm-up Phase: Run without measurement

@@ -217,32 +217,32 @@ def measure_single_backend_debug(mod, params, shape_dict, args, is_perf_logging,
     print(f"[{args.network}] Performance of {single_backend_name} on {args.hw} (mean, std) = ({mean_perf:.4f}+-{std_perf:.4f})")
 
 def measure_dp_and_baselines(mod, params, shape_dict, args, is_perf_logging):
-    # mean_perf, std_perf, mod_dp = measure_end_to_end_perf_autotvm(mod["main"], params, args.target, shape_dict,
-    #                                                               CustomFusionPass.DP,
-    #                                                               args.network, args.hw, args.batch_size)
-    # print(f"[{args.network}] Performance of DP on {args.hw} (mean, std) = ({mean_perf:.4f}+-{std_perf:.4f})")
-    # log_e2e_perf(args, 'DP', mean_perf, std_perf, is_perf_logging)
-    #
-    # mean_perf, std_perf, mod_tvm = measure_end_to_end_perf_autotvm(mod["main"], params, args.target, shape_dict,
-    #                                                                None,
-    #                                                                args.network, args.hw, args.batch_size)
-    # print(f"[{args.network}] Performance of AutoTVM on {args.hw} (mean, std) = ({mean_perf:.4f}+-{std_perf:.4f})")
-    # log_e2e_perf(args, 'AutoTVM', mean_perf, std_perf, is_perf_logging)
+    #mean_perf, std_perf, mod_dp = measure_end_to_end_perf_autotvm(mod["main"], params, args.target, shape_dict,
+    #                                                              CustomFusionPass.DP,
+    #                                                              args.network, args.hw, args.batch_size)
+    #print(f"[{args.network}] Performance of DP on {args.hw} (mean, std) = ({mean_perf:.4f}+-{std_perf:.4f})")
+    #log_e2e_perf(args, 'DP', mean_perf, std_perf, is_perf_logging)
+
+    mean_perf, std_perf, mod_tvm = measure_end_to_end_perf_autotvm(mod["main"], params, args.target, shape_dict,
+                                                                   None,
+                                                                   args.network, args.hw, args.batch_size)
+    print(f"[{args.network}] Performance of AutoTVM on {args.hw} (mean, std) = ({mean_perf:.4f}+-{std_perf:.4f})")
+    log_e2e_perf(args, 'AutoTVM', mean_perf, std_perf, is_perf_logging)
 
     mean_perf, std_perf, mod_trt = measure_end_to_end_perf_tensorrt(mod, params, args.target, shape_dict, args.hw)
     print(f"[{args.network}] Performance of TensorRT on {args.hw} (mean, std) = ({mean_perf:.4f}+-{std_perf:.4f})")
     log_e2e_perf(args, 'TensorRT', mean_perf, std_perf, is_perf_logging)
 
-    # mean_perf, std_perf, mod_cud = measure_end_to_end_perf_single_backend(mod["main"], params, args.target, shape_dict,
-    #                                                                       args.network, args.hw, args.batch_size,
-    #                                                                       Target.CUDNN.id())
-    # print(f"[{args.network}] Performance of cuDNN on {args.hw} (mean, std) = ({mean_perf:.4f}+-{std_perf:.4f})")
-    # log_e2e_perf(args, 'cuDNN', mean_perf, std_perf, is_perf_logging)
+    mean_perf, std_perf, mod_cud = measure_end_to_end_perf_single_backend(mod["main"], params, args.target, shape_dict,
+                                                                          args.network, args.hw, args.batch_size,
+                                                                          Target.CUDNN.id())
+    print(f"[{args.network}] Performance of cuDNN on {args.hw} (mean, std) = ({mean_perf:.4f}+-{std_perf:.4f})")
+    log_e2e_perf(args, 'cuDNN', mean_perf, std_perf, is_perf_logging)
 
     # mean_perf, std_perf = measure_end_to_end_perf_autosch(mod["main"], params, 'cuda', shape_dict, False, args.hw)
     # print(f"[AutoSCH] Performance of {args.network} (mean, std) = ({mean_perf:.4f}+-{std_perf:.4f})")
 
-    # verify_network_output(mod["main"], shape_dict, mod_tvm, mod_dp)
+    verify_network_output(mod["main"], shape_dict, mod_tvm, mod_dp)
 
 def measure_two_level(mod, params, shape_dict, args, is_perf_logging):
     mean_perf, std_perf, mod_two_level = measure_end_to_end_perf_autotvm(mod["main"], params, args.target, shape_dict,
@@ -335,9 +335,9 @@ if __name__ == "__main__":
     log_dir = "e2e_measure_logs"
 
     # For DP,
-    setup_logging(log_dir, task_name="e2e_measure", net_name=args.network, hw_name=args.hw, batch_size=args.batch_size,
-                  # logging_level=logging.INFO)
-                  logging_level=logging.WARNING)
+    #setup_logging(log_dir, task_name="e2e_measure", net_name=args.network, hw_name=args.hw, batch_size=args.batch_size,
+    #              # logging_level=logging.INFO)
+    #              logging_level=logging.WARNING)
 
     # For tuning time measurement, comment setup_logging above and uncomment the following codes
     logging.basicConfig(level=logging.ERROR)
@@ -366,9 +366,9 @@ if __name__ == "__main__":
     is_perf_logging = True
     # is_perf_logging = False
 
-    # measure_dp_and_baselines(mod, params, shape_dict, args, is_perf_logging)
+    measure_dp_and_baselines(mod, params, shape_dict, args, is_perf_logging)
     # measure_autotvm(mod, params, shape_dict, args, is_perf_logging)
-    measure_two_level(mod, params, shape_dict, args, is_perf_logging)
+    # measure_two_level(mod, params, shape_dict, args, is_perf_logging)
     # measure_dp_tuning_time(mod, params, shape_dict, args, is_perf_logging)
 
     # Debug: test single backend pipeline that offloads ops to single backend whenever possible
