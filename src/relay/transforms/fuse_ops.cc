@@ -1063,9 +1063,9 @@ namespace tvm {
           gmap_[graph.post_dfs_order[nid]->ref] = groups[nid];
         }
         // The following line can be used for debug.
-        // this->DebugDumpGroup(body);
+//         this->DebugDumpGroup(body);
         auto ret = this->Mutate(body);
-        // this->DebugDumpGroup(ret);
+//         this->DebugDumpGroup(ret);
         return ret;
       }
 
@@ -1463,14 +1463,15 @@ namespace tvm {
               }
             }
           }
-
-          parent_backend_ = op->backend;
+//          std::cerr << "Parent backend : " << op->backend.operator std::string() << std::endl;
           for (auto arg : op->args) {
+            parent_backend_ = op->backend;
             this->VisitExpr(arg);
           }
         }
 
         void VisitExpr_(const ConstantNode* op) final {
+//          std::cerr << "Mutate backend : " << parent_backend_.operator std::string() << std::endl;
           MutateBackendCopy(GetRef<Expr>(op), parent_backend_);
           ExprVisitor::VisitExpr_(op);
         }

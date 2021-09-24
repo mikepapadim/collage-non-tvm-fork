@@ -35,10 +35,10 @@ def plot_single_net(net_name):
     # plt.xticks(rotation=45)
     plt.savefig(fig_name, bbox_inches='tight')
 
-def fill_up_missing_first_val(tuning_time, inf_time, net_df, net_name, hw):
+def fill_up_missing_first_val(tuning_time, inf_time, net_df, net_name, hw, batch_size):
     def load_dp_perf(net_name, hw):
         perf_dic = E2EPerfLogger().read_dict_from_csv()
-        key = E2EPerfLogger().gen_dic_key(hw, net_name, 'DP')
+        key = E2EPerfLogger().gen_dic_key(hw, batch_size, net_name, 'DP')
         mean_perf, _ = perf_dic[key]
 
         return float(mean_perf)
@@ -69,7 +69,7 @@ def plot_all_nets(networks, hw, batch_size):
         tuning_time = net_df.index.tolist()
         inf_time = net_df.iloc[:, 0].tolist()
 
-        tuning_time, inf_time, dp_inf_time = fill_up_missing_first_val(tuning_time, inf_time, net_df, net_name, hw)
+        tuning_time, inf_time, dp_inf_time = fill_up_missing_first_val(tuning_time, inf_time, net_df, net_name, hw, batch_size)
         # dp_inf_time = inf_time[0]
         tuning_time, inf_time = np.array(tuning_time) / 60.0, np.array(inf_time)
 

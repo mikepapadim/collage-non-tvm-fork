@@ -94,18 +94,19 @@ def nasneta_tf2(input0):
 def nasneta_tf2_xla(input0):
     return nasneta_tf2_model(input0)
 
-parser = argparse.ArgumentParser()
-parser.add_argument("-hw", "--hw", help="target hardware")
-args = parser.parse_args()
-
 if __name__ == '__main__':
-    hw, network = args.hw, 'nasneta'
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-hw", "--hw", help="target hardware")
+    parser.add_argument("-bs", "--batch-size", default=1, type=int, help="batch size")
+    args = parser.parse_args()
+
+    args.network = 'nasneta'
     input_shape = (1, 64, 56, 56)
     inputs = np.random.uniform(-1, 1, size=input_shape).astype("float32")
 
     method_name = 'TF'
-    measure_tf2_gpu(nasneta_tf2, inputs, method_name, hw, network)
+    measure_tf2_gpu(nasneta_tf2, inputs, method_name, args)
 
     # This errors out; resize kernel is not supported even by the most recent XLA
     method_name = 'TF-XLA'
-    measure_tf2_gpu(nasneta_tf2_xla, inputs, method_name, hw, network)
+    measure_tf2_gpu(nasneta_tf2_xla, inputs, method_name, args)

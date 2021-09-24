@@ -424,7 +424,7 @@ class EvolutionarySearcher:
             best_ind, best_opt_match, time_perf_dic, total_search_time = self.update_best_ind_and_time_perf(best_ind, pop, search_start_time, time_perf_dic)
 
             # End the program if the time passes;
-            n_hours = 8 # It was 6 before; however, 3 is enough.
+            n_hours = 6 # It was 6 before; however, 3 is enough.
             if total_search_time > n_hours * 3600:
                 printe(f"It exceeds search time limit ({n_hours} hrs), so it stops.")
                 break

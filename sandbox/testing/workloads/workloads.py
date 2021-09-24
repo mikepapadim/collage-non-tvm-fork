@@ -48,13 +48,18 @@ from tvm.relay.transform.backend_operator.utils import *
 # Value is shape dict
 WORKLOADS_DIC = {
     "resnet_block" : {1: {"input0": [1, 64, 56, 56]},
-                      8: {"input0": [8, 64, 56, 56]}},
+                      8: {"input0": [8, 64, 56, 56]},
+                      16: {"input0": [16, 64, 56, 56]}},
     "resnet50" : {1: {"input0": [1, 64, 56, 56]},
-                  8: {"input0": [8, 64, 56, 56]}},
+                  8: {"input0": [8, 64, 56, 56]},
+                  16: {"input0": [16, 64, 56, 56]}},
     "resnext50_32x4d" : {1: {"input0": [1, 64, 56, 56]},
-                         8: {"input0": [8, 64, 56, 56]}},
+                         4: {"input0": [4, 64, 56, 56]},
+                         8: {"input0": [8, 64, 56, 56]},
+                         16: {"input0": [16, 64, 56, 56]}},
     "nasneta" : {1: {"input0": [1, 64, 56, 56]},
-                 8: {"input0": [8, 64, 56, 56]}},
+                 8: {"input0": [8, 64, 56, 56]},
+                 16: {"input0": [16, 64, 56, 56]}},
     # NasRNN always have some errors during autotuning operators with AutoTVM
     # "nasrnn": {'x.1': [1, 512]},
     # "nasrnn": {'x.1': [1, 1024]},
@@ -62,13 +67,20 @@ WORKLOADS_DIC = {
     "nasrnn": {1: {'x.1': [1, 2560]}},
     # "nasrnn": {'x.1': [1, 512], 'x.2': [1, 512], 'x.3': [1, 512], 'x.4': [1, 512], 'x': [1, 512]},
     "bert": {1: {"input0": [64, 1024]}},
+    "bert_full": {1: {"input0": [1, 64, 256]}, # (batch_size, max_seq_len, n_hidden)
+                  8: {"input0": [8, 64, 256]},
+                  16: {"input0": [16, 64, 256]}},
     "resnet50_3d": {1: {"input0": [1, 64, 3, 56, 56]},
-                    8: {"input0": [8, 64, 3, 56, 56]}},
+                    8: {"input0": [8, 64, 3, 56, 56]},
+                    16: {"input0": [16, 64, 3, 56, 56]}},
     "mobilenet_v2": {1: {"input0": [1, 32, 224, 224]},
-                     8: {"input0": [8, 32, 224, 224]}},
+                     8: {"input0": [8, 32, 224, 224]},
+                     16: {"input0": [16, 32, 224, 224]}},
     # "mobilenet_v2": {"input0": [1, 32, 56, 56]},
     "dcgan": {1: {"input0": [1, 100]},
-              8: {"input0": [8, 100]}},
+              8: {"input0": [8, 100]},
+              16: {"input0": [16, 100]}},
+    "yolov3": {1: {"input0": [1,3,416,416]}}
 }
 
 def create_relay_workload(expr):

@@ -194,7 +194,7 @@ def run_op_level_opt(relay_expr):
     # Optimizing graph
     optimizer = CompGraphOptimizer(backendop_lib, targets)
 
-    # visualize_network(relay_expr, "o3_nasnet_test", comp_graph.expr2node)
+    # visualize_network(relay_expr, "o3_bert_full_without_layernorm", comp_graph.expr2node)
     """
     Warning(@Soo): Note that current DP optimizer does not work for patterns with more than one root.
     For example, Conv     Conv (Two parallel convolution) case can't be handled
@@ -211,6 +211,7 @@ def run_op_level_opt(relay_expr):
 
     logging.info("[Op-Level: DP] It finished optimizing comp graph and assigning backend ops to Relay Expr (backend attr)")
 
+    # visualize_network(relay_expr, "o3_bert_full_without_layernorm_optimized", comp_graph.expr2node)
     # optimized_match, post_order_match_result = optimizer.get_optimized_match(comp_graph)
 
     # print("Match result: ", optimized_match)

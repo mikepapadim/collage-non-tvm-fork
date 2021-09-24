@@ -9,9 +9,11 @@ from baselines.pytorch.resnets import resnet50, resnext50_32x4d, resnet_block
 from baselines.pytorch.nasnet_a import NASNetA
 from baselines.pytorch.nasrnn import NASRNN
 from baselines.pytorch.bert import BERT
+from baselines.pytorch.bert_full import BERTFULL
 from baselines.pytorch.resnets_3d import resnet50_3d
 from baselines.pytorch.mobilenetv2 import mobilenet_v2
 from baselines.pytorch.dcgan import DCGAN
+from baselines.pytorch.yolov3 import YoloV3
 
 import logging
 from tvm.relay.transform.utility.debug_helper import printe
@@ -23,11 +25,13 @@ NETWORK_TO_TORCH_MODEL = {
     "nasneta" : NASNetA,
     "nasrnn": NASRNN,
     "bert": BERT,
+    "bert_full":BERTFULL,
 
     # Additional models to evaluate
     "resnet50_3d": resnet50_3d,
     "mobilenet_v2": mobilenet_v2,
     "dcgan": DCGAN,
+    "yolov3": YoloV3
 }
 
 
@@ -66,6 +70,7 @@ def load_torch_model_from_code(name, batch_size):
 
     # print(f"Input data: {input_shape}")
     scripted_model = torch.jit.trace(model.cpu(), input_data).eval()
+    # print(scripted_model.graph)
     return scripted_model
 
 # NOTE: Make sure that you executed codes in "baselines/pytorch_new" to have the most recent onnx files
