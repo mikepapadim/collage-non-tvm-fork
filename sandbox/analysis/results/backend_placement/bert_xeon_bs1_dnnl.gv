@@ -1,0 +1,530 @@
+digraph {
+	rankdir=BT
+	0 [label="input0 [0, default]:
+Tensor[(64, 1024), float32]" shape=rectangle]
+	1 [label="nodes.0.q [1, default]:
+Tensor[(1024, 1024), float32]" shape=rectangle]
+	2 [label="nodes.0.k [2, default]:
+Tensor[(1024, 1024), float32]" shape=rectangle]
+	3 [label="nodes.0.v [3, default]:
+Tensor[(1024, 1024), float32]" shape=rectangle]
+	4 [label="nodes.0.up [4, default]:
+Tensor[(1024, 4096), float32]" shape=rectangle]
+	5 [label="nodes.0.final [5, default]:
+Tensor[(4096, 1024), float32]" shape=rectangle]
+	6 [label="nodes.1.q [6, default]:
+Tensor[(1024, 1024), float32]" shape=rectangle]
+	7 [label="nodes.1.k [7, default]:
+Tensor[(1024, 1024), float32]" shape=rectangle]
+	8 [label="nodes.1.v [8, default]:
+Tensor[(1024, 1024), float32]" shape=rectangle]
+	9 [label="nodes.1.up [9, default]:
+Tensor[(1024, 4096), float32]" shape=rectangle]
+	10 [label="nodes.1.final [10, default]:
+Tensor[(4096, 1024), float32]" shape=rectangle]
+	11 [label="nodes.2.q [11, default]:
+Tensor[(1024, 1024), float32]" shape=rectangle]
+	12 [label="nodes.2.k [12, default]:
+Tensor[(1024, 1024), float32]" shape=rectangle]
+	13 [label="nodes.2.v [13, default]:
+Tensor[(1024, 1024), float32]" shape=rectangle]
+	14 [label="nodes.2.up [14, default]:
+Tensor[(1024, 4096), float32]" shape=rectangle]
+	15 [label="nodes.2.final [15, default]:
+Tensor[(4096, 1024), float32]" shape=rectangle]
+	16 [label="nodes.3.q [16, default]:
+Tensor[(1024, 1024), float32]" shape=rectangle]
+	17 [label="nodes.3.k [17, default]:
+Tensor[(1024, 1024), float32]" shape=rectangle]
+	18 [label="nodes.3.v [18, default]:
+Tensor[(1024, 1024), float32]" shape=rectangle]
+	19 [label="nodes.3.up [19, default]:
+Tensor[(1024, 4096), float32]" shape=rectangle]
+	20 [label="nodes.3.final [20, default]:
+Tensor[(4096, 1024), float32]" shape=rectangle]
+	21 [label="nodes.4.q [21, default]:
+Tensor[(1024, 1024), float32]" shape=rectangle]
+	22 [label="nodes.4.k [22, default]:
+Tensor[(1024, 1024), float32]" shape=rectangle]
+	23 [label="nodes.4.v [23, default]:
+Tensor[(1024, 1024), float32]" shape=rectangle]
+	24 [label="nodes.4.up [24, default]:
+Tensor[(1024, 4096), float32]" shape=rectangle]
+	25 [label="nodes.4.final [25, default]:
+Tensor[(4096, 1024), float32]" shape=rectangle]
+	26 [label="nodes.5.q [26, default]:
+Tensor[(1024, 1024), float32]" shape=rectangle]
+	27 [label="nodes.5.k [27, default]:
+Tensor[(1024, 1024), float32]" shape=rectangle]
+	28 [label="nodes.5.v [28, default]:
+Tensor[(1024, 1024), float32]" shape=rectangle]
+	29 [label="nodes.5.up [29, default]:
+Tensor[(1024, 4096), float32]" shape=rectangle]
+	30 [label="nodes.5.final [30, default]:
+Tensor[(4096, 1024), float32]" shape=rectangle]
+	31 [label="nodes.6.q [31, default]:
+Tensor[(1024, 1024), float32]" shape=rectangle]
+	32 [label="nodes.6.k [32, default]:
+Tensor[(1024, 1024), float32]" shape=rectangle]
+	33 [label="nodes.6.v [33, default]:
+Tensor[(1024, 1024), float32]" shape=rectangle]
+	34 [label="nodes.6.up [34, default]:
+Tensor[(1024, 4096), float32]" shape=rectangle]
+	35 [label="nodes.6.final [35, default]:
+Tensor[(4096, 1024), float32]" shape=rectangle]
+	36 [label="nodes.7.q [36, default]:
+Tensor[(1024, 1024), float32]" shape=rectangle]
+	37 [label="nodes.7.k [37, default]:
+Tensor[(1024, 1024), float32]" shape=rectangle]
+	38 [label="nodes.7.v [38, default]:
+Tensor[(1024, 1024), float32]" shape=rectangle]
+	39 [label="nodes.7.up [39, default]:
+Tensor[(1024, 4096), float32]" shape=rectangle]
+	40 [label="nodes.7.final [40, default]:
+Tensor[(4096, 1024), float32]" shape=rectangle]
+	41 [label="dnnl_57 [41, default]" shape=rectangle]
+	42 [label="dnnl_55 [42, default]" shape=rectangle]
+	43 [label="dnnl_50 [43, default]" shape=rectangle]
+	44 [label="dnnl_48 [44, default]" shape=rectangle]
+	45 [label="dnnl_43 [45, default]" shape=rectangle]
+	46 [label="dnnl_41 [46, default]" shape=rectangle]
+	47 [label="dnnl_36 [47, default]" shape=rectangle]
+	48 [label="dnnl_34 [48, default]" shape=rectangle]
+	49 [label="dnnl_29 [49, default]" shape=rectangle]
+	50 [label="dnnl_27 [50, default]" shape=rectangle]
+	51 [label="dnnl_22 [51, default]" shape=rectangle]
+	52 [label="dnnl_20 [52, default]" shape=rectangle]
+	53 [label="dnnl_15 [53, default]" shape=rectangle]
+	54 [label="dnnl_13 [54, default]" shape=rectangle]
+	55 [label="dnnl_8 [55, default]" shape=rectangle]
+	56 [label="dnnl_6 [56, default]" shape=rectangle]
+	57 [label="dnnl_0 [57, default]" shape=rectangle]
+	58 [label="Call [58, default](op=transpose)" color=greenyellow shape=ellipse style=filled]
+	1 -> 58
+	59 [label="Call[59, 20000000-tensorrt](GlobalVar=dnnl_0)" color=orange shape=ellipse style=filled]
+	0 -> 59
+	58 -> 59
+	60 [label="Call [60, default](op=reshape)" color=greenyellow shape=ellipse style=filled]
+	59 -> 60
+	61 [label="Call [61, default](op=transpose)" color=greenyellow shape=ellipse style=filled]
+	60 -> 61
+	62 [label="dnnl_2 [62, default]" shape=rectangle]
+	63 [label="Call [63, default](op=transpose)" color=greenyellow shape=ellipse style=filled]
+	2 -> 63
+	64 [label="Call[64, 20000001-tensorrt](GlobalVar=dnnl_2)" color=orange shape=ellipse style=filled]
+	0 -> 64
+	63 -> 64
+	65 [label="Call [65, default](op=reshape)" color=greenyellow shape=ellipse style=filled]
+	64 -> 65
+	66 [label="Call [66, default](op=transpose)" color=greenyellow shape=ellipse style=filled]
+	65 -> 66
+	67 [label="Call [67, default](op=transpose)" color=greenyellow shape=ellipse style=filled]
+	66 -> 67
+	68 [label="Call [68, default](op=nn.batch_matmul)" color=greenyellow shape=ellipse style=filled]
+	61 -> 68
+	67 -> 68
+	69 [label="dnnl_4 [69, default]" shape=rectangle]
+	70 [label="Call [70, default](op=transpose)" color=greenyellow shape=ellipse style=filled]
+	3 -> 70
+	71 [label="Call[71, 20000002-tensorrt](GlobalVar=dnnl_4)" color=orange shape=ellipse style=filled]
+	0 -> 71
+	70 -> 71
+	72 [label="Call [72, default](op=reshape)" color=greenyellow shape=ellipse style=filled]
+	71 -> 72
+	73 [label="Call [73, default](op=transpose)" color=greenyellow shape=ellipse style=filled]
+	72 -> 73
+	74 [label="Call [74, default](op=transpose)" color=greenyellow shape=ellipse style=filled]
+	73 -> 74
+	75 [label="Call [75, default](op=nn.batch_matmul)" color=greenyellow shape=ellipse style=filled]
+	68 -> 75
+	74 -> 75
+	76 [label="Call [76, default](op=transpose)" color=greenyellow shape=ellipse style=filled]
+	75 -> 76
+	77 [label="Call [77, default](op=reshape)" color=greenyellow shape=ellipse style=filled]
+	76 -> 77
+	78 [label="Call [78, default](op=transpose)" color=greenyellow shape=ellipse style=filled]
+	4 -> 78
+	79 [label="Call[79, 20000003-tensorrt](GlobalVar=dnnl_6)" color=orange shape=ellipse style=filled]
+	77 -> 79
+	78 -> 79
+	80 [label="Call [80, default](op=nn.relu)" color=greenyellow shape=ellipse style=filled]
+	79 -> 80
+	81 [label="Call [81, default](op=transpose)" color=greenyellow shape=ellipse style=filled]
+	5 -> 81
+	82 [label="Call [82, default](op=transpose)" color=greenyellow shape=ellipse style=filled]
+	6 -> 82
+	83 [label="Call [83, default](op=transpose)" color=greenyellow shape=ellipse style=filled]
+	7 -> 83
+	84 [label="Call [84, default](op=transpose)" color=greenyellow shape=ellipse style=filled]
+	8 -> 84
+	85 [label="Call[85, 20000004-tensorrt](GlobalVar=dnnl_8)" color=orange shape=ellipse style=filled]
+	80 -> 85
+	81 -> 85
+	82 -> 85
+	83 -> 85
+	84 -> 85
+	86 [label="TupleGetItem [86, 10000002-autotvm](idx=0)" color=greenyellow shape=ellipse style=filled]
+	85 -> 86
+	87 [label="Call [87, default](op=reshape)" color=greenyellow shape=ellipse style=filled]
+	86 -> 87
+	88 [label="Call [88, default](op=transpose)" color=greenyellow shape=ellipse style=filled]
+	87 -> 88
+	89 [label="TupleGetItem [89, 10000003-autotvm](idx=1)" color=greenyellow shape=ellipse style=filled]
+	85 -> 89
+	90 [label="Call [90, default](op=reshape)" color=greenyellow shape=ellipse style=filled]
+	89 -> 90
+	91 [label="Call [91, default](op=transpose)" color=greenyellow shape=ellipse style=filled]
+	90 -> 91
+	92 [label="Call [92, default](op=transpose)" color=greenyellow shape=ellipse style=filled]
+	91 -> 92
+	93 [label="Call [93, default](op=nn.batch_matmul)" color=greenyellow shape=ellipse style=filled]
+	88 -> 93
+	92 -> 93
+	94 [label="TupleGetItem [94, 10000001-autotvm](idx=2)" color=greenyellow shape=ellipse style=filled]
+	85 -> 94
+	95 [label="Call [95, default](op=reshape)" color=greenyellow shape=ellipse style=filled]
+	94 -> 95
+	96 [label="Call [96, default](op=transpose)" color=greenyellow shape=ellipse style=filled]
+	95 -> 96
+	97 [label="Call [97, default](op=transpose)" color=greenyellow shape=ellipse style=filled]
+	96 -> 97
+	98 [label="Call [98, default](op=nn.batch_matmul)" color=greenyellow shape=ellipse style=filled]
+	93 -> 98
+	97 -> 98
+	99 [label="Call [99, default](op=transpose)" color=greenyellow shape=ellipse style=filled]
+	98 -> 99
+	100 [label="Call [100, default](op=reshape)" color=greenyellow shape=ellipse style=filled]
+	99 -> 100
+	101 [label="Call [101, default](op=transpose)" color=greenyellow shape=ellipse style=filled]
+	9 -> 101
+	102 [label="Call[102, 20000005-tensorrt](GlobalVar=dnnl_13)" color=orange shape=ellipse style=filled]
+	100 -> 102
+	101 -> 102
+	103 [label="Call [103, default](op=nn.relu)" color=greenyellow shape=ellipse style=filled]
+	102 -> 103
+	104 [label="Call [104, default](op=transpose)" color=greenyellow shape=ellipse style=filled]
+	10 -> 104
+	105 [label="Call [105, default](op=transpose)" color=greenyellow shape=ellipse style=filled]
+	11 -> 105
+	106 [label="Call [106, default](op=transpose)" color=greenyellow shape=ellipse style=filled]
+	12 -> 106
+	107 [label="Call [107, default](op=transpose)" color=greenyellow shape=ellipse style=filled]
+	13 -> 107
+	108 [label="Call[108, 20000006-tensorrt](GlobalVar=dnnl_15)" color=orange shape=ellipse style=filled]
+	103 -> 108
+	104 -> 108
+	105 -> 108
+	106 -> 108
+	107 -> 108
+	109 [label="TupleGetItem [109, 10000006-autotvm](idx=0)" color=greenyellow shape=ellipse style=filled]
+	108 -> 109
+	110 [label="Call [110, default](op=reshape)" color=greenyellow shape=ellipse style=filled]
+	109 -> 110
+	111 [label="Call [111, default](op=transpose)" color=greenyellow shape=ellipse style=filled]
+	110 -> 111
+	112 [label="TupleGetItem [112, 10000007-autotvm](idx=1)" color=greenyellow shape=ellipse style=filled]
+	108 -> 112
+	113 [label="Call [113, default](op=reshape)" color=greenyellow shape=ellipse style=filled]
+	112 -> 113
+	114 [label="Call [114, default](op=transpose)" color=greenyellow shape=ellipse style=filled]
+	113 -> 114
+	115 [label="Call [115, default](op=transpose)" color=greenyellow shape=ellipse style=filled]
+	114 -> 115
+	116 [label="Call [116, default](op=nn.batch_matmul)" color=greenyellow shape=ellipse style=filled]
+	111 -> 116
+	115 -> 116
+	117 [label="TupleGetItem [117, 10000005-autotvm](idx=2)" color=greenyellow shape=ellipse style=filled]
+	108 -> 117
+	118 [label="Call [118, default](op=reshape)" color=greenyellow shape=ellipse style=filled]
+	117 -> 118
+	119 [label="Call [119, default](op=transpose)" color=greenyellow shape=ellipse style=filled]
+	118 -> 119
+	120 [label="Call [120, default](op=transpose)" color=greenyellow shape=ellipse style=filled]
+	119 -> 120
+	121 [label="Call [121, default](op=nn.batch_matmul)" color=greenyellow shape=ellipse style=filled]
+	116 -> 121
+	120 -> 121
+	122 [label="Call [122, default](op=transpose)" color=greenyellow shape=ellipse style=filled]
+	121 -> 122
+	123 [label="Call [123, default](op=reshape)" color=greenyellow shape=ellipse style=filled]
+	122 -> 123
+	124 [label="Call [124, default](op=transpose)" color=greenyellow shape=ellipse style=filled]
+	14 -> 124
+	125 [label="Call[125, 20000007-tensorrt](GlobalVar=dnnl_20)" color=orange shape=ellipse style=filled]
+	123 -> 125
+	124 -> 125
+	126 [label="Call [126, default](op=nn.relu)" color=greenyellow shape=ellipse style=filled]
+	125 -> 126
+	127 [label="Call [127, default](op=transpose)" color=greenyellow shape=ellipse style=filled]
+	15 -> 127
+	128 [label="Call [128, default](op=transpose)" color=greenyellow shape=ellipse style=filled]
+	16 -> 128
+	129 [label="Call [129, default](op=transpose)" color=greenyellow shape=ellipse style=filled]
+	17 -> 129
+	130 [label="Call [130, default](op=transpose)" color=greenyellow shape=ellipse style=filled]
+	18 -> 130
+	131 [label="Call[131, 20000008-tensorrt](GlobalVar=dnnl_22)" color=orange shape=ellipse style=filled]
+	126 -> 131
+	127 -> 131
+	128 -> 131
+	129 -> 131
+	130 -> 131
+	132 [label="TupleGetItem [132, 10000010-autotvm](idx=0)" color=greenyellow shape=ellipse style=filled]
+	131 -> 132
+	133 [label="Call [133, default](op=reshape)" color=greenyellow shape=ellipse style=filled]
+	132 -> 133
+	134 [label="Call [134, default](op=transpose)" color=greenyellow shape=ellipse style=filled]
+	133 -> 134
+	135 [label="TupleGetItem [135, 10000011-autotvm](idx=1)" color=greenyellow shape=ellipse style=filled]
+	131 -> 135
+	136 [label="Call [136, default](op=reshape)" color=greenyellow shape=ellipse style=filled]
+	135 -> 136
+	137 [label="Call [137, default](op=transpose)" color=greenyellow shape=ellipse style=filled]
+	136 -> 137
+	138 [label="Call [138, default](op=transpose)" color=greenyellow shape=ellipse style=filled]
+	137 -> 138
+	139 [label="Call [139, default](op=nn.batch_matmul)" color=greenyellow shape=ellipse style=filled]
+	134 -> 139
+	138 -> 139
+	140 [label="TupleGetItem [140, 10000009-autotvm](idx=2)" color=greenyellow shape=ellipse style=filled]
+	131 -> 140
+	141 [label="Call [141, default](op=reshape)" color=greenyellow shape=ellipse style=filled]
+	140 -> 141
+	142 [label="Call [142, default](op=transpose)" color=greenyellow shape=ellipse style=filled]
+	141 -> 142
+	143 [label="Call [143, default](op=transpose)" color=greenyellow shape=ellipse style=filled]
+	142 -> 143
+	144 [label="Call [144, default](op=nn.batch_matmul)" color=greenyellow shape=ellipse style=filled]
+	139 -> 144
+	143 -> 144
+	145 [label="Call [145, default](op=transpose)" color=greenyellow shape=ellipse style=filled]
+	144 -> 145
+	146 [label="Call [146, default](op=reshape)" color=greenyellow shape=ellipse style=filled]
+	145 -> 146
+	147 [label="Call [147, default](op=transpose)" color=greenyellow shape=ellipse style=filled]
+	19 -> 147
+	148 [label="Call[148, 20000009-tensorrt](GlobalVar=dnnl_27)" color=orange shape=ellipse style=filled]
+	146 -> 148
+	147 -> 148
+	149 [label="Call [149, default](op=nn.relu)" color=greenyellow shape=ellipse style=filled]
+	148 -> 149
+	150 [label="Call [150, default](op=transpose)" color=greenyellow shape=ellipse style=filled]
+	20 -> 150
+	151 [label="Call [151, default](op=transpose)" color=greenyellow shape=ellipse style=filled]
+	21 -> 151
+	152 [label="Call [152, default](op=transpose)" color=greenyellow shape=ellipse style=filled]
+	22 -> 152
+	153 [label="Call [153, default](op=transpose)" color=greenyellow shape=ellipse style=filled]
+	23 -> 153
+	154 [label="Call[154, 20000010-tensorrt](GlobalVar=dnnl_29)" color=orange shape=ellipse style=filled]
+	149 -> 154
+	150 -> 154
+	151 -> 154
+	152 -> 154
+	153 -> 154
+	155 [label="TupleGetItem [155, 10000014-autotvm](idx=0)" color=greenyellow shape=ellipse style=filled]
+	154 -> 155
+	156 [label="Call [156, default](op=reshape)" color=greenyellow shape=ellipse style=filled]
+	155 -> 156
+	157 [label="Call [157, default](op=transpose)" color=greenyellow shape=ellipse style=filled]
+	156 -> 157
+	158 [label="TupleGetItem [158, 10000015-autotvm](idx=1)" color=greenyellow shape=ellipse style=filled]
+	154 -> 158
+	159 [label="Call [159, default](op=reshape)" color=greenyellow shape=ellipse style=filled]
+	158 -> 159
+	160 [label="Call [160, default](op=transpose)" color=greenyellow shape=ellipse style=filled]
+	159 -> 160
+	161 [label="Call [161, default](op=transpose)" color=greenyellow shape=ellipse style=filled]
+	160 -> 161
+	162 [label="Call [162, default](op=nn.batch_matmul)" color=greenyellow shape=ellipse style=filled]
+	157 -> 162
+	161 -> 162
+	163 [label="TupleGetItem [163, 10000013-autotvm](idx=2)" color=greenyellow shape=ellipse style=filled]
+	154 -> 163
+	164 [label="Call [164, default](op=reshape)" color=greenyellow shape=ellipse style=filled]
+	163 -> 164
+	165 [label="Call [165, default](op=transpose)" color=greenyellow shape=ellipse style=filled]
+	164 -> 165
+	166 [label="Call [166, default](op=transpose)" color=greenyellow shape=ellipse style=filled]
+	165 -> 166
+	167 [label="Call [167, default](op=nn.batch_matmul)" color=greenyellow shape=ellipse style=filled]
+	162 -> 167
+	166 -> 167
+	168 [label="Call [168, default](op=transpose)" color=greenyellow shape=ellipse style=filled]
+	167 -> 168
+	169 [label="Call [169, default](op=reshape)" color=greenyellow shape=ellipse style=filled]
+	168 -> 169
+	170 [label="Call [170, default](op=transpose)" color=greenyellow shape=ellipse style=filled]
+	24 -> 170
+	171 [label="Call[171, 20000011-tensorrt](GlobalVar=dnnl_34)" color=orange shape=ellipse style=filled]
+	169 -> 171
+	170 -> 171
+	172 [label="Call [172, default](op=nn.relu)" color=greenyellow shape=ellipse style=filled]
+	171 -> 172
+	173 [label="Call [173, default](op=transpose)" color=greenyellow shape=ellipse style=filled]
+	25 -> 173
+	174 [label="Call [174, default](op=transpose)" color=greenyellow shape=ellipse style=filled]
+	26 -> 174
+	175 [label="Call [175, default](op=transpose)" color=greenyellow shape=ellipse style=filled]
+	27 -> 175
+	176 [label="Call [176, default](op=transpose)" color=greenyellow shape=ellipse style=filled]
+	28 -> 176
+	177 [label="Call[177, 20000012-tensorrt](GlobalVar=dnnl_36)" color=orange shape=ellipse style=filled]
+	172 -> 177
+	173 -> 177
+	174 -> 177
+	175 -> 177
+	176 -> 177
+	178 [label="TupleGetItem [178, 10000018-autotvm](idx=0)" color=greenyellow shape=ellipse style=filled]
+	177 -> 178
+	179 [label="Call [179, default](op=reshape)" color=greenyellow shape=ellipse style=filled]
+	178 -> 179
+	180 [label="Call [180, default](op=transpose)" color=greenyellow shape=ellipse style=filled]
+	179 -> 180
+	181 [label="TupleGetItem [181, 10000019-autotvm](idx=1)" color=greenyellow shape=ellipse style=filled]
+	177 -> 181
+	182 [label="Call [182, default](op=reshape)" color=greenyellow shape=ellipse style=filled]
+	181 -> 182
+	183 [label="Call [183, default](op=transpose)" color=greenyellow shape=ellipse style=filled]
+	182 -> 183
+	184 [label="Call [184, default](op=transpose)" color=greenyellow shape=ellipse style=filled]
+	183 -> 184
+	185 [label="Call [185, default](op=nn.batch_matmul)" color=greenyellow shape=ellipse style=filled]
+	180 -> 185
+	184 -> 185
+	186 [label="TupleGetItem [186, 10000017-autotvm](idx=2)" color=greenyellow shape=ellipse style=filled]
+	177 -> 186
+	187 [label="Call [187, default](op=reshape)" color=greenyellow shape=ellipse style=filled]
+	186 -> 187
+	188 [label="Call [188, default](op=transpose)" color=greenyellow shape=ellipse style=filled]
+	187 -> 188
+	189 [label="Call [189, default](op=transpose)" color=greenyellow shape=ellipse style=filled]
+	188 -> 189
+	190 [label="Call [190, default](op=nn.batch_matmul)" color=greenyellow shape=ellipse style=filled]
+	185 -> 190
+	189 -> 190
+	191 [label="Call [191, default](op=transpose)" color=greenyellow shape=ellipse style=filled]
+	190 -> 191
+	192 [label="Call [192, default](op=reshape)" color=greenyellow shape=ellipse style=filled]
+	191 -> 192
+	193 [label="Call [193, default](op=transpose)" color=greenyellow shape=ellipse style=filled]
+	29 -> 193
+	194 [label="Call[194, 20000013-tensorrt](GlobalVar=dnnl_41)" color=orange shape=ellipse style=filled]
+	192 -> 194
+	193 -> 194
+	195 [label="Call [195, default](op=nn.relu)" color=greenyellow shape=ellipse style=filled]
+	194 -> 195
+	196 [label="Call [196, default](op=transpose)" color=greenyellow shape=ellipse style=filled]
+	30 -> 196
+	197 [label="Call [197, default](op=transpose)" color=greenyellow shape=ellipse style=filled]
+	31 -> 197
+	198 [label="Call [198, default](op=transpose)" color=greenyellow shape=ellipse style=filled]
+	32 -> 198
+	199 [label="Call [199, default](op=transpose)" color=greenyellow shape=ellipse style=filled]
+	33 -> 199
+	200 [label="Call[200, 20000014-tensorrt](GlobalVar=dnnl_43)" color=orange shape=ellipse style=filled]
+	195 -> 200
+	196 -> 200
+	197 -> 200
+	198 -> 200
+	199 -> 200
+	201 [label="TupleGetItem [201, 10000022-autotvm](idx=0)" color=greenyellow shape=ellipse style=filled]
+	200 -> 201
+	202 [label="Call [202, default](op=reshape)" color=greenyellow shape=ellipse style=filled]
+	201 -> 202
+	203 [label="Call [203, default](op=transpose)" color=greenyellow shape=ellipse style=filled]
+	202 -> 203
+	204 [label="TupleGetItem [204, 10000023-autotvm](idx=1)" color=greenyellow shape=ellipse style=filled]
+	200 -> 204
+	205 [label="Call [205, default](op=reshape)" color=greenyellow shape=ellipse style=filled]
+	204 -> 205
+	206 [label="Call [206, default](op=transpose)" color=greenyellow shape=ellipse style=filled]
+	205 -> 206
+	207 [label="Call [207, default](op=transpose)" color=greenyellow shape=ellipse style=filled]
+	206 -> 207
+	208 [label="Call [208, default](op=nn.batch_matmul)" color=greenyellow shape=ellipse style=filled]
+	203 -> 208
+	207 -> 208
+	209 [label="TupleGetItem [209, 10000021-autotvm](idx=2)" color=greenyellow shape=ellipse style=filled]
+	200 -> 209
+	210 [label="Call [210, default](op=reshape)" color=greenyellow shape=ellipse style=filled]
+	209 -> 210
+	211 [label="Call [211, default](op=transpose)" color=greenyellow shape=ellipse style=filled]
+	210 -> 211
+	212 [label="Call [212, default](op=transpose)" color=greenyellow shape=ellipse style=filled]
+	211 -> 212
+	213 [label="Call [213, default](op=nn.batch_matmul)" color=greenyellow shape=ellipse style=filled]
+	208 -> 213
+	212 -> 213
+	214 [label="Call [214, default](op=transpose)" color=greenyellow shape=ellipse style=filled]
+	213 -> 214
+	215 [label="Call [215, default](op=reshape)" color=greenyellow shape=ellipse style=filled]
+	214 -> 215
+	216 [label="Call [216, default](op=transpose)" color=greenyellow shape=ellipse style=filled]
+	34 -> 216
+	217 [label="Call[217, 20000015-tensorrt](GlobalVar=dnnl_48)" color=orange shape=ellipse style=filled]
+	215 -> 217
+	216 -> 217
+	218 [label="Call [218, default](op=nn.relu)" color=greenyellow shape=ellipse style=filled]
+	217 -> 218
+	219 [label="Call [219, default](op=transpose)" color=greenyellow shape=ellipse style=filled]
+	35 -> 219
+	220 [label="Call [220, default](op=transpose)" color=greenyellow shape=ellipse style=filled]
+	36 -> 220
+	221 [label="Call [221, default](op=transpose)" color=greenyellow shape=ellipse style=filled]
+	37 -> 221
+	222 [label="Call [222, default](op=transpose)" color=greenyellow shape=ellipse style=filled]
+	38 -> 222
+	223 [label="Call[223, 20000016-tensorrt](GlobalVar=dnnl_50)" color=orange shape=ellipse style=filled]
+	218 -> 223
+	219 -> 223
+	220 -> 223
+	221 -> 223
+	222 -> 223
+	224 [label="TupleGetItem [224, 10000026-autotvm](idx=0)" color=greenyellow shape=ellipse style=filled]
+	223 -> 224
+	225 [label="Call [225, default](op=reshape)" color=greenyellow shape=ellipse style=filled]
+	224 -> 225
+	226 [label="Call [226, default](op=transpose)" color=greenyellow shape=ellipse style=filled]
+	225 -> 226
+	227 [label="TupleGetItem [227, 10000027-autotvm](idx=1)" color=greenyellow shape=ellipse style=filled]
+	223 -> 227
+	228 [label="Call [228, default](op=reshape)" color=greenyellow shape=ellipse style=filled]
+	227 -> 228
+	229 [label="Call [229, default](op=transpose)" color=greenyellow shape=ellipse style=filled]
+	228 -> 229
+	230 [label="Call [230, default](op=transpose)" color=greenyellow shape=ellipse style=filled]
+	229 -> 230
+	231 [label="Call [231, default](op=nn.batch_matmul)" color=greenyellow shape=ellipse style=filled]
+	226 -> 231
+	230 -> 231
+	232 [label="TupleGetItem [232, 10000025-autotvm](idx=2)" color=greenyellow shape=ellipse style=filled]
+	223 -> 232
+	233 [label="Call [233, default](op=reshape)" color=greenyellow shape=ellipse style=filled]
+	232 -> 233
+	234 [label="Call [234, default](op=transpose)" color=greenyellow shape=ellipse style=filled]
+	233 -> 234
+	235 [label="Call [235, default](op=transpose)" color=greenyellow shape=ellipse style=filled]
+	234 -> 235
+	236 [label="Call [236, default](op=nn.batch_matmul)" color=greenyellow shape=ellipse style=filled]
+	231 -> 236
+	235 -> 236
+	237 [label="Call [237, default](op=transpose)" color=greenyellow shape=ellipse style=filled]
+	236 -> 237
+	238 [label="Call [238, default](op=reshape)" color=greenyellow shape=ellipse style=filled]
+	237 -> 238
+	239 [label="Call [239, default](op=transpose)" color=greenyellow shape=ellipse style=filled]
+	39 -> 239
+	240 [label="Call[240, 20000017-tensorrt](GlobalVar=dnnl_55)" color=orange shape=ellipse style=filled]
+	238 -> 240
+	239 -> 240
+	241 [label="Call [241, default](op=nn.relu)" color=greenyellow shape=ellipse style=filled]
+	240 -> 241
+	242 [label="Call [242, default](op=transpose)" color=greenyellow shape=ellipse style=filled]
+	40 -> 242
+	243 [label="Call[243, 20000018-tensorrt](GlobalVar=dnnl_57)" color=orange shape=ellipse style=filled]
+	241 -> 243
+	242 -> 243
+	244 [label="Function (244)" shape=doubleoctagon]
+	243 -> 244
+}
