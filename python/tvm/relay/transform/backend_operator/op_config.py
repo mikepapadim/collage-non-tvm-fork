@@ -29,6 +29,7 @@ class Config(object):
       # _data_shape should be shape of all the inputs not only including data variable, but also parameters (constant)
       self._data_shape = get_input_shape(expr)
       self._attrs = extract_attrs(expr)
+
     else:
       # Debugging purpose
       self._data_shape = data_shape

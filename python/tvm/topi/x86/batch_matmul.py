@@ -169,6 +169,7 @@ def batch_matmul_blas_common(cfg, x, y, out_shape, lib):
         assert out_shape[1] == M, "got invalid output shape"
         assert out_shape[2] == N, "got invalid output shape"
     cfg.add_flop(XB * M * N * XK * 2)
+
     return lib.batch_matmul(x, y, False, True)
 
 

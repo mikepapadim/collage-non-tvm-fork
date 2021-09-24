@@ -17,6 +17,8 @@ import time
 import os
 
 from tvm.relay.transform.backend_operator.backend_op_lib import BackendOpLib
+from tvm.relay.transform.utility.visualize import visualize_network
+from tvm.relay.transform.optimizer.custom_fusion_pass import get_opt_info_tag
 
 def setup_attrs_ours(net, net_name, hw_name, batch_size):
     net = net.with_attr(NETWORK_FUNC_ATTR, net_name)
@@ -46,10 +48,10 @@ def measure_end_to_end_perf_tensorrt(mod, params, target_str, shape_dict, hw_nam
     with tvm.transform.PassContext(opt_level=OPT_LEVEL.get(), config={'relay.ext.tensorrt.options': config}):
         lib = relay.build(mod, target=target_str, params=params)
 
-    lib.export_library('compiled.so')
+    lib.export_library('compiled_tensorrt.so')
 
     dev = tvm.gpu(0)
-    loaded_lib = tvm.runtime.load_module('compiled.so')
+    loaded_lib = tvm.runtime.load_module('compiled_tensorrt.so')
     module = tvm.contrib.graph_executor.GraphModule(loaded_lib['default'](dev))
 
     # Setup execution
@@ -61,6 +63,55 @@ def measure_end_to_end_perf_tensorrt(mod, params, target_str, shape_dict, hw_nam
     mean_perf, std_perf = measure(ftimer, True, hw_name)
 
     return mean_perf, std_perf, module
+
+
+
+def measure_end_to_end_perf_dnnl(mod, params, target_str, shape_dict, hw_name, args):
+    if not tvm.get_global_func("runtime.DNNLJSONRuntimeCreate", True):
+        raise Exception("skip because DNNL codegen is not available")
+        return
+
+    opt_pass = tvm.transform.Sequential(
+        [
+            tvm.relay.transform.InferType(),
+            tvm.relay.transform.SimplifyInference(),
+            tvm.relay.transform.FoldConstant(),
+            tvm.relay.transform.FoldScaleAxis(),
+            tvm.relay.transform.AnnotateTarget("dnnl"),
+            tvm.relay.transform.MergeCompilerRegions(),
+            tvm.relay.transform.PartitionGraph(),
+        ]
+    )
+
+    with tvm.transform.PassContext(opt_level=OPT_LEVEL.get(), disabled_pass=["AlterOpLayout"]):
+        mod = opt_pass(mod)
+
+    # Debug: visualize IR
+    # opt_info_tag = get_opt_info_tag(args.network, hw_name, args.batch_size)
+    # visualize_network(mod["main"], f"{opt_info_tag}_dnnl")
+
+    with tvm.transform.PassContext(opt_level=OPT_LEVEL.get()):
+        lib = relay.build(mod, target=target_str, params=params)
+
+    dev = tvm.cpu(0)
+    kwargs = {}
+
+    lib.export_library('compiled_dnnl.so', fcompile=False, **kwargs)
+    loaded_lib = tvm.runtime.load_module('compiled_dnnl.so')
+    module = tvm.contrib.graph_executor.GraphModule(loaded_lib['default'](dev))
+    #module = tvm.contrib.graph_executor.create(json, lib, dev)
+
+    assert(module is not None)
+    # Setup execution
+    for input_name, input_shape in shape_dict.items():
+        input_data = np.random.uniform(-1, 1, size=input_shape).astype("float32")
+        module.set_input(input_name, input_data)
+
+    ftimer = module.module.time_evaluator("run", dev, number=NUM_MEASUREMENTS_PER_REPEAT_E2E, repeat=NUM_REPEATS_E2E)
+    mean_perf, std_perf = measure(ftimer, True, hw_name)
+
+    return mean_perf, std_perf, module
+
 
 def build_and_measure_autotvm(net, params, target_str, shape_dict, hw_name):
     # else:
@@ -331,13 +382,13 @@ if __name__ == "__main__":
     log_dir = "e2e_measure_logs"
 
     # For DP,
-    setup_logging(log_dir, task_name="e2e_measure", net_name=args.network, hw_name=args.hw, batch_size=args.batch_size)
+    #setup_logging(log_dir, task_name="e2e_measure", net_name=args.network, hw_name=args.hw, batch_size=args.batch_size)
 
     # For tuning time measurement, comment setup_logging above and uncomment the following codes
-    logging.basicConfig(level=logging.ERROR)
+    #logging.basicConfig(level=logging.ERROR)
 
     # It shows all logs. Still, it is too messy though cuz TVM logs are interrupting with our logs
-    # logging.basicConfig(level=logging.INFO)
+    logging.basicConfig(level=logging.INFO)
 
     # We can't test this because this network include batch norm.
     logging.info(f"batch size: {args.batch_size}")
@@ -351,10 +402,28 @@ if __name__ == "__main__":
 
     # Assign build target based on a given hw
     args.target = get_build_target(args.hw)
-    is_perf_logging = True
-    # is_perf_logging = False
+    # is_perf_logging = True
+    is_perf_logging = False
 
-    measure_dp_and_baselines(mod, params, shape_dict, args, is_perf_logging)
+    print("NETWORK LOADED")
+    mean_perf, std_perf, mod_dnnl = measure_end_to_end_perf_dnnl(mod, params, args.target, shape_dict, args.hw, args)
+    print(f"[{args.network}] Performance of DNNL on {args.hw} (mean, std) = ({mean_perf:.4f}+-{std_perf:.4f})")
+
+    #mean_perf, std_perf, mod_dp = measure_end_to_end_perf_autotvm(mod["main"], params, args.target, shape_dict,
+    #                                                              CustomFusionPass.DP,
+    #                                                              args.network, args.hw, args.batch_size)
+    #print(f"[{args.network}] Performance of DP on {args.hw} (mean, std) = ({mean_perf:.4f}+-{std_perf:.4f})")
+
+
+    #mean_perf, std_perf, mod_cud = measure_end_to_end_perf_single_backend(mod["main"], params, args.target, shape_dict,
+    #                                                                       args.network, args.hw, args.batch_size,
+    #                                                                       Target.MKL.id())
+    #print(f"[{args.network}] Performance of MKL on {args.hw} (mean, std) = ({mean_perf:.4f}+-{std_perf:.4f})")
+
+
+
+
+    #measure_dp_and_baselines(mod, params, shape_dict, args, is_perf_logging)
     # measure_autotvm(mod, params, shape_dict, args, is_perf_logging)
     # measure_two_level(mod, params, shape_dict, args, is_perf_logging)
     # measure_dp_tuning_time(mod, params, shape_dict, args, is_perf_logging)
