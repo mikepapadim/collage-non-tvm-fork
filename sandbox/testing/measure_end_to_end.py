@@ -268,11 +268,11 @@ def measure_single_backend_debug(mod, params, shape_dict, args, is_perf_logging,
     print(f"[{args.network}] Performance of {single_backend_name} on {args.hw} (mean, std) = ({mean_perf:.4f}+-{std_perf:.4f})")
 
 def measure_dp_and_baselines(mod, params, shape_dict, args, is_perf_logging):
-    #mean_perf, std_perf, mod_dp = measure_end_to_end_perf_autotvm(mod["main"], params, args.target, shape_dict,
-    #                                                              CustomFusionPass.DP,
-    #                                                              args.network, args.hw, args.batch_size)
-    #print(f"[{args.network}] Performance of DP on {args.hw} (mean, std) = ({mean_perf:.4f}+-{std_perf:.4f})")
-    #log_e2e_perf(args, 'DP', mean_perf, std_perf, is_perf_logging)
+    mean_perf, std_perf, mod_dp = measure_end_to_end_perf_autotvm(mod["main"], params, args.target, shape_dict,
+                                                                 CustomFusionPass.DP,
+                                                                 args.network, args.hw, args.batch_size)
+    print(f"[{args.network}] Performance of DP on {args.hw} (mean, std) = ({mean_perf:.4f}+-{std_perf:.4f})")
+    log_e2e_perf(args, 'DP', mean_perf, std_perf, is_perf_logging)
 
     mean_perf, std_perf, mod_tvm = measure_end_to_end_perf_autotvm(mod["main"], params, args.target, shape_dict,
                                                                    None,
@@ -417,9 +417,9 @@ if __name__ == "__main__":
     # is_perf_logging = True
     is_perf_logging = False
 
-    print("NETWORK LOADED")
-    mean_perf, std_perf, mod_dnnl = measure_end_to_end_perf_dnnl(mod, params, args.target, shape_dict, args.hw, args)
-    print(f"[{args.network}] Performance of DNNL on {args.hw} (mean, std) = ({mean_perf:.4f}+-{std_perf:.4f})")
+    # print("NETWORK LOADED")
+    # mean_perf, std_perf, mod_dnnl = measure_end_to_end_perf_dnnl(mod, params, args.target, shape_dict, args.hw, args)
+    # print(f"[{args.network}] Performance of DNNL on {args.hw} (mean, std) = ({mean_perf:.4f}+-{std_perf:.4f})")
 
     #mean_perf, std_perf, mod_dp = measure_end_to_end_perf_autotvm(mod["main"], params, args.target, shape_dict,
     #                                                              CustomFusionPass.DP,

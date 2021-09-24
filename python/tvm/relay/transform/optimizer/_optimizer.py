@@ -45,25 +45,20 @@ def visualize_network_debug(relay_expr, name):
         visualize_network(relay_expr, f"{net_name}_{name}")
         printe("[Done] Debug visualization")
 
-@tvm._ffi.register_func("relay.transform.optimizer.apply_external_compiler_op")
-def apply_external_compiler_op(mod):
-
-    # Skip this pass if the hw is not NVIDIA GPU
-    hw_name = mod["main"].attrs[HW_FUNC_ATTR]
-    if hw_name not in NVIDIA_GPUS:
-        printe("Skip external compiler op pass because the hw is not NVIDIA GPU.")
-        return mod
-
-    logging.info("External compiler op pass")
+def apply_tensorrt_op(mod):
+    logging.info("Applying TensorRT op pass")
 
     # Get best op match info
     fn_body = mod["main"].body
+    # Annotating expression
+    target_str = "tensorrt"
+
+    # Debug
     # print(f"backend body (before): {fn_body.backend}")
     # opt_match = OpMatchReader().read(fn_body)
     # print(f"backend body (after): {fn_body.backend}")
     # visualize_network(mod["main"], "notepad")
-    # Annotating expression
-    target_str = "tensorrt"
+
     # visualize_network(mod["main"], "AnnotateTargetFunc_before")
     # mod["main"] = ExtCompilerOpAnnotator(opt_match).annotate(mod["main"], target_str)
     # visualize_network(mod["main"], "AnnotateTargetFunc_after")
@@ -118,9 +113,9 @@ def apply_external_compiler_op(mod):
             # transform.FoldConstant(),
             transform.AnnotateTarget("tensorrt"),
             transform.MergeCompilerRegions(),
-            #tvm.ir.transform.PrintIR("After merging graph"),
+            # tvm.ir.transform.PrintIR("After merging graph"),
             transform.PartitionGraph(),
-            #tvm.ir.transform.PrintIR("After partitioning graph"),
+            # tvm.ir.transform.PrintIR("After partitioning graph"),
             transform.InferType(),
         ]
     )
@@ -134,6 +129,38 @@ def apply_external_compiler_op(mod):
         # printe("After sequential")
         # Warning(@Soo): Would it be problematic?
         # mod = prune_tensorrt_subgraphs(mod)
+
+    return mod
+
+def apply_dnnl_op(mod):
+    opt_pass = tvm.transform.Sequential(
+        [
+            transform.InferType(),
+            transform.SimplifyInference(),
+            transform.FoldConstant(),
+            transform.FoldScaleAxis(),
+            transform.AnnotateTarget("dnnl"),
+            transform.MergeCompilerRegions(),
+            transform.PartitionGraph(),
+            transform.InferType(),
+        ]
+    )
+
+    with tvm.transform.PassContext(opt_level=OPT_LEVEL.get(), disabled_pass=["AlterOpLayout"]):
+        mod = opt_pass(mod)
+
+    return mod
+
+@tvm._ffi.register_func("relay.transform.optimizer.apply_external_compiler_op")
+def apply_external_compiler_op(mod):
+    # Skip this pass if the hw is not NVIDIA GPU
+    hw_name = mod["main"].attrs[HW_FUNC_ATTR]
+    if hw_name in NVIDIA_GPUS:
+        mod = apply_tensorrt_op(mod)
+    elif hw_name in INTEL_CPUS:
+        mod = apply_dnnl_op(mod)
+    else:
+        Exception(f"Unexpected HW for external compiler op pass: {hw_name}")
 
     return mod
     # return mod, config

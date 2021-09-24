@@ -81,7 +81,7 @@ def get_backends(hw_name):
     if hw_name in NVIDIA_GPUS:
         backends = [Target.AUTOTVM, Target.CUDNN, Target.TENSORRT, Target.CUBLAS]
     elif hw_name in INTEL_CPUS:
-        backends = [Target.AUTOTVM, Target.MKL]
+        backends = [Target.AUTOTVM, Target.MKL, Target.DNNL]
         #backends = [Target.AUTOTVM, Target.MKL, Target.MKLDNN, Target.DNNL]
     else:
         raise Exception(f"{hw_name} is unexpected hw, we need to set default backends for this hw.")
@@ -158,7 +158,7 @@ class Target(Enum):
     # Intel CPU
     DNNL = (7, "dnnl") # not implemented
     MKL = (8, "mkl")  # not implemented
-    MKLDNN = (9, "mkldnn")  # not implemented
+    # MKLDNN = (9, "mkldnn")  # not implemented
 #     TENSORFLOWXLA = (10, "tensorflowxla") # not implemented
 
     def id(self):
@@ -307,6 +307,64 @@ class TVMSubGraphCostFunc_OpMeasurement(TargetCostFunc):
 #
 #     return strides, padding, out_channels, dilation, kernel_size, dtype, attrs.groups, attrs.data_layout, attrs.kernel_layout
 
+class DNNLCostFunc(TargetCostFunc):
+    def __init__(self):
+        super().__init__()
+
+    @staticmethod
+    def measure_cost(name, expr, target, hw_name):
+        if not tvm.get_global_func("runtime.DNNLJSONRuntimeCreate", True):
+            raise Exception("skip because DNNL codegen is not available")
+            return
+
+        # Create workload
+        inputs = relay.analysis.free_vars(expr)
+        expr_func = relay.Function(inputs, expr)
+        mod, params = testing.create_workload(expr_func)
+
+        opt_pass = tvm.transform.Sequential(
+            [
+                tvm.relay.transform.InferType(),
+                tvm.relay.transform.SimplifyInference(),
+                tvm.relay.transform.FoldConstant(),
+                tvm.relay.transform.FoldScaleAxis(),
+                tvm.relay.transform.AnnotateTarget("dnnl"),
+                tvm.relay.transform.MergeCompilerRegions(),
+                tvm.relay.transform.PartitionGraph(),
+                tvm.relay.transform.InferType(),
+            ]
+        )
+
+        with tvm.transform.PassContext(opt_level=OPT_LEVEL.get(), disabled_pass=["AlterOpLayout"]):
+            mod = opt_pass(mod)
+
+        # Debug: visualize IR
+        # opt_info_tag = get_opt_info_tag(args.network, hw_name, args.batch_size)
+        # visualize_network(mod["main"], f"{opt_info_tag}_dnnl")
+
+        target_str = get_build_target(hw_name)
+        with tvm.transform.PassContext(opt_level=OPT_LEVEL.get()):
+            lib = relay.build(mod, target=target_str, params=params)
+
+        dev = tvm.cpu(0)
+        kwargs = {}
+
+        lib.export_library('compiled_dnnl.so', fcompile=False, **kwargs)
+        loaded_lib = tvm.runtime.load_module('compiled_dnnl.so')
+        module = tvm.contrib.graph_executor.GraphModule(loaded_lib['default'](dev))
+        # module = tvm.contrib.graph_executor.create(json, lib, dev)
+
+        assert (module is not None)
+
+        setup_mod_inputs(module)
+        # input_shape = get_data_shape(expr)
+        # input_data = np.random.uniform(0, 1, input_shape).astype("float32")
+        # module.set_input("data", input_data)
+        ftimer = module.module.time_evaluator("run", dev, number=NUM_MEASUREMENTS_PER_REPEAT, repeat=NUM_REPEATS)
+
+        measure_info = measure(ftimer, False, hw_name)
+        return measure_info
+
 class TensorRTCostFunc(TargetCostFunc):
     def __init__(self):
         super().__init__()
@@ -331,10 +389,10 @@ class TensorRTCostFunc(TargetCostFunc):
         with tvm.transform.PassContext(opt_level=OPT_LEVEL.get(), config={'relay.ext.tensorrt.options': config}):
             lib = relay.build(mod, target=target_str, params=params)
 
-        lib.export_library('compiled.so')
+        lib.export_library('compiled_tensorrt.so')
 
         dev = tvm.gpu(0)
-        loaded_lib = tvm.runtime.load_module('compiled.so')
+        loaded_lib = tvm.runtime.load_module('compiled_tensorrt.so')
         module = tvm.contrib.graph_executor.GraphModule(loaded_lib['default'](dev))
 
         setup_mod_inputs(module)
@@ -365,9 +423,9 @@ target_to_cost_func = {
     Target.TVM_DEFAULT: TVMSubGraphCostFunc_OpMeasurement(),
 
     # CPU
-    Target.DNNL: TVMSubGraphCostFunc_OpMeasurement(),
+    Target.DNNL: DNNLCostFunc(),
     Target.MKL: TVMSubGraphCostFunc_OpMeasurement(),
-    Target.MKLDNN: TVMSubGraphCostFunc_OpMeasurement(),
+    # Target.MKLDNN: TVMSubGraphCostFunc_OpMeasurement(),
 }
 
 def get_target_cost_func(target):
