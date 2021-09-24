@@ -20,8 +20,9 @@ if((USE_DNNL_CODEGEN STREQUAL "ON") OR (USE_DNNL_CODEGEN STREQUAL "JSON"))
   file(GLOB DNNL_RELAY_CONTRIB_SRC src/relay/backend/contrib/dnnl/*.cc)
   list(APPEND COMPILER_SRCS ${DNNL_RELAY_CONTRIB_SRC})
   list(APPEND COMPILER_SRCS ${JSON_RELAY_CONTRIB_SRC})
-
-  find_library(EXTERN_LIBRARY_DNNL dnnl)
+  
+  find_library(EXTERN_LIBRARY_DNNL dnnl HINTS ${DNNL_HOME}/lib/)
+  include_directories(SYSTEM ${DNNL_HOME}/include)
   list(APPEND TVM_RUNTIME_LINKER_LIBS ${EXTERN_LIBRARY_DNNL})
   file(GLOB DNNL_CONTRIB_SRC src/runtime/contrib/dnnl/dnnl_json_runtime.cc)
   list(APPEND RUNTIME_SRCS ${DNNL_CONTRIB_SRC})
