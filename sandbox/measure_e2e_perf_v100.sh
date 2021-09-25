@@ -14,8 +14,8 @@
 #CUDA_VISIBLE_DEVICES=0 python3 testing/measure_end_to_end.py -n nasneta -hw v100
 #CUDA_VISIBLE_DEVICES=0 python3 testing/measure_end_to_end.py -n resnet50_3d -hw v100
 #CUDA_VISIBLE_DEVICES=0 python3 testing/measure_end_to_end.py -n dcgan -hw v100
-#CUDA_VISIBLE_DEVICES=0 python3 testing/measure_end_to_end.py -n bert -hw v100
 CUDA_VISIBLE_DEVICES=0 python3 testing/measure_end_to_end.py -n bert_full -hw v100
+#CUDA_VISIBLE_DEVICES=0 python3 testing/measure_end_to_end.py -n bert -hw v100
 #CUDA_VISIBLE_DEVICES=0 python3 testing/measure_end_to_end.py -n resnet50 -hw v100
 #CUDA_VISIBLE_DEVICES=0 python3 testing/measure_end_to_end.py -n nasrnn -hw v100
 #CUDA_VISIBLE_DEVICES=0 python3 testing/measure_end_to_end.py -n mobilenet_v2 -hw v100
