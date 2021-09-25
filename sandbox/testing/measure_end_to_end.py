@@ -345,12 +345,12 @@ def measure_two_level(mod, params, shape_dict, args, is_perf_logging):
 
     verify_network_output(mod["main"], shape_dict, mod_tvm, mod_two_level)
 
-def measure_tvm_strategy_cudnn_cublas(mod, params, shape_dict, args, is_perf_logging):
+def measure_tvm_strategy_libs(mod, params, lib_target, shape_dict, args, is_perf_logging):
     mean_perf, std_perf, mod_tvm2 = measure_end_to_end_tvm_no_tuning(mod["main"], params, args.target, shape_dict,
                                                                      None, args.network, args.hw, args.batch_size)
     print(f"[{args.network}] Performance of TVM (no tuning) on {args.hw} (mean, std) = ({mean_perf:.4f}+-{std_perf:.4f})")
 
-    mean_perf, std_perf, mod_tvm1 = measure_end_to_end_tvm_no_tuning(mod["main"], params, 'cuda -libs=cudnn,cublas', shape_dict,
+    mean_perf, std_perf, mod_tvm1 = measure_end_to_end_tvm_no_tuning(mod["main"], params, lib_target, shape_dict,
                                                                      None, args.network, args.hw, args.batch_size)
     print(f"[{args.network}] Performance of TVM (no tuning, but with cuDNN, cuBLAS) on {args.hw} (mean, std) = ({mean_perf:.4f}+-{std_perf:.4f})")
     log_e2e_perf(args, 'AutoTVM-libs', mean_perf, std_perf, is_perf_logging)
@@ -421,15 +421,15 @@ if __name__ == "__main__":
     log_dir = "e2e_measure_logs"
 
     # For DP,
-    #setup_logging(log_dir, task_name="e2e_measure", net_name=args.network, hw_name=args.hw, batch_size=args.batch_size,
-                  # logging_level=logging.INFO)
-    #              logging_level=logging.WARNING)
+    setup_logging(log_dir, task_name="e2e_measure", net_name=args.network, hw_name=args.hw, batch_size=args.batch_size,
+                  logging_level=logging.INFO)
+                  # logging_level=logging.WARNING)
 
     # For tuning time measurement, comment setup_logging above and uncomment the following codes
-    logging.basicConfig(level=logging.ERROR)
+    # logging.basicConfig(level=logging.ERROR)
 
     # It shows all logs. Still, it is too messy though cuz TVM logs are interrupting with our logs
-    #logging.basicConfig(level=logging.INFO)
+    logging.basicConfig(level=logging.INFO)
     #logging.basicConfig(level=logging.WARNING)
 
     # We can't test this because this network include batch norm.
@@ -450,8 +450,8 @@ if __name__ == "__main__":
 
     # Assign build target based on a given hw
     args.target = get_build_target(args.hw)
-    # is_perf_logging = True
-    is_perf_logging = False
+    is_perf_logging = True
+    # is_perf_logging = False
 
     # print("NETWORK LOADED")
     # mean_perf, std_perf, mod_dnnl = measure_end_to_end_perf_dnnl(mod, params, args.target, shape_dict, args.hw, args)
@@ -469,8 +469,8 @@ if __name__ == "__main__":
     #print(f"[{args.network}] Performance of MKL on {args.hw} (mean, std) = ({mean_perf:.4f}+-{std_perf:.4f})")
 
 
-    # measure_dp_and_baselines(mod, params, shape_dict, args, is_perf_logging)
-    measure_autotvm(mod, params, shape_dict, args, is_perf_logging)
+    measure_dp_and_baselines(mod, params, shape_dict, args, is_perf_logging)
+    # measure_autotvm(mod, params, shape_dict, args, is_perf_logging)
     # measure_two_level(mod, params, shape_dict, args, is_perf_logging)
     # measure_dp_tuning_time(mod, params, shape_dict, args, is_perf_logging)
 
@@ -479,7 +479,8 @@ if __name__ == "__main__":
     # measure_single_backend_debug(mod, params, shape_dict, args, is_perf_logging, single_backend)
 
     # Note that this one do not use AutoTVM because cudnn and cublas will be used only if AutoTVM is disabled
-    # measure_tvm_strategy_cudnn_cublas(mod, params, shape_dict, args, is_perf_logging)
+    # measure_tvm_strategy_libs(mod, params, 'cuda -libs=cudnn,cublas', shape_dict, args, is_perf_logging)
+    measure_tvm_strategy_libs(mod, params, 'llvm -libs=mkl', shape_dict, args, is_perf_logging)
 
     # NasNet-A only works for opt_level 2 (not 3 due to the avgpool2d issue)
     # if args.network == "nasneta":
