@@ -311,7 +311,7 @@ class BackendOpLib(object):
     # self._add_backendop_with_key(Target.CUDNN, "BIAS_ADD")
 
     # NOTE: BatchNorm is currently not supported. If you need it, please contact @Sung
-    # self._add_backendop_with_key(Target.CUDNN, "BATCHNORM")
+    self._add_backendop_with_key(Target.CUDNN, "BATCHNORM")
 
     # DNNL, MKL, MKLDNN
     # TODO: Add patterns. matmul, batch matmul
@@ -345,7 +345,7 @@ class BackendOpLib(object):
 
     self._add_backendop_with_key(Target.DNNL, "CONV2D")
     self._add_backendop_with_key(Target.DNNL, "CONV3D")
-    #self._add_backendop_with_key(Target.DNNL, "BATCHNORM")
+    self._add_backendop_with_key(Target.DNNL, "BATCHNORM")
     self._add_backendop_with_key(Target.DNNL, "DENSE")
     self._add_backendop_with_key(Target.DNNL, "ADD", check_constraints_dnnl_add)
     self._add_backendop_with_key(Target.DNNL, "RELU", check_constraints_dnnl_relu)

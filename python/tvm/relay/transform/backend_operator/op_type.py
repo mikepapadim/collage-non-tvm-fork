@@ -62,7 +62,7 @@ optype_to_pattern = {
 
   # Others
   "DIAMOND" : get_diamond(),
-  #"BATCHNORM" : Pattern(is_tuple_get_item(is_op("nn.batch_norm")(wildcard(), wildcard(), wildcard(), wildcard(), wildcard()), 0)),
+  "BATCHNORM" : Pattern(is_tuple_get_item(is_op("nn.batch_norm")(wildcard(), wildcard(), wildcard(), wildcard(), wildcard()), 0)),
   "SOFTMAX" : Pattern(is_op("nn.softmax")(wildcard())),
   "BATCH_FLATTEN" : Pattern(is_op("nn.batch_flatten")(wildcard())),
   "GLOBAL_AVG_POOL2D" : Pattern(is_op("nn.global_avg_pool2d")(wildcard())),
