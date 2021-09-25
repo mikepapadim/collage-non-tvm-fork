@@ -326,7 +326,7 @@ def measure_dp_and_baselines(mod, params, shape_dict, args, is_perf_logging):
         print(f"[{args.network}] Performance of DNNL on {args.hw} (mean, std) = ({mean_perf:.4f}+-{std_perf:.4f})")
         log_e2e_perf(args, 'DNNL', mean_perf, std_perf, is_perf_logging)
     else:
-        raise Exception(f"{hw_name} is unexpected hw, we need to set default backends for this hw.")
+        raise Exception(f"{args.hw} is unexpected hw, we need to set default backends for this hw.")
 
     verify_network_output(mod["main"], shape_dict, mod_tvm, mod_dp)
 
@@ -471,7 +471,7 @@ if __name__ == "__main__":
 
     measure_dp_and_baselines(mod, params, shape_dict, args, is_perf_logging)
     # measure_autotvm(mod, params, shape_dict, args, is_perf_logging)
-    # measure_two_level(mod, params, shape_dict, args, is_perf_logging)
+    measure_two_level(mod, params, shape_dict, args, is_perf_logging)
     # measure_dp_tuning_time(mod, params, shape_dict, args, is_perf_logging)
 
     # Debug: test single backend pipeline that offloads ops to single backend whenever possible
@@ -479,8 +479,8 @@ if __name__ == "__main__":
     # measure_single_backend_debug(mod, params, shape_dict, args, is_perf_logging, single_backend)
 
     # Note that this one do not use AutoTVM because cudnn and cublas will be used only if AutoTVM is disabled
-    # measure_tvm_strategy_libs(mod, params, 'cuda -libs=cudnn,cublas', shape_dict, args, is_perf_logging)
-    measure_tvm_strategy_libs(mod, params, 'llvm -libs=mkl', shape_dict, args, is_perf_logging)
+    measure_tvm_strategy_libs(mod, params, 'cuda -libs=cudnn,cublas', shape_dict, args, is_perf_logging)
+    # measure_tvm_strategy_libs(mod, params, 'llvm -libs=mkl', shape_dict, args, is_perf_logging)
 
     # NasNet-A only works for opt_level 2 (not 3 due to the avgpool2d issue)
     # if args.network == "nasneta":
