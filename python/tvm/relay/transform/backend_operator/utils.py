@@ -29,7 +29,7 @@ def setup_mod_inputs(mod):
     input = mod.get_input(i)
     if is_data_tensor(input):
       input_shape = input.asnumpy().shape
-      logging.info("Data shape: ", i, input_shape)
+      logging.info(f"Data shape: {i}, {input_shape}")
       mod.set_input(i, np.random.uniform(-1, 1, size=input_shape).astype("float32"))
 
 def convert_shape_imm_to_tuple(shape_imm):

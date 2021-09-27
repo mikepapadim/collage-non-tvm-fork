@@ -86,28 +86,28 @@ class YoloV3(nn.Module):
         self.module_list.append(nn.Sequential(OrderedDict([
                     ("conv_0", nn.Conv2d(3, 32, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)),
                     ("batch_norm_0", nn.BatchNorm2d(32)),
-                    ("leaky_0", nn.LeakyReLU(negative_slope=0.1, inplace=True))
+                    ("leaky_0", nn.ReLU(inplace=True))
                     ])))
         self.blocks.append({'type':'convolutional'})
 
         self.module_list.append(nn.Sequential(OrderedDict([
                     ("conv_1", nn.Conv2d(32, 64, kernel_size=(3, 3), stride=(2, 2), padding=(1, 1), bias=False)),
                     ("batch_norm_1", nn.BatchNorm2d(64)),
-                    ("leaky_1", nn.LeakyReLU(negative_slope=0.1, inplace=True))
+                    ("leaky_1", nn.ReLU(inplace=True))
                     ])))
         self.blocks.append({'type': 'convolutional'})
 
         self.module_list.append(nn.Sequential(OrderedDict([
                     ("conv_2", nn.Conv2d(64, 32, kernel_size=(1, 1), stride=(1, 1), bias=False)),
                     ("batch_norm_2", nn.BatchNorm2d(32)),
-                    ("leaky_2", nn.LeakyReLU(negative_slope=0.1, inplace=True))
+                    ("leaky_2", nn.ReLU(inplace=True))
                     ])))
         self.blocks.append({'type': 'convolutional'})
 
         self.module_list.append(nn.Sequential(OrderedDict([
                     ("conv_3", nn.Conv2d(32, 64, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1),bias=False)),
                     ("batch_norm_3", nn.BatchNorm2d(64)),
-                    ("leaky_3", nn.LeakyReLU(negative_slope=0.1, inplace=True))
+                    ("leaky_3", nn.ReLU(inplace=True))
                     ])))
         self.blocks.append({'type': 'convolutional'})
 
@@ -119,21 +119,21 @@ class YoloV3(nn.Module):
         self.module_list.append(nn.Sequential(OrderedDict([
                     ("conv_5", nn.Conv2d(64, 128, kernel_size=(3, 3), stride=(2, 2), padding=(1, 1),bias=False)),
                     ("batch_norm_5", nn.BatchNorm2d(128)),
-                    ("leaky_5", nn.LeakyReLU(negative_slope=0.1, inplace=True))
+                    ("leaky_5", nn.ReLU(inplace=True))
                     ])))
         self.blocks.append({'type': 'convolutional'})
 
         self.module_list.append(nn.Sequential(OrderedDict([
                     ("conv_6", nn.Conv2d(128, 64, kernel_size=(1, 1), stride=(1, 1),bias=False)),
                     ("batch_norm_6", nn.BatchNorm2d(64)),
-                    ("leaky_6", nn.LeakyReLU(negative_slope=0.1, inplace=True))
+                    ("leaky_6", nn.ReLU(inplace=True))
                     ])))
         self.blocks.append({'type': 'convolutional'})
 
         self.module_list.append(nn.Sequential(OrderedDict([
                     ("conv_7", nn.Conv2d(64, 128, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1),bias=False)),
                     ("batch_norm_7", nn.BatchNorm2d(128)),
-                    ("leaky_7", nn.LeakyReLU(negative_slope=0.1, inplace=True))
+                    ("leaky_7", nn.ReLU(inplace=True))
                     ])))
         self.blocks.append({'type': 'convolutional'})
 
@@ -145,14 +145,14 @@ class YoloV3(nn.Module):
         self.module_list.append(nn.Sequential(OrderedDict([
                     ("conv_9", nn.Conv2d(128, 64, kernel_size=(1, 1), stride=(1, 1),bias=False)),
                     ("batch_norm_9", nn.BatchNorm2d(64)),
-                    ("leaky_9", nn.LeakyReLU(negative_slope=0.1, inplace=True))
+                    ("leaky_9", nn.ReLU(inplace=True))
                     ])))
         self.blocks.append({'type': 'convolutional'})
 
         self.module_list.append(nn.Sequential(OrderedDict([
                     ("conv_10", nn.Conv2d(64, 128, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1),bias=False)),
                     ("batch_norm_10", nn.BatchNorm2d(128)),
-                    ("leaky_10", nn.LeakyReLU(negative_slope=0.1, inplace=True))
+                    ("leaky_10", nn.ReLU(inplace=True))
                     ])))
         self.blocks.append({'type': 'convolutional'})
 
@@ -164,21 +164,21 @@ class YoloV3(nn.Module):
         self.module_list.append(nn.Sequential(OrderedDict([
                     ("conv_12", nn.Conv2d(128, 256, kernel_size=(3, 3), stride=(2, 2), padding=(1, 1),bias=False)),
                     ("batch_norm_12", nn.BatchNorm2d(256)),
-                    ("leaky_12", nn.LeakyReLU(negative_slope=0.1, inplace=True))
+                    ("leaky_12", nn.ReLU(inplace=True))
                     ])))
         self.blocks.append({'type': 'convolutional'})
 
         self.module_list.append(nn.Sequential(OrderedDict([
                     ("conv_13", nn.Conv2d(256, 128, kernel_size=(1, 1), stride=(1, 1),bias=False)),
                     ("batch_norm_13", nn.BatchNorm2d(128)),
-                    ("leaky_13", nn.LeakyReLU(negative_slope=0.1, inplace=True))
+                    ("leaky_13", nn.ReLU(inplace=True))
                     ])))
         self.blocks.append({'type': 'convolutional'})
 
         self.module_list.append(nn.Sequential(OrderedDict([
                     ("conv_14", nn.Conv2d(128, 256, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1),bias=False)),
                     ("batch_norm_14", nn.BatchNorm2d(256)),
-                    ("leaky_14", nn.LeakyReLU(negative_slope=0.1, inplace=True))
+                    ("leaky_14", nn.ReLU(inplace=True))
                     ])))
         self.blocks.append({'type': 'convolutional'})
 
@@ -190,14 +190,14 @@ class YoloV3(nn.Module):
         self.module_list.append(nn.Sequential(OrderedDict([
                     ("conv_16", nn.Conv2d(256, 128, kernel_size=(1, 1), stride=(1, 1),bias=False)),
                     ("batch_norm_16", nn.BatchNorm2d(128)),
-                    ("leaky_16", nn.LeakyReLU(negative_slope=0.1, inplace=True))
+                    ("leaky_16", nn.ReLU(inplace=True))
                     ])))
         self.blocks.append({'type': 'convolutional'})
 
         self.module_list.append(nn.Sequential(OrderedDict([
                     ("conv_17", nn.Conv2d(128, 256, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1),bias=False)),
                     ("batch_norm_17", nn.BatchNorm2d(256)),
-                    ("leaky_17", nn.LeakyReLU(negative_slope=0.1, inplace=True))
+                    ("leaky_17", nn.ReLU(inplace=True))
                     ])))
         self.blocks.append({'type': 'convolutional'})
 
@@ -209,14 +209,14 @@ class YoloV3(nn.Module):
         self.module_list.append(nn.Sequential(OrderedDict([
                     ("conv_19", nn.Conv2d(256, 128, kernel_size=(1, 1), stride=(1, 1),bias=False)),
                     ("batch_norm_19", nn.BatchNorm2d(128)),
-                    ("leaky_19", nn.LeakyReLU(negative_slope=0.1, inplace=True))
+                    ("leaky_19", nn.ReLU(inplace=True))
                     ])))
         self.blocks.append({'type': 'convolutional'})
 
         self.module_list.append(nn.Sequential(OrderedDict([
                     ("conv_20", nn.Conv2d(128, 256, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1),bias=False)),
                     ("batch_norm_20", nn.BatchNorm2d(256)),
-                    ("leaky_20", nn.LeakyReLU(negative_slope=0.1, inplace=True))
+                    ("leaky_20", nn.ReLU(inplace=True))
                     ])))
         self.blocks.append({'type': 'convolutional'})
 
@@ -228,14 +228,14 @@ class YoloV3(nn.Module):
         self.module_list.append(nn.Sequential(OrderedDict([
                     ("conv_22", nn.Conv2d(256, 128, kernel_size=(1, 1), stride=(1, 1),bias=False)),
                     ("batch_norm_22", nn.BatchNorm2d(128)),
-                    ("leaky_22", nn.LeakyReLU(negative_slope=0.1, inplace=True))
+                    ("leaky_22", nn.ReLU(inplace=True))
                     ])))
         self.blocks.append({'type': 'convolutional'})
 
         self.module_list.append(nn.Sequential(OrderedDict([
                     ("conv_23", nn.Conv2d(128, 256, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1),bias=False)),
                     ("batch_norm_23", nn.BatchNorm2d(256)),
-                    ("leaky_23", nn.LeakyReLU(negative_slope=0.1, inplace=True))
+                    ("leaky_23", nn.ReLU(inplace=True))
                     ])))
         self.blocks.append({'type': 'convolutional'})
 
@@ -247,14 +247,14 @@ class YoloV3(nn.Module):
         self.module_list.append(nn.Sequential(OrderedDict([
                     ("conv_25", nn.Conv2d(256, 128, kernel_size=(1, 1), stride=(1, 1),bias=False)),
                     ("batch_norm_25", nn.BatchNorm2d(128)),
-                    ("leaky_25", nn.LeakyReLU(negative_slope=0.1, inplace=True))
+                    ("leaky_25", nn.ReLU(inplace=True))
                     ])))
         self.blocks.append({'type': 'convolutional'})
 
         self.module_list.append(nn.Sequential(OrderedDict([
                     ("conv_26", nn.Conv2d(128, 256, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1),bias=False)),
                     ("batch_norm_26", nn.BatchNorm2d(256)),
-                    ("leaky_26", nn.LeakyReLU(negative_slope=0.1, inplace=True))
+                    ("leaky_26", nn.ReLU(inplace=True))
                     ])))
         self.blocks.append({'type': 'convolutional'})
 
@@ -266,14 +266,14 @@ class YoloV3(nn.Module):
         self.module_list.append(nn.Sequential(OrderedDict([
                     ("conv_28", nn.Conv2d(256, 128, kernel_size=(1, 1), stride=(1, 1),bias=False)),
                     ("batch_norm_28", nn.BatchNorm2d(128)),
-                    ("leaky_28", nn.LeakyReLU(negative_slope=0.1, inplace=True))
+                    ("leaky_28", nn.ReLU(inplace=True))
                     ])))
         self.blocks.append({'type': 'convolutional'})
 
         self.module_list.append(nn.Sequential(OrderedDict([
                     ("conv_29", nn.Conv2d(128, 256, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1),bias=False)),
                     ("batch_norm_29", nn.BatchNorm2d(256)),
-                    ("leaky_29", nn.LeakyReLU(negative_slope=0.1, inplace=True))
+                    ("leaky_29", nn.ReLU(inplace=True))
                     ])))
         self.blocks.append({'type': 'convolutional'})
 
@@ -285,14 +285,14 @@ class YoloV3(nn.Module):
         self.module_list.append(nn.Sequential(OrderedDict([
                     ("conv_31", nn.Conv2d(256, 128, kernel_size=(1, 1), stride=(1, 1),bias=False)),
                     ("batch_norm_31", nn.BatchNorm2d(128)),
-                    ("leaky_31", nn.LeakyReLU(negative_slope=0.1, inplace=True))
+                    ("leaky_31", nn.ReLU(inplace=True))
                     ])))
         self.blocks.append({'type': 'convolutional'})
 
         self.module_list.append(nn.Sequential(OrderedDict([
                     ("conv_32", nn.Conv2d(128, 256, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1),bias=False)),
                     ("batch_norm_32", nn.BatchNorm2d(256)),
-                    ("leaky_32", nn.LeakyReLU(negative_slope=0.1, inplace=True))
+                    ("leaky_32", nn.ReLU(inplace=True))
                     ])))
         self.blocks.append({'type': 'convolutional'})
 
@@ -304,14 +304,14 @@ class YoloV3(nn.Module):
         self.module_list.append(nn.Sequential(OrderedDict([
                     ("conv_34", nn.Conv2d(256, 128, kernel_size=(1, 1), stride=(1, 1),bias=False)),
                     ("batch_norm_34", nn.BatchNorm2d(128)),
-                    ("leaky_34", nn.LeakyReLU(negative_slope=0.1, inplace=True))
+                    ("leaky_34", nn.ReLU(inplace=True))
                     ])))
         self.blocks.append({'type': 'convolutional'})
 
         self.module_list.append(nn.Sequential(OrderedDict([
                     ("conv_35", nn.Conv2d(128, 256, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1),bias=False)),
                     ("batch_norm_35", nn.BatchNorm2d(256)),
-                    ("leaky_35", nn.LeakyReLU(negative_slope=0.1, inplace=True))
+                    ("leaky_35", nn.ReLU(inplace=True))
                     ])))
         self.blocks.append({'type': 'convolutional'})
 
@@ -323,21 +323,21 @@ class YoloV3(nn.Module):
         self.module_list.append(nn.Sequential(OrderedDict([
                     ("conv_37", nn.Conv2d(256, 512, kernel_size=(3, 3), stride=(2, 2), padding=(1, 1),bias=False)),
                     ("batch_norm_37", nn.BatchNorm2d(512)),
-                    ("leaky_37", nn.LeakyReLU(negative_slope=0.1, inplace=True))
+                    ("leaky_37", nn.ReLU(inplace=True))
                     ])))
         self.blocks.append({'type': 'convolutional'})
 
         self.module_list.append(nn.Sequential(OrderedDict([
                     ("conv_38", nn.Conv2d(512, 256, kernel_size=(1, 1), stride=(1, 1),bias=False)),
                     ("batch_norm_38", nn.BatchNorm2d(256)),
-                    ("leaky_38", nn.LeakyReLU(negative_slope=0.1, inplace=True))
+                    ("leaky_38", nn.ReLU(inplace=True))
                     ])))
         self.blocks.append({'type': 'convolutional'})
 
         self.module_list.append(nn.Sequential(OrderedDict([
                     ("conv_39", nn.Conv2d(256, 512, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1),bias=False)),
                     ("batch_norm_39", nn.BatchNorm2d(512)),
-                    ("leaky_39", nn.LeakyReLU(negative_slope=0.1, inplace=True))
+                    ("leaky_39", nn.ReLU(inplace=True))
                     ])))
         self.blocks.append({'type': 'convolutional'})
 
@@ -349,14 +349,14 @@ class YoloV3(nn.Module):
         self.module_list.append(nn.Sequential(OrderedDict([
                     ("conv_41", nn.Conv2d(512, 256, kernel_size=(1, 1), stride=(1, 1),bias=False)),
                     ("batch_norm_41", nn.BatchNorm2d(256)),
-                    ("leaky_41", nn.LeakyReLU(negative_slope=0.1, inplace=True))
+                    ("leaky_41", nn.ReLU(inplace=True))
                     ])))
         self.blocks.append({'type': 'convolutional'})
 
         self.module_list.append(nn.Sequential(OrderedDict([
                     ("conv_42", nn.Conv2d(256, 512, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1),bias=False)),
                     ("batch_norm_42", nn.BatchNorm2d(512)),
-                    ("leaky_42", nn.LeakyReLU(negative_slope=0.1, inplace=True))
+                    ("leaky_42", nn.ReLU(inplace=True))
                     ])))
         self.blocks.append({'type': 'convolutional'})
 
@@ -368,14 +368,14 @@ class YoloV3(nn.Module):
         self.module_list.append(nn.Sequential(OrderedDict([
                     ("conv_44", nn.Conv2d(512, 256, kernel_size=(1, 1), stride=(1, 1),bias=False)),
                     ("batch_norm_44", nn.BatchNorm2d(256)),
-                    ("leaky_44", nn.LeakyReLU(negative_slope=0.1, inplace=True))
+                    ("leaky_44", nn.ReLU(inplace=True))
                     ])))
         self.blocks.append({'type': 'convolutional'})
 
         self.module_list.append(nn.Sequential(OrderedDict([
                     ("conv_45", nn.Conv2d(256, 512, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1),bias=False)),
                     ("batch_norm_45", nn.BatchNorm2d(512)),
-                    ("leaky_45", nn.LeakyReLU(negative_slope=0.1, inplace=True))
+                    ("leaky_45", nn.ReLU(inplace=True))
                     ])))
         self.blocks.append({'type': 'convolutional'})
 
@@ -387,14 +387,14 @@ class YoloV3(nn.Module):
         self.module_list.append(nn.Sequential(OrderedDict([
                     ("conv_47", nn.Conv2d(512, 256, kernel_size=(1, 1), stride=(1, 1),bias=False)),
                     ("batch_norm_47", nn.BatchNorm2d(256)),
-                    ("leaky_47", nn.LeakyReLU(negative_slope=0.1, inplace=True))
+                    ("leaky_47", nn.ReLU(inplace=True))
                     ])))
         self.blocks.append({'type': 'convolutional'})
 
         self.module_list.append(nn.Sequential(OrderedDict([
                     ("conv_48", nn.Conv2d(256, 512, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1),bias=False)),
                     ("batch_norm_48", nn.BatchNorm2d(512)),
-                    ("leaky_48", nn.LeakyReLU(negative_slope=0.1, inplace=True))
+                    ("leaky_48", nn.ReLU(inplace=True))
                     ])))
         self.blocks.append({'type': 'convolutional'})
 
@@ -406,14 +406,14 @@ class YoloV3(nn.Module):
         self.module_list.append(nn.Sequential(OrderedDict([
                     ("conv_50", nn.Conv2d(512, 256, kernel_size=(1, 1), stride=(1, 1),bias=False)),
                     ("batch_norm_50", nn.BatchNorm2d(256)),
-                    ("leaky_50", nn.LeakyReLU(negative_slope=0.1, inplace=True))
+                    ("leaky_50", nn.ReLU(inplace=True))
                     ])))
         self.blocks.append({'type': 'convolutional'})
 
         self.module_list.append(nn.Sequential(OrderedDict([
                     ("conv_51", nn.Conv2d(256, 512, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1),bias=False)),
                     ("batch_norm_51", nn.BatchNorm2d(512)),
-                    ("leaky_51", nn.LeakyReLU(negative_slope=0.1, inplace=True))
+                    ("leaky_51", nn.ReLU(inplace=True))
                     ])))
         self.blocks.append({'type': 'convolutional'})
 
@@ -425,14 +425,14 @@ class YoloV3(nn.Module):
         self.module_list.append(nn.Sequential(OrderedDict([
                     ("conv_53", nn.Conv2d(512, 256, kernel_size=(1, 1), stride=(1, 1),bias=False)),
                     ("batch_norm_53", nn.BatchNorm2d(256)),
-                    ("leaky_53", nn.LeakyReLU(negative_slope=0.1, inplace=True))
+                    ("leaky_53", nn.ReLU(inplace=True))
                     ])))
         self.blocks.append({'type': 'convolutional'})
 
         self.module_list.append(nn.Sequential(OrderedDict([
                     ("conv_54", nn.Conv2d(256, 512, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1),bias=False)),
                     ("batch_norm_54", nn.BatchNorm2d(512)),
-                    ("leaky_54", nn.LeakyReLU(negative_slope=0.1, inplace=True))
+                    ("leaky_54", nn.ReLU(inplace=True))
                     ])))
         self.blocks.append({'type': 'convolutional'})
 
@@ -444,14 +444,14 @@ class YoloV3(nn.Module):
         self.module_list.append(nn.Sequential(OrderedDict([
                     ("conv_56", nn.Conv2d(512, 256, kernel_size=(1, 1), stride=(1, 1),bias=False)),
                     ("batch_norm_56", nn.BatchNorm2d(256)),
-                    ("leaky_56", nn.LeakyReLU(negative_slope=0.1, inplace=True))
+                    ("leaky_56", nn.ReLU(inplace=True))
                     ])))
         self.blocks.append({'type': 'convolutional'})
 
         self.module_list.append(nn.Sequential(OrderedDict([
                     ("conv_57", nn.Conv2d(256, 512, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1),bias=False)),
                     ("batch_norm_57", nn.BatchNorm2d(512)),
-                    ("leaky_57", nn.LeakyReLU(negative_slope=0.1, inplace=True))
+                    ("leaky_57", nn.ReLU(inplace=True))
                     ])))
         self.blocks.append({'type': 'convolutional'})
 
@@ -463,14 +463,14 @@ class YoloV3(nn.Module):
         self.module_list.append(nn.Sequential(OrderedDict([
                     ("conv_59", nn.Conv2d(512, 256, kernel_size=(1, 1), stride=(1, 1),bias=False)),
                     ("batch_norm_59", nn.BatchNorm2d(256)),
-                    ("leaky_59", nn.LeakyReLU(negative_slope=0.1, inplace=True))
+                    ("leaky_59", nn.ReLU(inplace=True))
                     ])))
         self.blocks.append({'type': 'convolutional'})
 
         self.module_list.append(nn.Sequential(OrderedDict([
                     ("conv_60", nn.Conv2d(256, 512, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1),bias=False)),
                     ("batch_norm_60", nn.BatchNorm2d(512)),
-                    ("leaky_60", nn.LeakyReLU(negative_slope=0.1, inplace=True))
+                    ("leaky_60", nn.ReLU(inplace=True))
                     ])))
         self.blocks.append({'type': 'convolutional'})
 
@@ -482,21 +482,21 @@ class YoloV3(nn.Module):
         self.module_list.append(nn.Sequential(OrderedDict([
                     ("conv_62", nn.Conv2d(512, 1024, kernel_size=(3, 3), stride=(2, 2), padding=(1, 1),bias=False)),
                     ("batch_norm_62", nn.BatchNorm2d(1024)),
-                    ("leaky_62", nn.LeakyReLU(negative_slope=0.1, inplace=True))
+                    ("leaky_62", nn.ReLU(inplace=True))
                     ])))
         self.blocks.append({'type': 'convolutional'})
 
         self.module_list.append(nn.Sequential(OrderedDict([
                     ("conv_63", nn.Conv2d(1024, 512, kernel_size=(1, 1), stride=(1, 1),bias=False)),
                     ("batch_norm_63", nn.BatchNorm2d(512)),
-                    ("leaky_63", nn.LeakyReLU(negative_slope=0.1, inplace=True))
+                    ("leaky_63", nn.ReLU(inplace=True))
                     ])))
         self.blocks.append({'type': 'convolutional'})
 
         self.module_list.append(nn.Sequential(OrderedDict([
                     ("conv_64", nn.Conv2d(512, 1024, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1),bias=False)),
                     ("batch_norm_64", nn.BatchNorm2d(1024)),
-                    ("leaky_64", nn.LeakyReLU(negative_slope=0.1, inplace=True))
+                    ("leaky_64", nn.ReLU(inplace=True))
                     ])))
         self.blocks.append({'type': 'convolutional'})
 
@@ -508,14 +508,14 @@ class YoloV3(nn.Module):
         self.module_list.append(nn.Sequential(OrderedDict([
                     ("conv_66", nn.Conv2d(1024, 512, kernel_size=(1, 1), stride=(1, 1),bias=False)),
                     ("batch_norm_66", nn.BatchNorm2d(512)),
-                    ("leaky_66", nn.LeakyReLU(negative_slope=0.1, inplace=True))
+                    ("leaky_66", nn.ReLU(inplace=True))
                     ])))
         self.blocks.append({'type': 'convolutional'})
 
         self.module_list.append(nn.Sequential(OrderedDict([
                     ("conv_67", nn.Conv2d(512, 1024, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1),bias=False)),
                     ("batch_norm_67", nn.BatchNorm2d(1024)),
-                    ("leaky_67", nn.LeakyReLU(negative_slope=0.1, inplace=True))
+                    ("leaky_67", nn.ReLU(inplace=True))
                     ])))
         self.blocks.append({'type': 'convolutional'})
 
@@ -527,14 +527,14 @@ class YoloV3(nn.Module):
         self.module_list.append(nn.Sequential(OrderedDict([
                     ("conv_69", nn.Conv2d(1024, 512, kernel_size=(1, 1), stride=(1, 1),bias=False)),
                     ("batch_norm_69", nn.BatchNorm2d(512)),
-                    ("leaky_69", nn.LeakyReLU(negative_slope=0.1, inplace=True))
+                    ("leaky_69", nn.ReLU(inplace=True))
                     ])))
         self.blocks.append({'type': 'convolutional'})
 
         self.module_list.append(nn.Sequential(OrderedDict([
                     ("conv_70", nn.Conv2d(512, 1024, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1),bias=False)),
                     ("batch_norm_70", nn.BatchNorm2d(1024)),
-                    ("leaky_70", nn.LeakyReLU(negative_slope=0.1, inplace=True))
+                    ("leaky_70", nn.ReLU(inplace=True))
                     ])))
         self.blocks.append({'type': 'convolutional'})
 
@@ -546,14 +546,14 @@ class YoloV3(nn.Module):
         self.module_list.append(nn.Sequential(OrderedDict([
                     ("conv_72", nn.Conv2d(1024, 512, kernel_size=(1, 1), stride=(1, 1),bias=False)),
                     ("batch_norm_72", nn.BatchNorm2d(512)),
-                    ("leaky_72", nn.LeakyReLU(negative_slope=0.1, inplace=True))
+                    ("leaky_72", nn.ReLU(inplace=True))
                     ])))
         self.blocks.append({'type': 'convolutional'})
 
         self.module_list.append(nn.Sequential(OrderedDict([
                     ("conv_73", nn.Conv2d(512, 1024, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1),bias=False)),
                     ("batch_norm_73", nn.BatchNorm2d(1024)),
-                    ("leaky_73", nn.LeakyReLU(negative_slope=0.1, inplace=True))
+                    ("leaky_73", nn.ReLU(inplace=True))
                     ])))
         self.blocks.append({'type': 'convolutional'})
 
@@ -565,42 +565,42 @@ class YoloV3(nn.Module):
         self.module_list.append(nn.Sequential(OrderedDict([
                     ("conv_75", nn.Conv2d(1024, 512, kernel_size=(1, 1), stride=(1, 1),bias=False)),
                     ("batch_norm_75", nn.BatchNorm2d(512)),
-                    ("leaky_75", nn.LeakyReLU(negative_slope=0.1, inplace=True))
+                    ("leaky_75", nn.ReLU(inplace=True))
                     ])))
         self.blocks.append({'type': 'convolutional'})
 
         self.module_list.append(nn.Sequential(OrderedDict([
                     ("conv_76", nn.Conv2d(512, 1024, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1),bias=False)),
                     ("batch_norm_76", nn.BatchNorm2d(1024)),
-                    ("leaky_76", nn.LeakyReLU(negative_slope=0.1, inplace=True))
+                    ("leaky_76", nn.ReLU(inplace=True))
                     ])))
         self.blocks.append({'type': 'convolutional'})
 
         self.module_list.append(nn.Sequential(OrderedDict([
                     ("conv_77", nn.Conv2d(1024, 512, kernel_size=(1, 1), stride=(1, 1),bias=False)),
                     ("batch_norm_77", nn.BatchNorm2d(512)),
-                    ("leaky_77", nn.LeakyReLU(negative_slope=0.1, inplace=True))
+                    ("leaky_77", nn.ReLU(inplace=True))
                     ])))
         self.blocks.append({'type': 'convolutional'})
 
         self.module_list.append(nn.Sequential(OrderedDict([
                     ("conv_78", nn.Conv2d(512, 1024, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1),bias=False)),
                     ("batch_norm_78", nn.BatchNorm2d(1024)),
-                    ("leaky_78", nn.LeakyReLU(negative_slope=0.1, inplace=True))
+                    ("leaky_78", nn.ReLU(inplace=True))
                     ])))
         self.blocks.append({'type': 'convolutional'})
 
         self.module_list.append(nn.Sequential(OrderedDict([
                     ("conv_79", nn.Conv2d(1024, 512, kernel_size=(1, 1), stride=(1, 1),bias=False)),
                     ("batch_norm_79", nn.BatchNorm2d(512)),
-                    ("leaky_79", nn.LeakyReLU(negative_slope=0.1, inplace=True))
+                    ("leaky_79", nn.ReLU(inplace=True))
                     ])))
         self.blocks.append({'type': 'convolutional'})
 
         self.module_list.append(nn.Sequential(OrderedDict([
                     ("conv_80", nn.Conv2d(512, 1024, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1),bias=False)),
                     ("batch_norm_80", nn.BatchNorm2d(1024)),
-                    ("leaky_80", nn.LeakyReLU(negative_slope=0.1, inplace=True))
+                    ("leaky_80", nn.ReLU(inplace=True))
                     ])))
         self.blocks.append({'type': 'convolutional'})
 
@@ -622,7 +622,7 @@ class YoloV3(nn.Module):
         self.module_list.append(nn.Sequential(OrderedDict([
                     ("conv_84", nn.Conv2d(512, 256, kernel_size=(1, 1), stride=(1, 1),bias=False)),
                     ("batch_norm_84", nn.BatchNorm2d(256)),
-                    ("leaky_84", nn.LeakyReLU(negative_slope=0.1, inplace=True))
+                    ("leaky_84", nn.ReLU(inplace=True))
                     ])))
         self.blocks.append({'type': 'convolutional'})
 
@@ -639,42 +639,42 @@ class YoloV3(nn.Module):
         self.module_list.append(nn.Sequential(OrderedDict([
                     ("conv_87", nn.Conv2d(768, 256, kernel_size=(1, 1), stride=(1, 1),bias=False)),
                     ("batch_norm_87", nn.BatchNorm2d(256)),
-                    ("leaky_87", nn.LeakyReLU(negative_slope=0.1, inplace=True))
+                    ("leaky_87", nn.ReLU(inplace=True))
                     ])))
         self.blocks.append({'type': 'convolutional'})
 
         self.module_list.append(nn.Sequential(OrderedDict([
                     ("conv_88", nn.Conv2d(256, 512, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1),bias=False)),
                     ("batch_norm_88", nn.BatchNorm2d(512)),
-                    ("leaky_88", nn.LeakyReLU(negative_slope=0.1, inplace=True))
+                    ("leaky_88", nn.ReLU(inplace=True))
                     ])))
         self.blocks.append({'type': 'convolutional'})
 
         self.module_list.append(nn.Sequential(OrderedDict([
                     ("conv_89", nn.Conv2d(512, 256, kernel_size=(1, 1), stride=(1, 1),bias=False)),
                     ("batch_norm_89", nn.BatchNorm2d(256)),
-                    ("leaky_89", nn.LeakyReLU(negative_slope=0.1, inplace=True))
+                    ("leaky_89", nn.ReLU(inplace=True))
                     ])))
         self.blocks.append({'type': 'convolutional'})
 
         self.module_list.append(nn.Sequential(OrderedDict([
                     ("conv_90", nn.Conv2d(256, 512, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1),bias=False)),
                     ("batch_norm_90", nn.BatchNorm2d(512)),
-                    ("leaky_90", nn.LeakyReLU(negative_slope=0.1, inplace=True))
+                    ("leaky_90", nn.ReLU(inplace=True))
                     ])))
         self.blocks.append({'type': 'convolutional'})
 
         self.module_list.append(nn.Sequential(OrderedDict([
                     ("conv_91", nn.Conv2d(512, 256, kernel_size=(1, 1), stride=(1, 1),bias=False)),
                     ("batch_norm_91", nn.BatchNorm2d(256)),
-                    ("leaky_91", nn.LeakyReLU(negative_slope=0.1, inplace=True))
+                    ("leaky_91", nn.ReLU(inplace=True))
                     ])))
         self.blocks.append({'type': 'convolutional'})
 
         self.module_list.append(nn.Sequential(OrderedDict([
                     ("conv_92", nn.Conv2d(256, 512, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1),bias=False)),
                     ("batch_norm_92", nn.BatchNorm2d(512)),
-                    ("leaky_92", nn.LeakyReLU(negative_slope=0.1, inplace=True))
+                    ("leaky_92", nn.ReLU(inplace=True))
                     ])))
         self.blocks.append({'type': 'convolutional'})
 
@@ -696,7 +696,7 @@ class YoloV3(nn.Module):
         self.module_list.append(nn.Sequential(OrderedDict([
                     ("conv_96", nn.Conv2d(256, 128, kernel_size=(1, 1), stride=(1, 1),bias=False)),
                     ("batch_norm_96", nn.BatchNorm2d(128)),
-                    ("leaky_96", nn.LeakyReLU(negative_slope=0.1, inplace=True))
+                    ("leaky_96", nn.ReLU(inplace=True))
                     ])))
         self.blocks.append({'type': 'convolutional'})
 
@@ -713,42 +713,42 @@ class YoloV3(nn.Module):
         self.module_list.append(nn.Sequential(OrderedDict([
                     ("conv_99", nn.Conv2d(384, 128, kernel_size=(1, 1), stride=(1, 1),bias=False)),
                     ("batch_norm_99", nn.BatchNorm2d(128)),
-                    ("leaky_99", nn.LeakyReLU(negative_slope=0.1, inplace=True))
+                    ("leaky_99", nn.ReLU(inplace=True))
                     ])))
         self.blocks.append({'type': 'convolutional'})
 
         self.module_list.append(nn.Sequential(OrderedDict([
                     ("conv_100", nn.Conv2d(128, 256, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1),bias=False)),
                     ("batch_norm_100", nn.BatchNorm2d(256)),
-                    ("leaky_100", nn.LeakyReLU(negative_slope=0.1, inplace=True))
+                    ("leaky_100", nn.ReLU(inplace=True))
                     ])))
         self.blocks.append({'type': 'convolutional'})
 
         self.module_list.append(nn.Sequential(OrderedDict([
                     ("conv_101", nn.Conv2d(256, 128, kernel_size=(1, 1), stride=(1, 1),bias=False)),
                     ("batch_norm_101", nn.BatchNorm2d(128)),
-                    ("leaky_101", nn.LeakyReLU(negative_slope=0.1, inplace=True))
+                    ("leaky_101", nn.ReLU(inplace=True))
                     ])))
         self.blocks.append({'type': 'convolutional'})
 
         self.module_list.append(nn.Sequential(OrderedDict([
                     ("conv_102", nn.Conv2d(128, 256, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1),bias=False)),
                     ("batch_norm_102", nn.BatchNorm2d(256)),
-                    ("leaky_102", nn.LeakyReLU(negative_slope=0.1, inplace=True))
+                    ("leaky_102", nn.ReLU(inplace=True))
                     ])))
         self.blocks.append({'type': 'convolutional'})
 
         self.module_list.append(nn.Sequential(OrderedDict([
                     ("conv_103", nn.Conv2d(256, 128, kernel_size=(1, 1), stride=(1, 1),bias=False)),
                     ("batch_norm_103", nn.BatchNorm2d(128)),
-                    ("leaky_103", nn.LeakyReLU(negative_slope=0.1, inplace=True))
+                    ("leaky_103", nn.ReLU(inplace=True))
                     ])))
         self.blocks.append({'type': 'convolutional'})
 
         self.module_list.append(nn.Sequential(OrderedDict([
                     ("conv_104", nn.Conv2d(128, 256, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1),bias=False)),
                     ("batch_norm_104", nn.BatchNorm2d(256)),
-                    ("leaky_104", nn.LeakyReLU(negative_slope=0.1, inplace=True))
+                    ("leaky_104", nn.ReLU(inplace=True))
                     ])))
         self.blocks.append({'type': 'convolutional'})
 
