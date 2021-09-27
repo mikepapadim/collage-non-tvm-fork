@@ -352,7 +352,7 @@ def measure_tvm_strategy_libs(mod, params, lib_target, shape_dict, args, is_perf
 
     mean_perf, std_perf, mod_tvm1 = measure_end_to_end_tvm_no_tuning(mod["main"], params, lib_target, shape_dict,
                                                                      None, args.network, args.hw, args.batch_size)
-    print(f"[{args.network}] Performance of TVM (no tuning, but with cuDNN, cuBLAS) on {args.hw} (mean, std) = ({mean_perf:.4f}+-{std_perf:.4f})")
+    print(f"[{args.network}] Performance of TVM (no tuning, with vendor libs) on {args.hw} (mean, std) = ({mean_perf:.4f}+-{std_perf:.4f})")
     log_e2e_perf(args, 'AutoTVM-libs', mean_perf, std_perf, is_perf_logging)
 
     verify_network_output(mod["main"], shape_dict, mod_tvm1, mod_tvm2)
