@@ -70,6 +70,12 @@ rtx2070,1,resnext50_32x4d,TF-XLA,21.9156,0.5763
 rtx2070,1,resnext50_32x4d,TensorRT,3.3121,0.0015
 rtx2070,1,resnext50_32x4d,Two-level,2.2188,0.0002
 rtx2070,1,resnext50_32x4d,cuDNN,3.5582,0.0006
+rtx2070,1,yolov3,AutoTVM,11.9491,0.0054
+rtx2070,1,yolov3,AutoTVM-libs,12.8245,0.0020
+rtx2070,1,yolov3,DP,10.0928,0.0047
+rtx2070,1,yolov3,TensorRT,10.1972,0.0035
+rtx2070,1,yolov3,Two-level,9.6268,0.0045
+rtx2070,1,yolov3,cuDNN,12.8981,0.0026
 v100,1,bert,AutoTVM,9.0982,0.0018
 v100,1,bert,AutoTVM-libs,1.7555,0.0009
 v100,1,bert,DP,1.5432,0.0003
