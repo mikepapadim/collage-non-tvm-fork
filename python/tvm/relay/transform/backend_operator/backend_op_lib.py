@@ -327,9 +327,14 @@ class BackendOpLib(object):
 
 
     def check_constraints_dnnl_add(config):
-        for shape in config._data_shape:
+        for idx_shape, shape in enumerate(config._data_shape):
             if len(shape) < 2:
                 return False
+
+            # Check if all inputs have same dimensionality
+            if idx_shape > 0 and len(shape) != prev_shape:
+                return False
+            prev_shape = len(shape)
 
             if shape == [1, 64, 56, 56] or shape == [1,128,28,28] or shape == [1, 256, 14, 14]:
                 return False
@@ -347,7 +352,8 @@ class BackendOpLib(object):
     self._add_backendop_with_key(Target.DNNL, "CONV3D")
     #self._add_backendop_with_key(Target.DNNL, "BATCHNORM")
     self._add_backendop_with_key(Target.DNNL, "DENSE")
-    self._add_backendop_with_key(Target.DNNL, "ADD", check_constraints_dnnl_add)
+    # Disabled cuz it still errors out for DCGAN / NasNet-A
+    #self._add_backendop_with_key(Target.DNNL, "ADD", check_constraints_dnnl_add)
     self._add_backendop_with_key(Target.DNNL, "RELU", check_constraints_dnnl_relu)
 
     # Unsupported error by DNNL
