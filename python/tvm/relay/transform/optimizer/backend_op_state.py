@@ -113,10 +113,11 @@ class OpStateToMatchTranslator():
     def __init__(self, optimized_match, group_id_to_exprs_anno, hw_name):
         self.optimized_match = optimized_match
         self.group_id_to_exprs_anno = group_id_to_exprs_anno
-        self.state_id_to_group_id = self.get_valid_op_state_by_filtering()
-        self.graph_opt_backend_name = get_graph_level_opt_backend_name(hw_name)
 
+        self.graph_opt_backend_name = get_graph_level_opt_backend_name(hw_name)
         self.is_invalid_ext_compiler_op = backend_to_invalid_op_checker[self.graph_opt_backend_name]
+
+        self.state_id_to_group_id = self.get_valid_op_state_by_filtering()
 
     def is_valid_op_state(self, expr_anno_pairs):
         assert len(expr_anno_pairs) > 0
