@@ -4,17 +4,31 @@
 # E2EPerfLogger().log_all_perf(memo_dic)
 #
 
-from workloads.relay_workloads import create_relay_workload
-from tvm import relay
+def printa(text):
+    print(text + "-a")
 
-a = relay.var("data", shape=(10,10))
-b = relay.var("data", shape=(10,10))
-workload = relay.add(a, b)
-mod, params = create_relay_workload(workload)
 
-from tvm.relay.op.contrib.tensorrt import partition_for_tensorrt
-mod, config = partition_for_tensorrt(mod, params)
-print(mod)
+class ABC():
+    def __init__(self):
+        self.func = printa
+
+    def wow(self):
+        self.func("WOW")
+
+a = ABC()
+a.wow()
+
+# from workloads.relay_workloads import create_relay_workload
+# from tvm import relay
+#
+# a = relay.var("data", shape=(10,10))
+# b = relay.var("data", shape=(10,10))
+# workload = relay.add(a, b)
+# mod, params = create_relay_workload(workload)
+#
+# from tvm.relay.op.contrib.tensorrt import partition_for_tensorrt
+# mod, config = partition_for_tensorrt(mod, params)
+# print(mod)
 # from deap import base
 # toolbox = base.Toolbox()
 # toolbox.mate()
