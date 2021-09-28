@@ -29,7 +29,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     args.network = 'bert_full'
-    input_shape = (1, 64, 256)
+    input_shape = (args.batch_size, 64, 256)
     inputs = np.random.uniform(-1, 1, size=input_shape).astype("float32")
 
     method_name = 'TF'
