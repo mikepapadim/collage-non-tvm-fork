@@ -18,12 +18,7 @@
 #CUDA_VISIBLE_DEVICES=0 python3 testing/autotune_relay.py -tu autotvm -t cuda -th llvm -dt float32 -n nasrnn -l autotvm_ops -bs 1 -hw v100
 #CUDA_VISIBLE_DEVICES=0 python3 testing/autotune_relay.py -tu autotvm -t cuda -th llvm -dt float32 -n resnet50 -l autotvm_ops -bs 1 -hw v100
 #CUDA_VISIBLE_DEVICES=0 python3 testing/autotune_relay.py -tu autotvm -t cuda -th llvm -dt float32 -n mobilenet_v2 -l autotvm_ops -bs 1 -hw v100
-CUDA_VISIBLE_DEVICES=0 python3 testing/autotune_relay.py -tu autotvm -t cuda -th llvm -dt float32 -n yolov3 -l autotvm_ops -bs 1 -hw v100
-CUDA_VISIBLE_DEVICES=0 python3 testing/measure_end_to_end.py -n bert_full -hw v100
-CUDA_VISIBLE_DEVICES=0 python3 testing/measure_end_to_end.py -n yolov3 -hw v100
-CUDA_VISIBLE_DEVICES=0 python3 testing/measure_end_to_end.py -n resnext50_32x4d -hw v100 -bs 16
-CUDA_VISIBLE_DEVICES=0 python3 testing/measure_end_to_end.py -n resnext50_32x4d -hw v100 -bs 8
-CUDA_VISIBLE_DEVICES=0 python3 testing/measure_end_to_end.py -n resnext50_32x4d -hw v100 -bs 4
+#CUDA_VISIBLE_DEVICES=0 python3 testing/autotune_relay.py -tu autotvm -t cuda -th llvm -dt float32 -n yolov3 -l autotvm_ops -bs 1 -hw v100
 
 # Increasing Batch Size for ResNext
 #CUDA_VISIBLE_DEVICES=0 python3 testing/autotune_relay.py -tu autotvm -t cuda -th llvm -dt float32 -n resnext50_32x4d -l autotvm_ops -bs 16 -hw v100
