@@ -27,8 +27,8 @@
 #CUDA_VISIBLE_DEVICES=0 python3 testing/measure_pytorch.py -n nasneta -hw v100
 #CUDA_VISIBLE_DEVICES=0 python3 testing/measure_pytorch.py -n resnet50_3d -hw v100
 #CUDA_VISIBLE_DEVICES=0 python3 testing/measure_pytorch.py -n dcgan -hw v100
-CUDA_VISIBLE_DEVICES=0 python3 testing/measure_pytorch.py -n bert_full -hw v100
-CUDA_VISIBLE_DEVICES=0 python3 testing/measure_pytorch.py -n yolov3 -hw v100
+#CUDA_VISIBLE_DEVICES=0 python3 testing/measure_pytorch.py -n bert_full -hw v100
+#CUDA_VISIBLE_DEVICES=0 python3 testing/measure_pytorch.py -n yolov3 -hw v100
 
 #CUDA_VISIBLE_DEVICES=0 python3 testing/measure_pytorch.py -n bert -hw v100
 #CUDA_VISIBLE_DEVICES=0 python3 testing/measure_pytorch.py -n resnet50 -hw v100
@@ -39,9 +39,9 @@ CUDA_VISIBLE_DEVICES=0 python3 testing/measure_pytorch.py -n yolov3 -hw v100
 #CUDA_VISIBLE_DEVICES=0 python3 testing/measure_end_to_end.py -n resnext50_32x4d -hw v100 -bs 16
 #CUDA_VISIBLE_DEVICES=0 python3 testing/measure_end_to_end.py -n resnext50_32x4d -hw v100 -bs 8
 #CUDA_VISIBLE_DEVICES=0 python3 testing/measure_end_to_end.py -n resnext50_32x4d -hw v100 -bs 4
-CUDA_VISIBLE_DEVICES=0 python3 testing/measure_pytorch.py -n resnext50_32x4d -hw v100 -bs 16
-CUDA_VISIBLE_DEVICES=0 python3 testing/measure_pytorch.py -n resnext50_32x4d -hw v100 -bs 8
-CUDA_VISIBLE_DEVICES=0 python3 testing/measure_pytorch.py -n resnext50_32x4d -hw v100 -bs 4
+#CUDA_VISIBLE_DEVICES=0 python3 testing/measure_pytorch.py -n resnext50_32x4d -hw v100 -bs 16
+#CUDA_VISIBLE_DEVICES=0 python3 testing/measure_pytorch.py -n resnext50_32x4d -hw v100 -bs 8
+#CUDA_VISIBLE_DEVICES=0 python3 testing/measure_pytorch.py -n resnext50_32x4d -hw v100 -bs 4
 
 XLA_FLAGS=--xla_gpu_cuda_data_dir=/usr/local/cuda CUDA_VISIBLE_DEVICES=0 python3 testing/baselines/tf2/resnext50.py -hw v100 -bs 16
 XLA_FLAGS=--xla_gpu_cuda_data_dir=/usr/local/cuda CUDA_VISIBLE_DEVICES=0 python3 testing/baselines/tf2/resnext50.py -hw v100 -bs 8
