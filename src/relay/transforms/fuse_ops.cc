@@ -1401,6 +1401,11 @@ namespace tvm {
     // For end-to-end measure, execute user-defined pass by using best match
     // from PlanFusionWithExtCompiler
     Expr FuseOps(const Expr& expr, int fuse_opt_level, size_t max_fuse_depth, const IRModule& module) {
+      // Debug: visualization
+      // auto vis_call = tvm::runtime::Registry::Get("relay.transform.optimizer.visualize_expr");
+      // (*vis_call)(expr, "before_fusion");
+
+        
       // WARNING(@Soo): Assume that all exprs are function!
       const FunctionNode* fn_node = static_cast<const FunctionNode*>(expr.get());
       bool is_custom_pass = false;
@@ -1410,8 +1415,13 @@ namespace tvm {
       auto fused_expr = FuseMutator().Transform(expr, fuse_opt_level, max_fuse_depth, is_custom_pass);
 //      std::cerr << "[Done] FuseOps (is_custom_pass: " << is_custom_pass << ")" << std::endl;
 
-//      auto vis_call = tvm::runtime::Registry::Get("relay.transform.optimizer.visualize_expr");
-//      (*vis_call)(fused_expr, "FuseOps_after");
+    
+      // Debug: visualization
+      // std::string network_name = std::string(fn_node->GetAttr<String>("Network").value());
+      // auto vis_call2 = tvm::runtime::Registry::Get("relay.transform.optimizer.visualize_expr");
+      // (*vis_call2)(fused_expr, network_name+"_after_fusion");
+      // (*vis_call2)(fused_expr, "after_fusion");
+
 
       return fused_expr;
     }
