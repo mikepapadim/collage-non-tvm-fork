@@ -157,15 +157,15 @@ class MultiHeadedAttention(object):
 
         print(batch_size)
         # 1) Do all the linear projections in batch from d_model => h x d_k
-        query, key, value = [l(x).view(batch_size, -1, self.h, self.d_k).transpose(1, 2)
+        query, key, value = [tf.transpose(tf.reshape(l(x),(batch_size, -1, self.h, self.d_k)), perm=[0,2,1,3])
                              for l, x in zip(self.linear_layers, (query, key, value))]
 
         # 2) Apply attention on all the projected vectors in batch.
         x, attn = self.attention(query, key, value, mask=mask, dropout=self.dropout)
 
         # 3) "Concat" using a view and apply a final linear.
-        x = x.transpose(1, 2).contiguous().view(batch_size, -1, self.h * self.d_k)
-
+        #x = x.transpose(1, 2).contiguous().view(batch_size, -1, self.h * self.d_k)
+        x = tf.reshape(tf.tranpose(x,perm=[0,2,1,3]),(batch_size, -1, self.h * self.d_k))
         return self.output_linear(x)
 
 class TransformerBlock(object):
