@@ -21,7 +21,7 @@ class LayerNorm(object):
         self.eps = eps
 
     def forward(self, x):
-        mean, var = tf.nn.moments(x, len(x.shape) - 1, shift=None, keepdims=False, name=None)
+        mean, var = tf.nn.moments(x, len(x.shape) - 1, shift=None, keepdims=True, name=None)
         std = tf.sqrt(var)
         #mean = x.mean(-1, keepdim=True)
         #std = x.std(-1, keepdim=True)
