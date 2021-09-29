@@ -35,8 +35,8 @@ class GELU(object):
 class PositionwiseFeedForward(object):
     def __init__(self, d_model, d_ff, dropout=0.1):
         super(PositionwiseFeedForward, self).__init__()
-        self.w_1 = make_linear(d_model, d_ff)
-        self.w_2 = make_linear(d_ff, d_model)
+        self.w_1 = lambda x: make_linear(x, d_model, d_ff)
+        self.w_2 = lambda x: make_linear(x, d_ff, d_model)
         # self.dropout = nn.Dropout(dropout)
         # self.activation = GELU()
 
@@ -139,8 +139,8 @@ class MultiHeadedAttention(object):
         self.d_k = d_model // h
         self.h = h
 
-        self.linear_layers = [make_linear(d_model, d_model) for _ in range(3)]
-        self.output_linear = make_linear(d_model, d_model)
+        self.linear_layers = [lambda x: make_linear(x, d_model, d_model) for _ in range(3)]
+        self.output_linear = lambda x: make_linear(x, d_model, d_model)
         self.attention = Attention()
 
         #self.dropout = nn.Dropout(p=dropout)
