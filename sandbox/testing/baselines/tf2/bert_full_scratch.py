@@ -166,7 +166,7 @@ class MultiHeadedAttention(object):
 
         # 3) "Concat" using a view and apply a final linear.
         #x = x.transpose(1, 2).contiguous().view(batch_size, -1, self.h * self.d_k)
-        x = tf.reshape(tf.tranpose(x,perm=[0,2,1,3]),(batch_size, -1, self.h * self.d_k))
+        x = tf.reshape(tf.transpose(x,perm=[0,2,1,3]),(batch_size, -1, self.h * self.d_k))
         return self.output_linear(x)
 
 class TransformerBlock(object):
