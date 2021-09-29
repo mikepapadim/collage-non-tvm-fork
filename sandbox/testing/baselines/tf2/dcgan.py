@@ -3,7 +3,7 @@ import tensorflow as tf
 import numpy as np
 import time
 import timeit
-from shared_functions import make_activation, make_conv2d_bn, make_matmul, measure_tf2_gpu
+from shared_functions import make_activation, make_conv2d_bn, make_linear, measure_tf2_gpu
 from shared_functions import make_conv2d_nhwc as make_conv2d
 
 NAME = 'dcgan'
@@ -15,7 +15,7 @@ channels = 3
 def generator(input):
     t = input
     init_size = img_size // 4
-    l1 = make_matmul(t, 128 * init_size ** 2)
+    l1 = make_linear(t, 128 * init_size ** 2)
     #print(l1.shape)
 
     t = tf.reshape(l1, (l1.shape[0], init_size, init_size, 128) )
@@ -53,7 +53,7 @@ def discriminator(input):
 
     ds_size = img_size // 2 ** 4
     t = tf.reshape(t, (t.shape[0], 128 * ds_size ** 2))
-    adv_layer = make_matmul(t, 1)
+    adv_layer = make_linear(t, 1)
     t = tf.nn.sigmoid(adv_layer)
     return t
 

@@ -83,6 +83,13 @@ def make_avgpool2d(input_tensor, kernels, strides, padding):
 def make_maxpool2d(input_tensor, kernels, strides, padding):
     return tf.nn.max_pool2d(input=input_tensor, ksize=kernels, strides=strides, padding=padding, data_format="NCHW")
 
+def make_linear(input_tensor, out_channels):
+    weight_shape = (input_tensor.shape[1], out_channels)
+    bias_shape = (1, out_channels)
+    weight = tf.constant(np.random.random_sample(weight_shape), dtype=tf.float32)
+    bias = tf.constant(np.random.random_sample(bias_shape), dtype=tf.float32)
+    return tf.nn.add(tf.matmul(input_tensor, weight), bias)
+ 
 def make_matmul(input_tensor, out_channels):
     weight_shape = (input_tensor.shape[1], out_channels)
     weight = tf.constant(np.random.random_sample(weight_shape), dtype=tf.float32)
