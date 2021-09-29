@@ -108,7 +108,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     args.network = 'mobilenet_v2'
-    input_shape = (1, 32, 224, 224)
+    input_shape = (args.batch_size, 32, 224, 224)
     inputs = np.random.uniform(-1, 1, size=input_shape).astype("float32")
 
     method_name = 'TF'

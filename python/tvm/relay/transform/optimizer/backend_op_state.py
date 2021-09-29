@@ -7,7 +7,7 @@ from tvm.ir import Op
 import copy
 from enum import IntEnum
 
-EXT_COMPILERS = ["tensorrt"]
+EXT_COMPILERS = ["tensorrt", "dnnl"]
 
 class BackendStateType(IntEnum):
     # This is for measurement
@@ -59,44 +59,65 @@ class MatchToOpGroupTranslator(ExprVisitor):
         super().visit(expr)
 
 
+def is_invalid_ext_compiler_op_tensorrt(expr):
+    is_not_valid = False
+    # It's fine to allow TensorRT to take tuple or tuplegetitem
+    # It could even allow TensorRT to merge more regions in comp graph
+    # is_not_valid = is_tuple_node(expr) or is_tuplegetitem_node(expr)
+
+    # Patterns that TensorRT can't afford
+    transpose_pat = is_op("transpose")(wildcard())
+    batch_matmul_pat = is_op("nn.batch_matmul")(wildcard(), wildcard())
+    image_resize_pat = is_op("image.resize")(wildcard())
+
+    variance_pat = is_op("variance")(wildcard(), wildcard())
+    reshape_pat = is_op("reshape")(wildcard())
+    divide_pat = is_op("divide")(wildcard(), wildcard())
+
+    is_not_valid |= transpose_pat.match(expr)
+    is_not_valid |= batch_matmul_pat.match(expr)
+    is_not_valid |= image_resize_pat.match(expr)
+
+    # For BERT full version
+    is_not_valid |= variance_pat.match(expr)
+    is_not_valid |= reshape_pat.match(expr)
+    is_not_valid |= divide_pat.match(expr)
+
+    return is_not_valid
+
+def is_invalid_ext_compiler_op_dnnl(expr):
+    is_valid = False
+
+    # Patterns that DNNL can afford
+    is_valid |= optype_to_pattern["CONV2D"].match(expr)
+    is_valid |= optype_to_pattern["CONV3D"].match(expr)
+    is_valid |= optype_to_pattern["BATCHNORM"].match(expr)
+    is_valid |= optype_to_pattern["DENSE"].match(expr)
+    is_valid |= optype_to_pattern["RELU"].match(expr)
+
+    return not is_valid
+
+
 """
 This back-translates state_id_to_exprs_anno into optimized_match for measurement; 
 It translates state_id_to_exprs_anno (Key: state id / Value: a list of pairs of expression and its annotation)
 into optimized_match (Key: expression / Value: annotation (group_id + op_name)) 
 """
 
+backend_to_invalid_op_checker = {
+    "tensorrt": is_invalid_ext_compiler_op_tensorrt,
+    "dnnl": is_invalid_ext_compiler_op_dnnl,
+}
+
 class OpStateToMatchTranslator():
     def __init__(self, optimized_match, group_id_to_exprs_anno, hw_name):
         self.optimized_match = optimized_match
         self.group_id_to_exprs_anno = group_id_to_exprs_anno
-        self.state_id_to_group_id = self.get_valid_op_state_by_filtering()
+
         self.graph_opt_backend_name = get_graph_level_opt_backend_name(hw_name)
+        self.is_invalid_ext_compiler_op = backend_to_invalid_op_checker[self.graph_opt_backend_name]
 
-    def is_valid_ext_compiler_op(self, expr):
-        is_not_valid = False
-        # It's find to allow TensorRT to take tuple or tuplegetitem
-        # It could even allow TensorRT to merge more regions in comp graph
-        # is_not_valid = is_tuple_node(expr) or is_tuplegetitem_node(expr)
-
-        # Patterns that TensorRT can't afford
-        transpose_pat = is_op("transpose")(wildcard())
-        batch_matmul_pat = is_op("nn.batch_matmul")(wildcard(),wildcard())
-        image_resize_pat = is_op("image.resize")(wildcard())
-
-        variance_pat = is_op("variance")(wildcard(), wildcard())
-        reshape_pat = is_op("reshape")(wildcard())
-        divide_pat = is_op("divide")(wildcard(), wildcard())
-
-        is_not_valid |= transpose_pat.match(expr)
-        is_not_valid |= batch_matmul_pat.match(expr)
-        is_not_valid |= image_resize_pat.match(expr)
-
-        # For BERT full version
-        is_not_valid |= variance_pat.match(expr)
-        is_not_valid |= reshape_pat.match(expr)
-        is_not_valid |= divide_pat.match(expr)
-
-        return is_not_valid
+        self.state_id_to_group_id = self.get_valid_op_state_by_filtering()
 
     def is_valid_op_state(self, expr_anno_pairs):
         assert len(expr_anno_pairs) > 0
@@ -112,12 +133,12 @@ class OpStateToMatchTranslator():
             assert backend_name == first_backend
 
             # If one of ops is tuple or tuple_get_item, then prevent it from being ext compiler ops
-            if self.is_valid_ext_compiler_op(expr):
+            if self.is_invalid_ext_compiler_op(expr):
                 is_valid_op_state = False
                 # print(type(expr), anno)
                 break
 
-        # If this is TensorRT op chosen from the first op optimizing pass,
+        # If this is External compiler op chosen from the first op optimizing pass,
         # Then we don't need to consider it on the second subgraph optimizing pass.
         if first_backend in EXT_COMPILERS:
             is_valid_op_state = False
@@ -142,7 +163,7 @@ class OpStateToMatchTranslator():
         # sys.exit(0)
         return state_id_to_group_id
 
-    def gen_trt_annotation(self, anno):
+    def gen_ext_compiler_op_annotation(self, anno):
         group_id = int(get_group_id_from_backend_op_annotation(anno))
         op_name = get_op_name_from_backend_op_annotation(anno)
         backend_name = self.graph_opt_backend_name
@@ -155,7 +176,7 @@ class OpStateToMatchTranslator():
         gid = self.state_id_to_group_id[state_id]
         for expr, anno in self.group_id_to_exprs_anno[gid]:
             assert expr in new_opt_match
-            new_opt_match[expr] = self.gen_trt_annotation(anno)
+            new_opt_match[expr] = self.gen_ext_compiler_op_annotation(anno)
             # print(f"anno / new anno: {anno} / {new_opt_match[expr]}")
 
     def translate(self, op_state):

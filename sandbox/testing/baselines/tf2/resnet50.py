@@ -54,7 +54,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     args.network = 'resnet50'
-    input_shape = (1, 64, 56, 56)
+    input_shape = (args.batch_size, 64, 56, 56)
     inputs = np.random.uniform(-1, 1, size=input_shape).astype("float32")
 
     method_name = 'TF'

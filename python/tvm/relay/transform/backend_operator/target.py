@@ -18,7 +18,7 @@ from ..utility.debug_helper import printe
 
 # only collect results whose standard deviation is below this
 MAX_STD_MEASURE_RTX = 5E-04
-MAX_STD_MEASURE_XEON = 0.005 # 0.0025
+MAX_STD_MEASURE_XEON = 0.1 # 0.01 #stil small# 0.005 # Too small
 # MAX_STD_MEASURE_GPU = 5E-03
 
 # This is for operator measurement
@@ -277,8 +277,12 @@ class TVMSubGraphCostFunc_OpMeasurement(TargetCostFunc):
         # Build the subgraph
         target_str = get_build_target(hw_name)
 
-        with tvm.transform.PassContext(opt_level=OPT_LEVEL.get()):
-            lib = relay.build_module.build(net, target=target_str, params=params)
+        if get_backend_from_backend_op_annotation(annotation) == 'mkl':
+            with tvm.transform.PassContext(opt_level=OPT_LEVEL.get(), disabled_pass=["AlterOpLayout"]):
+                lib = relay.build_module.build(net, target=target_str, params=params)
+        else:
+             with tvm.transform.PassContext(opt_level=OPT_LEVEL.get()):
+                lib = relay.build_module.build(net, target=target_str, params=params)
 
         dev = tvm.device(target_str, 0)
         module = runtime.GraphModule(lib["default"](dev))
@@ -343,7 +347,9 @@ class DNNLCostFunc(TargetCostFunc):
         # visualize_network(mod["main"], f"{opt_info_tag}_dnnl")
 
         target_str = get_build_target(hw_name)
-        with tvm.transform.PassContext(opt_level=OPT_LEVEL.get()):
+        # It's ok not to do AlterOpLayout because DNNL ops are gonna be changed to GlobalVar,
+        # which won't be touched by AlterOpLayout
+        with tvm.transform.PassContext(opt_level=OPT_LEVEL.get()):#, disabled_pass=["AlterOpLayout"]):
             lib = relay.build(mod, target=target_str, params=params)
 
         dev = tvm.cpu(0)

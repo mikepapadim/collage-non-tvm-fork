@@ -311,7 +311,7 @@ class BackendOpLib(object):
     # self._add_backendop_with_key(Target.CUDNN, "BIAS_ADD")
 
     # NOTE: BatchNorm is currently not supported. If you need it, please contact @Sung
-    # self._add_backendop_with_key(Target.CUDNN, "BATCHNORM")
+    self._add_backendop_with_key(Target.CUDNN, "BATCHNORM")
 
     # DNNL, MKL, MKLDNN
     # TODO: Add patterns. matmul, batch matmul
@@ -325,15 +325,40 @@ class BackendOpLib(object):
     self._add_backendop_with_key(Target.MKL, "BATCH_MATMUL")
     #self._add_backendop_with_key(Target.MKLDNN, "DENSE")
 
+
+    def check_constraints_dnnl_add(config):
+        for idx_shape, shape in enumerate(config._data_shape):
+            if len(shape) < 2:
+                return False
+
+            # Check if all inputs have same dimensionality
+            if idx_shape > 0 and len(shape) != prev_shape:
+                return False
+            prev_shape = len(shape)
+
+            if shape == [1, 64, 56, 56] or shape == [1,128,28,28] or shape == [1, 256, 14, 14]:
+                return False
+        return True
+
+    def check_constraints_dnnl_relu(config):
+        for shape in config._data_shape:
+            if len(shape) != 4:
+                return False
+        return True
+
+
+
     self._add_backendop_with_key(Target.DNNL, "CONV2D")
     self._add_backendop_with_key(Target.DNNL, "CONV3D")
-    #self._add_backendop_with_key(Target.DNNL, "BATCHNORM")
+    self._add_backendop_with_key(Target.DNNL, "BATCHNORM")
     self._add_backendop_with_key(Target.DNNL, "DENSE")
-    self._add_backendop_with_key(Target.DNNL, "SUBTRACT")
-    self._add_backendop_with_key(Target.DNNL, "MULTIPLY")
-    self._add_backendop_with_key(Target.DNNL, "ADD")
-    self._add_backendop_with_key(Target.DNNL, "RELU")
+    # Disabled cuz it still errors out for DCGAN / NasNet-A
+    #self._add_backendop_with_key(Target.DNNL, "ADD", check_constraints_dnnl_add)
+    self._add_backendop_with_key(Target.DNNL, "RELU", check_constraints_dnnl_relu)
 
+    # Unsupported error by DNNL
+    #self._add_backendop_with_key(Target.DNNL, "SUBTRACT")
+    #self._add_backendop_with_key(Target.DNNL, "MULTIPLY")
 
     # CUBLAS
     # TODO: Add patterns. matmul, batch matmul

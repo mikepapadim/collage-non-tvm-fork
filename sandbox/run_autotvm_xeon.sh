@@ -13,6 +13,9 @@
 # --> RTX2070
 #python3 testing/autotune_relay.py -tu autotvm -t llvm -th llvm -dt float32 -n nasneta -l autotvm_ops -bs 1 -hw xeon
 #python3 testing/autotune_relay.py -tu autotvm -t llvm -th llvm -dt float32 -n resnet50_3d -l autotvm_ops -bs 1 -hw xeon
+#python3 testing/autotune_relay.py -tu autotvm -t llvm -th llvm -dt float32 -n bert_full -l autotvm_ops -bs 1 -hw xeon
+#python3 testing/autotune_relay.py -tu autotvm -t llvm -th llvm -dt float32 -n yolov3 -l autotvm_ops -bs 1 -hw xeon
+
 
 # Error
 #python3 testing/autotune_relay.py -tu autotvm -t llvm -th llvm -dt float32 -n dcgan -l autotvm_ops -bs 1 -hw xeon
