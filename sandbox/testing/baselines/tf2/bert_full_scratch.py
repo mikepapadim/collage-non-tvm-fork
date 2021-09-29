@@ -12,7 +12,7 @@ this_code_path = os.path.dirname(os.path.abspath(__file__))
 import torch
 
 def make_linear(input_tensor, out_channels):
-    weight_shape = (input_tensor.shape[0], input_tensor.shape[1], out_channels)
+    weight_shape = (input_tensor.shape[0], input_tensor.shape[2], out_channels)
     bias_shape = (input_tensor.shape[0], 1, out_channels)
     weight = tf.constant(np.random.random_sample(weight_shape), dtype=tf.float32)
     bias = tf.constant(np.random.random_sample(bias_shape), dtype=tf.float32)
