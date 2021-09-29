@@ -187,7 +187,7 @@ class TransformerBlock(object):
         self.feed_forward = PositionwiseFeedForward(d_model=hidden, d_ff=feed_forward_hidden, dropout=dropout)
         self.input_sublayer = SublayerConnection(size=hidden, dropout=dropout)
         self.output_sublayer = SublayerConnection(size=hidden, dropout=dropout)
-        # self.dropout = nn.Dropout(p=dropout)
+        self.dropout = dropout
 
     def forward(self, x, mask):
         x = self.input_sublayer.forward(x, lambda _x: self.attention.forward(_x, _x, _x, mask=mask))
