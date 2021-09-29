@@ -52,7 +52,7 @@ class SublayerConnection(object):
 
     def forward(self, x, sublayer):
         # return x + self.dropout(sublayer(self.norm(x)))
-        return x + sublayer(self.norm(x))
+        return x + sublayer.forward(self.norm.forward(x))
         # return x + sublayer(x)
 
 class SegmentEmbedding(object):
