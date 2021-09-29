@@ -85,10 +85,10 @@ def make_maxpool2d(input_tensor, kernels, strides, padding):
 
 def make_linear(input_tensor, out_channels):
     weight_shape = (input_tensor.shape[1], out_channels)
-    #bias_shape = (1, out_channels)
+    bias_shape = (1, out_channels)
     weight = tf.constant(np.random.random_sample(weight_shape), dtype=tf.float32)
-    #bias = tf.constant(np.random.random_sample(bias_shape), dtype=tf.float32)
-    return tf.matmul(input_tensor, weight)#tf.math.add(tf.matmul(input_tensor, weight), bias)
+    bias = tf.constant(np.random.random_sample(bias_shape), dtype=tf.float32)
+    return tf.math.add(tf.matmul(input_tensor, weight), bias)
  
 def make_matmul(input_tensor, out_channels):
     weight_shape = (input_tensor.shape[1], out_channels)

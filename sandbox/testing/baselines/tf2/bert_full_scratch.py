@@ -4,13 +4,20 @@ import numpy as np
 import time
 from shared_functions import make_matmul, measure_tf2_gpu
 import os, math
-from shared_functions import make_linear
 
 this_code_path = os.path.dirname(os.path.abspath(__file__))
 #model_path = f"{this_code_path}/../onnx/bert_full.pb"
 #model = tf.saved_model.load(model_path)
 
 import torch
+
+def make_linear(input_tensor, out_channels):
+    weight_shape = (input_tensor.shape[0], input_tensor.shape[1], out_channels)
+    bias_shape = (input_tensor.shape[0], 1, out_channels)
+    weight = tf.constant(np.random.random_sample(weight_shape), dtype=tf.float32)
+    bias = tf.constant(np.random.random_sample(bias_shape), dtype=tf.float32)
+    return tf.math.add(tf.matmul(input_tensor, weight), bias)
+ 
 
 class LayerNorm(object):
 
