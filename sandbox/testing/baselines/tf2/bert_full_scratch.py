@@ -59,7 +59,7 @@ class SublayerConnection(object):
 
     def forward(self, x, sublayer):
         # return x + self.dropout(sublayer(self.norm(x)))
-        return x + sublayer.forward(self.norm.forward(x))
+        return x + sublayer(self.norm.forward(x))
         # return x + sublayer(x)
 
 class SegmentEmbedding(object):
@@ -192,7 +192,7 @@ class TransformerBlock(object):
 
     def forward(self, x, mask):
         x = self.input_sublayer.forward(x, lambda _x: self.attention.forward(_x, _x, _x, mask=mask))
-        x = self.output_sublayer.forward(x, self.feed_forward)
+        x = self.output_sublayer.forward(x, self.feed_forward.forward)
         return x
         # return self.dropout(x)
 
