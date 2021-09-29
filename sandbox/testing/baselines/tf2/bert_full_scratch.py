@@ -4,7 +4,7 @@ import numpy as np
 import time
 from shared_functions import make_matmul, measure_tf2_gpu
 import os, math
-from shared_functions import make_matmul
+from shared_functions import make_linear
 
 this_code_path = os.path.dirname(os.path.abspath(__file__))
 #model_path = f"{this_code_path}/../onnx/bert_full.pb"
@@ -35,15 +35,14 @@ class GELU(object):
 class PositionwiseFeedForward(object):
     def __init__(self, d_model, d_ff, dropout=0.1):
         super(PositionwiseFeedForward, self).__init__()
-        self.w_1 = nn.Linear(d_model, d_ff)
-        self.w_2 = nn.Linear(d_ff, d_model)
+        self.w_1 = make_linear(d_model, d_ff)
+        self.w_2 = make_linear(d_ff, d_model)
         # self.dropout = nn.Dropout(dropout)
         # self.activation = GELU()
-        self.activation = nn.ReLU(inplace=True)
 
     def forward(self, x):
         # return self.w_2(self.dropout(self.activation(self.w_1(x))))
-        return self.w_2(self.activation(self.w_1(x)))
+        return self.w_2(tf.nn.relu(self.w_1(x)))
 
 class SublayerConnection(object):
     def __init__(self, size, dropout):
@@ -127,11 +126,11 @@ class MultiHeadedAttention(object):
         self.d_k = d_model // h
         self.h = h
 
-        self.linear_layers = [nn.Linear(d_model, d_model) for _ in range(3)]
-        self.output_linear = nn.Linear(d_model, d_model)
+        self.linear_layers = [make_linear(d_model, d_model) for _ in range(3)]
+        self.output_linear = make_linear(d_model, d_model)
         self.attention = Attention()
 
-        self.dropout = nn.Dropout(p=dropout)
+        #self.dropout = nn.Dropout(p=dropout)
 
     def forward(self, query, key, value, mask=None):
         batch_size = query.size(0)
