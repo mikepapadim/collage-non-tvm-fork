@@ -94,7 +94,7 @@ class PositionalEmbedding(object):
         self.pe = tf.constant(self.pe.numpy())
 
     def forward(self, x):
-        return self.pe[:, :x.size(1)]
+        return self.pe[:, :x.shape[1]]
 
 class BERTEmbedding(object):
     def __init__(self, vocab_size, embed_size, dropout=0.1):
@@ -146,7 +146,7 @@ class MultiHeadedAttention(object):
         #self.dropout = nn.Dropout(p=dropout)
 
     def forward(self, query, key, value, mask=None):
-        batch_size = query.size(0)
+        batch_size = query.shape[0]
 
         # 1) Do all the linear projections in batch from d_model => h x d_k
         query, key, value = [l(x).view(batch_size, -1, self.h, self.d_k).transpose(1, 2)
