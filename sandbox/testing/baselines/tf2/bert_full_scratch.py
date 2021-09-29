@@ -161,7 +161,7 @@ class MultiHeadedAttention(object):
                              for l, x in zip(self.linear_layers, (query, key, value))]
 
         # 2) Apply attention on all the projected vectors in batch.
-        x, attn = self.attention(query, key, value, mask=mask, dropout=0)
+        x, attn = self.attention.forward(query, key, value, mask=mask, dropout=0)
 
         # 3) "Concat" using a view and apply a final linear.
         #x = x.transpose(1, 2).contiguous().view(batch_size, -1, self.h * self.d_k)
