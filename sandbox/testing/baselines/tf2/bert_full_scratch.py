@@ -125,9 +125,9 @@ class Attention(object):
 
         # if mask is not None:
         #     scores = scores.masked_fill(mask == 0, -1e9)
-        print(scores.shape)
-        
-        p_attn = tf.nn.softmax(scores, axis=scores.shape[-1])
+        #print(scores.shape)
+
+        p_attn = tf.nn.softmax(scores, axis=3)
 
         # if dropout is not None:
         #     p_attn = dropout(p_attn)
