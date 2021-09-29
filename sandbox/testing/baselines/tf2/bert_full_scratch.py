@@ -120,7 +120,7 @@ class BERTEmbedding(object):
 class Attention(object):
     def forward(self, query, key, value, mask=None, dropout=None):
         ks = key.shape
-        scores = tf.matmul(query, tf.nn.transpose(key, perm=[ks[0], ks[-2], ks[-1]]) ) \
+        scores = tf.matmul(query, tf.transpose(key, perm=[ks[0], ks[-2], ks[-1]]) ) \
                  / math.sqrt(query.shape[-1])
 
         if mask is not None:
