@@ -182,8 +182,8 @@ class TransformerBlock(object):
         # self.dropout = nn.Dropout(p=dropout)
 
     def forward(self, x, mask):
-        x = self.input_sublayer(x, lambda _x: self.attention.forward(_x, _x, _x, mask=mask))
-        x = self.output_sublayer(x, self.feed_forward)
+        x = self.input_sublayer.forward(x, lambda _x: self.attention.forward(_x, _x, _x, mask=mask))
+        x = self.output_sublayer.forward(x, self.feed_forward)
         return x
         # return self.dropout(x)
 
