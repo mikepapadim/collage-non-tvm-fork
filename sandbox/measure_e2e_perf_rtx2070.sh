@@ -59,7 +59,7 @@ CUDA_VISIBLE_DEVICES=1 python3 testing/measure_end_to_end.py -n bert_full -hw rt
 
 # TF, TF-XLA measurement
 #XLA_FLAGS=--xla_gpu_cuda_data_dir=/usr/local/cuda TF_XLA_FLAGS="--tf_xla_auto_jit=2"
-#XLA_FLAGS=--xla_gpu_cuda_data_dir=/usr/local/cuda CUDA_VISIBLE_DEVICES=1 python3 testing/baselines/tf2/bert.py -hw rtx2070 -bs 8
+#XLA_FLAGS=--xla_gpu_cuda_data_dir=/usr/local/cuda CUDA_VISIBLE_DEVICES=1 python3 testing/baselines/tf2/bert_full_scratch.py -hw rtx2070 -bs 8
 #XLA_FLAGS=--xla_gpu_cuda_data_dir=/usr/local/cuda CUDA_VISIBLE_DEVICES=1 python3 testing/baselines/tf2/dcgan.py -hw rtx2070 -bs 8
 #XLA_FLAGS=--xla_gpu_cuda_data_dir=/usr/local/cuda CUDA_VISIBLE_DEVICES=1 python3 testing/baselines/tf2/resnext50.py -hw rtx2070 -bs 8
 #XLA_FLAGS=--xla_gpu_cuda_data_dir=/usr/local/cuda CUDA_VISIBLE_DEVICES=1 python3 testing/baselines/tf2/nasnet_a.py -hw rtx2070 -bs 8

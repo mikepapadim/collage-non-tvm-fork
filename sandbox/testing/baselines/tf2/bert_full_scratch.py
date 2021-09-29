@@ -4,13 +4,20 @@ import numpy as np
 import time
 from shared_functions import make_matmul, measure_tf2_gpu
 import os, math
-from shared_functions import make_linear
 
 this_code_path = os.path.dirname(os.path.abspath(__file__))
 #model_path = f"{this_code_path}/../onnx/bert_full.pb"
 #model = tf.saved_model.load(model_path)
 
 import torch
+
+def make_linear(input_tensor, out_channels):
+    weight_shape = (input_tensor.shape[0], input_tensor.shape[2], out_channels)
+    bias_shape = (input_tensor.shape[0], 1, out_channels)
+    weight = tf.constant(np.random.random_sample(weight_shape), dtype=tf.float32)
+    bias = tf.constant(np.random.random_sample(bias_shape), dtype=tf.float32)
+    return tf.math.add(tf.matmul(input_tensor, weight), bias)
+ 
 
 class LayerNorm(object):
 
@@ -21,7 +28,7 @@ class LayerNorm(object):
         self.eps = eps
 
     def forward(self, x):
-        mean, var = tf.nn.moments(x, len(x.shape) - 1, shift=None, keepdims=False, name=None)
+        mean, var = tf.nn.moments(x, len(x.shape) - 1, shift=None, keepdims=True, name=None)
         std = tf.sqrt(var)
         #mean = x.mean(-1, keepdim=True)
         #std = x.std(-1, keepdim=True)
@@ -35,8 +42,8 @@ class GELU(object):
 class PositionwiseFeedForward(object):
     def __init__(self, d_model, d_ff, dropout=0.1):
         super(PositionwiseFeedForward, self).__init__()
-        self.w_1 = make_linear(d_model, d_ff)
-        self.w_2 = make_linear(d_ff, d_model)
+        self.w_1 = lambda x: make_linear(x, d_ff)
+        self.w_2 = lambda x: make_linear(x, d_model)
         # self.dropout = nn.Dropout(dropout)
         # self.activation = GELU()
 
@@ -52,7 +59,7 @@ class SublayerConnection(object):
 
     def forward(self, x, sublayer):
         # return x + self.dropout(sublayer(self.norm(x)))
-        return x + sublayer(self.norm(x))
+        return x + sublayer(self.norm.forward(x))
         # return x + sublayer(x)
 
 class SegmentEmbedding(object):
@@ -94,7 +101,7 @@ class PositionalEmbedding(object):
         self.pe = tf.constant(self.pe.numpy())
 
     def forward(self, x):
-        return self.pe[:, :x.size(1)]
+        return self.pe[:, :x.shape[1]]
 
 class BERTEmbedding(object):
     def __init__(self, vocab_size, embed_size, dropout=0.1):
@@ -113,13 +120,14 @@ class BERTEmbedding(object):
 class Attention(object):
     def forward(self, query, key, value, mask=None, dropout=None):
         ks = key.shape
-        scores = tf.matmul(query, tf.nn.transpose(key, perm=[ks[0], ks[-2], ks[-1]]) ) \
+        scores = tf.matmul(query, tf.transpose(key, perm=[0,1,3,2]) ) \
                  / math.sqrt(query.shape[-1])
 
-        if mask is not None:
-            scores = scores.masked_fill(mask == 0, -1e9)
+        # if mask is not None:
+        #     scores = scores.masked_fill(mask == 0, -1e9)
+        #print(scores.shape)
 
-        p_attn = tf.nn.softmax(scores, axis=scores.shape[-1])
+        p_attn = tf.nn.softmax(scores, axis=3)
 
         # if dropout is not None:
         #     p_attn = dropout(p_attn)
@@ -139,25 +147,26 @@ class MultiHeadedAttention(object):
         self.d_k = d_model // h
         self.h = h
 
-        self.linear_layers = [make_linear(d_model, d_model) for _ in range(3)]
-        self.output_linear = make_linear(d_model, d_model)
+        self.linear_layers = [lambda x: make_linear(x, d_model) for _ in range(3)]
+        self.output_linear = lambda x: make_linear(x, d_model)
         self.attention = Attention()
 
         #self.dropout = nn.Dropout(p=dropout)
 
     def forward(self, query, key, value, mask=None):
-        batch_size = query.size(0)
+        batch_size = query.shape[0]
 
+        # print(batch_size)
         # 1) Do all the linear projections in batch from d_model => h x d_k
-        query, key, value = [l(x).view(batch_size, -1, self.h, self.d_k).transpose(1, 2)
+        query, key, value = [tf.transpose(tf.reshape(l(x),(batch_size, -1, self.h, self.d_k)), perm=[0,2,1,3])
                              for l, x in zip(self.linear_layers, (query, key, value))]
 
         # 2) Apply attention on all the projected vectors in batch.
-        x, attn = self.attention(query, key, value, mask=mask, dropout=self.dropout)
+        x, attn = self.attention.forward(query, key, value, mask=mask, dropout=0)
 
         # 3) "Concat" using a view and apply a final linear.
-        x = x.transpose(1, 2).contiguous().view(batch_size, -1, self.h * self.d_k)
-
+        #x = x.transpose(1, 2).contiguous().view(batch_size, -1, self.h * self.d_k)
+        x = tf.reshape(tf.transpose(x,perm=[0,2,1,3]),(batch_size, -1, self.h * self.d_k))
         return self.output_linear(x)
 
 class TransformerBlock(object):
@@ -179,11 +188,11 @@ class TransformerBlock(object):
         self.feed_forward = PositionwiseFeedForward(d_model=hidden, d_ff=feed_forward_hidden, dropout=dropout)
         self.input_sublayer = SublayerConnection(size=hidden, dropout=dropout)
         self.output_sublayer = SublayerConnection(size=hidden, dropout=dropout)
-        # self.dropout = nn.Dropout(p=dropout)
+        self.dropout = dropout
 
     def forward(self, x, mask):
-        x = self.input_sublayer(x, lambda _x: self.attention.forward(_x, _x, _x, mask=mask))
-        x = self.output_sublayer(x, self.feed_forward)
+        x = self.input_sublayer.forward(x, lambda _x: self.attention.forward(_x, _x, _x, mask=mask))
+        x = self.output_sublayer.forward(x, self.feed_forward.forward)
         return x
         # return self.dropout(x)
 
@@ -224,7 +233,7 @@ class BERTFULL(object):
 model = BERTFULL()
 
 def bert_full_tf2_model(input):
-    return model(input0=input)
+    return model.forward(input)
 
 # @tf.function(jit_compile=False)
 @tf.function(experimental_compile=False)
