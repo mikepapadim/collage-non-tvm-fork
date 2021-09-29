@@ -156,7 +156,7 @@ class MultiHeadedAttention(object):
     def forward(self, query, key, value, mask=None):
         batch_size = query.shape[0]
 
-        print(batch_size)
+        # print(batch_size)
         # 1) Do all the linear projections in batch from d_model => h x d_k
         query, key, value = [tf.transpose(tf.reshape(l(x),(batch_size, -1, self.h, self.d_k)), perm=[0,2,1,3])
                              for l, x in zip(self.linear_layers, (query, key, value))]
