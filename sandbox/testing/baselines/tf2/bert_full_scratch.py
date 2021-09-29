@@ -30,7 +30,7 @@ class LayerNorm(object):
 
 class GELU(object):
     def forward(self, x):
-        return 0.5 * x * (1 + torch.tanh(math.sqrt(2 / math.pi) * (x + 0.044715 * torch.pow(x, 3))))
+        return 0.5 * x * (1 + tf.math.tanh(math.sqrt(2 / math.pi) * (x + 0.044715 * tf.math.pow(x, 3))))
 
 class PositionwiseFeedForward(object):
     def __init__(self, d_model, d_ff, dropout=0.1):
@@ -55,13 +55,24 @@ class SublayerConnection(object):
         return x + sublayer(self.norm(x))
         # return x + sublayer(x)
 
-class SegmentEmbedding(nn.Embedding):
+class SegmentEmbedding(object):
     def __init__(self, embed_size=512):
-        super().__init__(3, embed_size, padding_idx=0)
+        self.embeds = tf.constant(np.random.random_sample((3,embed_size)), dtype=tf.float32)
+        #super().__init__(3, embed_size, padding_idx=0)
+    def forward(self, x):
+        return tf.nn.embedding_lookup(
+            self.embeds, x, max_norm=None, name=None
+        )
 
-class TokenEmbedding(nn.Embedding):
+
+class TokenEmbedding(object):
     def __init__(self, vocab_size, embed_size=512):
-        super().__init__(vocab_size, embed_size, padding_idx=0)
+        #super().__init__(vocab_size, embed_size, padding_idx=0)
+        self.embeds = tf.constant(np.random.random_sample((vocab_size,embed_size)), dtype=tf.float32)
+    def forward(self, x):
+        return tf.nn.embedding_lookup(
+            self.embeds, x, max_norm=None, name=None
+        )    
 
 class PositionalEmbedding(object):
 
@@ -80,6 +91,7 @@ class PositionalEmbedding(object):
 
         pe = pe.unsqueeze(0)
         self.register_buffer('pe', pe)
+        self.pe = tf.constant(self.pe.numpy())
 
     def forward(self, x):
         return self.pe[:, :x.size(1)]
@@ -94,24 +106,25 @@ class BERTEmbedding(object):
         self.embed_size = embed_size
 
     def forward(self, sequence, segment_label):
-        x = self.token(sequence) + self.position(sequence) + self.segment(segment_label)
+        x = self.token.forward(sequence) + self.position.forward(sequence) + self.segment.forward(segment_label)
         return x
         # return self.dropout(x)
 
 class Attention(object):
     def forward(self, query, key, value, mask=None, dropout=None):
-        scores = torch.matmul(query, key.transpose(-2, -1)) \
-                 / math.sqrt(query.size(-1))
+        ks = key.shape
+        scores = tf.matmul(query, tf.nn.transpose(key, perm=[ks[0], ks[-2], ks[-1]]) ) \
+                 / math.sqrt(query.shape[-1])
 
         if mask is not None:
             scores = scores.masked_fill(mask == 0, -1e9)
 
-        p_attn = F.softmax(scores, dim=-1)
+        p_attn = tf.nn.softmax(scores, axis=scores.shape[-1])
 
         # if dropout is not None:
         #     p_attn = dropout(p_attn)
 
-        return torch.matmul(p_attn, value), p_attn
+        return tf.matmul(p_attn, value), p_attn
 
 class MultiHeadedAttention(object):
     """
