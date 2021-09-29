@@ -224,7 +224,7 @@ class BERTFULL(object):
 model = BERTFULL()
 
 def bert_full_tf2_model(input):
-    return model(input0=input)
+    return model.forward(input)
 
 # @tf.function(jit_compile=False)
 @tf.function(experimental_compile=False)
