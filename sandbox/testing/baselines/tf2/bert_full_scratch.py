@@ -123,9 +123,10 @@ class Attention(object):
         scores = tf.matmul(query, tf.transpose(key, perm=[0,1,3,2]) ) \
                  / math.sqrt(query.shape[-1])
 
-        if mask is not None:
-            scores = scores.masked_fill(mask == 0, -1e9)
-
+        # if mask is not None:
+        #     scores = scores.masked_fill(mask == 0, -1e9)
+        print(scores.shape)
+        
         p_attn = tf.nn.softmax(scores, axis=scores.shape[-1])
 
         # if dropout is not None:
