@@ -1430,9 +1430,37 @@ namespace tvm {
       // WARNING(@Soo): Assume that all exprs are function!
       const FunctionNode* fn_node = static_cast<const FunctionNode*>(expr.get());
       bool is_custom_pass = false;
+
       // Warning(@Soo) - every fusion should be done by saved match log regardless of algorithms!
       // If you comment this line, we can try original fusion pass.
       if (fn_node->GetAttr<IntImm>(attr::kCustomFusionPass).defined()) is_custom_pass = true;
+
+      // Warning(@Soo): It only works for CHAIN FUSION PATTERN now
+      struct AssignNewOpGroupToBrokenChildren : ExprVisitor {
+        std::string parent_of_new_node_backend;
+        bool is_any_broken_children = false;
+
+        void Assign(std::string backend_name, const Expr& expr) {
+          is_any_broken_children = false;
+          parent_of_new_node_backend = backend_name;
+
+          this->VisitExpr(expr);
+          if (is_any_broken_children) ++NEW_BACKEND_GROUP_ID_FUSE_PASS;
+        }
+
+        void VisitExpr_(const CallNode* op) final {
+          if (op->backend.operator std::string().compare(parent_of_new_node_backend) == 0) {
+            is_any_broken_children = true;
+            // This needs to be updated to afford all other backends
+            // Not only the autotvm
+            std::string new_backend = std::to_string(NEW_BACKEND_GROUP_ID_FUSE_PASS) + "-autotvm";
+            GetRef<Expr>(op).as_non_const<CallNode>()->backend = new_backend;
+            for (auto arg : op->args) {
+              this->VisitExpr(arg);
+            }
+          }
+        }
+      };
 
       struct InferBackendForConstantVisitor : ExprVisitor {
         String parent_backend_ = "default";
@@ -1452,20 +1480,22 @@ namespace tvm {
               if (op_node->name == "expand_dims") {
                 MutateBackendCopy(GetRef<Expr>(op), parent_backend_);
               } else if (op_node->name == "layout_transform") {
-                if (parent_backend_.operator std::string().compare("default") == 0) {
-                  // If layout_transform is a parent of Call, then we shouldn't fuse it with
-                  // the following Call function; that's what TVM does.
-                  // It is also faster without fusion.
-                  UpdateBackendWithNewGroup<CallNode>(GetRef<Expr>(op));
-                  // We can safely assume that the input of layout transformation is always call node
-//                  const CallNode* child_call = op->args[0].as<CallNode>();
-//                  auto child_backend = child_call->backend;
-//                  MutateBackendCopy(GetRef<Expr>(op), child_backend);
-                } else {
-                  // In one convolution test, it seems that fusion is slower than non-fusion case.
-                  UpdateBackendWithNewGroup<CallNode>(GetRef<Expr>(op));
-//                  MutateBackendCopy(GetRef<Expr>(op), parent_backend_);
-                }
+                // If layout_transform is a parent of Call, then we shouldn't fuse it with
+                // the following Call function; that's what TVM does.
+                // It is also faster without fusion.
+                // e.g., in one convolution test, it seems that fusion is slower than non-fusion case.
+                UpdateBackendWithNewGroup<CallNode>(GetRef<Expr>(op));
+
+                // If you want fusion with child or parent, use the code below
+//                const CallNode* child_call = op->args[0].as<CallNode>();
+//                auto child_backend = child_call->backend;
+//                MutateBackendCopy(GetRef<Expr>(op), child_backend);
+//                MutateBackendCopy(GetRef<Expr>(op), parent_backend_);
+
+                // Create new group id to children fused ops that are broken bu layout_transform
+                // Warning(@Soo): It only works for CHAIN FUSION PATTERN now
+                // We can safely assume that the input of layout transformation is always call node.
+                AssignNewOpGroupToBrokenChildren().Assign(parent_backend_.operator std::string(), op->args[0]);
               } else {
                   ICHECK(0) << "Unexpected operator type (" << op_node->name << ") "
                             << "with the backend of default"
