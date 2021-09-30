@@ -22,7 +22,7 @@ class BackendStateType(IntEnum):
 This class translates optimized_match (Key: expression / Value: annotation (group_id + op_name))
 into group_id_to_exprs_anno (Key: state id / Value: a list of pairs of expression and its annotation)
 
-group_id_to_exprs_anno will be used for building state (search space) for evolutionary search 
+group_id_to_exprs_anno will be used for building state (search space) for evolutionary search
 """
 
 class MatchToOpGroupTranslator(ExprVisitor):
@@ -94,14 +94,20 @@ def is_invalid_ext_compiler_op_dnnl(expr):
     is_valid |= optype_to_pattern["BATCHNORM"].match(expr)
     is_valid |= optype_to_pattern["DENSE"].match(expr)
     is_valid |= optype_to_pattern["RELU"].match(expr)
+    is_valid |= is_constant_or_var_node(expr)
+
+    if optype_to_pattern["RELU"].match(expr):
+        shape = expr.checked_type.shape
+        if len(shape)!=4:
+            is_valid = False
 
     return not is_valid
 
 
 """
-This back-translates state_id_to_exprs_anno into optimized_match for measurement; 
+This back-translates state_id_to_exprs_anno into optimized_match for measurement;
 It translates state_id_to_exprs_anno (Key: state id / Value: a list of pairs of expression and its annotation)
-into optimized_match (Key: expression / Value: annotation (group_id + op_name)) 
+into optimized_match (Key: expression / Value: annotation (group_id + op_name))
 """
 
 backend_to_invalid_op_checker = {
@@ -135,7 +141,9 @@ class OpStateToMatchTranslator():
             # If one of ops is tuple or tuple_get_item, then prevent it from being ext compiler ops
             if self.is_invalid_ext_compiler_op(expr):
                 is_valid_op_state = False
-                # print(type(expr), anno)
+                #if 'conv2d' in anno:
+                #    print(f"{anno} is invalid")
+                #    print(type(expr), anno)
                 break
 
         # If this is External compiler op chosen from the first op optimizing pass,
@@ -143,8 +151,10 @@ class OpStateToMatchTranslator():
         if first_backend in EXT_COMPILERS:
             is_valid_op_state = False
 
-        # print(is_valid_op_state)
-        # print("-"*30)
+        #print("-"*30)
+        #if is_valid_op_state:
+        #    print(f"{anno} : is valid? {is_valid_op_state}")
+
         return is_valid_op_state
 
 
