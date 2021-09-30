@@ -12,10 +12,12 @@
 
 # Pass
 #python3 testing/measure_end_to_end.py -n resnext50_32x4d -hw xeon
-#python3 testing/measure_end_to_end.py -n dcgan -hw xeon
 #python3 testing/measure_end_to_end.py -n resnet50_3d -hw xeon
 #python3 testing/measure_end_to_end.py -n nasneta -hw xeon
 #python3 testing/measure_end_to_end.py -n bert_full -hw xeon
+
+# Error (DCGAN)
+python3 testing/measure_end_to_end.py -n dcgan -hw xeon
 #python3 testing/measure_end_to_end.py -n bert -hw xeon
 
 # Fail

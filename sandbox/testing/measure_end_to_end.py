@@ -424,16 +424,16 @@ if __name__ == "__main__":
     log_dir = "e2e_measure_logs"
 
     # For DP,
-    #setup_logging(log_dir, task_name="e2e_measure", net_name=args.network, hw_name=args.hw, batch_size=args.batch_size,
-    #              logging_level=logging.INFO)
+    setup_logging(log_dir, task_name="e2e_measure", net_name=args.network, hw_name=args.hw, batch_size=args.batch_size,
+                  logging_level=logging.INFO)
                   # logging_level=logging.WARNING)
 
     # For tuning time measurement, comment setup_logging above and uncomment the following codes
     # logging.basicConfig(level=logging.ERROR)
 
     # It shows all logs. Still, it is too messy though cuz TVM logs are interrupting with our logs
-    #logging.basicConfig(level=logging.INFO)
-    logging.basicConfig(level=logging.WARNING)
+    logging.basicConfig(level=logging.INFO)
+    # logging.basicConfig(level=logging.WARNING)
 
     # We can't test this because this network include batch norm.
     logging.info(f"batch size: {args.batch_size}")
@@ -453,8 +453,8 @@ if __name__ == "__main__":
 
     # Assign build target based on a given hw
     args.target = get_build_target(args.hw)
-    # is_perf_logging = True
-    is_perf_logging = False
+    is_perf_logging = True
+    # is_perf_logging = False
 
     # print("NETWORK LOADED")
     # mean_perf, std_perf, mod_dnnl = measure_end_to_end_perf_dnnl(mod, params, args.target, shape_dict, args.hw, args)
@@ -473,8 +473,8 @@ if __name__ == "__main__":
 
 
     # measure_dp_and_baselines(mod, params, shape_dict, args, is_perf_logging)
-    measure_autotvm(mod, params, shape_dict, args, is_perf_logging)
-    # measure_two_level(mod, params, shape_dict, args, is_perf_logging)
+    # measure_autotvm(mod, params, shape_dict, args, is_perf_logging)
+    measure_two_level(mod, params, shape_dict, args, is_perf_logging)
     # measure_dp_tuning_time(mod, params, shape_dict, args, is_perf_logging)
 
     # Debug: test single backend pipeline that offloads ops to single backend whenever possible
