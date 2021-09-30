@@ -405,6 +405,9 @@ class DPTable:
         logging.info("Matched operators (in post-dfs-order, from the root of comp graph to the last node)")
         group_id, backend_annotation = 0, None
         optimized_match = {}
+
+        # Match annotation
+        matched_b_op_name = []
         # Note that we have one dummy cell, and that's why it's opt_match_cell.prev_cell instead of opt_match_cell
         while opt_match_cell.prev_cell is not None:
             # Warning(@Soo): It might be important which backend to assign to data node
@@ -418,6 +421,7 @@ class DPTable:
                 optimized_match[expr] = backend_annotation
 
             logging.warning(f"{backend_annotation}")
+            matched_b_op_name.append(backend_annotation)
 
             opt_match_cell = opt_match_cell.prev_cell
             # if opt_match_cell is not None:
@@ -425,5 +429,6 @@ class DPTable:
             group_id += 1
 
         logging.info("=" * 50)
+        log_matched_ops_by_method("dp", self._hw_name, matched_b_op_name)
 
         return optimized_match

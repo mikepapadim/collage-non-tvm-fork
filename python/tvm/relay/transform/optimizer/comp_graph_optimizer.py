@@ -264,9 +264,28 @@ class CompGraphOptimizer:
             # else:
             #     printe(f"n_match_froniter : {n_match_frontier}")
 
-        # Print out matched operators
+        # Get max_group_id
+        max_group_id = 0
+        for anno in matched_b_op_name:
+            group_id = int(get_group_id_from_backend_op_annotation(anno))
+            if max_group_id < group_id:
+                max_group_id = group_id
+
+        # Get new annotation
+        for idx, anno in enumerate(matched_b_op_name):
+            group_id = int(get_group_id_from_backend_op_annotation(anno))
+            new_group_id = max_group_id - group_id
+            backend_op_name = get_backendop_name_from_backend_op_annotation(anno)
+            new_anno = create_backend_op_annotation(new_group_id, backend_op_name)
+            matched_b_op_name[idx] = new_anno
+        matched_b_op_name = matched_b_op_name[::-1]
+
+        # Log to files
+        log_matched_ops_by_method("single_backend", hw_name, matched_b_op_name)
+
+        # Log into stdout
         logging.info("=" * 50)
-        logging.info("Matched operators (from the last node of comp graph to the root, which is data node)")
+        logging.info("Matched operators (in post-dfs-order, from the root of comp graph to the last node)")
         for anno in matched_b_op_name:
             logging.info(anno)
 
