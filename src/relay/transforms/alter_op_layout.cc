@@ -93,10 +93,12 @@ class AlterTransformMemorizer : public TransformMemorizer {
 
     // Warning(@Soo): Second condition is added to prevent CuDNN op (Conv2d)
     // from being altered to Winograd conv
-    bool is_cudnn_or_cublas = GetBackendFromAnnotation(ref_call->backend) == "cudnn";
-    is_cudnn_or_cublas |= GetBackendFromAnnotation(ref_call->backend) == "cublas";
+    // MKL (dense) op should be prevented from being altered to nn.contrib_dense_pack
+    bool is_cudnn_or_cublas_or_mkl = GetBackendFromAnnotation(ref_call->backend) == "cudnn";
+    is_cudnn_or_cublas_or_mkl |= GetBackendFromAnnotation(ref_call->backend) == "cublas";
+    is_cudnn_or_cublas_or_mkl |= GetBackendFromAnnotation(ref_call->backend) == "mkl";
 
-    if (falter_layout.count(op) && !is_cudnn_or_cublas) {
+    if (falter_layout.count(op) && !is_cudnn_or_cublas_or_mkl) {
       tvm::Array<tvm::te::Tensor> tinfos;
       for (auto expr : ref_call->args) {
         auto ttype = expr->type_as<TensorTypeNode>();
