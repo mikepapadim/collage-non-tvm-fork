@@ -140,6 +140,8 @@ v100,16,resnext50_32x4d,AutoTVM,15.1673,0.0044
 v100,16,resnext50_32x4d,AutoTVM-libs,20.5878,0.0072
 v100,16,resnext50_32x4d,DP,12.3561,0.0032
 v100,16,resnext50_32x4d,PyTorch,18.6208,0.8105
+v100,16,resnext50_32x4d,TF,50.3611,1.5472
+v100,16,resnext50_32x4d,TF-XLA,46.7323,2.6854
 v100,16,resnext50_32x4d,TensorRT,15.6582,0.0077
 v100,16,resnext50_32x4d,Two-level,12.3507,0.0060
 v100,16,resnext50_32x4d,cuDNN,20.5556,0.0047
@@ -147,6 +149,8 @@ v100,4,resnext50_32x4d,AutoTVM,4.5478,0.0014
 v100,4,resnext50_32x4d,AutoTVM-libs,7.6965,0.0008
 v100,4,resnext50_32x4d,DP,4.1300,0.0009
 v100,4,resnext50_32x4d,PyTorch,8.6901,0.0313
+v100,4,resnext50_32x4d,TF,39.8693,1.0524
+v100,4,resnext50_32x4d,TF-XLA,37.3815,0.8892
 v100,4,resnext50_32x4d,TensorRT,5.9519,0.0024
 v100,4,resnext50_32x4d,Two-level,4.0223,0.0017
 v100,4,resnext50_32x4d,cuDNN,7.5381,0.0028
@@ -154,6 +158,8 @@ v100,8,resnext50_32x4d,AutoTVM,7.7766,0.0011
 v100,8,resnext50_32x4d,AutoTVM-libs,12.6225,0.0002
 v100,8,resnext50_32x4d,DP,6.7300,0.0023
 v100,8,resnext50_32x4d,PyTorch,10.7037,0.0895
+v100,8,resnext50_32x4d,TF,39.9079,1.6869
+v100,8,resnext50_32x4d,TF-XLA,41.3404,1.4052
 v100,8,resnext50_32x4d,TensorRT,9.7770,0.0042
 v100,8,resnext50_32x4d,Two-level,6.6940,0.0028
 v100,8,resnext50_32x4d,cuDNN,12.7181,0.0052
