@@ -93,7 +93,7 @@ v100,1,bert_full,PyTorch,10.5021,2.8409
 v100,1,bert_full,TF,4.4807,0.1733
 v100,1,bert_full,TF-XLA,1.7175,0.0381
 v100,1,bert_full,TensorRT,6.4405,0.0024
-v100,1,bert_full,Two-level,1.1051,0.0002
+v100,1,bert_full,Two-level,1.0923,0.0003
 v100,1,bert_full,cuDNN,1.3528,0.0006
 v100,1,dcgan,AutoTVM,1.5847,0.0003
 v100,1,dcgan,AutoTVM-libs,1.3040,0.0003
