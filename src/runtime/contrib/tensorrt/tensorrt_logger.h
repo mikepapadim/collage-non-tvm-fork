@@ -51,7 +51,7 @@ class TensorRTLogger : public nvinfer1::ILogger {
         LOG(ERROR) << "ERROR: " << msg;
         break;
       case Severity::kWARNING:
-        LOG(WARNING) << "WARNING: " << msg;
+        //LOG(WARNING) << "WARNING: " << msg;
         break;
       case Severity::kINFO:
         LOG(INFO) << "INFO: " << msg;
