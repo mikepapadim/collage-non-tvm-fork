@@ -16,7 +16,7 @@ def setup_df_with_baselines_and_method(df, methods):
     # Make sure column order is following before we normalize perf
     df = df[methods]
 
-    df = df.rename(columns={'AutoTVM-libs': 'TVM'})
+    df = df.rename(columns={'AutoTVM-libs': 'TVM', 'DP':'Op-level'})
 
     df = df.loc[FINAL_NETWORKS]
     df = df.rename(index=NET_NAME_TO_OFFICIAL)
@@ -29,7 +29,7 @@ def setup_df_with_baselines_and_method_diff_batch(df, methods):
     # Make sure column order is following before we normalize perf
     df = df[methods]
 
-    df = df.rename(columns={'AutoTVM-libs': 'TVM'})
+    df = df.rename(columns={'AutoTVM-libs': 'TVM', 'DP':'Op-level'})
 
     df = df.loc[[1,4,8,16]]
     BATCH_SIZE_TO_TEXT = {
@@ -53,7 +53,7 @@ def setup_df_for_normalized_perf_plot_diff_batch(df):
     # print(df.iloc[0:5, :])
 
     # Add Geomean
-    df.loc['GeoMean'] = stats.gmean(df.iloc[0:5, :], axis=0)
+    # df.loc['GeoMean'] = stats.gmean(df.iloc[0:5, :], axis=0)
 
     # Correct Geomean of TF-XLA to deal with missing values
     xla_perf = [df.loc['BatchSize=1', 'TF-XLA'], df.loc['BatchSize=4', 'TF-XLA'],

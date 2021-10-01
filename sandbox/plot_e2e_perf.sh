@@ -4,9 +4,9 @@
 # CUDA_VISIBLE_DEVICES=1 --> RTX2070
 
 ## Make sure you uncomment visualization code in "get_user_fusion" function in _optimizer.py
-#python3 testing/plot_e2e_perf.py -hw rtx2070 -bs 1
-#python3 testing/plot_e2e_perf.py -hw v100 -bs 1
-#python3 testing/plot_e2e_perf.py -hw xeon -bs 1
+python3 testing/plot_e2e_perf.py -hw rtx2070 -bs 1
+python3 testing/plot_e2e_perf.py -hw v100 -bs 1
+python3 testing/plot_e2e_perf.py -hw xeon -bs 1
 python3 testing/plot_e2e_perf.py -hw diff_batch_v100 -bs 1
 
 
