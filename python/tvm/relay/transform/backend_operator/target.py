@@ -129,6 +129,13 @@ def measure(ftimer, is_net, hw_name, *args):
 
     mean_perf, std_perf = None, None
     # Measure performance. Continue until we get results within the max standard deviation
+
+    # Warning(@Soo): We may want to investigate more on how to measure op perf
+    # Example: in BERT, where we measure a lot of light-weighted kernel (e.g., add, multiply, relu+add),
+    # we found that op perf measurement has a lot of variance within/across runtimes.
+    # Plus, there is also a gap between op perf and real perf in network inference, specifically
+    # for such light-weighted kernels, e.g., TensorRT op is on par with AutoTVM in op perf,
+    # but it is always worse than AutoTVM in actual network inference runtime
     while True:
         perfs = np.array(ftimer(*args).results) * 1000  # convert to millisecond
         mean_perf, std_perf = np.mean(perfs), np.std(perfs)
