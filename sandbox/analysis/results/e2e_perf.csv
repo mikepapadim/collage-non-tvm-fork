@@ -20,7 +20,7 @@ rtx2070,1,dcgan,AutoTVM,3.2788,0.0008
 rtx2070,1,dcgan,AutoTVM-libs,2.9731,0.0006
 rtx2070,1,dcgan,DP,2.0101,0.0008
 rtx2070,1,dcgan,PyTorch,2.9186,0.0133
-rtx2070,1,dcgan,TF,3.1637,0.0918
+rtx2070,1,dcgan,TF,3.1401,0.2040
 rtx2070,1,dcgan,TensorRT,2.3837,0.0006
 rtx2070,1,dcgan,Two-level,2.0101,0.0010
 rtx2070,1,dcgan,cuDNN,3.3650,0.0006
