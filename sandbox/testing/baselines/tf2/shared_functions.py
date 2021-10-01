@@ -124,7 +124,8 @@ def get_tf2_args():
 
 # Don't forget to sync this code with
 def measure_tf2_gpu(model, inputs, method_name, args):
-    discard_iter, iterations = 2000, 10000
+    # discard_iter, iterations = 2000, 10000
+    discard_iter, iterations = 100, 1000
     is_perf_logging = True
 
     # Enable graph mode instead of eager execution
@@ -138,7 +139,18 @@ def measure_tf2_gpu(model, inputs, method_name, args):
     # Warning(@Soo): It has an issue of executing CPU only for TF2.4.0 or TF2.6.0
     # tf.compat.v1.disable_eager_execution()
 
-    with tf.device('/device:GPU:0'):
+    device_name = '/device:GPU:0'
+
+    # Change the device depending on hw
+    nvidia_gpus = ['rtx2070', 'rtx3070', 'jetson', 'v100']
+    if args.hw == 'xeon':
+        device_name = '/device:CPU:0'
+    elif args.hw in nvidia_gpus:
+        pass
+    else:
+        Exception(f"Unexpected HW for external compiler op pass: {args.hw}")
+
+    with tf.device(device_name):
         # with tf.device('/device:CPU:0'):
         times = []
         for i in tqdm(range(discard_iter + iterations)):

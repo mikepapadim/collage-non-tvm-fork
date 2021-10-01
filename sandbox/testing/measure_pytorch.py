@@ -10,6 +10,7 @@ from workloads.workloads import *
 # import tensorflow as tf
 # import time
 from measure_end_to_end import log_e2e_perf
+import time
 
 def args_checker(args, parser):
     is_missing_arg = not args.network
@@ -29,8 +30,11 @@ def get_args():
     parser.add_argument("-bs", "--batch-size", default=1, type=int, help="batch size")
 
     # Measurement related parameters
-    parser.add_argument("--iterations", help="How many iterations to average for timing", type=int, default=10000)
-    parser.add_argument("--discard_iter", help="How many iterations to not time during warm up", type=int, default=2000)
+    # parser.add_argument("--iterations", help="How many iterations to average for timing", type=int, default=10000)
+    # parser.add_argument("--discard_iter", help="How many iterations to not time during warm up", type=int, default=2000)
+    parser.add_argument("--iterations", help="How many iterations to average for timing", type=int, default=1000)
+    parser.add_argument("--discard_iter", help="How many iterations to not time during warm up", type=int, default=100)
+
     args = parser.parse_args()
 
     args_checker(args, parser)
@@ -91,6 +95,21 @@ def measure_torch(model, inputs, args, is_perf_logging):
     print(f"[{args.network}] Performance of PyTorch on {args.hw} (mean, std) = ({mean_perf:.4f}+-{std_perf:.4f})")
     log_e2e_perf(args, 'PyTorch', mean_perf, std_perf, is_perf_logging)
 
+# Link: https://discuss.pytorch.org/t/how-to-measure-execution-time-in-pytorch/111458
+# Note: CPU operations are synchronous; you can use any Python runtime profiling method like time.time().
+def measure_torch_cpu(model, inputs, args, is_perf_logging):
+    times = []
+    with torch.no_grad():
+        for i in tqdm(range(args.discard_iter + args.iterations)):
+            start_time = time.time()
+            model(inputs)
+            times.append((time.time() - start_time)*1000.0)
+
+    times = np.array(times)[args.discard_iter:]
+    mean_perf, std_perf = np.mean(times), np.std(times)
+    print(f"[{args.network}] Performance of PyTorch on {args.hw} (mean, std) = ({mean_perf:.4f}+-{std_perf:.4f})")
+    log_e2e_perf(args, 'PyTorch', mean_perf, std_perf, is_perf_logging)
+
 #######################################################################
 # Warning(@Soo): Deprecated; It turns out that we need to run model code as a main (e.g., bert.py)
 # not to get an error for BERT and DCGAN.
@@ -143,7 +162,12 @@ if __name__ == '__main__':
 
     # PyTorch measurement
     model, inputs = get_torch_model_and_input(args)
-    measure_torch(model, inputs, args, is_perf_logging)
+    if args.hw in NVIDIA_GPUS:
+        measure_torch(model, inputs, args, is_perf_logging)
+    elif args.hw in INTEL_CPUS:
+        measure_torch_cpu(model, inputs, args, is_perf_logging)
+    else:
+        raise Exception(f"{args.hw} is unexpected hw, we need to set default backends for this hw.")
 
     #######################################################################
     # Warning(@Soo): Deprecated; It turns out that we need to run model code as a main (e.g., bert.py)
