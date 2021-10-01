@@ -90,6 +90,8 @@ v100,1,bert_full,AutoTVM,1.5124,0.0002
 v100,1,bert_full,AutoTVM-libs,1.5534,0.0007
 v100,1,bert_full,DP,1.3171,0.0002
 v100,1,bert_full,PyTorch,10.5021,2.8409
+v100,1,bert_full,TF,4.4807,0.1733
+v100,1,bert_full,TF-XLA,1.7175,0.0381
 v100,1,bert_full,TensorRT,6.4405,0.0024
 v100,1,bert_full,Two-level,1.1051,0.0002
 v100,1,bert_full,cuDNN,1.3528,0.0006
@@ -97,7 +99,7 @@ v100,1,dcgan,AutoTVM,1.5847,0.0003
 v100,1,dcgan,AutoTVM-libs,1.3040,0.0003
 v100,1,dcgan,DP,1.1143,0.0002
 v100,1,dcgan,PyTorch,1.4300,0.0062
-v100,1,dcgan,TF,1.6176,0.0823
+v100,1,dcgan,TF,1.6138,0.0659
 v100,1,dcgan,TensorRT,1.1349,0.0004
 v100,1,dcgan,Two-level,1.0269,0.0004
 v100,1,dcgan,cuDNN,1.6416,0.0004
