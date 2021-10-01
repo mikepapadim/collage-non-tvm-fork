@@ -171,7 +171,7 @@ xeon,1,dcgan,DNNL,252.2999,3.5751
 xeon,1,dcgan,DP,59.0132,0.1584
 xeon,1,nasneta,AutoTVM,32.2965,0.0645
 xeon,1,nasneta,AutoTVM-libs,139.8195,0.1130
-xeon,1,nasneta,DP,55.3677,0.0790
+xeon,1,nasneta,DP,29.0528,0.0381
 xeon,1,resnet50_3d,AutoTVM,158.3016,0.4057
 xeon,1,resnet50_3d,AutoTVM-libs,367.3986,0.5326
 xeon,1,resnet50_3d,DNNL,359.7532,2.6520
