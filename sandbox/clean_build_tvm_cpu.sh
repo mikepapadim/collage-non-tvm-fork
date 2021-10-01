@@ -9,3 +9,4 @@ cp cmake/config.cmake.cpu build/config.cmake
 cd build
 cmake ..
 make clean && make -j64
+. /opt/intel/oneapi/setvars.sh
