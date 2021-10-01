@@ -28,6 +28,7 @@ def get_args():
     parser.add_argument("-n", "--network", help="name of a neural network")
     parser.add_argument("-hw", "--hw", help="target hardware")
     parser.add_argument("-bs", "--batch-size", default=1, type=int, help="batch size")
+    parser.add_argument('-tensorrt', action='store_true')
 
     # Measurement related parameters
     # parser.add_argument("--iterations", help="How many iterations to average for timing", type=int, default=10000)
@@ -40,26 +41,25 @@ def get_args():
     args_checker(args, parser)
     return args
 
-# def measure_trt():
-#     from torch2trt import torch2trt
-#     import time
-#
-#     model_trt = torch2trt(model, [inputs])
-#
-#     times = []
-#     for i in tqdm(range(args.discard_iter + args.iterations)):
-#         torch.cuda.current_stream().synchronize()
-#         t0 = time.time()
-#         model_trt(inputs)
-#         torch.cuda.current_stream().synchronize()
-#         t1 = time.time()
-#         times.append(1000.0 * (t1 - t0))
-#
-#     total = 0
-#     for i in range(args.discard_iter, len(times)):
-#         total += times[i]
-#     avg = total / (args.iterations)
-#     print("TensorRT: Average inference time of the last " + str(args.iterations) + " iterations: " + str(avg) + " ms")
+def measure_trt(model, inputs, args, is_perf_logging):
+    from torch2trt import torch2trt
+    import time
+
+    model_trt = torch2trt(model, [inputs])
+
+    times = []
+    for i in tqdm(range(args.discard_iter + args.iterations)):
+        torch.cuda.current_stream().synchronize()
+        t0 = time.time()
+        model_trt(inputs)
+        torch.cuda.current_stream().synchronize()
+        t1 = time.time()
+        times.append(1000.0 * (t1 - t0))
+
+    times = np.array(times)[args.discard_iter:]
+    mean_perf, std_perf = np.mean(times), np.std(times)
+    print(f"[{args.network}] Performance of TensorRT on {args.hw} (mean, std) = ({mean_perf:.4f}+-{std_perf:.4f})")
+    log_e2e_perf(args, 'TensorRT', mean_perf, std_perf, is_perf_logging)
 
 def get_torch_model_and_input(args):
     model = NETWORK_TO_TORCH_MODEL[args.network]()
@@ -160,14 +160,17 @@ if __name__ == '__main__':
 
     is_perf_logging = True
 
-    # PyTorch measurement
     model, inputs = get_torch_model_and_input(args)
-    if args.hw in NVIDIA_GPUS:
-        measure_torch(model, inputs, args, is_perf_logging)
-    elif args.hw in INTEL_CPUS:
-        measure_torch_cpu(model, inputs, args, is_perf_logging)
+    if not args.tensorrt:
+        # PyTorch measurement
+        if args.hw in NVIDIA_GPUS:
+            measure_torch(model, inputs, args, is_perf_logging)
+        elif args.hw in INTEL_CPUS:
+            measure_torch_cpu(model, inputs, args, is_perf_logging)
+        else:
+            raise Exception(f"{args.hw} is unexpected hw, we need to set default backends for this hw.")
     else:
-        raise Exception(f"{args.hw} is unexpected hw, we need to set default backends for this hw.")
+        measure_trt(model, inputs, args, is_perf_logging)
 
     #######################################################################
     # Warning(@Soo): Deprecated; It turns out that we need to run model code as a main (e.g., bert.py)
