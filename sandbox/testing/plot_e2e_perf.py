@@ -2,20 +2,22 @@ import matplotlib.pyplot as plt
 import pandas as pd
 from e2e_perf_logger import *
 from tvm.relay.transform.utility.plot_utils import set_plt_font_size
+from tvm.relay.transform.backend_operator.target import *
 from scipy import stats
 import argparse
 
-NET_NAME_TO_OFFICIAL = {'bert': 'BERT', 'nasneta':"NasNet-A", 'resnet50': 'ResNet50',
+NET_NAME_TO_OFFICIAL = {'bert_full': 'BERT', 'nasneta':"NasNet-A", 'resnet50': 'ResNet50',
                       'resnext50_32x4d':"ResNeXt50", 'resnet50_3d':"3D-ResNet50",
                       'mobilenet_v2':"Mobilenet V2", 'nasrnn':"NasRNN", 'dcgan':'DCGAN'}
 
-FINAL_NETWORKS = ["bert", "dcgan", "nasneta", 'resnet50_3d', "resnext50_32x4d"]
+FINAL_NETWORKS = ["bert_full", "dcgan", "nasneta", 'resnet50_3d', "resnext50_32x4d"]
 
-def setup_df_with_baselines_and_method(df):
+def setup_df_with_baselines_and_method(df, methods):
     # Make sure column order is following before we normalize perf
-    df = df[['cuDNN', 'AutoTVM', 'TensorRT', 'TF', 'TF-XLA', 'PyTorch', 'AutoTVM-libs', 'DP', 'Two-level']]
-    df = df.rename(columns={'AutoTVM-libs': 'TVM', 'Two-level': 'Collage'})
-    df = df.drop(columns=['DP'])
+    df = df[methods]
+
+    df = df.rename(columns={'AutoTVM-libs': 'TVM'})
+
     df = df.loc[FINAL_NETWORKS]
     df = df.rename(index=NET_NAME_TO_OFFICIAL)
     # df = df.drop(['Mobilenet V2', 'ResNet50', 'NasRNN'])#, '3D-ResNet50', 'DCGAN', 'NasNet-A', 'ResNeXt50'])
@@ -23,12 +25,53 @@ def setup_df_with_baselines_and_method(df):
     print(df)
     return df
 
-def setup_df_for_normalized_perf_plot(df):
-    df = setup_df_with_baselines_and_method(df)
+def setup_df_with_baselines_and_method_diff_batch(df, methods):
+    # Make sure column order is following before we normalize perf
+    df = df[methods]
+
+    df = df.rename(columns={'AutoTVM-libs': 'TVM'})
+
+    df = df.loc[[1,4,8,16]]
+    BATCH_SIZE_TO_TEXT = {
+        1: "BatchSize=1",
+        4: "BatchSize=4",
+        8: "BatchSize=8",
+        16: "BatchSize=16",
+    }
+    df = df.rename(index=BATCH_SIZE_TO_TEXT)
+    # df = df.drop(['Mobilenet V2', 'ResNet50', 'NasRNN'])#, '3D-ResNet50', 'DCGAN', 'NasNet-A', 'ResNeXt50'])
+
+    print(df)
+    return df
+
+def setup_df_for_normalized_perf_plot_diff_batch(df):
     # Normalize the performance
     for method in df:
-        print(method)
-        df[method] = df['Collage'] / df[method]
+        # print(method)
+        df[method] = df['Two-level'] / df[method]
+
+    # print(df.iloc[0:5, :])
+
+    # Add Geomean
+    df.loc['GeoMean'] = stats.gmean(df.iloc[0:5, :], axis=0)
+
+    # Correct Geomean of TF-XLA to deal with missing values
+    xla_perf = [df.loc['BatchSize=1', 'TF-XLA'], df.loc['BatchSize=4', 'TF-XLA'],
+                df.loc['BatchSize=8', 'TF-XLA'], df.loc['BatchSize=16', 'TF-XLA']]
+    # df.at['GeoMean', 'TF-XLA'] = stats.gmean(xla_perf, axis=0)
+    print(df)
+
+    # Without DP
+    # df = df.rename(columns={'Two-level': 'Collage'})
+    # df = df.drop(columns=['DP'])
+
+    return df
+
+def setup_df_for_normalized_perf_plot(df):
+    # Normalize the performance
+    for method in df:
+        # print(method)
+        df[method] = df['Two-level'] / df[method]
 
     # print(df.iloc[0:5, :])
 
@@ -40,24 +83,26 @@ def setup_df_for_normalized_perf_plot(df):
     df.at['GeoMean', 'TF-XLA'] = stats.gmean(xla_perf, axis=0)
     print(df)
 
+    # Without DP
+    # df = df.rename(columns={'Two-level': 'Collage'})
+    # df = df.drop(columns=['DP'])
+
     return df
 
 def draw_e2e_perf_plot_normalized(df, args):
-    df = setup_df_for_normalized_perf_plot(df)
     df.plot.bar(figsize=(24, 5), width=0.7)
 
     # Save figures
     plt.xlabel("")
-    plt.ylabel('Normalized Throughput')
+    plt.ylabel('Normalized Performance')
     # plt.ylabel('Inference Time (ms)')
 
     plt.grid(axis='y', zorder=-2.0)
     plt.xticks(rotation=0)
-    plt.legend(ncol=8, loc='upper center', bbox_to_anchor=(0.48, 1.2), handletextpad=0.3, borderpad=0.3)
+    plt.legend(ncol=args.n_method, loc='upper center', bbox_to_anchor=(0.48, 1.2), handletextpad=0.3, borderpad=0.3, labelspacing=0.15)
     plt.savefig(f"{EXP_RESULT_PATH}/plots/e2e_perf_norm_{args.hw}_{args.batch_size}.png", bbox_inches='tight')
 
 def draw_e2e_perf_plot_ms(df, args):
-    df = setup_df_with_baselines_and_method(df)
     df.plot.bar(figsize=(24, 5), width=0.7)
 
     # Save figures
@@ -78,14 +123,45 @@ if __name__ == "__main__":
     parser.add_argument("-bs", "--batch-size", default=1, type=int, help="batch size")
     args = parser.parse_args()
 
-    df = pd.read_csv(E2E_PERF_LOG_PATH, header=None)
-    df.columns = E2E_PERF_COLS
-    df = df[(df['HW'] == args.hw) & (df['BatchSize'] == args.batch_size)]
-    df = df.drop(columns=['HW', 'BatchSize', 'Std Perf'])
-    df = df.set_index('Network')
-    df = df.pivot_table(values='Mean Perf', index=df.index, columns='Method', aggfunc='first')
+    print(args)
+    if args.hw in NVIDIA_GPUS or args.hw in INTEL_CPUS:
+        df = pd.read_csv(E2E_PERF_LOG_PATH, header=None)
+        df.columns = E2E_PERF_COLS
+        df = df[(df['HW'] == args.hw) & (df['BatchSize'] == args.batch_size)]
+        df = df.drop(columns=['HW', 'BatchSize', 'Std Perf'])
+        df = df.set_index('Network')
+        df = df.pivot_table(values='Mean Perf', index=df.index, columns='Method', aggfunc='first')
 
-    draw_e2e_perf_plot_normalized(df, args)
+        if args.hw in NVIDIA_GPUS:
+            methods = ['cuDNN', 'AutoTVM', 'TensorRT', 'TF', 'TF-XLA', 'PyTorch', 'AutoTVM-libs', 'DP', 'Two-level']
+        elif args.hw in INTEL_CPUS:
+            methods = ['AutoTVM', 'DNNL', 'TF', 'TF-XLA', 'PyTorch', 'AutoTVM-libs', 'DP', 'Two-level']
+        else:
+            raise Exception(f"{args.hw} is unexpected hw, we need to set default backends for this hw.")
+
+        args.n_method = len(methods)
+
+        df = setup_df_with_baselines_and_method(df, methods)
+        df = setup_df_for_normalized_perf_plot(df)
+        draw_e2e_perf_plot_normalized(df, args)
+    elif args.hw == 'diff_batch_v100':
+        df = pd.read_csv(E2E_PERF_LOG_PATH, header=None)
+        df.columns = E2E_PERF_COLS
+        df = df[(df['HW'] == "v100") & (df['Network'] == "resnext50_32x4d")]
+        df = df.drop(columns=['HW', 'Network', 'Std Perf'])
+        df = df.set_index('BatchSize')
+        df = df.pivot_table(values='Mean Perf', index=df.index, columns='Method', aggfunc='first')
+
+        methods = ['cuDNN', 'AutoTVM', 'TensorRT', 'TF', 'TF-XLA', 'PyTorch', 'AutoTVM-libs', 'DP', 'Two-level']
+        args.n_method = len(methods)
+
+        df = setup_df_with_baselines_and_method_diff_batch(df, methods)
+        df = setup_df_for_normalized_perf_plot_diff_batch(df)
+        draw_e2e_perf_plot_normalized(df, args)
+        # draw_e2e_perf_plot_normalized(df, args)
+    else:
+        raise Exception(f"{args.hw} is unexpected hw, we need to set default backends for this hw.")
+
     # draw_e2e_perf_plot_ms(df, args)
 
 # This plots the speedup breakdown of op-level and two-level
