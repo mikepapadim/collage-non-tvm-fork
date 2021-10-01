@@ -145,7 +145,11 @@ class DPTableCell:
         self.prev_cell = prev_cell
 
         # @Sung: This is a driver cost to get correct cost estimate when operators are not fused
-        self.C = 0.01
+        # Guideline(@Soo): it should be hardware-dependent ideally.
+        # For now, we use 0.01 for everything else than bert-full (0.5)
+        # Bert-full has the issue of picking up inefficeint TensorRT ops for lightweighted kernel
+        # e.g., add+relu, multiply, etc; it is more likely the issue of op measurement variance though
+        self.C = 0.01 #0.5 #0.1 #1 #0.01
 
         # Optimal cost with selected nodes
         self.opt_cost = self.get_cost(best_b_op_cost, prev_cell)
