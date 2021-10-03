@@ -12,6 +12,8 @@ from workloads.workloads import *
 from measure_end_to_end import log_e2e_perf
 import time
 
+from torchsummary import summary
+
 def args_checker(args, parser):
     is_missing_arg = not args.network
     is_missing_arg |= not args.hw
@@ -44,6 +46,8 @@ def get_args():
 def measure_trt(model, inputs, args, is_perf_logging):
     from torch2trt import torch2trt
     import time
+
+    # summary(model, (64, 256))
 
     model_trt = torch2trt(model, [inputs])
 
