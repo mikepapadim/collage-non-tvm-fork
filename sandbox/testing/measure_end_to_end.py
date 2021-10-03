@@ -389,7 +389,8 @@ def measure_dp_tuning_time(mod, params, shape_dict, args, is_perf_logging):
     for i in range(n_trial):
         # Delete operator_cost log
         print("Delete operator cost for measurement")
-        os.system(f"rm /home/byungsoj/tvm/python/tvm/relay/transform/logs/operator_cost_{args.hw}.*")
+        this_code_path = os.path.dirname(os.path.abspath(__file__))
+        os.system(f"rm {this_code_path}/../../python/tvm/relay/transform/logs/operator_cost_{args.hw}.*")
 
         # Measure dp + measurement time
         start_time = time.time()
@@ -472,10 +473,10 @@ if __name__ == "__main__":
     #print(f"[{args.network}] Performance of MKL on {args.hw} (mean, std) = ({mean_perf:.4f}+-{std_perf:.4f})")
 
 
-    measure_dp_and_baselines(mod, params, shape_dict, args, is_perf_logging)
+    # measure_dp_and_baselines(mod, params, shape_dict, args, is_perf_logging)
     # measure_autotvm(mod, params, shape_dict, args, is_perf_logging)
-    #measure_two_level(mod, params, shape_dict, args, is_perf_logging)
-    # measure_dp_tuning_time(mod, params, shape_dict, args, is_perf_logging)
+    # measure_two_level(mod, params, shape_dict, args, is_perf_logging)
+    measure_dp_tuning_time(mod, params, shape_dict, args, is_perf_logging)
 
     # Debug: test single backend pipeline that offloads ops to single backend whenever possible
     # single_backend = Target.CUDNN

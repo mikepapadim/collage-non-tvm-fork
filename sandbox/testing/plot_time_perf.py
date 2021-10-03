@@ -38,25 +38,22 @@ def plot_single_net(net_name):
 def fill_up_missing_first_val(tuning_time, inf_time, net_df, net_name, hw, batch_size):
     def load_dp_perf(net_name, hw):
         perf_dic = E2EPerfLogger().read_dict_from_csv()
-        key = E2EPerfLogger().gen_dic_key(hw, batch_size, net_name, 'DP')
+        key = E2EPerfLogger().gen_dic_key(hw, str(batch_size), net_name, 'DP')
         mean_perf, _ = perf_dic[key]
 
         return float(mean_perf)
 
     # If there is a missing first dp perf
-    tuning_time.insert(0, 0)
     dp_inf_time = load_dp_perf(net_name, hw)
-    if inf_time[0] > dp_inf_time:
-        dp_inf_time = inf_time[0]
+    if inf_time[0] < dp_inf_time:
+        inf_time[0] = dp_inf_time
         print(
             f"[{net_name}] DP inf time is longer than best inf time of two-level after first iteration, measurement error")
-
-    inf_time.insert(0, dp_inf_time)
 
     return tuning_time, inf_time, dp_inf_time
 
 def plot_all_nets(networks, hw, batch_size):
-    plot_file_name = "time_perf_all_networks"
+    plot_file_name = f"time_perf_{hw}"
 
     fig_size = (10,6)
     plt.figure(figsize=fig_size)
@@ -64,7 +61,7 @@ def plot_all_nets(networks, hw, batch_size):
     for net_name in networks:
         file_name = f"time_perf_{net_name}_{hw}_bs{batch_size}"
         # net_df = pd.read_csv(f"{LOG_PATH}/eval_results/rtx2070_bs1/210905/{file_name}.log", index_col=0)
-        net_df = pd.read_csv(f"{EVAL_RESULT_LOG_PATH}/rtx2070_bs1/{file_name}.log", index_col=0)
+        net_df = pd.read_csv(f"{EVAL_RESULT_LOG_PATH}/{hw}_bs1/{file_name}.log", index_col=0)
 
         tuning_time = net_df.index.tolist()
         inf_time = net_df.iloc[:, 0].tolist()
@@ -72,6 +69,11 @@ def plot_all_nets(networks, hw, batch_size):
         tuning_time, inf_time, dp_inf_time = fill_up_missing_first_val(tuning_time, inf_time, net_df, net_name, hw, batch_size)
         # dp_inf_time = inf_time[0]
         tuning_time, inf_time = np.array(tuning_time) / 60.0, np.array(inf_time)
+
+        # Cut array up to 3 hours
+        cond = np.vectorize(lambda t: t < 180)
+        tuning_time = tuning_time[cond(tuning_time)]
+        inf_time = inf_time[:len(tuning_time)]
 
         rel_speed_up = dp_inf_time/inf_time
 
@@ -92,4 +94,6 @@ if __name__ == "__main__":
     #plot_single_net('resnet50')
 
     set_plt_font_size()
-    plot_all_nets(FINAL_NETWORKS, 'rtx2070', 1)
+    #hw = 'rtx2070'
+    hw = 'v100'
+    plot_all_nets(FINAL_NETWORKS, hw, 1)
