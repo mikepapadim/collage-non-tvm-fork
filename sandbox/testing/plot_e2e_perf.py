@@ -12,6 +12,16 @@ NET_NAME_TO_OFFICIAL = {'bert_full': 'BERT', 'nasneta':"NasNet-A", 'resnet50': '
 
 FINAL_NETWORKS = ["bert_full", "dcgan", "nasneta", 'resnet50_3d', "resnext50_32x4d"]
 
+METHOD_TO_COLOR = {
+    'Collage': "C0", # blue, my favorite
+    "TF":"C1", # orange
+    "TF-XLA":"C5", # brown
+    "PyTorch":"C3", # is red
+    "TensorRT":"C2", # is close to green
+    "TVM":"C4", # is purple (instead of blue)
+    # C6 is pink
+}
+
 def setup_df_with_baselines_and_method(df, methods):
     # Make sure column order is following before we normalize perf
     df = df[methods]
@@ -59,11 +69,11 @@ def setup_df_for_normalized_perf_plot_diff_batch(df):
     xla_perf = [df.loc['BatchSize=1', 'TF-XLA'], df.loc['BatchSize=4', 'TF-XLA'],
                 df.loc['BatchSize=8', 'TF-XLA'], df.loc['BatchSize=16', 'TF-XLA']]
     # df.at['GeoMean', 'TF-XLA'] = stats.gmean(xla_perf, axis=0)
-    print(df)
+    # print(df)
 
     # Without DP
-    # df = df.rename(columns={'Two-level': 'Collage'})
-    # df = df.drop(columns=['DP'])
+    df = df.rename(columns={'Two-level': 'Collage'})
+    df = df.drop(columns=['Op-level'])
 
     return df
 
@@ -81,16 +91,59 @@ def setup_df_for_normalized_perf_plot(df):
     # Correct Geomean of TF-XLA to deal with missing values
     xla_perf = [df.loc['BERT', 'TF-XLA'], df.loc['ResNeXt50', 'TF-XLA'], df.loc['NasNet-A', 'TF-XLA']]
     df.at['GeoMean', 'TF-XLA'] = stats.gmean(xla_perf, axis=0)
-    print(df)
+    # print(df)
 
     # Without DP
-    # df = df.rename(columns={'Two-level': 'Collage'})
-    # df = df.drop(columns=['DP'])
+    df = df.rename(columns={'Two-level': 'Collage'})
+    df = df.drop(columns=['Op-level'])
 
     return df
 
-def draw_e2e_perf_plot_normalized(df, args):
-    df.plot.bar(figsize=(24, 5), width=0.7)
+# Shift the bars if there is a space between two bars because of NaN value in the middle.
+def draw_plot_without_nan_values(df, is_diff_batch=False):
+    fig = plt.figure(figsize=(24, 5))
+    ax = plt.gca()
+
+    # Have a dataframe (row: method, col: network)
+    df = df.T
+    # Sort data frame by geomean
+    if is_diff_batch:
+        df = df.sort_values(by='BatchSize=1')
+    else:
+        df = df.sort_values(by='GeoMean')
+    print(df)
+
+    shifted = df.notnull().cumsum()
+    # width of each bar
+    width = 1 / len(df.columns) * 0.8
+    if is_diff_batch:
+        width*=0.7
+
+
+    n_methods = df.shape[0]
+    n_networks = df.shape[1]
+    pos_of_method_in_each_net = np.arange(n_networks) # df.shape[1] is # of networks
+    colors = [METHOD_TO_COLOR[method] for method in df.index]
+
+    # Offset
+    n_method_per_networks = shifted.loc['Collage'].to_numpy()
+    net_offset = (n_methods - n_method_per_networks) * width/2.0
+
+    for i, method in enumerate(df.index):
+        offsets = shifted.loc[method]
+        values = df.loc[method]
+        # print(pos_of_method_in_each_net + width*offsets)
+        ax.bar(pos_of_method_in_each_net + width*offsets-width*(n_methods+1)/2.0 + net_offset, values,
+               color=colors[i], width=width, label=method)
+    ax.set_xticks(pos_of_method_in_each_net)
+    ax.set_xticklabels(df.columns)
+    ax.legend()
+
+def draw_e2e_perf_plot_normalized(df, args, is_diff_batch=False):
+    draw_plot_without_nan_values(df, is_diff_batch)
+
+    # df = df.fillna()
+    # df.plot.bar(figsize=(24, 5), width=0.7)
 
     # Save figures
     plt.xlabel("")
@@ -133,9 +186,11 @@ if __name__ == "__main__":
         df = df.pivot_table(values='Mean Perf', index=df.index, columns='Method', aggfunc='first')
 
         if args.hw in NVIDIA_GPUS:
-            methods = ['cuDNN', 'AutoTVM', 'TensorRT', 'TF', 'TF-XLA', 'PyTorch', 'AutoTVM-libs', 'DP', 'Two-level']
+            # methods = ['cuDNN', 'AutoTVM', 'TensorRT', 'TF', 'TF-XLA', 'PyTorch', 'AutoTVM-libs', 'DP', 'Two-level']
+            methods = ['TensorRT', 'TF', 'TF-XLA', 'PyTorch', 'AutoTVM-libs', 'DP', 'Two-level']
         elif args.hw in INTEL_CPUS:
-            methods = ['AutoTVM', 'DNNL', 'TF', 'TF-XLA', 'PyTorch', 'AutoTVM-libs', 'DP', 'Two-level']
+            # methods = ['AutoTVM', 'DNNL', 'TF', 'TF-XLA', 'PyTorch', 'AutoTVM-libs', 'DP', 'Two-level']
+            methods = ['TF', 'TF-XLA', 'PyTorch', 'AutoTVM-libs', 'DP', 'Two-level']
         else:
             raise Exception(f"{args.hw} is unexpected hw, we need to set default backends for this hw.")
 
@@ -152,12 +207,13 @@ if __name__ == "__main__":
         df = df.set_index('BatchSize')
         df = df.pivot_table(values='Mean Perf', index=df.index, columns='Method', aggfunc='first')
 
-        methods = ['cuDNN', 'AutoTVM', 'TensorRT', 'TF', 'TF-XLA', 'PyTorch', 'AutoTVM-libs', 'DP', 'Two-level']
+        # methods = ['cuDNN', 'AutoTVM', 'TensorRT', 'TF', 'TF-XLA', 'PyTorch', 'AutoTVM-libs', 'DP', 'Two-level']
+        methods = ['TensorRT', 'TF', 'TF-XLA', 'PyTorch', 'AutoTVM-libs', 'DP', 'Two-level']
         args.n_method = len(methods)
 
         df = setup_df_with_baselines_and_method_diff_batch(df, methods)
         df = setup_df_for_normalized_perf_plot_diff_batch(df)
-        draw_e2e_perf_plot_normalized(df, args)
+        draw_e2e_perf_plot_normalized(df, args, is_diff_batch=True)
         # draw_e2e_perf_plot_normalized(df, args)
     else:
         raise Exception(f"{args.hw} is unexpected hw, we need to set default backends for this hw.")
