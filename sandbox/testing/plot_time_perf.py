@@ -71,7 +71,7 @@ def plot_all_nets(networks, hw, batch_size):
         tuning_time, inf_time = np.array(tuning_time) / 60.0, np.array(inf_time)
 
         # Cut array up to 3 hours
-        cond = np.vectorize(lambda t: t < 180)
+        cond = np.vectorize(lambda t: t < 60)
         tuning_time = tuning_time[cond(tuning_time)]
         inf_time = inf_time[:len(tuning_time)]
 
@@ -81,8 +81,8 @@ def plot_all_nets(networks, hw, batch_size):
         plt.plot(tuning_time, rel_speed_up, label=net_name)
 
     # plt.xlabel('Tuning time (secs)')
-    plt.xticks(range(60, 181, 60))
-    plt.xlabel('Tuning time (mins)')
+    plt.xticks(range(10, 61, 10))
+    plt.xlabel('Optimization Time (Mins)')
     plt.ylabel('Relative Speedup')
     plt.legend(ncol=3, loc='upper center', bbox_to_anchor=(0.45, 1.25), labelspacing=0.3, columnspacing=1.0)
 
