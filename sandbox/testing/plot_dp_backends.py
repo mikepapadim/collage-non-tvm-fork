@@ -40,30 +40,30 @@ if __name__ == "__main__":
 
     # Plot adding one backend at a time
     backends_to_print = ['cublas','cublas-cudnn','cublas-cudnn-tensorrt', 'cublas-cudnn-tensorrt-autotvm']
-    backend_rename_dic = {'cublas':'cuBLAS','cublas-cudnn':'+cuDNN',
-                          'cublas-cudnn-tensorrt':'+TensorRT','cublas-cudnn-tensorrt-autotvm':'+TVM'}
-    best_backend = '+TVM'
+    backend_rename_dic = {'cublas':'Collage (1 Backend)','cublas-cudnn':'Collage (2 Backends)',
+                          'cublas-cudnn-tensorrt':'Collage (3 Backends)','cublas-cudnn-tensorrt-autotvm':'Collage (4 Backends)'}
+    best_backend = 'Collage (4 Backends)'
     args.n_method = 4
     args.plot_name = 'backend_inc'
 
     # Plot all combinations of three backends performance
-    backends_to_print = ['cudnn-tensorrt-autotvm','cublas-tensorrt-autotvm',
-                         'cublas-cudnn-autotvm', 'cublas-cudnn-tensorrt']
-    backend_rename_dic = {'cudnn-tensorrt-autotvm':'-cuBLAS','cublas-tensorrt-autotvm':'-cuDNN',
-                          'cublas-cudnn-autotvm':'-TensorRT','cublas-cudnn-tensorrt':'-TVM'}
-    best_backend = '-TVM'
-    args.n_method = 4
-    args.plot_name = 'backend_dec'
+    #backends_to_print = ['cudnn-tensorrt-autotvm','cublas-tensorrt-autotvm',
+    #                     'cublas-cudnn-autotvm', 'cublas-cudnn-tensorrt']
+    #backend_rename_dic = {'cudnn-tensorrt-autotvm':'-cuBLAS','cublas-tensorrt-autotvm':'-cuDNN',
+    #                      'cublas-cudnn-autotvm':'-TensorRT','cublas-cudnn-tensorrt':'-TVM'}
+    #best_backend = '-TVM'
+    #args.n_method = 4
+    #args.plot_name = 'backend_dec'
 
     df = df[backends_to_print]
     df = df.rename(columns=backend_rename_dic)
     df = df.rename(index=NET_NAME_TO_OFFICIAL)
 
-    print(df)
-
     # Normalize perf
     for method in df:
         df[method] = df[best_backend] / df[method]
+
+    print(df)
 
     # Add Geomean
     df.loc['GeoMean'] = stats.gmean(df.iloc[0:5, :], axis=0)

@@ -113,12 +113,19 @@ if __name__ == "__main__":
     # - Incomplete op coverages: (cuDNN, TensorRT, cuBLAS)
 
     import itertools
-    backends = [Target.CUBLAS,Target.CUDNN,Target.TENSORRT,Target.AUTOTVM]
+    backend_combinations = [[Target.CUBLAS],
+                            [Target.CUBLAS, Target.CUDNN],
+                            [Target.CUBLAS, Target.CUDNN, Target.TENSORRT],
+                            [Target.CUBLAS, Target.CUDNN, Target.TENSORRT, Target.AUTOTVM]]
 
-    # # Measure all possible combinations of backends
-    for L in range(1, len(backends) + 1):
-        for subset in itertools.combinations(backends, L):
-            measure_dp(mod["main"], params, shape_dict, args, is_perf_logging, subset)
+    for subset in backend_combinations:
+        measure_dp(mod["main"], params, shape_dict, args, is_perf_logging, subset)
+
+    # backends = [Target.CUBLAS,Target.CUDNN,Target.TENSORRT,Target.AUTOTVM]
+    # Measure all possible combinations of backends
+    #for L in range(1, len(backends) + 1):
+    #    for subset in itertools.combinations(backends, L):
+    #        measure_dp(mod["main"], params, shape_dict, args, is_perf_logging, subset)
 
     # Perf plot order: cuBLAS, cuDNN, TensorRT, AutoTVM (in the increasing order of op coverage)
     # It shows perf of cuBLAS, cuBLAS+cuDNN, cuBLAS+cuDNN+TensorRT, and all together
