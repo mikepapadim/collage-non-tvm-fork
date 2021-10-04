@@ -79,6 +79,11 @@ class CompGraphOptimizer:
         for pat in self._backendop_lib.get_all_patterns():
             logging.info(f"Checking... {repr(pat)}")
 
+            #Debug
+            #backendops = self._backendop_lib.get_backendops(pat)
+            #for op in backendops:
+            #    print(repr(op))
+
         # For backend ablation study where we are given a list of backends,
         # We need TVM (no-tuning) fall back operator patterns to have full op coverage
         # if AutoTVM is not inlcuded as a backend
@@ -241,9 +246,9 @@ class CompGraphOptimizer:
         Run single backend baseline fusion strategy (e.g., CuDNN, OneDNN)
         - It greedily matches backend operators from the given backend.
         - If there are multiple matchings of ops from the given backend, it prioritize backend op with more ops.
-          e.g., matching fused operator (relu+conv) instead of a single op (conv)  
-        - If there is no existing backend operator of the given backend, it alternatively uses AutoTVM ops; 
-          Still, it only allows matching with AutoTVM ops including only ops that can't be matched with ops from the given backend 
+          e.g., matching fused operator (relu+conv) instead of a single op (conv)
+        - If there is no existing backend operator of the given backend, it alternatively uses AutoTVM ops;
+          Still, it only allows matching with AutoTVM ops including only ops that can't be matched with ops from the given backend
         """
 
         # Separate out patterns of the given backend and sort them in the decreasing order of depth

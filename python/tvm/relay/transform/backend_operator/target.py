@@ -160,7 +160,7 @@ class Target(Enum):
     TENSORRT = (2, "tensorrt")
     CUBLAS = (3, "cublas")
     # Temporary solution to make it work with current lowering pipeline that do not support tvm default
-    TVM_DEFAULT = (4, 'autotvm')#"tvm-default")
+    TVM_DEFAULT = (4, 'tvm')#"tvm-default")
     AUTOTVM = (5, "autotvm")
     AUTOSCH = (6, "autosch")
 

@@ -89,7 +89,7 @@ if __name__ == "__main__":
     logging.basicConfig(level=logging.ERROR)
 
     # It shows all logs. Still, it is too messy though cuz TVM logs are interrupting with our logs
-    # logging.basicConfig(level=logging.INFO)
+    #logging.basicConfig(level=logging.INFO)
     # logging.basicConfig(level=logging.WARNING)
 
     # We can't test this because this network include batch norm.

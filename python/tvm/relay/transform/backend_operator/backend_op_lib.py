@@ -472,6 +472,8 @@ class BackendOpLib(object):
     # TVM_GPU
     # add_all_backend_ops_to_lib(self, Target.AUTOSCH)
     add_all_backend_ops_to_lib(self, Target.AUTOTVM)
+    add_all_backend_ops_to_lib(self, Target.TVM_DEFAULT)
+
     # add_all_backend_ops_to_lib_except_fused(backendop_lib, Target.TVM_GPU)
 
     # TVM_GPU_NO_TUNING
