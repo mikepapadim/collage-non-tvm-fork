@@ -17,6 +17,11 @@ class CompGraphOptimizer:
         # Attribute key to pass to N-to-1 lowering pass
         self._bop_attr_key = "backend-op"
 
+        # With BackendList Attr, we do not have full op coverage without AutoTVM (e.g., if cuDNN is sole backend)
+        # Thus, we need to use TVM fallback ops (without auto-tuninng)
+        # Even if it is named as AutoTVM, we will build without tuning logs. So, effectively, it is TVM with no tuning.
+        self._need_tvm_fallback_ops = Target.AUTOTVM not in target_backend
+
         # For printing matched backend ops in ResNet graph
         #patterns = self._backendop_lib.get_all_patterns()
         #self._pattern_to_name = {}
@@ -74,6 +79,28 @@ class CompGraphOptimizer:
         for pat in self._backendop_lib.get_all_patterns():
             logging.info(f"Checking... {repr(pat)}")
 
+        # For backend ablation study where we are given a list of backends,
+        # We need TVM (no-tuning) fall back operator patterns to have full op coverage
+        # if AutoTVM is not inlcuded as a backend
+        # Warning(@Soo): We need to discard TVM fallback operator fusion patterns that include ops supported by
+        # backend in a list. It is currently dealt by the following codes.
+        fallback_backend_pats = None
+        if self._need_tvm_fallback_ops:
+            fallback_backend_pat_ops = self._backendop_lib.get_all_patterns_and_backend_ops_from_single_backend(
+                Target.AUTOTVM, self._target_backend)
+
+            # Create a pattern set
+            fallback_backend_pats = set()
+            for (pat, op) in fallback_backend_pat_ops:
+                fallback_backend_pats.add(pat)
+
+            # Debug
+            # print("\n\n\n")
+            # print("Fallback patterns")
+            # for tup in self._fallback_backend_pats_ops:
+            #     print(tup[0])
+            # sys.exit(0)
+
         # for node, dom in post_dom_tree.items():
         #    print(f"{repr(node)} --> {repr(dom)}\n")
         #    print("\n")
@@ -110,15 +137,16 @@ class CompGraphOptimizer:
                     logging.info(f"The following pattern is matched: {pat.get_relay_pattern()}")
 
                     # Get best backend op and its cost for matched nodes
-                    best_backend_op, min_cost = get_optimal_backendop(self._backendop_lib, f_expr,
-                                                                      pat, self._target_backend, hw_name)
+                    best_backend_op_name, min_cost = get_optimal_backendop(self._backendop_lib, f_expr,
+                                                                           pat, self._target_backend, hw_name,
+                                                                           self._need_tvm_fallback_ops,
+                                                                           fallback_backend_pats)
 
                     # Skip update if there is no backend op available for matched pattern
-                    if best_backend_op is None:
+                    if best_backend_op_name is None:
                         continue
 
                     # Extract match information; refer to detailed explanation in the MatchInfoExtractor
-                    best_backend_op_name = repr(best_backend_op)
                     matched_nodes, match_dic, new_frontiers = extractor.extract(f_expr, pat.get_relay_pattern(), best_backend_op_name)
 
                     dp_table.update(matched_nodes, match_dic, best_backend_op_name, min_cost, new_frontiers)
@@ -222,9 +250,9 @@ class CompGraphOptimizer:
         # Output
         # - patterns from the given backend
         # - patterns of AutoTVM ops that do not include patterns of the given backend
-        single_backend_pats_ops = self._backendop_lib.get_all_patterns_and_backend_ops_from_single_backend(single_backend)
+        single_backend_pats_ops = self._backendop_lib.get_all_patterns_and_backend_ops_from_single_backend([single_backend])
         fallback_backend = Target.AUTOTVM
-        fallback_backend_pats_ops = self._backendop_lib.get_all_patterns_and_backend_ops_from_single_backend(fallback_backend, single_backend)
+        fallback_backend_pats_ops = self._backendop_lib.get_all_patterns_and_backend_ops_from_single_backend(fallback_backend, [single_backend])
 
         # Debug
         # single_op = [tup[0] for tup in single_backend_pats_ops]

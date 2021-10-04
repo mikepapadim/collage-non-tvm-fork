@@ -9,5 +9,8 @@ scp cf:/home/byungsoj/tvm/sandbox/analysis/results/e2e_perf.csv /Users/bsjeon/Dr
 # Download dp-tuning-time results
 scp cf:/home/byungsoj/tvm/sandbox/analysis/results/dp_tuning_time.csv /Users/bsjeon/Dropbox/research_phd/codes/tvm/sandbox/analysis/results/dp_tuning_time.csv
 
+# Download dp-backend perf results
+scp cf:/home/byungsoj/tvm/sandbox/analysis/results/dp_backend_perf.csv /Users/bsjeon/Dropbox/research_phd/codes/tvm/sandbox/analysis/results/dp_backend_perf.csv
+
 # Download # of expensive op stats per network
 scp cf:/home/byungsoj/tvm/sandbox/analysis/results/expensive_op_stats.csv /Users/bsjeon/Dropbox/research_phd/codes/tvm/sandbox/analysis/results/expensive_op_stats.csv

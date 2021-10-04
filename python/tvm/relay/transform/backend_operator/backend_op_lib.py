@@ -552,6 +552,7 @@ class BackendOpLib(object):
   def get_all_patterns_and_backend_ops_from_single_backend(self, target_backend, backend_to_exclude=None):
       # Generate op names to exclude
       op_names_to_exclude = set()
+      # print(f"\n\n\nbackend OPs from {backend_to_exclude}")
       if backend_to_exclude is not None:
           for pat, b_ops in self.pattern_to_backendops.items():
               # Consider only the pattern with the depth of 1
@@ -560,7 +561,8 @@ class BackendOpLib(object):
                   continue
 
               for b_op in b_ops:
-                  if b_op.get_target() == backend_to_exclude:
+                  if b_op.get_target() in backend_to_exclude:
+                      # print(b_op)
                       op_names_to_exclude |= pat.get_op_name_set()
                       break
 

@@ -49,6 +49,7 @@ BATCH_SIZE_ATTR = "BatchSize"
 BACKEND_OP_ATTR = "BackendOP"
 NETWORK_FUNC_ATTR = "Network"
 SINGLE_BACKEND_ATTR = "SingleBackend"
+BACKEND_LIST_ATTR = "BackendList"
 
 # AUTOTVM_LOG = f"{LOG_PATH}/autotvm_ops.json"
 # Temporary autoscheduler log file
@@ -77,7 +78,7 @@ def get_build_target(hw_name):
 
     return build_target
 
-def get_backends(hw_name):
+def get_backends_from_hw(hw_name):
     if hw_name in NVIDIA_GPUS:
         backends = [Target.AUTOTVM, Target.CUDNN, Target.TENSORRT, Target.CUBLAS]
     elif hw_name in INTEL_CPUS:

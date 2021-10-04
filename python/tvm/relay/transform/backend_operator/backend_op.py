@@ -17,7 +17,7 @@ from .pattern import Pattern
 from .utils import get_diamond
 from .utils import *
 from .op_config import Config, MeasuredConfigs
-from .target import get_target_cost_func
+from .target import get_target_cost_func, Target
 from .op_type import optype_to_pattern, relayop_to_varnames
 from ..utility.debug_helper import printe
 import logging
@@ -220,7 +220,8 @@ def extract_subgraph(expr, pattern):
 
 # given a pattern and a relay expr matching that pattern, return the cheapest backend operator
 # satisfying the constraints and its cost. Return None if no backend operators satisfy constraints.
-def get_optimal_backendop(b_op_lib, expr, pattern, target = None, hw_name = "INVALID"):
+def get_optimal_backendop(b_op_lib, expr, pattern, target = None, hw_name = "INVALID",
+                          need_tvm_fallback_ops=False, fallback_backend_pats=None):
   assert type(target) == list
 
   backendops = b_op_lib.get_backendops(pattern)
@@ -250,11 +251,27 @@ def get_optimal_backendop(b_op_lib, expr, pattern, target = None, hw_name = "INV
     assert cost != None
     if cost < min_cost:
       min_cost = cost
-      cheapest_op = op
+      cheapest_op = repr(op)
 
-  if min_cost == float('inf'):
+  # If no operator matched current patterns, fall back on TVM (no tuning) ops
+  if cheapest_op is None:
+    assert need_tvm_fallback_ops
+
+    if pattern in fallback_backend_pats:
+      # For this pattern, no other backends than TVM can afford this pattern
+      min_cost = 100000 # sys.maxsize
+      # Even if it's an autotvm, it will lower to TVM (no-tuning) ops cuz we will build without AutoTVM logs
+      # We name it as autotvm because current lowering pipeline does not differentiate between TVM and AutoTVM.
+      cheapest_op = f'autotvm-{pattern.get_name()}' # fallback op name
+  else:
+    # Exceptional cases to block
+    # - 1) tensorrt_0-Op(add)[*, *] - If the add is the sole operator, then TensorRT has an issue to execute it
+    if cheapest_op == 'tensorrt_0-Op(add)[*, *]' and len(expr.checked_type.shape) != 4:
+      cheapest_op = f'autotvm-{pattern.get_name()}' # fallback op name
+
+  if min_cost == float('inf') and not need_tvm_fallback_ops:
     raise Exception("No corresponding backend operators / or backend op errors out (e.g., CuDNN conv_bias_relu)")
-    return None, None
+
   return cheapest_op, min_cost
 
 

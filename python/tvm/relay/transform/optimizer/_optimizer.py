@@ -193,28 +193,32 @@ def get_user_fusion(relay_expr):
     # opt_info_tag = get_opt_info_tag(net_name, hw_name, batch_size)
     # visualize_network(relay_expr, opt_info_tag)
 
-def run_op_level_opt(relay_expr):
-    hw_name = relay_expr.attrs[HW_FUNC_ATTR]
-    relay_expr = get_function_body(relay_expr)
+def get_backends(func_expr, hw_name):
+    if BACKEND_LIST_ATTR in func_expr.attrs:
+        backend_list_str = func_expr.attrs[BACKEND_LIST_ATTR]
+        backend_str_list = backend_list_str.split(",")
+        backends = [target_id_to_target[int(b)] for b in backend_str_list]
+        # print(backend_list_str)
+        # print(backends)
+        # sys.exit(0)
+    else:
+        backends = get_backends_from_hw(hw_name)
+
+    return backends
+
+def run_op_level_opt(func_expr):
+    hw_name = func_expr.attrs[HW_FUNC_ATTR]
+
+    # Sanity check: Only AutoTVM
+    # targets = [Target.AUTOTVM]
+    targets = get_backends(func_expr, hw_name)
+
+    relay_expr = get_function_body(func_expr)
 
     logging.info(f"[Op-Level: DP] Computation graph generation...")
     comp_graph = ComputationGraph(relay_expr)
     n_relay_nodes = comp_graph.n_relay_nodes
     logging.info(f"# of relay nodes in comp graph: {n_relay_nodes}")
-
-    # Sanity check: Only AutoTVM
-    # targets = [Target.AUTOTVM]
-    # targets = [Target.TENSORRT]
-
-    # Sanity check: Enable all backends except for TensorRT
-    # targets = [Target.AUTOTVM, Target.CUDNN, Target.CUBLAS]
-    # We coudln't figure out how to support CUBLAS in Jetson yet
-    # It shouldn't be a big deal though given TensorRT uses CuBLAS internally
-    # targets = [Target.AUTOTVM, Target.CUDNN, Target.TENSORRT]
-    #targets = [Target.AUTOTVM, Target.CUDNN]
-    #targets = [Target.AUTOTVM, Target.TENSORRT]#, Target.CUBLAS]
-
-    targets = get_backends(hw_name)
 
     backendop_lib = setup_backend_op_lib(hw_name)
 
@@ -395,16 +399,16 @@ Run single backend baseline fusion strategy (e.g., CuDNN, OneDNN)
   Still, it only allows matching with AutoTVM ops including only ops that can't be matched with ops from the given backend
 """
 @tvm._ffi.register_func("relay.transform.optimizer.run_single_backend_baseline")
-def run_single_backend_baseline(relay_expr):
-    single_backend_id = int(relay_expr.attrs[SINGLE_BACKEND_ATTR])
+def run_single_backend_baseline(func_expr):
+    single_backend_id = int(func_expr.attrs[SINGLE_BACKEND_ATTR])
     assert isinstance(single_backend_id, int)
 
     # printe(f"single backend id: {single_backend_id, type(single_backend_id)}")
     # printe(f"single backend: {target_id_to_target[single_backend_id]}")
     single_backend_target = target_id_to_target[single_backend_id]
 
-    hw_name = relay_expr.attrs[HW_FUNC_ATTR]
-    relay_expr = get_function_body(relay_expr)
+    hw_name = func_expr.attrs[HW_FUNC_ATTR]
+    relay_expr = get_function_body(func_expr)
 
     logging.info(f"[Single backend baseline] Computation graph generation...")
     comp_graph = ComputationGraph(relay_expr)
