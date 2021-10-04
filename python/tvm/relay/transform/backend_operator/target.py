@@ -159,7 +159,8 @@ class Target(Enum):
     CUDNN = (1, "cudnn")
     TENSORRT = (2, "tensorrt")
     CUBLAS = (3, "cublas")
-    TVM_DEFAULT = (4, "tvm-default")
+    # Temporary solution to make it work with current lowering pipeline that do not support tvm default
+    TVM_DEFAULT = (4, 'autotvm')#"tvm-default")
     AUTOTVM = (5, "autotvm")
     AUTOSCH = (6, "autosch")
 
@@ -257,6 +258,41 @@ class TVMSubGraphCostFunc_AutoTVM(TargetCostFunc):
             # data = np.random.uniform(-1, 1, size=data_shape).astype("float32")
             # module.set_input("data", data)
             ftimer = module.module.time_evaluator("run", dev, number=NUM_MEASUREMENTS_PER_REPEAT, repeat=NUM_REPEATS)
+
+        return measure(ftimer, False, hw_name)
+
+class TVMSubGraphCostFunc_DefaultTVM(TargetCostFunc):
+    def __init__(self):
+        super().__init__()
+
+    # measure the cost of running an expression on a target, in milliseconds.
+    # We assume that the target has a backend operator satisfying the configuration of the expr
+    @staticmethod
+    def measure_cost(name, expr, target, hw_name):
+        # Create workload
+        inputs = relay.analysis.free_vars(expr)
+        expr_func = relay.Function(inputs, expr)
+        net, params = testing.create_workload(expr_func)
+
+        assert(os.path.exists(get_autotvm_log_path(hw_name)))
+
+        # print(f"Measure autotvm log: {get_autotvm_log_path(hw_name)}")
+        # AutoTVM codes
+        # Compile kernels with history best records
+
+        target_str = get_build_target(hw_name)
+        with tvm.transform.PassContext(opt_level=OPT_LEVEL.get()):
+            lib = relay.build_module.build(net, target=target_str, params=params)
+
+        dev = tvm.device(target_str, 0)
+        module = runtime.GraphModule(lib["default"](dev))
+
+        # Setup execution
+        setup_mod_inputs(module)
+        # data_shape = get_data_shape(expr)
+        # data = np.random.uniform(-1, 1, size=data_shape).astype("float32")
+        # module.set_input("data", data)
+        ftimer = module.module.time_evaluator("run", dev, number=NUM_MEASUREMENTS_PER_REPEAT, repeat=NUM_REPEATS)
 
         return measure(ftimer, False, hw_name)
 
@@ -434,7 +470,7 @@ target_to_cost_func = {
     Target.TENSORRT: TensorRTCostFunc(),
     Target.CUDNN: TVMSubGraphCostFunc_OpMeasurement(),
     Target.CUBLAS: TVMSubGraphCostFunc_OpMeasurement(),
-    Target.TVM_DEFAULT: TVMSubGraphCostFunc_OpMeasurement(),
+    Target.TVM_DEFAULT: TVMSubGraphCostFunc_DefaultTVM(),
 
     # CPU
     Target.DNNL: DNNLCostFunc(),

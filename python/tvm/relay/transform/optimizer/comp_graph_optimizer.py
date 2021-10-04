@@ -20,7 +20,7 @@ class CompGraphOptimizer:
         # With BackendList Attr, we do not have full op coverage without AutoTVM (e.g., if cuDNN is sole backend)
         # Thus, we need to use TVM fallback ops (without auto-tuninng)
         # Even if it is named as AutoTVM, we will build without tuning logs. So, effectively, it is TVM with no tuning.
-        self._need_tvm_fallback_ops = Target.AUTOTVM not in target_backend
+        self._need_tvm_fallback_ops = False#Target.AUTOTVM not in target_backend
 
         # For printing matched backend ops in ResNet graph
         #patterns = self._backendop_lib.get_all_patterns()

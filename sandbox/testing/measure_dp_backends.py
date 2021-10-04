@@ -113,9 +113,9 @@ if __name__ == "__main__":
     # - Incomplete op coverages: (cuDNN, TensorRT, cuBLAS)
 
     import itertools
-    backend_combinations = [[Target.CUBLAS],
-                            [Target.CUBLAS, Target.CUDNN],
-                            [Target.CUBLAS, Target.CUDNN, Target.TENSORRT],
+    backend_combinations = [[Target.CUBLAS, Target.TVM_DEFAULT],
+                            [Target.CUBLAS, Target.CUDNN, Target.TVM_DEFAULT],
+                            [Target.CUBLAS, Target.CUDNN, Target.TENSORRT, Target.TVM_DEFAULT],
                             [Target.CUBLAS, Target.CUDNN, Target.TENSORRT, Target.AUTOTVM]]
 
     for subset in backend_combinations:

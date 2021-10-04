@@ -464,6 +464,11 @@ class BackendOpLib(object):
     tvm_pattern_generator = BasePatternGenerator(Target.AUTOTVM, tvm_pattern_rule, None, tvm_optype2enum, tvm_enum2optype)
     self._add_backend_pattern_rule(tvm_pattern_generator)
 
+    # Add TVM Default patterns
+    tvm_pattern_generator = BasePatternGenerator(Target.TVM_DEFAULT, tvm_pattern_rule, None, tvm_optype2enum,
+                                                 tvm_enum2optype)
+    self._add_backend_pattern_rule(tvm_pattern_generator)
+
     # TVM_GPU
     # add_all_backend_ops_to_lib(self, Target.AUTOSCH)
     add_all_backend_ops_to_lib(self, Target.AUTOTVM)
