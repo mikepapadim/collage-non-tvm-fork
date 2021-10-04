@@ -119,7 +119,6 @@ if __name__ == "__main__":
     for L in range(1, len(backends) + 1):
         for subset in itertools.combinations(backends, L):
             measure_dp(mod["main"], params, shape_dict, args, is_perf_logging, subset)
-            sys.exit(0)
 
     # Perf plot order: cuBLAS, cuDNN, TensorRT, AutoTVM (in the increasing order of op coverage)
     # It shows perf of cuBLAS, cuBLAS+cuDNN, cuBLAS+cuDNN+TensorRT, and all together
