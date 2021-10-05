@@ -267,7 +267,7 @@ def get_optimal_backendop(b_op_lib, expr, pattern, target = None, hw_name = "INV
     # Exceptional cases to block
     # - 1) tensorrt_0-Op(add)[*, *] - If the add is the sole operator, then TensorRT has an issue to execute it
     if cheapest_op == 'tensorrt_0-Op(add)[*, *]' and len(expr.checked_type.shape) != 4:
-      cheapest_op = f'autotvm-{pattern.get_name()}' # fallback op name
+      cheapest_op = f'tvm-{pattern.get_name()}' # fallback op name
 
   if min_cost == float('inf') and not need_tvm_fallback_ops:
     raise Exception("No corresponding backend operators / or backend op errors out (e.g., CuDNN conv_bias_relu)")
