@@ -101,7 +101,11 @@ def setup_df_for_normalized_perf_plot(df):
 
 # Shift the bars if there is a space between two bars because of NaN value in the middle.
 def draw_plot_without_nan_values(df, is_diff_batch=False):
-    fig = plt.figure(figsize=(24, 5))
+    if is_diff_batch:
+        fig = plt.figure(figsize=(16, 5))
+    else:
+        fig = plt.figure(figsize=(24, 5))
+
     ax = plt.gca()
 
     # Have a dataframe (row: method, col: network)
