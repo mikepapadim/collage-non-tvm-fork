@@ -104,7 +104,7 @@ def draw_plot_without_nan_values(df, is_diff_batch=False):
     if is_diff_batch:
         fig = plt.figure(figsize=(16, 5))
     else:
-        fig = plt.figure(figsize=(24, 5))
+        fig = plt.figure(figsize=(21, 4.2))
 
     ax = plt.gca()
 
@@ -156,6 +156,7 @@ def draw_e2e_perf_plot_normalized(df, args, is_diff_batch=False):
 
     plt.grid(axis='y', zorder=-2.0)
     plt.xticks(rotation=0)
+    plt.yticks(np.arange(0,1.01,0.2))
     plt.legend(ncol=args.n_method, loc='upper center', bbox_to_anchor=(0.48, 1.2), handletextpad=0.3, borderpad=0.3, labelspacing=0.15)
     plt.savefig(f"{EXP_RESULT_PATH}/plots/e2e_perf_norm_{args.hw}_{args.batch_size}.png", bbox_inches='tight')
 
@@ -168,7 +169,7 @@ def draw_e2e_perf_plot_ms(df, args):
 
     plt.grid(axis='y', zorder=-2.0)
     plt.xticks(rotation=0)
-    plt.legend(ncol=6, loc='upper center', bbox_to_anchor=(0.5, 1.2))
+    plt.legend(ncol=6, loc='upper center', bbox_to_anchor=(0.5, 1.22))
     plt.savefig(f"{EXP_RESULT_PATH}/plots/e2e_perf_ms_{args.hw}_{args.batch_size}.png", bbox_inches='tight')
 
 
