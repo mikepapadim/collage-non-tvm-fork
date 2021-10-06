@@ -5,12 +5,13 @@ from backend_perf_logger import *
 from tvm.relay.transform.utility.plot_utils import set_plt_font_size
 from tvm.relay.transform.backend_operator.target import *
 from scipy import stats
+import numpy as np
 import argparse
 
 import sys
 
 def draw_e2e_perf_plot_normalized(df, args, is_diff_batch=False):
-    df.plot.bar(figsize=(24, 5), width=0.7)
+    df.plot.bar(figsize=(23, 4), width=0.7)
 
     # Save figures
     plt.xlabel("")
@@ -19,7 +20,8 @@ def draw_e2e_perf_plot_normalized(df, args, is_diff_batch=False):
 
     plt.grid(axis='y', zorder=-2.0)
     plt.xticks(rotation=0)
-    plt.legend(ncol=args.n_method, loc='upper center', bbox_to_anchor=(0.48, 1.2), handletextpad=0.3, borderpad=0.3, labelspacing=0.15)
+    plt.yticks(np.arange(0,1.01,0.2))
+    plt.legend(ncol=args.n_method, loc='upper center', bbox_to_anchor=(0.48, 1.23), handletextpad=0.3, borderpad=0.3, labelspacing=0.15)
     plt.savefig(f"{EXP_RESULT_PATH}/plots/{args.plot_name}_perf_norm_{args.hw}_{args.batch_size}.png", bbox_inches='tight')
 
 if __name__ == "__main__":
