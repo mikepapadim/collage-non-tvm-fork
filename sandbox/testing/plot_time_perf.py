@@ -55,7 +55,7 @@ def fill_up_missing_first_val(tuning_time, inf_time, net_df, net_name, hw, batch
 def plot_all_nets(networks, hw, batch_size):
     plot_file_name = f"time_perf_{hw}"
 
-    fig_size = (10,6)
+    fig_size = (10,4.7)
     plt.figure(figsize=fig_size)
 
     for net_name in networks:
@@ -84,7 +84,7 @@ def plot_all_nets(networks, hw, batch_size):
     plt.xticks(range(10, 61, 10))
     plt.xlabel('Optimization Time (Mins)')
     plt.ylabel('Relative Speedup')
-    plt.legend(ncol=3, loc='upper center', bbox_to_anchor=(0.45, 1.25), labelspacing=0.3, columnspacing=1.0)
+    plt.legend(ncol=3, loc='upper center', bbox_to_anchor=(0.45, 1.32), labelspacing=0.3, columnspacing=1.0)
 
     this_code_path = os.path.dirname(os.path.abspath(__file__))
     fig_name = f'{this_code_path}/../analysis/results/plots/{plot_file_name}.png'
