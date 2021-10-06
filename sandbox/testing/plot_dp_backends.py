@@ -44,6 +44,9 @@ if __name__ == "__main__":
     backends_to_print = ['autotvm','autotvm-cublas','autotvm-cublas-cudnn', 'autotvm-cublas-cudnn-tensorrt']
     backend_rename_dic = {'autotvm':'Collage (ATVM)','autotvm-cublas':'Collage (ATVM,cuB)',
                           'autotvm-cublas-cudnn':'Collage (ATVM,cuB,cuD)','autotvm-cublas-cudnn-tensorrt':'Collage (ATVM,cuB,cuD,TRT)'}
+    cols = ['Collage (ATVM)','Collage (ATVM,cuB)', 'Collage (ATVM,cuB,cuD)', 'Collage (ATVM,cuB,cuD,TRT)']
+    #cols = cols[::-1]
+    #best_backend = 'Collage (ATVM)'
     best_backend = 'Collage (ATVM,cuB,cuD,TRT)'
     args.n_method = 4
     args.plot_name = 'backend_inc'
@@ -60,13 +63,14 @@ if __name__ == "__main__":
     df = df[backends_to_print]
     df = df.rename(columns=backend_rename_dic)
     df = df.rename(index=NET_NAME_TO_OFFICIAL)
+    df = df[cols]
 
     # Normalize perf
     for method in df:
         df[method] = df[best_backend] / df[method]
-
-    print(df)
+    #df = df[cols[::-1]]
 
     # Add Geomean
     df.loc['GeoMean'] = stats.gmean(df.iloc[0:5, :], axis=0)
+    print(df)
     draw_e2e_perf_plot_normalized(df, args)
