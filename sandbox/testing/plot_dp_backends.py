@@ -39,18 +39,18 @@ if __name__ == "__main__":
     df = df.pivot_table(values='mean_perf', index=df.index, columns='backends', aggfunc='first')
 
     # Plot adding one backend at a time
-    backends_to_print = ['cublas','cublas-cudnn','cublas-cudnn-tensorrt', 'cublas-cudnn-tensorrt-autotvm']
-    backend_rename_dic = {'cublas':'Collage (1 Backend)','cublas-cudnn':'Collage (2 Backends)',
-                          'cublas-cudnn-tensorrt':'Collage (3 Backends)','cublas-cudnn-tensorrt-autotvm':'Collage (4 Backends)'}
-    best_backend = 'Collage (4 Backends)'
+    backends_to_print = ['autotvm','autotvm-cublas','autotvm-cublas-cudnn', 'autotvm-cublas-cudnn-tensorrt']
+    backend_rename_dic = {'autotvm':'Collage (ATVM)','autotvm-cublas':'Collage (ATVM,cuB)',
+                          'autotvm-cublas-cudnn':'Collage (ATVM,cuB,cuD)','autotvm-cublas-cudnn-tensorrt':'Collage (ATVM,cuB,cuD,TRT)'}
+    best_backend = 'Collage (ATVM,cuB,cuD,TRT)'
     args.n_method = 4
     args.plot_name = 'backend_inc'
 
     # Plot all combinations of three backends performance
-    #backends_to_print = ['cudnn-tensorrt-autotvm','cublas-tensorrt-autotvm',
-    #                     'cublas-cudnn-autotvm', 'cublas-cudnn-tensorrt']
-    #backend_rename_dic = {'cudnn-tensorrt-autotvm':'-cuBLAS','cublas-tensorrt-autotvm':'-cuDNN',
-    #                      'cublas-cudnn-autotvm':'-TensorRT','cublas-cudnn-tensorrt':'-TVM'}
+    #backends_to_print = ['cublas-cublas-autotvm','autotvm-cublas-autotvm',
+    #                     'autotvm-cublas-autotvm', 'autotvm-cublas-cublas']
+    #backend_rename_dic = {'cublas-cublas-autotvm':'-autotvm','autotvm-cublas-autotvm':'-cublas',
+    #                      'autotvm-cublas-autotvm':'-cublas','autotvm-cublas-cublas':'-TVM'}
     #best_backend = '-TVM'
     #args.n_method = 4
     #args.plot_name = 'backend_dec'

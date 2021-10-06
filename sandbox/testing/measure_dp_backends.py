@@ -113,10 +113,10 @@ if __name__ == "__main__":
     # - Incomplete op coverages: (cuDNN, TensorRT, cuBLAS)
 
     import itertools
-    backend_combinations = [[Target.CUBLAS, Target.TVM_DEFAULT],
-                            [Target.CUBLAS, Target.CUDNN, Target.TVM_DEFAULT],
-                            [Target.CUBLAS, Target.CUDNN, Target.TENSORRT, Target.TVM_DEFAULT],
-                            [Target.CUBLAS, Target.CUDNN, Target.TENSORRT, Target.AUTOTVM]]
+    backend_combinations = [[Target.AUTOTVM],
+                            [Target.AUTOTVM, Target.CUBLAS],
+                            [Target.AUTOTVM, Target.CUBLAS, Target.CUDNN],
+                            [Target.AUTOTVM, Target.CUBLAS, Target.CUDNN, Target.TENSORRT]]
 
     for subset in backend_combinations:
         measure_dp(mod["main"], params, shape_dict, args, is_perf_logging, subset)
