@@ -104,7 +104,7 @@ def draw_plot_without_nan_values(df, is_diff_batch=False):
     if is_diff_batch:
         fig = plt.figure(figsize=(16, 5))
     else:
-        fig = plt.figure(figsize=(21, 4.2))
+        fig = plt.figure(figsize=(21, 3.5))
 
     ax = plt.gca()
 
@@ -151,13 +151,16 @@ def draw_e2e_perf_plot_normalized(df, args, is_diff_batch=False):
 
     # Save figures
     plt.xlabel("")
-    plt.ylabel('Normalized Performance')
+    # plt.ylabel('Normalized Performance')
+    plt.ylabel('Normalized Throughput')
     # plt.ylabel('Inference Time (ms)')
 
     plt.grid(axis='y', zorder=-2.0)
     plt.xticks(rotation=0)
     plt.yticks(np.arange(0,1.01,0.2))
-    plt.legend(ncol=args.n_method, loc='upper center', bbox_to_anchor=(0.48, 1.2), handletextpad=0.3, borderpad=0.3, labelspacing=0.15)
+
+    box_y_pos = 1.26 if not is_diff_batch else 1.2
+    plt.legend(ncol=args.n_method, loc='upper center', bbox_to_anchor=(0.48, box_y_pos), handletextpad=0.3, borderpad=0.3, labelspacing=0.15)
     plt.savefig(f"{EXP_RESULT_PATH}/plots/e2e_perf_norm_{args.hw}_{args.batch_size}.png", bbox_inches='tight')
 
 def draw_e2e_perf_plot_ms(df, args):
@@ -175,11 +178,13 @@ def draw_e2e_perf_plot_ms(df, args):
 
 if __name__ == "__main__":
     set_plt_font_size()
-
     parser = argparse.ArgumentParser()
     parser.add_argument("-hw", "--hw", help="target hardware")
     parser.add_argument("-bs", "--batch-size", default=1, type=int, help="batch size")
     args = parser.parse_args()
+
+    if args.hw!='diff_batch_v100':
+        plt.rc('axes', labelsize=18)
 
     print(args)
     if args.hw in NVIDIA_GPUS or args.hw in INTEL_CPUS:

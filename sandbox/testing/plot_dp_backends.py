@@ -15,7 +15,7 @@ def draw_e2e_perf_plot_normalized(df, args, is_diff_batch=False):
 
     # Save figures
     plt.xlabel("")
-    plt.ylabel('Normalized Performance')
+    plt.ylabel('Normalized Throughput')
     # plt.ylabel('Inference Time (ms)')
 
     plt.grid(axis='y', zorder=-2.0)
