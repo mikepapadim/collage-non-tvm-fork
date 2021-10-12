@@ -488,7 +488,8 @@ class BackendOpLib(object):
     # TENSORRT
     # NOTE: Current TensorRT pattern follows TVM fusion rule for simplicity.
     # But, since BATCH_MATMUL and TRANSPOSE are not supported, we are going to exclude the patterns if they contain those illegal operators by passing verify function.
-    ops_to_exclude_trt = ["transpose", "nn.batch_matmul", "image.resize", "variance", "divide", "reshape"]
+    ops_to_exclude_trt = ["image.resize"]
+    #ops_to_exclude_trt = ["transpose", "image.resize", "variance", "divide", "reshape", "nn.batch_matmul"]
 
     def trt_verify(pattern):
         q = [ pattern ]
@@ -503,6 +504,7 @@ class BackendOpLib(object):
                     pass
                 else:
                     op_name = cur.op.expr.name
+
                     if op_name in ops_to_exclude_trt:
                         return False
                     q.extend(cur.args)
@@ -518,6 +520,13 @@ class BackendOpLib(object):
     trt_pattern_generator = BasePatternGenerator(Target.TENSORRT, tvm_pattern_rule, trt_verify, tvm_optype2enum, tvm_enum2optype)
     self._add_backend_pattern_rule(trt_pattern_generator)
 
+    #def check_constraints_batch_matmul(config):
+    #    assert(len(config._data_shape) == 2)
+    #    t1, t2 = config._data_shape[0], config._data_shape[1]
+    #    if not (len(t1)==3 and len(t2)==3 and t1[-1] == t2[-2]):
+    #        return False
+    #    return True
+    #self._add_backendop_with_key(Target.TENSORRT, "BATCH_MATMUL", check_constraints_batch_matmul)
 
     #add_all_backend_ops_to_lib(self, Target.TENSORRT, ["DIAMOND", "TRANSPOSE",
                                                        # "TUPLE_TWO_IDX", "TUPLE_FIVE_IDX",

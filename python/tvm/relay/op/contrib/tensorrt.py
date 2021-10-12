@@ -157,7 +157,7 @@ def partition_for_tensorrt(
     # with tvm.transform.PassContext(opt_level=3, config={"relay.ext.tensorrt.options": config},trace=print_ir):
     with tvm.transform.PassContext(opt_level=3, config={"relay.ext.tensorrt.options": config}):
         mod = seq(mod)
-        mod = prune_tensorrt_subgraphs(mod)
+        #mod = prune_tensorrt_subgraphs(mod)
 
     return mod, config
 
@@ -286,6 +286,7 @@ _register_external_op_helper_with_checker("prod", reduce_annotate_fn)
 _register_external_op_helper_with_checker("max", reduce_annotate_fn)
 _register_external_op_helper_with_checker("min", reduce_annotate_fn)
 _register_external_op_helper_with_checker("mean", reduce_annotate_fn)
+_register_external_op_helper_with_checker("variance", reduce_annotate_fn)
 
 
 def trt_version_annotate_fn(version):
@@ -309,6 +310,19 @@ _register_external_op_helper_with_checker("atan", trt_version_annotate_fn((5, 1,
 _register_external_op_helper_with_checker("ceil", trt_version_annotate_fn((5, 1, 5)))
 
 
+def batch_matmul_annotate_fn(attrs, args, op_name):
+    """Check if batch_matmul is supported by TensorRT."""
+    #print(args[0].checked_type.shape, args[1].checked_type.shape, list(args[0].checked_type.shape) == list(args[1].checked_type.shape))
+    #return list(args[0].checked_type.shape) == list(args[1].checked_type.shape)
+    t1, t2 = args[0].checked_type.shape, args[1].checked_type.shape
+    if any([x.checked_type.dtype != "float32" for x in args]):
+        logger.info("Only float32 inputs are supported for TensorRT.")
+        return False
+    return True
+
+_register_external_op_helper_with_checker("nn.batch_matmul", batch_matmul_annotate_fn)
+
+
 @_register_external_dynamic_check_func("add")
 def add_annotate_fn(expr):  # pylint: disable=unused-variable
     """Check if add is supported by TensorRT."""
@@ -321,22 +335,23 @@ def add_annotate_fn(expr):  # pylint: disable=unused-variable
     ]
 
     # RelayVM + TRT doesn't support scalar addition yet.
-    for shape in shapes:
-        if len(shape) < 1:
-            return False
+    #for shape in shapes:
+    #    if len(shape) < 1:
+    #        return False
 
     if any([x.checked_type.dtype != "float32" for x in args]):
         logger.info("Only float32 inputs are supported for TensorRT.")
         return False
-    if (
-        not get_tensorrt_use_implicit_batch_mode()
-        and (isinstance(args[0], Constant) or isinstance(args[1], Constant))
-        and shapes[0][0] == shapes[1][0]
-        and shapes[0][0] != 1
-        and (len(shapes[0]) > 3 or len(shapes[1]) > 3)
-    ):
-        logger.info("add: bug in TRT with adding batched constants.")
-        return False
+
+    #if (
+    #    not get_tensorrt_use_implicit_batch_mode()
+    #    and (isinstance(args[0], Constant) or isinstance(args[1], Constant))
+    #    and shapes[0][0] == shapes[1][0]
+    #    and shapes[0][0] != 1
+    #    and (len(shapes[0]) > 3 or len(shapes[1]) > 3)
+    #):
+    #    logger.info("add: bug in TRT with adding batched constants.")
+    #    return False
     return True
 
 
@@ -411,6 +426,8 @@ def dense_annotate_fn(expr):  # pylint: disable=unused-variable
         logger.info("nn.dense: weight has rank %d but must be 2.", weight_rank)
         return False
     return True
+
+
 
 
 @_register_external_dynamic_check_func("nn.bias_add")
@@ -622,12 +639,17 @@ def reshape_annotate_fn(expr):  # pylint: disable=unused-variable
     if args[0].checked_type.dtype != "float32":
         logger.info("Only float32 inputs are supported for TensorRT.")
         return False
+
+
     if any([x < -1 for x in map(int, attrs.newshape)]):
         logger.info("reshape: new shape dims must be explicit.")
         return False
+
     if get_tensorrt_use_implicit_batch_mode():
+        # print("==> batch mode", file=sys.stderr)
         shape = args[0].checked_type.shape
         new_shape = attrs.newshape
+        # print(new_shape, file=sys.stderr)
         if len(new_shape) == 0 or len(shape) == 0:
             logger.info("reshape: Can't reshape to or from scalar.")
             return False
@@ -665,10 +687,17 @@ def reshape_annotate_fn(expr):  # pylint: disable=unused-variable
         for i, value in enumerate(new_shape):
             if value == -1:
                 new_shape[i] = original_volume // np.prod([x for x in new_shape if x != -1])
+
+
+        # print(shape, new_shape, file=sys.stderr)
+
         # Remove batch dimension and see if volumes match
-        if shape[0] != new_shape[0]:
-            logger.info("reshape: can't modify batch dimension.")
-            return False
+        # if shape[0] != new_shape[0]:
+        #    print(shape, new_shape)
+        #    return False
+        #    logger.info("reshape: can't modify batch dimension.")
+        #    return False
+
     return True
 
 

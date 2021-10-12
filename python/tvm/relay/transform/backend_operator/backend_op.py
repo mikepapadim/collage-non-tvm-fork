@@ -149,6 +149,8 @@ def extract_subgraph(expr, pattern):
     elif is_call_node(expr):
       # note that only call node has "op" attribute corresponding to a single backend operator
       op, args, attrs, type_args, span = expr.op, expr.args, expr.attrs, expr.type_args, expr.span
+      #if expr.op.name == 'reshape':
+      #  print(expr.attrs.newshape)
       new_args = []
       # at depth 1, turn call expr arguments into free variables with the same attributes and data shapes!
       if depth == 1:

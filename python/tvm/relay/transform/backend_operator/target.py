@@ -421,6 +421,8 @@ class TensorRTCostFunc(TargetCostFunc):
 
     @staticmethod
     def measure_cost(name, expr, target, hw_name):
+        #if expr.op.name == "reshape":
+        #    assert(0)
 
         # Create workload
         inputs = relay.analysis.free_vars(expr)
