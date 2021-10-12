@@ -43,7 +43,8 @@ def measure_end_to_end_perf_tensorrt(mod, params, target_str, shape_dict, hw_nam
     mod, config = partition_for_tensorrt(mod, params)
 
     # Debug to check if TRT supports ops of interest
-    # print(mod["main"])
+    net_expr = mod["main"]
+    print(f"After partition : {net_expr}")
 
     with tvm.transform.PassContext(opt_level=OPT_LEVEL.get(), config={'relay.ext.tensorrt.options': config}):
         lib = relay.build(mod, target=target_str, params=params)
@@ -505,22 +506,23 @@ if __name__ == "__main__":
     # mod, params, shape_dict, _ = get_network_from_relay("conv2d", 1)
     # mod, params, shape_dict, _ = get_network_from_relay("conv2d+relu_x2", 1)
     # mod, params, shape_dict, _ = get_network_from_relay("diamond", 1)
+    # mod, params, shape_dict, _ = get_network_from_relay("reshape", 1)
     # Debugging for BERT_full (only including first block)
     # mod, params, shape_dict, _ = crop_network_from_torch(args.network, 1, 100)
 
     # Assign build target based on a given hw
     args.target = get_build_target(args.hw)
-    is_perf_logging = True
-    # is_perf_logging = False
+    # is_perf_logging = True
+    is_perf_logging = False
 
     # print("NETWORK LOADED")
     # mean_perf, std_perf, mod_dnnl = measure_end_to_end_perf_dnnl(mod, params, args.target, shape_dict, args.hw, args)
     # print(f"[{args.network}] Performance of DNNL on {args.hw} (mean, std) = ({mean_perf:.4f}+-{std_perf:.4f})")
 
-    #mean_perf, std_perf, mod_dp = measure_end_to_end_perf_autotvm(mod["main"], params, args.target, shape_dict,
-     #                                                             CustomFusionPass.DP,
-     #                                                             args.network, args.hw, args.batch_size)
-    #print(f"[{args.network}] Performance of DP on {args.hw} (mean, std) = ({mean_perf:.4f}+-{std_perf:.4f})")
+    mean_perf, std_perf, mod_dp = measure_end_to_end_perf_autotvm(mod["main"], params, args.target, shape_dict,
+                                                                  CustomFusionPass.DP,
+                                                                  args.network, args.hw, args.batch_size)
+    print(f"[{args.network}] Performance of DP on {args.hw} (mean, std) = ({mean_perf:.4f}+-{std_perf:.4f})")
 
 
     #mean_perf, std_perf, mod_cud = measure_end_to_end_perf_single_backend_without_alter_layout(mod["main"], params, args.target, shape_dict,
@@ -531,13 +533,13 @@ if __name__ == "__main__":
     #print(f"[{args.network}] Performance of TVM (no tuning) on {args.hw} (mean, std) = ({mean_perf:.4f}+-{std_perf:.4f})")
 
 
-    mean_perf, std_perf, mod_trt = measure_end_to_end_perf_tensorrt(mod, params, args.target, shape_dict, args.hw)
-    print(f"[{args.network}] Performance of TensorRT on {args.hw} (mean, std) = ({mean_perf:.4f}+-{std_perf:.4f})")
+    # mean_perf, std_perf, mod_trt = measure_end_to_end_perf_tensorrt(mod, params, args.target, shape_dict, args.hw)
+    # print(f"[{args.network}] Performance of TensorRT on {args.hw} (mean, std) = ({mean_perf:.4f}+-{std_perf:.4f})")
 
 
     #verify_network_output(mod["main"], shape_dict, mod_tvm, None)
 
-    #measure_dp_and_baselines(mod, params, shape_dict, args, is_perf_logging)
+    # measure_dp_and_baselines(mod, params, shape_dict, args, is_perf_logging)
     # measure_autotvm(mod, params, shape_dict, args, is_perf_logging)
     # measure_two_level(mod, params, shape_dict, args, is_perf_logging)
     #measure_dp_tuning_time(mod, params, shape_dict, args, is_perf_logging)
@@ -547,7 +549,7 @@ if __name__ == "__main__":
     # measure_single_backend_debug(mod, params, shape_dict, args, is_perf_logging, single_backend)
 
     # Note that this one do not use AutoTVM because cudnn and cublas will be used only if AutoTVM is disabled
-    #if args.hw in NVIDIA_GPUS:
+    # if args.hw in NVIDIA_GPUS:
     #    measure_tvm_strategy_libs(mod, params, 'cuda -libs=cudnn,cublas', shape_dict, args, is_perf_logging)
     #elif args.hw in INTEL_CPUS:
     #    measure_tvm_strategy_libs(mod, params, 'llvm -libs=mkl', shape_dict, args, is_perf_logging)

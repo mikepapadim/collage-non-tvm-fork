@@ -961,29 +961,30 @@ class ReshapeOpConverter : public TensorRTOpConverter {
   void Convert(TensorRTOpConverterParams* params) const {
     auto input = params->inputs.at(0).tensor;
     auto input_dims = TrtDimsToVector(input->getDimensions());
+
     /*
     std::cerr << "Input shape: ";
     for (size_t i=0; i<input_dims.size(); ++i) {
         std::cerr << input_dims[i] << ",";
     }
     std::cerr << "\n";
-    */
+     */
 
     auto str_newshape = params->node.GetAttr<std::vector<std::string>>("newshape");
     std::vector<int> new_shape;
     int start_index = TRT_HAS_IMPLICIT_BATCH(params) ? 1 : 0;
     if(std::stoi(str_newshape[0])==-1) start_index = 0;
+//    const int start_index = TRT_HAS_IMPLICIT_BATCH(params) ? 1 : 0;
 
-    //const int start_index = TRT_HAS_IMPLICIT_BATCH(params) ? 1 : 0;
     /*
-    std::cerr << "Start index: " << start_index << " // ";
+    std::cerr << "Start index: " << start_index << "\n";
+    std::cerr << "New shape: ";
     for (size_t i = 0; i < str_newshape.size(); ++i) {  
       const int value = std::stoi(str_newshape[i]);
-      std::cerr << value << " ";
+      std::cerr << value << ",";
     }
-    std::cerr << "\n\n";
+    std::cerr << "\n---------------------------------------\n";
     */
-
 
     for (size_t i = start_index; i < str_newshape.size(); ++i) {
       const int value = std::stoi(str_newshape[i]);

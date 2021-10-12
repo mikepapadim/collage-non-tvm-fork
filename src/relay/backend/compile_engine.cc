@@ -111,7 +111,7 @@ class ScheduleGetter : public backend::MemoizedExprTranslator<Array<te::Tensor>>
   CachedFunc Create(const Function& prim_func) {
     auto cache_node = make_object<CachedFuncNode>();
     cache_node->target = target_;
-      
+
     Array<tvm::te::Tensor> all_inputs;
     for (Var param : prim_func->params) {
       Array<tvm::te::Tensor> inputs;
@@ -143,12 +143,16 @@ class ScheduleGetter : public backend::MemoizedExprTranslator<Array<te::Tensor>>
 
     //NOTE: update target --> Target("llvm")
 //    std::cerr << "DP_TARGET: " << dp_target << "\n";
-    bool doCustomLowering = dp_target.size()>0 
+    bool doCustomLowering = dp_target.size()>0
                             && ((int)dp_target.find("INVALID_BACKEND_OP")==-1)
-                            && ((int)dp_target.find("autotvm")==-1) 
+                            && ((int)dp_target.find("autotvm")==-1)
                             && ((int)dp_target.find("tvm")==-1);
 
-    ICHECK_EQ((int)dp_target.find("tensorrt"), -1);
+    if (dp_target.find("tensorrt") && dp_target.find("reshape")) {
+      doCustomLowering = false;
+    } else {
+      ICHECK_EQ((int)dp_target.find("tensorrt"), -1);
+    }
     if(doCustomLowering){
       // Note: Sung
       cache_node->outputs = myVisitExpr(prim_func, dp_target);

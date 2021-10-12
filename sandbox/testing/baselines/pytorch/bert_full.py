@@ -137,7 +137,11 @@ class MultiHeadedAttention(nn.Module):
     """
     Take in model size and number of heads.
     """
-
+    # d_model = 256, h = 8, d_k =32, max_len = 64
+    # (1, 64, 8, 32) -> (1, 8, 64, 32) (after transpose)
+    # (1, 8, 64, 32) -> (8, 64, 32) (after reshape)
+    # (8, 64, 32) -> (8, 64, 64) (after batchmatmul)
+    # (1, 8, 64, 32) -> (1, 8, 256) (after transpose)
     def __init__(self, h, d_model, dropout=0.1):
         super().__init__()
         assert d_model % h == 0

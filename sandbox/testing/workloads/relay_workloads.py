@@ -132,6 +132,19 @@ def get_annotate_test(batch_size):
     mod = relay.transform.InferType()(mod)
     return mod, params
 
+def get_reshape(batch_size):
+    # Network definition
+    data = relay.var("data", relay.TensorType((8, 64, 32), "float32"))
+    expr = relay.reshape(data=data, newshape=(1,8,64,32))
+
+    # Workload
+    mod, params = create_relay_workload(expr)
+    shape_dict = {
+        "data": (8, 64, 32),
+    }
+
+    return mod, params, shape_dict
+
 # def get_conv2d_relu_x2(batch_size):
 #     # Chain graph
 #     # batch_size = 1
@@ -245,6 +258,7 @@ NAME_TO_WORKLOAD = {
     "conv2d+relu_x2":get_conv2d_relu_x2,
     "diamond":get_diamond,
     "annotate_test":get_annotate_test,
+    "reshape":get_reshape,
 }
 
 def get_network_from_relay(name, batch_size):

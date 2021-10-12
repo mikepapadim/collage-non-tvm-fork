@@ -113,7 +113,7 @@ def get_max_std_for_measurement(hw_name, mean_perf):
 def measure(ftimer, is_net, hw_name, *args):
     # Dummy run to check whether it runs correctly e.g., segfault due to large workspace
     import sys
-    """
+
     try:
         ftimer(*args)
     except Exception as E:
@@ -121,7 +121,7 @@ def measure(ftimer, is_net, hw_name, *args):
         printe(E)
         print(sys.exc_info()[0])
         return sys.maxsize, 0
-    """
+
     # Warm-up Phase: Run without measurement
     # TimeEvaluator itself come with the warmup,
     # so we don't need this part technically.

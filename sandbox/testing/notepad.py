@@ -1,22 +1,24 @@
+
+
 # from e2e_perf_logger import *
 #
 # memo_dic = E2EPerfLogger().read_dict_from_csv()
 # E2EPerfLogger().log_all_perf(memo_dic)
 #
 
-def printa(text):
-    print(text + "-a")
-
-
-class ABC():
-    def __init__(self):
-        self.func = printa
-
-    def wow(self):
-        self.func("WOW")
-
-a = ABC()
-a.wow()
+# def printa(text):
+#     print(text + "-a")
+#
+#
+# class ABC():
+#     def __init__(self):
+#         self.func = printa
+#
+#     def wow(self):
+#         self.func("WOW")
+#
+# a = ABC()
+# a.wow()
 
 # from workloads.relay_workloads import create_relay_workload
 # from tvm import relay

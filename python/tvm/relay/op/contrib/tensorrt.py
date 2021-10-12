@@ -692,9 +692,9 @@ def reshape_annotate_fn(expr):  # pylint: disable=unused-variable
         # print(shape, new_shape, file=sys.stderr)
 
         # Remove batch dimension and see if volumes match
-        # if shape[0] != new_shape[0]:
+        if shape[0] != new_shape[0]:
         #    print(shape, new_shape)
-        #    return False
+           return False
         #    logger.info("reshape: can't modify batch dimension.")
         #    return False
 
