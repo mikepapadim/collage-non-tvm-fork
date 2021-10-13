@@ -532,7 +532,9 @@ if __name__ == "__main__":
 
     #print(f"[{args.network}] Performance of TVM (no tuning) on {args.hw} (mean, std) = ({mean_perf:.4f}+-{std_perf:.4f})")
 
-
+    # To measure true TRT performance of BERT (one TRT op), you need to comment out the condition of Reshape ops
+    # the line of if shape[0] != new_shape[0]. You should enable more ops by commenting this part.
+    # File location: python/tvm/relay/op/contrib/tensorrt.py
     # mean_perf, std_perf, mod_trt = measure_end_to_end_perf_tensorrt(mod, params, args.target, shape_dict, args.hw)
     # print(f"[{args.network}] Performance of TensorRT on {args.hw} (mean, std) = ({mean_perf:.4f}+-{std_perf:.4f})")
 
