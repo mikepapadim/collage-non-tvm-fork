@@ -148,11 +148,15 @@ class ScheduleGetter : public backend::MemoizedExprTranslator<Array<te::Tensor>>
                             && ((int)dp_target.find("autotvm")==-1)
                             && ((int)dp_target.find("tvm")==-1);
 
-    if (dp_target.find("tensorrt") && dp_target.find("reshape")) {
-      doCustomLowering = false;
-    } else {
-      ICHECK_EQ((int)dp_target.find("tensorrt"), -1);
+    if (dp_target.find("tensorrt") != -1) {
+      if (dp_target.find("reshape") != -1) {
+        doCustomLowering = false;
+      } else {
+        std::cerr << "DP_TARGET: " << dp_target << "\n";
+        ICHECK_EQ((int)dp_target.find("tensorrt"), -1);
+      }
     }
+
     if(doCustomLowering){
       // Note: Sung
       cache_node->outputs = myVisitExpr(prim_func, dp_target);

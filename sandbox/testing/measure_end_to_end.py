@@ -482,8 +482,8 @@ if __name__ == "__main__":
     log_dir = "e2e_measure_logs"
 
     # For DP,
-    #setup_logging(log_dir, task_name="e2e_measure", net_name=args.network, hw_name=args.hw, batch_size=args.batch_size,
-    #              logging_level=logging.INFO)
+    setup_logging(log_dir, task_name="e2e_measure", net_name=args.network, hw_name=args.hw, batch_size=args.batch_size,
+                 logging_level=logging.INFO)
                   # logging_level=logging.WARNING)
 
     # For tuning time measurement, comment setup_logging above and uncomment the following codes
@@ -512,17 +512,17 @@ if __name__ == "__main__":
 
     # Assign build target based on a given hw
     args.target = get_build_target(args.hw)
-    # is_perf_logging = True
-    is_perf_logging = False
+    is_perf_logging = True
+    # is_perf_logging = False
 
     # print("NETWORK LOADED")
     # mean_perf, std_perf, mod_dnnl = measure_end_to_end_perf_dnnl(mod, params, args.target, shape_dict, args.hw, args)
     # print(f"[{args.network}] Performance of DNNL on {args.hw} (mean, std) = ({mean_perf:.4f}+-{std_perf:.4f})")
 
-    mean_perf, std_perf, mod_dp = measure_end_to_end_perf_autotvm(mod["main"], params, args.target, shape_dict,
-                                                                  CustomFusionPass.DP,
-                                                                  args.network, args.hw, args.batch_size)
-    print(f"[{args.network}] Performance of DP on {args.hw} (mean, std) = ({mean_perf:.4f}+-{std_perf:.4f})")
+    # mean_perf, std_perf, mod_dp = measure_end_to_end_perf_autotvm(mod["main"], params, args.target, shape_dict,
+    #                                                               CustomFusionPass.DP,
+    #                                                               args.network, args.hw, args.batch_size)
+    # print(f"[{args.network}] Performance of DP on {args.hw} (mean, std) = ({mean_perf:.4f}+-{std_perf:.4f})")
 
 
     #mean_perf, std_perf, mod_cud = measure_end_to_end_perf_single_backend_without_alter_layout(mod["main"], params, args.target, shape_dict,
@@ -541,7 +541,7 @@ if __name__ == "__main__":
 
     # measure_dp_and_baselines(mod, params, shape_dict, args, is_perf_logging)
     # measure_autotvm(mod, params, shape_dict, args, is_perf_logging)
-    # measure_two_level(mod, params, shape_dict, args, is_perf_logging)
+    measure_two_level(mod, params, shape_dict, args, is_perf_logging)
     #measure_dp_tuning_time(mod, params, shape_dict, args, is_perf_logging)
 
     # Debug: test single backend pipeline that offloads ops to single backend whenever possible
