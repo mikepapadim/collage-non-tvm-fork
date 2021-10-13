@@ -22,6 +22,9 @@ def draw_e2e_perf_plot(df):
     plt.xlabel("")
     plt.ylabel('Time (s)')
 
+    plt.grid(axis='y', zorder=-2.0)
+    # plt.yticks(np.arange(20, 121, 20))
+
     plt.xticks(rotation=10)
     plt.legend(ncol=2, loc='upper center', bbox_to_anchor=(0.75, 1.2))
     plt.savefig(f"{EXP_RESULT_PATH}/plots/dp_tuning_time_{TARGET_HW}.png", bbox_inches='tight')

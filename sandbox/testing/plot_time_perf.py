@@ -78,7 +78,11 @@ def plot_all_nets(networks, hw, batch_size):
         rel_speed_up = dp_inf_time/inf_time
 
         net_name = NET_NAME_TO_OFFICIAL[net_name]
+        # print(f"{net_name}: {rel_speed_up}")
         plt.plot(tuning_time, rel_speed_up, label=net_name)
+
+    plt.grid(axis='y', zorder=-2.0)
+    # plt.yticks(np.arange(1.0, 1.21, 0.05))
 
     # plt.xlabel('Tuning time (secs)')
     plt.xticks(range(10, 61, 10))
