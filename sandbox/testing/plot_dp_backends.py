@@ -42,12 +42,12 @@ if __name__ == "__main__":
 
     # Plot adding one backend at a time
     backends_to_print = ['autotvm','autotvm-cublas','autotvm-cublas-cudnn', 'autotvm-cublas-cudnn-tensorrt']
-    backend_rename_dic = {'autotvm':'Collage (ATVM)','autotvm-cublas':'Collage (ATVM,cuB)',
-                          'autotvm-cublas-cudnn':'Collage (ATVM,cuB,cuD)','autotvm-cublas-cudnn-tensorrt':'Collage (ATVM,cuB,cuD,TRT)'}
-    cols = ['Collage (ATVM)','Collage (ATVM,cuB)', 'Collage (ATVM,cuB,cuD)', 'Collage (ATVM,cuB,cuD,TRT)']
+    backend_rename_dic = {'autotvm':'Collage (TVM)','autotvm-cublas':'Collage (TVM,cuB)',
+                          'autotvm-cublas-cudnn':'Collage (TVM,cuB,cuD)','autotvm-cublas-cudnn-tensorrt':'Collage (TVM,cuB,cuD,TRT)'}
+    cols = ['Collage (TVM)','Collage (TVM,cuB)', 'Collage (TVM,cuB,cuD)', 'Collage (TVM,cuB,cuD,TRT)']
     #cols = cols[::-1]
-    #best_backend = 'Collage (ATVM)'
-    best_backend = 'Collage (ATVM,cuB,cuD,TRT)'
+    #best_backend = 'Collage (TVM)'
+    best_backend = 'Collage (TVM,cuB,cuD,TRT)'
     args.n_method = 4
     args.plot_name = 'backend_inc'
 
