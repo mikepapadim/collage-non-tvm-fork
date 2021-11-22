@@ -1,0 +1,1932 @@
+digraph {
+	rankdir=BT
+	0 [label="input0 (0):
+Tensor[(1, 64, 56, 56), float32]" shape=rectangle]
+	1 [label="normal_cell_0.0.squeeze.0.weight (1):
+Tensor[(64, 64, 1, 1), float32]" shape=rectangle]
+	2 [label="normal_cell_0.0.squeeze.0.bias (2):
+Tensor[(64,), float32]" shape=rectangle]
+	3 [label="normal_cell_0.0.nodes.0.depthwise_conv2d.weight (3):
+Tensor[(64, 1, 3, 3), float32]" shape=rectangle]
+	4 [label="normal_cell_0.0.nodes.0.pointwise_conv2d.weight (4):
+Tensor[(64, 64, 1, 1), float32]" shape=rectangle]
+	5 [label="normal_cell_0.0.fit.0.weight (5):
+Tensor[(64, 64, 1, 1), float32]" shape=rectangle]
+	6 [label="normal_cell_0.0.fit.0.bias (6):
+Tensor[(64,), float32]" shape=rectangle]
+	7 [label="normal_cell_0.0.nodes.1.depthwise_conv2d.weight (7):
+Tensor[(64, 1, 3, 3), float32]" shape=rectangle]
+	8 [label="normal_cell_0.0.nodes.1.pointwise_conv2d.weight (8):
+Tensor[(64, 64, 1, 1), float32]" shape=rectangle]
+	9 [label="normal_cell_0.0.nodes.2.depthwise_conv2d.weight (9):
+Tensor[(64, 1, 3, 3), float32]" shape=rectangle]
+	10 [label="normal_cell_0.0.nodes.2.pointwise_conv2d.weight (10):
+Tensor[(64, 64, 1, 1), float32]" shape=rectangle]
+	11 [label="normal_cell_0.0.nodes.3.depthwise_conv2d.weight (11):
+Tensor[(64, 1, 3, 3), float32]" shape=rectangle]
+	12 [label="normal_cell_0.0.nodes.3.pointwise_conv2d.weight (12):
+Tensor[(64, 64, 1, 1), float32]" shape=rectangle]
+	13 [label="normal_cell_0.0.nodes.4.depthwise_conv2d.weight (13):
+Tensor[(64, 1, 3, 3), float32]" shape=rectangle]
+	14 [label="normal_cell_0.0.nodes.4.pointwise_conv2d.weight (14):
+Tensor[(64, 64, 1, 1), float32]" shape=rectangle]
+	15 [label="normal_cell_0.1.squeeze.0.weight (15):
+Tensor[(64, 320, 1, 1), float32]" shape=rectangle]
+	16 [label="normal_cell_0.1.squeeze.0.bias (16):
+Tensor[(64,), float32]" shape=rectangle]
+	17 [label="normal_cell_0.1.nodes.0.depthwise_conv2d.weight (17):
+Tensor[(64, 1, 3, 3), float32]" shape=rectangle]
+	18 [label="normal_cell_0.1.nodes.0.pointwise_conv2d.weight (18):
+Tensor[(64, 64, 1, 1), float32]" shape=rectangle]
+	19 [label="normal_cell_0.1.fit.0.weight (19):
+Tensor[(64, 64, 1, 1), float32]" shape=rectangle]
+	20 [label="normal_cell_0.1.fit.0.bias (20):
+Tensor[(64,), float32]" shape=rectangle]
+	21 [label="normal_cell_0.1.nodes.1.depthwise_conv2d.weight (21):
+Tensor[(64, 1, 3, 3), float32]" shape=rectangle]
+	22 [label="normal_cell_0.1.nodes.1.pointwise_conv2d.weight (22):
+Tensor[(64, 64, 1, 1), float32]" shape=rectangle]
+	23 [label="normal_cell_0.1.nodes.2.depthwise_conv2d.weight (23):
+Tensor[(64, 1, 3, 3), float32]" shape=rectangle]
+	24 [label="normal_cell_0.1.nodes.2.pointwise_conv2d.weight (24):
+Tensor[(64, 64, 1, 1), float32]" shape=rectangle]
+	25 [label="normal_cell_0.1.nodes.3.depthwise_conv2d.weight (25):
+Tensor[(64, 1, 3, 3), float32]" shape=rectangle]
+	26 [label="normal_cell_0.1.nodes.3.pointwise_conv2d.weight (26):
+Tensor[(64, 64, 1, 1), float32]" shape=rectangle]
+	27 [label="normal_cell_0.1.nodes.4.depthwise_conv2d.weight (27):
+Tensor[(64, 1, 3, 3), float32]" shape=rectangle]
+	28 [label="normal_cell_0.1.nodes.4.pointwise_conv2d.weight (28):
+Tensor[(64, 64, 1, 1), float32]" shape=rectangle]
+	29 [label="normal_cell_0.2.squeeze.0.weight (29):
+Tensor[(64, 320, 1, 1), float32]" shape=rectangle]
+	30 [label="normal_cell_0.2.squeeze.0.bias (30):
+Tensor[(64,), float32]" shape=rectangle]
+	31 [label="normal_cell_0.2.nodes.0.depthwise_conv2d.weight (31):
+Tensor[(64, 1, 3, 3), float32]" shape=rectangle]
+	32 [label="normal_cell_0.2.nodes.0.pointwise_conv2d.weight (32):
+Tensor[(64, 64, 1, 1), float32]" shape=rectangle]
+	33 [label="normal_cell_0.2.fit.0.weight (33):
+Tensor[(64, 320, 1, 1), float32]" shape=rectangle]
+	34 [label="normal_cell_0.2.fit.0.bias (34):
+Tensor[(64,), float32]" shape=rectangle]
+	35 [label="normal_cell_0.2.nodes.1.depthwise_conv2d.weight (35):
+Tensor[(64, 1, 3, 3), float32]" shape=rectangle]
+	36 [label="normal_cell_0.2.nodes.1.pointwise_conv2d.weight (36):
+Tensor[(64, 64, 1, 1), float32]" shape=rectangle]
+	37 [label="normal_cell_0.2.nodes.2.depthwise_conv2d.weight (37):
+Tensor[(64, 1, 3, 3), float32]" shape=rectangle]
+	38 [label="normal_cell_0.2.nodes.2.pointwise_conv2d.weight (38):
+Tensor[(64, 64, 1, 1), float32]" shape=rectangle]
+	39 [label="normal_cell_0.2.nodes.3.depthwise_conv2d.weight (39):
+Tensor[(64, 1, 3, 3), float32]" shape=rectangle]
+	40 [label="normal_cell_0.2.nodes.3.pointwise_conv2d.weight (40):
+Tensor[(64, 64, 1, 1), float32]" shape=rectangle]
+	41 [label="normal_cell_0.2.nodes.4.depthwise_conv2d.weight (41):
+Tensor[(64, 1, 3, 3), float32]" shape=rectangle]
+	42 [label="normal_cell_0.2.nodes.4.pointwise_conv2d.weight (42):
+Tensor[(64, 64, 1, 1), float32]" shape=rectangle]
+	43 [label="normal_cell_0.3.squeeze.0.weight (43):
+Tensor[(64, 320, 1, 1), float32]" shape=rectangle]
+	44 [label="normal_cell_0.3.squeeze.0.bias (44):
+Tensor[(64,), float32]" shape=rectangle]
+	45 [label="normal_cell_0.3.nodes.0.depthwise_conv2d.weight (45):
+Tensor[(64, 1, 3, 3), float32]" shape=rectangle]
+	46 [label="normal_cell_0.3.nodes.0.pointwise_conv2d.weight (46):
+Tensor[(64, 64, 1, 1), float32]" shape=rectangle]
+	47 [label="normal_cell_0.3.fit.0.weight (47):
+Tensor[(64, 320, 1, 1), float32]" shape=rectangle]
+	48 [label="normal_cell_0.3.fit.0.bias (48):
+Tensor[(64,), float32]" shape=rectangle]
+	49 [label="normal_cell_0.3.nodes.1.depthwise_conv2d.weight (49):
+Tensor[(64, 1, 3, 3), float32]" shape=rectangle]
+	50 [label="normal_cell_0.3.nodes.1.pointwise_conv2d.weight (50):
+Tensor[(64, 64, 1, 1), float32]" shape=rectangle]
+	51 [label="normal_cell_0.3.nodes.2.depthwise_conv2d.weight (51):
+Tensor[(64, 1, 3, 3), float32]" shape=rectangle]
+	52 [label="normal_cell_0.3.nodes.2.pointwise_conv2d.weight (52):
+Tensor[(64, 64, 1, 1), float32]" shape=rectangle]
+	53 [label="normal_cell_0.3.nodes.3.depthwise_conv2d.weight (53):
+Tensor[(64, 1, 3, 3), float32]" shape=rectangle]
+	54 [label="normal_cell_0.3.nodes.3.pointwise_conv2d.weight (54):
+Tensor[(64, 64, 1, 1), float32]" shape=rectangle]
+	55 [label="normal_cell_0.3.nodes.4.depthwise_conv2d.weight (55):
+Tensor[(64, 1, 3, 3), float32]" shape=rectangle]
+	56 [label="normal_cell_0.3.nodes.4.pointwise_conv2d.weight (56):
+Tensor[(64, 64, 1, 1), float32]" shape=rectangle]
+	57 [label="reduction_cell_0.fit.0.weight (57):
+Tensor[(128, 320, 1, 1), float32]" shape=rectangle]
+	58 [label="reduction_cell_0.fit.0.bias (58):
+Tensor[(128,), float32]" shape=rectangle]
+	59 [label="reduction_cell_0.conv7_1.depthwise_conv2d.weight (59):
+Tensor[(128, 1, 7, 7), float32]" shape=rectangle]
+	60 [label="reduction_cell_0.conv7_1.pointwise_conv2d.weight (60):
+Tensor[(128, 128, 1, 1), float32]" shape=rectangle]
+	61 [label="normal_cell_0.4.squeeze.0.weight (61):
+Tensor[(64, 320, 1, 1), float32]" shape=rectangle]
+	62 [label="normal_cell_0.4.squeeze.0.bias (62):
+Tensor[(64,), float32]" shape=rectangle]
+	63 [label="normal_cell_0.4.nodes.0.depthwise_conv2d.weight (63):
+Tensor[(64, 1, 3, 3), float32]" shape=rectangle]
+	64 [label="normal_cell_0.4.nodes.0.pointwise_conv2d.weight (64):
+Tensor[(64, 64, 1, 1), float32]" shape=rectangle]
+	65 [label="normal_cell_0.4.fit.0.weight (65):
+Tensor[(64, 320, 1, 1), float32]" shape=rectangle]
+	66 [label="normal_cell_0.4.fit.0.bias (66):
+Tensor[(64,), float32]" shape=rectangle]
+	67 [label="normal_cell_0.4.nodes.1.depthwise_conv2d.weight (67):
+Tensor[(64, 1, 3, 3), float32]" shape=rectangle]
+	68 [label="normal_cell_0.4.nodes.1.pointwise_conv2d.weight (68):
+Tensor[(64, 64, 1, 1), float32]" shape=rectangle]
+	69 [label="normal_cell_0.4.nodes.2.depthwise_conv2d.weight (69):
+Tensor[(64, 1, 3, 3), float32]" shape=rectangle]
+	70 [label="normal_cell_0.4.nodes.2.pointwise_conv2d.weight (70):
+Tensor[(64, 64, 1, 1), float32]" shape=rectangle]
+	71 [label="normal_cell_0.4.nodes.3.depthwise_conv2d.weight (71):
+Tensor[(64, 1, 3, 3), float32]" shape=rectangle]
+	72 [label="normal_cell_0.4.nodes.3.pointwise_conv2d.weight (72):
+Tensor[(64, 64, 1, 1), float32]" shape=rectangle]
+	73 [label="normal_cell_0.4.nodes.4.depthwise_conv2d.weight (73):
+Tensor[(64, 1, 3, 3), float32]" shape=rectangle]
+	74 [label="normal_cell_0.4.nodes.4.pointwise_conv2d.weight (74):
+Tensor[(64, 64, 1, 1), float32]" shape=rectangle]
+	75 [label="reduction_cell_0.squeeze.0.weight (75):
+Tensor[(128, 320, 1, 1), float32]" shape=rectangle]
+	76 [label="reduction_cell_0.squeeze.0.bias (76):
+Tensor[(128,), float32]" shape=rectangle]
+	77 [label="reduction_cell_0.conv5_1.depthwise_conv2d.weight (77):
+Tensor[(128, 1, 5, 5), float32]" shape=rectangle]
+	78 [label="reduction_cell_0.conv5_1.pointwise_conv2d.weight (78):
+Tensor[(128, 128, 1, 1), float32]" shape=rectangle]
+	79 [label="reduction_cell_0.conv7_2.depthwise_conv2d.weight (79):
+Tensor[(128, 1, 7, 7), float32]" shape=rectangle]
+	80 [label="reduction_cell_0.conv7_2.pointwise_conv2d.weight (80):
+Tensor[(128, 128, 1, 1), float32]" shape=rectangle]
+	81 [label="reduction_cell_0.conv5_2.depthwise_conv2d.weight (81):
+Tensor[(128, 1, 5, 5), float32]" shape=rectangle]
+	82 [label="reduction_cell_0.conv5_2.pointwise_conv2d.weight (82):
+Tensor[(128, 128, 1, 1), float32]" shape=rectangle]
+	83 [label="reduction_cell_0.conv3_1.depthwise_conv2d.weight (83):
+Tensor[(128, 1, 3, 3), float32]" shape=rectangle]
+	84 [label="reduction_cell_0.conv3_1.pointwise_conv2d.weight (84):
+Tensor[(128, 128, 1, 1), float32]" shape=rectangle]
+	85 [label="normal_cell_1.0.squeeze.0.weight (85):
+Tensor[(128, 640, 1, 1), float32]" shape=rectangle]
+	86 [label="normal_cell_1.0.squeeze.0.bias (86):
+Tensor[(128,), float32]" shape=rectangle]
+	87 [label="normal_cell_1.0.nodes.0.depthwise_conv2d.weight (87):
+Tensor[(128, 1, 3, 3), float32]" shape=rectangle]
+	88 [label="normal_cell_1.0.nodes.0.pointwise_conv2d.weight (88):
+Tensor[(128, 128, 1, 1), float32]" shape=rectangle]
+	89 [label="normal_cell_1.0.fit.0.weight (89):
+Tensor[(128, 640, 1, 1), float32]" shape=rectangle]
+	90 [label="normal_cell_1.0.fit.0.bias (90):
+Tensor[(128,), float32]" shape=rectangle]
+	91 [label="normal_cell_1.0.nodes.1.depthwise_conv2d.weight (91):
+Tensor[(128, 1, 3, 3), float32]" shape=rectangle]
+	92 [label="normal_cell_1.0.nodes.1.pointwise_conv2d.weight (92):
+Tensor[(128, 128, 1, 1), float32]" shape=rectangle]
+	93 [label="normal_cell_1.0.nodes.2.depthwise_conv2d.weight (93):
+Tensor[(128, 1, 3, 3), float32]" shape=rectangle]
+	94 [label="normal_cell_1.0.nodes.2.pointwise_conv2d.weight (94):
+Tensor[(128, 128, 1, 1), float32]" shape=rectangle]
+	95 [label="normal_cell_1.0.nodes.3.depthwise_conv2d.weight (95):
+Tensor[(128, 1, 3, 3), float32]" shape=rectangle]
+	96 [label="normal_cell_1.0.nodes.3.pointwise_conv2d.weight (96):
+Tensor[(128, 128, 1, 1), float32]" shape=rectangle]
+	97 [label="normal_cell_1.0.nodes.4.depthwise_conv2d.weight (97):
+Tensor[(128, 1, 3, 3), float32]" shape=rectangle]
+	98 [label="normal_cell_1.0.nodes.4.pointwise_conv2d.weight (98):
+Tensor[(128, 128, 1, 1), float32]" shape=rectangle]
+	99 [label="normal_cell_1.1.squeeze.0.weight (99):
+Tensor[(128, 640, 1, 1), float32]" shape=rectangle]
+	100 [label="normal_cell_1.1.squeeze.0.bias (100):
+Tensor[(128,), float32]" shape=rectangle]
+	101 [label="normal_cell_1.1.nodes.0.depthwise_conv2d.weight (101):
+Tensor[(128, 1, 3, 3), float32]" shape=rectangle]
+	102 [label="normal_cell_1.1.nodes.0.pointwise_conv2d.weight (102):
+Tensor[(128, 128, 1, 1), float32]" shape=rectangle]
+	103 [label="normal_cell_1.1.fit.0.weight (103):
+Tensor[(128, 640, 1, 1), float32]" shape=rectangle]
+	104 [label="normal_cell_1.1.fit.0.bias (104):
+Tensor[(128,), float32]" shape=rectangle]
+	105 [label="normal_cell_1.1.nodes.1.depthwise_conv2d.weight (105):
+Tensor[(128, 1, 3, 3), float32]" shape=rectangle]
+	106 [label="normal_cell_1.1.nodes.1.pointwise_conv2d.weight (106):
+Tensor[(128, 128, 1, 1), float32]" shape=rectangle]
+	107 [label="normal_cell_1.1.nodes.2.depthwise_conv2d.weight (107):
+Tensor[(128, 1, 3, 3), float32]" shape=rectangle]
+	108 [label="normal_cell_1.1.nodes.2.pointwise_conv2d.weight (108):
+Tensor[(128, 128, 1, 1), float32]" shape=rectangle]
+	109 [label="normal_cell_1.1.nodes.3.depthwise_conv2d.weight (109):
+Tensor[(128, 1, 3, 3), float32]" shape=rectangle]
+	110 [label="normal_cell_1.1.nodes.3.pointwise_conv2d.weight (110):
+Tensor[(128, 128, 1, 1), float32]" shape=rectangle]
+	111 [label="normal_cell_1.1.nodes.4.depthwise_conv2d.weight (111):
+Tensor[(128, 1, 3, 3), float32]" shape=rectangle]
+	112 [label="normal_cell_1.1.nodes.4.pointwise_conv2d.weight (112):
+Tensor[(128, 128, 1, 1), float32]" shape=rectangle]
+	113 [label="normal_cell_1.2.squeeze.0.weight (113):
+Tensor[(128, 640, 1, 1), float32]" shape=rectangle]
+	114 [label="normal_cell_1.2.squeeze.0.bias (114):
+Tensor[(128,), float32]" shape=rectangle]
+	115 [label="normal_cell_1.2.nodes.0.depthwise_conv2d.weight (115):
+Tensor[(128, 1, 3, 3), float32]" shape=rectangle]
+	116 [label="normal_cell_1.2.nodes.0.pointwise_conv2d.weight (116):
+Tensor[(128, 128, 1, 1), float32]" shape=rectangle]
+	117 [label="normal_cell_1.2.fit.0.weight (117):
+Tensor[(128, 640, 1, 1), float32]" shape=rectangle]
+	118 [label="normal_cell_1.2.fit.0.bias (118):
+Tensor[(128,), float32]" shape=rectangle]
+	119 [label="normal_cell_1.2.nodes.1.depthwise_conv2d.weight (119):
+Tensor[(128, 1, 3, 3), float32]" shape=rectangle]
+	120 [label="normal_cell_1.2.nodes.1.pointwise_conv2d.weight (120):
+Tensor[(128, 128, 1, 1), float32]" shape=rectangle]
+	121 [label="normal_cell_1.2.nodes.2.depthwise_conv2d.weight (121):
+Tensor[(128, 1, 3, 3), float32]" shape=rectangle]
+	122 [label="normal_cell_1.2.nodes.2.pointwise_conv2d.weight (122):
+Tensor[(128, 128, 1, 1), float32]" shape=rectangle]
+	123 [label="normal_cell_1.2.nodes.3.depthwise_conv2d.weight (123):
+Tensor[(128, 1, 3, 3), float32]" shape=rectangle]
+	124 [label="normal_cell_1.2.nodes.3.pointwise_conv2d.weight (124):
+Tensor[(128, 128, 1, 1), float32]" shape=rectangle]
+	125 [label="normal_cell_1.2.nodes.4.depthwise_conv2d.weight (125):
+Tensor[(128, 1, 3, 3), float32]" shape=rectangle]
+	126 [label="normal_cell_1.2.nodes.4.pointwise_conv2d.weight (126):
+Tensor[(128, 128, 1, 1), float32]" shape=rectangle]
+	127 [label="normal_cell_1.3.squeeze.0.weight (127):
+Tensor[(128, 640, 1, 1), float32]" shape=rectangle]
+	128 [label="normal_cell_1.3.squeeze.0.bias (128):
+Tensor[(128,), float32]" shape=rectangle]
+	129 [label="normal_cell_1.3.nodes.0.depthwise_conv2d.weight (129):
+Tensor[(128, 1, 3, 3), float32]" shape=rectangle]
+	130 [label="normal_cell_1.3.nodes.0.pointwise_conv2d.weight (130):
+Tensor[(128, 128, 1, 1), float32]" shape=rectangle]
+	131 [label="normal_cell_1.3.fit.0.weight (131):
+Tensor[(128, 640, 1, 1), float32]" shape=rectangle]
+	132 [label="normal_cell_1.3.fit.0.bias (132):
+Tensor[(128,), float32]" shape=rectangle]
+	133 [label="normal_cell_1.3.nodes.1.depthwise_conv2d.weight (133):
+Tensor[(128, 1, 3, 3), float32]" shape=rectangle]
+	134 [label="normal_cell_1.3.nodes.1.pointwise_conv2d.weight (134):
+Tensor[(128, 128, 1, 1), float32]" shape=rectangle]
+	135 [label="normal_cell_1.3.nodes.2.depthwise_conv2d.weight (135):
+Tensor[(128, 1, 3, 3), float32]" shape=rectangle]
+	136 [label="normal_cell_1.3.nodes.2.pointwise_conv2d.weight (136):
+Tensor[(128, 128, 1, 1), float32]" shape=rectangle]
+	137 [label="normal_cell_1.3.nodes.3.depthwise_conv2d.weight (137):
+Tensor[(128, 1, 3, 3), float32]" shape=rectangle]
+	138 [label="normal_cell_1.3.nodes.3.pointwise_conv2d.weight (138):
+Tensor[(128, 128, 1, 1), float32]" shape=rectangle]
+	139 [label="normal_cell_1.3.nodes.4.depthwise_conv2d.weight (139):
+Tensor[(128, 1, 3, 3), float32]" shape=rectangle]
+	140 [label="normal_cell_1.3.nodes.4.pointwise_conv2d.weight (140):
+Tensor[(128, 128, 1, 1), float32]" shape=rectangle]
+	141 [label="reduction_cell_1.fit.0.weight (141):
+Tensor[(256, 640, 1, 1), float32]" shape=rectangle]
+	142 [label="reduction_cell_1.fit.0.bias (142):
+Tensor[(256,), float32]" shape=rectangle]
+	143 [label="reduction_cell_1.conv7_1.depthwise_conv2d.weight (143):
+Tensor[(256, 1, 7, 7), float32]" shape=rectangle]
+	144 [label="reduction_cell_1.conv7_1.pointwise_conv2d.weight (144):
+Tensor[(256, 256, 1, 1), float32]" shape=rectangle]
+	145 [label="normal_cell_1.4.squeeze.0.weight (145):
+Tensor[(128, 640, 1, 1), float32]" shape=rectangle]
+	146 [label="normal_cell_1.4.squeeze.0.bias (146):
+Tensor[(128,), float32]" shape=rectangle]
+	147 [label="normal_cell_1.4.nodes.0.depthwise_conv2d.weight (147):
+Tensor[(128, 1, 3, 3), float32]" shape=rectangle]
+	148 [label="normal_cell_1.4.nodes.0.pointwise_conv2d.weight (148):
+Tensor[(128, 128, 1, 1), float32]" shape=rectangle]
+	149 [label="normal_cell_1.4.fit.0.weight (149):
+Tensor[(128, 640, 1, 1), float32]" shape=rectangle]
+	150 [label="normal_cell_1.4.fit.0.bias (150):
+Tensor[(128,), float32]" shape=rectangle]
+	151 [label="normal_cell_1.4.nodes.1.depthwise_conv2d.weight (151):
+Tensor[(128, 1, 3, 3), float32]" shape=rectangle]
+	152 [label="normal_cell_1.4.nodes.1.pointwise_conv2d.weight (152):
+Tensor[(128, 128, 1, 1), float32]" shape=rectangle]
+	153 [label="normal_cell_1.4.nodes.2.depthwise_conv2d.weight (153):
+Tensor[(128, 1, 3, 3), float32]" shape=rectangle]
+	154 [label="normal_cell_1.4.nodes.2.pointwise_conv2d.weight (154):
+Tensor[(128, 128, 1, 1), float32]" shape=rectangle]
+	155 [label="normal_cell_1.4.nodes.3.depthwise_conv2d.weight (155):
+Tensor[(128, 1, 3, 3), float32]" shape=rectangle]
+	156 [label="normal_cell_1.4.nodes.3.pointwise_conv2d.weight (156):
+Tensor[(128, 128, 1, 1), float32]" shape=rectangle]
+	157 [label="normal_cell_1.4.nodes.4.depthwise_conv2d.weight (157):
+Tensor[(128, 1, 3, 3), float32]" shape=rectangle]
+	158 [label="normal_cell_1.4.nodes.4.pointwise_conv2d.weight (158):
+Tensor[(128, 128, 1, 1), float32]" shape=rectangle]
+	159 [label="reduction_cell_1.squeeze.0.weight (159):
+Tensor[(256, 640, 1, 1), float32]" shape=rectangle]
+	160 [label="reduction_cell_1.squeeze.0.bias (160):
+Tensor[(256,), float32]" shape=rectangle]
+	161 [label="reduction_cell_1.conv5_1.depthwise_conv2d.weight (161):
+Tensor[(256, 1, 5, 5), float32]" shape=rectangle]
+	162 [label="reduction_cell_1.conv5_1.pointwise_conv2d.weight (162):
+Tensor[(256, 256, 1, 1), float32]" shape=rectangle]
+	163 [label="reduction_cell_1.conv7_2.depthwise_conv2d.weight (163):
+Tensor[(256, 1, 7, 7), float32]" shape=rectangle]
+	164 [label="reduction_cell_1.conv7_2.pointwise_conv2d.weight (164):
+Tensor[(256, 256, 1, 1), float32]" shape=rectangle]
+	165 [label="reduction_cell_1.conv5_2.depthwise_conv2d.weight (165):
+Tensor[(256, 1, 5, 5), float32]" shape=rectangle]
+	166 [label="reduction_cell_1.conv5_2.pointwise_conv2d.weight (166):
+Tensor[(256, 256, 1, 1), float32]" shape=rectangle]
+	167 [label="reduction_cell_1.conv3_1.depthwise_conv2d.weight (167):
+Tensor[(256, 1, 3, 3), float32]" shape=rectangle]
+	168 [label="reduction_cell_1.conv3_1.pointwise_conv2d.weight (168):
+Tensor[(256, 256, 1, 1), float32]" shape=rectangle]
+	169 [label="normal_cell_2.0.squeeze.0.weight (169):
+Tensor[(256, 1280, 1, 1), float32]" shape=rectangle]
+	170 [label="normal_cell_2.0.squeeze.0.bias (170):
+Tensor[(256,), float32]" shape=rectangle]
+	171 [label="normal_cell_2.0.nodes.0.depthwise_conv2d.weight (171):
+Tensor[(256, 1, 3, 3), float32]" shape=rectangle]
+	172 [label="normal_cell_2.0.nodes.0.pointwise_conv2d.weight (172):
+Tensor[(256, 256, 1, 1), float32]" shape=rectangle]
+	173 [label="normal_cell_2.0.fit.0.weight (173):
+Tensor[(256, 1280, 1, 1), float32]" shape=rectangle]
+	174 [label="normal_cell_2.0.fit.0.bias (174):
+Tensor[(256,), float32]" shape=rectangle]
+	175 [label="normal_cell_2.0.nodes.1.depthwise_conv2d.weight (175):
+Tensor[(256, 1, 3, 3), float32]" shape=rectangle]
+	176 [label="normal_cell_2.0.nodes.1.pointwise_conv2d.weight (176):
+Tensor[(256, 256, 1, 1), float32]" shape=rectangle]
+	177 [label="normal_cell_2.0.nodes.2.depthwise_conv2d.weight (177):
+Tensor[(256, 1, 3, 3), float32]" shape=rectangle]
+	178 [label="normal_cell_2.0.nodes.2.pointwise_conv2d.weight (178):
+Tensor[(256, 256, 1, 1), float32]" shape=rectangle]
+	179 [label="normal_cell_2.0.nodes.3.depthwise_conv2d.weight (179):
+Tensor[(256, 1, 3, 3), float32]" shape=rectangle]
+	180 [label="normal_cell_2.0.nodes.3.pointwise_conv2d.weight (180):
+Tensor[(256, 256, 1, 1), float32]" shape=rectangle]
+	181 [label="normal_cell_2.0.nodes.4.depthwise_conv2d.weight (181):
+Tensor[(256, 1, 3, 3), float32]" shape=rectangle]
+	182 [label="normal_cell_2.0.nodes.4.pointwise_conv2d.weight (182):
+Tensor[(256, 256, 1, 1), float32]" shape=rectangle]
+	183 [label="normal_cell_2.1.squeeze.0.weight (183):
+Tensor[(256, 1280, 1, 1), float32]" shape=rectangle]
+	184 [label="normal_cell_2.1.squeeze.0.bias (184):
+Tensor[(256,), float32]" shape=rectangle]
+	185 [label="normal_cell_2.1.nodes.0.depthwise_conv2d.weight (185):
+Tensor[(256, 1, 3, 3), float32]" shape=rectangle]
+	186 [label="normal_cell_2.1.nodes.0.pointwise_conv2d.weight (186):
+Tensor[(256, 256, 1, 1), float32]" shape=rectangle]
+	187 [label="normal_cell_2.1.fit.0.weight (187):
+Tensor[(256, 1280, 1, 1), float32]" shape=rectangle]
+	188 [label="normal_cell_2.1.fit.0.bias (188):
+Tensor[(256,), float32]" shape=rectangle]
+	189 [label="normal_cell_2.1.nodes.1.depthwise_conv2d.weight (189):
+Tensor[(256, 1, 3, 3), float32]" shape=rectangle]
+	190 [label="normal_cell_2.1.nodes.1.pointwise_conv2d.weight (190):
+Tensor[(256, 256, 1, 1), float32]" shape=rectangle]
+	191 [label="normal_cell_2.1.nodes.2.depthwise_conv2d.weight (191):
+Tensor[(256, 1, 3, 3), float32]" shape=rectangle]
+	192 [label="normal_cell_2.1.nodes.2.pointwise_conv2d.weight (192):
+Tensor[(256, 256, 1, 1), float32]" shape=rectangle]
+	193 [label="normal_cell_2.1.nodes.3.depthwise_conv2d.weight (193):
+Tensor[(256, 1, 3, 3), float32]" shape=rectangle]
+	194 [label="normal_cell_2.1.nodes.3.pointwise_conv2d.weight (194):
+Tensor[(256, 256, 1, 1), float32]" shape=rectangle]
+	195 [label="normal_cell_2.1.nodes.4.depthwise_conv2d.weight (195):
+Tensor[(256, 1, 3, 3), float32]" shape=rectangle]
+	196 [label="normal_cell_2.1.nodes.4.pointwise_conv2d.weight (196):
+Tensor[(256, 256, 1, 1), float32]" shape=rectangle]
+	197 [label="normal_cell_2.2.squeeze.0.weight (197):
+Tensor[(256, 1280, 1, 1), float32]" shape=rectangle]
+	198 [label="normal_cell_2.2.squeeze.0.bias (198):
+Tensor[(256,), float32]" shape=rectangle]
+	199 [label="normal_cell_2.2.nodes.0.depthwise_conv2d.weight (199):
+Tensor[(256, 1, 3, 3), float32]" shape=rectangle]
+	200 [label="normal_cell_2.2.nodes.0.pointwise_conv2d.weight (200):
+Tensor[(256, 256, 1, 1), float32]" shape=rectangle]
+	201 [label="normal_cell_2.2.fit.0.weight (201):
+Tensor[(256, 1280, 1, 1), float32]" shape=rectangle]
+	202 [label="normal_cell_2.2.fit.0.bias (202):
+Tensor[(256,), float32]" shape=rectangle]
+	203 [label="normal_cell_2.2.nodes.1.depthwise_conv2d.weight (203):
+Tensor[(256, 1, 3, 3), float32]" shape=rectangle]
+	204 [label="normal_cell_2.2.nodes.1.pointwise_conv2d.weight (204):
+Tensor[(256, 256, 1, 1), float32]" shape=rectangle]
+	205 [label="normal_cell_2.2.nodes.2.depthwise_conv2d.weight (205):
+Tensor[(256, 1, 3, 3), float32]" shape=rectangle]
+	206 [label="normal_cell_2.2.nodes.2.pointwise_conv2d.weight (206):
+Tensor[(256, 256, 1, 1), float32]" shape=rectangle]
+	207 [label="normal_cell_2.2.nodes.3.depthwise_conv2d.weight (207):
+Tensor[(256, 1, 3, 3), float32]" shape=rectangle]
+	208 [label="normal_cell_2.2.nodes.3.pointwise_conv2d.weight (208):
+Tensor[(256, 256, 1, 1), float32]" shape=rectangle]
+	209 [label="normal_cell_2.2.nodes.4.depthwise_conv2d.weight (209):
+Tensor[(256, 1, 3, 3), float32]" shape=rectangle]
+	210 [label="normal_cell_2.2.nodes.4.pointwise_conv2d.weight (210):
+Tensor[(256, 256, 1, 1), float32]" shape=rectangle]
+	211 [label="normal_cell_2.3.squeeze.0.weight (211):
+Tensor[(256, 1280, 1, 1), float32]" shape=rectangle]
+	212 [label="normal_cell_2.3.squeeze.0.bias (212):
+Tensor[(256,), float32]" shape=rectangle]
+	213 [label="normal_cell_2.3.nodes.0.depthwise_conv2d.weight (213):
+Tensor[(256, 1, 3, 3), float32]" shape=rectangle]
+	214 [label="normal_cell_2.3.nodes.0.pointwise_conv2d.weight (214):
+Tensor[(256, 256, 1, 1), float32]" shape=rectangle]
+	215 [label="normal_cell_2.3.fit.0.weight (215):
+Tensor[(256, 1280, 1, 1), float32]" shape=rectangle]
+	216 [label="normal_cell_2.3.fit.0.bias (216):
+Tensor[(256,), float32]" shape=rectangle]
+	217 [label="normal_cell_2.3.nodes.1.depthwise_conv2d.weight (217):
+Tensor[(256, 1, 3, 3), float32]" shape=rectangle]
+	218 [label="normal_cell_2.3.nodes.1.pointwise_conv2d.weight (218):
+Tensor[(256, 256, 1, 1), float32]" shape=rectangle]
+	219 [label="normal_cell_2.3.nodes.2.depthwise_conv2d.weight (219):
+Tensor[(256, 1, 3, 3), float32]" shape=rectangle]
+	220 [label="normal_cell_2.3.nodes.2.pointwise_conv2d.weight (220):
+Tensor[(256, 256, 1, 1), float32]" shape=rectangle]
+	221 [label="normal_cell_2.3.nodes.3.depthwise_conv2d.weight (221):
+Tensor[(256, 1, 3, 3), float32]" shape=rectangle]
+	222 [label="normal_cell_2.3.nodes.3.pointwise_conv2d.weight (222):
+Tensor[(256, 256, 1, 1), float32]" shape=rectangle]
+	223 [label="normal_cell_2.3.nodes.4.depthwise_conv2d.weight (223):
+Tensor[(256, 1, 3, 3), float32]" shape=rectangle]
+	224 [label="normal_cell_2.3.nodes.4.pointwise_conv2d.weight (224):
+Tensor[(256, 256, 1, 1), float32]" shape=rectangle]
+	225 [label="normal_cell_2.4.squeeze.0.weight (225):
+Tensor[(256, 1280, 1, 1), float32]" shape=rectangle]
+	226 [label="normal_cell_2.4.squeeze.0.bias (226):
+Tensor[(256,), float32]" shape=rectangle]
+	227 [label="normal_cell_2.4.nodes.0.depthwise_conv2d.weight (227):
+Tensor[(256, 1, 3, 3), float32]" shape=rectangle]
+	228 [label="normal_cell_2.4.nodes.0.pointwise_conv2d.weight (228):
+Tensor[(256, 256, 1, 1), float32]" shape=rectangle]
+	229 [label="normal_cell_2.4.fit.0.weight (229):
+Tensor[(256, 1280, 1, 1), float32]" shape=rectangle]
+	230 [label="normal_cell_2.4.fit.0.bias (230):
+Tensor[(256,), float32]" shape=rectangle]
+	231 [label="normal_cell_2.4.nodes.1.depthwise_conv2d.weight (231):
+Tensor[(256, 1, 3, 3), float32]" shape=rectangle]
+	232 [label="normal_cell_2.4.nodes.1.pointwise_conv2d.weight (232):
+Tensor[(256, 256, 1, 1), float32]" shape=rectangle]
+	233 [label="normal_cell_2.4.nodes.2.depthwise_conv2d.weight (233):
+Tensor[(256, 1, 3, 3), float32]" shape=rectangle]
+	234 [label="normal_cell_2.4.nodes.2.pointwise_conv2d.weight (234):
+Tensor[(256, 256, 1, 1), float32]" shape=rectangle]
+	235 [label="normal_cell_2.4.nodes.3.depthwise_conv2d.weight (235):
+Tensor[(256, 1, 3, 3), float32]" shape=rectangle]
+	236 [label="normal_cell_2.4.nodes.3.pointwise_conv2d.weight (236):
+Tensor[(256, 256, 1, 1), float32]" shape=rectangle]
+	237 [label="normal_cell_2.4.nodes.4.depthwise_conv2d.weight (237):
+Tensor[(256, 1, 3, 3), float32]" shape=rectangle]
+	238 [label="normal_cell_2.4.nodes.4.pointwise_conv2d.weight (238):
+Tensor[(256, 256, 1, 1), float32]" shape=rectangle]
+	239 [label="Call (239)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	0 -> 239
+	1 -> 239
+	240 [label="Call (240)(op=nn.bias_add)" color=greenyellow shape=ellipse style=filled]
+	239 -> 240
+	2 -> 240
+	241 [label="Call (241)(op=nn.relu)" color=greenyellow shape=ellipse style=filled]
+	240 -> 241
+	242 [label="Call (242)(op=reshape)" color=greenyellow shape=ellipse style=filled]
+	3 -> 242
+	243 [label="Call (243)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	241 -> 243
+	242 -> 243
+	244 [label="Call (244)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	243 -> 244
+	4 -> 244
+	245 [label="Call (245)(op=add)" color=greenyellow shape=ellipse style=filled]
+	244 -> 245
+	241 -> 245
+	246 [label="Call (246)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	0 -> 246
+	5 -> 246
+	247 [label="Call (247)(op=nn.bias_add)" color=greenyellow shape=ellipse style=filled]
+	246 -> 247
+	6 -> 247
+	248 [label="Call (248)(op=nn.relu)" color=greenyellow shape=ellipse style=filled]
+	247 -> 248
+	249 [label="Call (249)(op=reshape)" color=greenyellow shape=ellipse style=filled]
+	7 -> 249
+	250 [label="Call (250)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	248 -> 250
+	249 -> 250
+	251 [label="Call (251)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	250 -> 251
+	8 -> 251
+	252 [label="Call (252)(op=reshape)" color=greenyellow shape=ellipse style=filled]
+	9 -> 252
+	253 [label="Call (253)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	241 -> 253
+	252 -> 253
+	254 [label="Call (254)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	253 -> 254
+	10 -> 254
+	255 [label="Call (255)(op=add)" color=greenyellow shape=ellipse style=filled]
+	251 -> 255
+	254 -> 255
+	256 [label="Call (256)(op=nn.avg_pool2d)" color=greenyellow shape=ellipse style=filled]
+	241 -> 256
+	257 [label="Call (257)(op=add)" color=greenyellow shape=ellipse style=filled]
+	256 -> 257
+	248 -> 257
+	258 [label="Call (258)(op=nn.avg_pool2d)" color=greenyellow shape=ellipse style=filled]
+	248 -> 258
+	259 [label="Call (259)(op=nn.avg_pool2d)" color=greenyellow shape=ellipse style=filled]
+	248 -> 259
+	260 [label="Call (260)(op=add)" color=greenyellow shape=ellipse style=filled]
+	258 -> 260
+	259 -> 260
+	261 [label="Call (261)(op=reshape)" color=greenyellow shape=ellipse style=filled]
+	11 -> 261
+	262 [label="Call (262)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	248 -> 262
+	261 -> 262
+	263 [label="Call (263)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	262 -> 263
+	12 -> 263
+	264 [label="Call (264)(op=reshape)" color=greenyellow shape=ellipse style=filled]
+	13 -> 264
+	265 [label="Call (265)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	248 -> 265
+	264 -> 265
+	266 [label="Call (266)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	265 -> 266
+	14 -> 266
+	267 [label="Call (267)(op=add)" color=greenyellow shape=ellipse style=filled]
+	263 -> 267
+	266 -> 267
+	268 [label="Tuple (268)(fileds=none)" color=greenyellow shape=ellipse style=filled]
+	245 -> 268
+	255 -> 268
+	257 -> 268
+	260 -> 268
+	267 -> 268
+	269 [label="Call (269)(op=concatenate)" color=greenyellow shape=ellipse style=filled]
+	268 -> 269
+	270 [label="Call (270)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	269 -> 270
+	15 -> 270
+	271 [label="Call (271)(op=nn.bias_add)" color=greenyellow shape=ellipse style=filled]
+	270 -> 271
+	16 -> 271
+	272 [label="Call (272)(op=nn.relu)" color=greenyellow shape=ellipse style=filled]
+	271 -> 272
+	273 [label="Call (273)(op=reshape)" color=greenyellow shape=ellipse style=filled]
+	17 -> 273
+	274 [label="Call (274)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	272 -> 274
+	273 -> 274
+	275 [label="Call (275)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	274 -> 275
+	18 -> 275
+	276 [label="Call (276)(op=add)" color=greenyellow shape=ellipse style=filled]
+	275 -> 276
+	272 -> 276
+	277 [label="Call (277)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	0 -> 277
+	19 -> 277
+	278 [label="Call (278)(op=nn.bias_add)" color=greenyellow shape=ellipse style=filled]
+	277 -> 278
+	20 -> 278
+	279 [label="Call (279)(op=nn.relu)" color=greenyellow shape=ellipse style=filled]
+	278 -> 279
+	280 [label="Call (280)(op=reshape)" color=greenyellow shape=ellipse style=filled]
+	21 -> 280
+	281 [label="Call (281)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	279 -> 281
+	280 -> 281
+	282 [label="Call (282)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	281 -> 282
+	22 -> 282
+	283 [label="Call (283)(op=reshape)" color=greenyellow shape=ellipse style=filled]
+	23 -> 283
+	284 [label="Call (284)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	272 -> 284
+	283 -> 284
+	285 [label="Call (285)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	284 -> 285
+	24 -> 285
+	286 [label="Call (286)(op=add)" color=greenyellow shape=ellipse style=filled]
+	282 -> 286
+	285 -> 286
+	287 [label="Call (287)(op=nn.avg_pool2d)" color=greenyellow shape=ellipse style=filled]
+	272 -> 287
+	288 [label="Call (288)(op=add)" color=greenyellow shape=ellipse style=filled]
+	287 -> 288
+	279 -> 288
+	289 [label="Call (289)(op=nn.avg_pool2d)" color=greenyellow shape=ellipse style=filled]
+	279 -> 289
+	290 [label="Call (290)(op=nn.avg_pool2d)" color=greenyellow shape=ellipse style=filled]
+	279 -> 290
+	291 [label="Call (291)(op=add)" color=greenyellow shape=ellipse style=filled]
+	289 -> 291
+	290 -> 291
+	292 [label="Call (292)(op=reshape)" color=greenyellow shape=ellipse style=filled]
+	25 -> 292
+	293 [label="Call (293)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	279 -> 293
+	292 -> 293
+	294 [label="Call (294)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	293 -> 294
+	26 -> 294
+	295 [label="Call (295)(op=reshape)" color=greenyellow shape=ellipse style=filled]
+	27 -> 295
+	296 [label="Call (296)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	279 -> 296
+	295 -> 296
+	297 [label="Call (297)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	296 -> 297
+	28 -> 297
+	298 [label="Call (298)(op=add)" color=greenyellow shape=ellipse style=filled]
+	294 -> 298
+	297 -> 298
+	299 [label="Tuple (299)(fileds=none)" color=greenyellow shape=ellipse style=filled]
+	276 -> 299
+	286 -> 299
+	288 -> 299
+	291 -> 299
+	298 -> 299
+	300 [label="Call (300)(op=concatenate)" color=greenyellow shape=ellipse style=filled]
+	299 -> 300
+	301 [label="Call (301)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	300 -> 301
+	29 -> 301
+	302 [label="Call (302)(op=nn.bias_add)" color=greenyellow shape=ellipse style=filled]
+	301 -> 302
+	30 -> 302
+	303 [label="Call (303)(op=nn.relu)" color=greenyellow shape=ellipse style=filled]
+	302 -> 303
+	304 [label="Call (304)(op=reshape)" color=greenyellow shape=ellipse style=filled]
+	31 -> 304
+	305 [label="Call (305)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	303 -> 305
+	304 -> 305
+	306 [label="Call (306)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	305 -> 306
+	32 -> 306
+	307 [label="Call (307)(op=add)" color=greenyellow shape=ellipse style=filled]
+	306 -> 307
+	303 -> 307
+	308 [label="Call (308)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	269 -> 308
+	33 -> 308
+	309 [label="Call (309)(op=nn.bias_add)" color=greenyellow shape=ellipse style=filled]
+	308 -> 309
+	34 -> 309
+	310 [label="Call (310)(op=nn.relu)" color=greenyellow shape=ellipse style=filled]
+	309 -> 310
+	311 [label="Call (311)(op=reshape)" color=greenyellow shape=ellipse style=filled]
+	35 -> 311
+	312 [label="Call (312)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	310 -> 312
+	311 -> 312
+	313 [label="Call (313)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	312 -> 313
+	36 -> 313
+	314 [label="Call (314)(op=reshape)" color=greenyellow shape=ellipse style=filled]
+	37 -> 314
+	315 [label="Call (315)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	303 -> 315
+	314 -> 315
+	316 [label="Call (316)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	315 -> 316
+	38 -> 316
+	317 [label="Call (317)(op=add)" color=greenyellow shape=ellipse style=filled]
+	313 -> 317
+	316 -> 317
+	318 [label="Call (318)(op=nn.avg_pool2d)" color=greenyellow shape=ellipse style=filled]
+	303 -> 318
+	319 [label="Call (319)(op=add)" color=greenyellow shape=ellipse style=filled]
+	318 -> 319
+	310 -> 319
+	320 [label="Call (320)(op=nn.avg_pool2d)" color=greenyellow shape=ellipse style=filled]
+	310 -> 320
+	321 [label="Call (321)(op=nn.avg_pool2d)" color=greenyellow shape=ellipse style=filled]
+	310 -> 321
+	322 [label="Call (322)(op=add)" color=greenyellow shape=ellipse style=filled]
+	320 -> 322
+	321 -> 322
+	323 [label="Call (323)(op=reshape)" color=greenyellow shape=ellipse style=filled]
+	39 -> 323
+	324 [label="Call (324)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	310 -> 324
+	323 -> 324
+	325 [label="Call (325)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	324 -> 325
+	40 -> 325
+	326 [label="Call (326)(op=reshape)" color=greenyellow shape=ellipse style=filled]
+	41 -> 326
+	327 [label="Call (327)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	310 -> 327
+	326 -> 327
+	328 [label="Call (328)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	327 -> 328
+	42 -> 328
+	329 [label="Call (329)(op=add)" color=greenyellow shape=ellipse style=filled]
+	325 -> 329
+	328 -> 329
+	330 [label="Tuple (330)(fileds=none)" color=greenyellow shape=ellipse style=filled]
+	307 -> 330
+	317 -> 330
+	319 -> 330
+	322 -> 330
+	329 -> 330
+	331 [label="Call (331)(op=concatenate)" color=greenyellow shape=ellipse style=filled]
+	330 -> 331
+	332 [label="Call (332)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	331 -> 332
+	43 -> 332
+	333 [label="Call (333)(op=nn.bias_add)" color=greenyellow shape=ellipse style=filled]
+	332 -> 333
+	44 -> 333
+	334 [label="Call (334)(op=nn.relu)" color=greenyellow shape=ellipse style=filled]
+	333 -> 334
+	335 [label="Call (335)(op=reshape)" color=greenyellow shape=ellipse style=filled]
+	45 -> 335
+	336 [label="Call (336)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	334 -> 336
+	335 -> 336
+	337 [label="Call (337)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	336 -> 337
+	46 -> 337
+	338 [label="Call (338)(op=add)" color=greenyellow shape=ellipse style=filled]
+	337 -> 338
+	334 -> 338
+	339 [label="Call (339)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	300 -> 339
+	47 -> 339
+	340 [label="Call (340)(op=nn.bias_add)" color=greenyellow shape=ellipse style=filled]
+	339 -> 340
+	48 -> 340
+	341 [label="Call (341)(op=nn.relu)" color=greenyellow shape=ellipse style=filled]
+	340 -> 341
+	342 [label="Call (342)(op=reshape)" color=greenyellow shape=ellipse style=filled]
+	49 -> 342
+	343 [label="Call (343)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	341 -> 343
+	342 -> 343
+	344 [label="Call (344)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	343 -> 344
+	50 -> 344
+	345 [label="Call (345)(op=reshape)" color=greenyellow shape=ellipse style=filled]
+	51 -> 345
+	346 [label="Call (346)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	334 -> 346
+	345 -> 346
+	347 [label="Call (347)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	346 -> 347
+	52 -> 347
+	348 [label="Call (348)(op=add)" color=greenyellow shape=ellipse style=filled]
+	344 -> 348
+	347 -> 348
+	349 [label="Call (349)(op=nn.avg_pool2d)" color=greenyellow shape=ellipse style=filled]
+	334 -> 349
+	350 [label="Call (350)(op=add)" color=greenyellow shape=ellipse style=filled]
+	349 -> 350
+	341 -> 350
+	351 [label="Call (351)(op=nn.avg_pool2d)" color=greenyellow shape=ellipse style=filled]
+	341 -> 351
+	352 [label="Call (352)(op=nn.avg_pool2d)" color=greenyellow shape=ellipse style=filled]
+	341 -> 352
+	353 [label="Call (353)(op=add)" color=greenyellow shape=ellipse style=filled]
+	351 -> 353
+	352 -> 353
+	354 [label="Call (354)(op=reshape)" color=greenyellow shape=ellipse style=filled]
+	53 -> 354
+	355 [label="Call (355)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	341 -> 355
+	354 -> 355
+	356 [label="Call (356)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	355 -> 356
+	54 -> 356
+	357 [label="Call (357)(op=reshape)" color=greenyellow shape=ellipse style=filled]
+	55 -> 357
+	358 [label="Call (358)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	341 -> 358
+	357 -> 358
+	359 [label="Call (359)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	358 -> 359
+	56 -> 359
+	360 [label="Call (360)(op=add)" color=greenyellow shape=ellipse style=filled]
+	356 -> 360
+	359 -> 360
+	361 [label="Tuple (361)(fileds=none)" color=greenyellow shape=ellipse style=filled]
+	338 -> 361
+	348 -> 361
+	350 -> 361
+	353 -> 361
+	360 -> 361
+	362 [label="Call (362)(op=concatenate)" color=greenyellow shape=ellipse style=filled]
+	361 -> 362
+	363 [label="Call (363)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	362 -> 363
+	57 -> 363
+	364 [label="Call (364)(op=nn.bias_add)" color=greenyellow shape=ellipse style=filled]
+	363 -> 364
+	58 -> 364
+	365 [label="Call (365)(op=nn.relu)" color=greenyellow shape=ellipse style=filled]
+	364 -> 365
+	366 [label="Call (366)(op=reshape)" color=greenyellow shape=ellipse style=filled]
+	59 -> 366
+	367 [label="Call (367)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	365 -> 367
+	366 -> 367
+	368 [label="Call (368)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	367 -> 368
+	60 -> 368
+	369 [label="Call (369)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	362 -> 369
+	61 -> 369
+	370 [label="Call (370)(op=nn.bias_add)" color=greenyellow shape=ellipse style=filled]
+	369 -> 370
+	62 -> 370
+	371 [label="Call (371)(op=nn.relu)" color=greenyellow shape=ellipse style=filled]
+	370 -> 371
+	372 [label="Call (372)(op=reshape)" color=greenyellow shape=ellipse style=filled]
+	63 -> 372
+	373 [label="Call (373)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	371 -> 373
+	372 -> 373
+	374 [label="Call (374)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	373 -> 374
+	64 -> 374
+	375 [label="Call (375)(op=add)" color=greenyellow shape=ellipse style=filled]
+	374 -> 375
+	371 -> 375
+	376 [label="Call (376)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	331 -> 376
+	65 -> 376
+	377 [label="Call (377)(op=nn.bias_add)" color=greenyellow shape=ellipse style=filled]
+	376 -> 377
+	66 -> 377
+	378 [label="Call (378)(op=nn.relu)" color=greenyellow shape=ellipse style=filled]
+	377 -> 378
+	379 [label="Call (379)(op=reshape)" color=greenyellow shape=ellipse style=filled]
+	67 -> 379
+	380 [label="Call (380)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	378 -> 380
+	379 -> 380
+	381 [label="Call (381)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	380 -> 381
+	68 -> 381
+	382 [label="Call (382)(op=reshape)" color=greenyellow shape=ellipse style=filled]
+	69 -> 382
+	383 [label="Call (383)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	371 -> 383
+	382 -> 383
+	384 [label="Call (384)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	383 -> 384
+	70 -> 384
+	385 [label="Call (385)(op=add)" color=greenyellow shape=ellipse style=filled]
+	381 -> 385
+	384 -> 385
+	386 [label="Call (386)(op=nn.avg_pool2d)" color=greenyellow shape=ellipse style=filled]
+	371 -> 386
+	387 [label="Call (387)(op=add)" color=greenyellow shape=ellipse style=filled]
+	386 -> 387
+	378 -> 387
+	388 [label="Call (388)(op=nn.avg_pool2d)" color=greenyellow shape=ellipse style=filled]
+	378 -> 388
+	389 [label="Call (389)(op=nn.avg_pool2d)" color=greenyellow shape=ellipse style=filled]
+	378 -> 389
+	390 [label="Call (390)(op=add)" color=greenyellow shape=ellipse style=filled]
+	388 -> 390
+	389 -> 390
+	391 [label="Call (391)(op=reshape)" color=greenyellow shape=ellipse style=filled]
+	71 -> 391
+	392 [label="Call (392)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	378 -> 392
+	391 -> 392
+	393 [label="Call (393)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	392 -> 393
+	72 -> 393
+	394 [label="Call (394)(op=reshape)" color=greenyellow shape=ellipse style=filled]
+	73 -> 394
+	395 [label="Call (395)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	378 -> 395
+	394 -> 395
+	396 [label="Call (396)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	395 -> 396
+	74 -> 396
+	397 [label="Call (397)(op=add)" color=greenyellow shape=ellipse style=filled]
+	393 -> 397
+	396 -> 397
+	398 [label="Tuple (398)(fileds=none)" color=greenyellow shape=ellipse style=filled]
+	375 -> 398
+	385 -> 398
+	387 -> 398
+	390 -> 398
+	397 -> 398
+	399 [label="Call (399)(op=concatenate)" color=greenyellow shape=ellipse style=filled]
+	398 -> 399
+	400 [label="Call (400)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	399 -> 400
+	75 -> 400
+	401 [label="Call (401)(op=nn.bias_add)" color=greenyellow shape=ellipse style=filled]
+	400 -> 401
+	76 -> 401
+	402 [label="Call (402)(op=nn.relu)" color=greenyellow shape=ellipse style=filled]
+	401 -> 402
+	403 [label="Call (403)(op=reshape)" color=greenyellow shape=ellipse style=filled]
+	77 -> 403
+	404 [label="Call (404)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	402 -> 404
+	403 -> 404
+	405 [label="Call (405)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	404 -> 405
+	78 -> 405
+	406 [label="Call (406)(op=add)" color=greenyellow shape=ellipse style=filled]
+	368 -> 406
+	405 -> 406
+	407 [label="Call (407)(op=nn.max_pool2d)" color=greenyellow shape=ellipse style=filled]
+	402 -> 407
+	408 [label="Call (408)(op=reshape)" color=greenyellow shape=ellipse style=filled]
+	79 -> 408
+	409 [label="Call (409)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	365 -> 409
+	408 -> 409
+	410 [label="Call (410)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	409 -> 410
+	80 -> 410
+	411 [label="Call (411)(op=add)" color=greenyellow shape=ellipse style=filled]
+	407 -> 411
+	410 -> 411
+	412 [label="Call (412)(op=nn.avg_pool2d)" color=greenyellow shape=ellipse style=filled]
+	402 -> 412
+	413 [label="Call (413)(op=reshape)" color=greenyellow shape=ellipse style=filled]
+	81 -> 413
+	414 [label="Call (414)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	365 -> 414
+	413 -> 414
+	415 [label="Call (415)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	414 -> 415
+	82 -> 415
+	416 [label="Call (416)(op=add)" color=greenyellow shape=ellipse style=filled]
+	412 -> 416
+	415 -> 416
+	417 [label="Call (417)(op=nn.max_pool2d)" color=greenyellow shape=ellipse style=filled]
+	402 -> 417
+	418 [label="Call (418)(op=reshape)" color=greenyellow shape=ellipse style=filled]
+	83 -> 418
+	419 [label="Call (419)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	406 -> 419
+	418 -> 419
+	420 [label="Call (420)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	419 -> 420
+	84 -> 420
+	421 [label="Call (421)(op=add)" color=greenyellow shape=ellipse style=filled]
+	417 -> 421
+	420 -> 421
+	422 [label="Call (422)(op=nn.avg_pool2d)" color=greenyellow shape=ellipse style=filled]
+	406 -> 422
+	423 [label="Call (423)(op=add)" color=greenyellow shape=ellipse style=filled]
+	422 -> 423
+	411 -> 423
+	424 [label="Tuple (424)(fileds=none)" color=greenyellow shape=ellipse style=filled]
+	406 -> 424
+	411 -> 424
+	416 -> 424
+	421 -> 424
+	423 -> 424
+	425 [label="Call (425)(op=concatenate)" color=greenyellow shape=ellipse style=filled]
+	424 -> 425
+	426 [label="Call (426)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	425 -> 426
+	85 -> 426
+	427 [label="Call (427)(op=nn.bias_add)" color=greenyellow shape=ellipse style=filled]
+	426 -> 427
+	86 -> 427
+	428 [label="Call (428)(op=nn.relu)" color=greenyellow shape=ellipse style=filled]
+	427 -> 428
+	429 [label="Call (429)(op=reshape)" color=greenyellow shape=ellipse style=filled]
+	87 -> 429
+	430 [label="Call (430)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	428 -> 430
+	429 -> 430
+	431 [label="Call (431)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	430 -> 431
+	88 -> 431
+	432 [label="Call (432)(op=add)" color=greenyellow shape=ellipse style=filled]
+	431 -> 432
+	428 -> 432
+	433 [label="Call (433)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	425 -> 433
+	89 -> 433
+	434 [label="Call (434)(op=nn.bias_add)" color=greenyellow shape=ellipse style=filled]
+	433 -> 434
+	90 -> 434
+	435 [label="Call (435)(op=nn.relu)" color=greenyellow shape=ellipse style=filled]
+	434 -> 435
+	436 [label="Call (436)(op=reshape)" color=greenyellow shape=ellipse style=filled]
+	91 -> 436
+	437 [label="Call (437)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	435 -> 437
+	436 -> 437
+	438 [label="Call (438)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	437 -> 438
+	92 -> 438
+	439 [label="Call (439)(op=reshape)" color=greenyellow shape=ellipse style=filled]
+	93 -> 439
+	440 [label="Call (440)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	428 -> 440
+	439 -> 440
+	441 [label="Call (441)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	440 -> 441
+	94 -> 441
+	442 [label="Call (442)(op=add)" color=greenyellow shape=ellipse style=filled]
+	438 -> 442
+	441 -> 442
+	443 [label="Call (443)(op=nn.avg_pool2d)" color=greenyellow shape=ellipse style=filled]
+	428 -> 443
+	444 [label="Call (444)(op=add)" color=greenyellow shape=ellipse style=filled]
+	443 -> 444
+	435 -> 444
+	445 [label="Call (445)(op=nn.avg_pool2d)" color=greenyellow shape=ellipse style=filled]
+	435 -> 445
+	446 [label="Call (446)(op=nn.avg_pool2d)" color=greenyellow shape=ellipse style=filled]
+	435 -> 446
+	447 [label="Call (447)(op=add)" color=greenyellow shape=ellipse style=filled]
+	445 -> 447
+	446 -> 447
+	448 [label="Call (448)(op=reshape)" color=greenyellow shape=ellipse style=filled]
+	95 -> 448
+	449 [label="Call (449)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	435 -> 449
+	448 -> 449
+	450 [label="Call (450)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	449 -> 450
+	96 -> 450
+	451 [label="Call (451)(op=reshape)" color=greenyellow shape=ellipse style=filled]
+	97 -> 451
+	452 [label="Call (452)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	435 -> 452
+	451 -> 452
+	453 [label="Call (453)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	452 -> 453
+	98 -> 453
+	454 [label="Call (454)(op=add)" color=greenyellow shape=ellipse style=filled]
+	450 -> 454
+	453 -> 454
+	455 [label="Tuple (455)(fileds=none)" color=greenyellow shape=ellipse style=filled]
+	432 -> 455
+	442 -> 455
+	444 -> 455
+	447 -> 455
+	454 -> 455
+	456 [label="Call (456)(op=concatenate)" color=greenyellow shape=ellipse style=filled]
+	455 -> 456
+	457 [label="Call (457)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	456 -> 457
+	99 -> 457
+	458 [label="Call (458)(op=nn.bias_add)" color=greenyellow shape=ellipse style=filled]
+	457 -> 458
+	100 -> 458
+	459 [label="Call (459)(op=nn.relu)" color=greenyellow shape=ellipse style=filled]
+	458 -> 459
+	460 [label="Call (460)(op=reshape)" color=greenyellow shape=ellipse style=filled]
+	101 -> 460
+	461 [label="Call (461)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	459 -> 461
+	460 -> 461
+	462 [label="Call (462)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	461 -> 462
+	102 -> 462
+	463 [label="Call (463)(op=add)" color=greenyellow shape=ellipse style=filled]
+	462 -> 463
+	459 -> 463
+	464 [label="Call (464)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	425 -> 464
+	103 -> 464
+	465 [label="Call (465)(op=nn.bias_add)" color=greenyellow shape=ellipse style=filled]
+	464 -> 465
+	104 -> 465
+	466 [label="Call (466)(op=nn.relu)" color=greenyellow shape=ellipse style=filled]
+	465 -> 466
+	467 [label="Call (467)(op=reshape)" color=greenyellow shape=ellipse style=filled]
+	105 -> 467
+	468 [label="Call (468)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	466 -> 468
+	467 -> 468
+	469 [label="Call (469)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	468 -> 469
+	106 -> 469
+	470 [label="Call (470)(op=reshape)" color=greenyellow shape=ellipse style=filled]
+	107 -> 470
+	471 [label="Call (471)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	459 -> 471
+	470 -> 471
+	472 [label="Call (472)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	471 -> 472
+	108 -> 472
+	473 [label="Call (473)(op=add)" color=greenyellow shape=ellipse style=filled]
+	469 -> 473
+	472 -> 473
+	474 [label="Call (474)(op=nn.avg_pool2d)" color=greenyellow shape=ellipse style=filled]
+	459 -> 474
+	475 [label="Call (475)(op=add)" color=greenyellow shape=ellipse style=filled]
+	474 -> 475
+	466 -> 475
+	476 [label="Call (476)(op=nn.avg_pool2d)" color=greenyellow shape=ellipse style=filled]
+	466 -> 476
+	477 [label="Call (477)(op=nn.avg_pool2d)" color=greenyellow shape=ellipse style=filled]
+	466 -> 477
+	478 [label="Call (478)(op=add)" color=greenyellow shape=ellipse style=filled]
+	476 -> 478
+	477 -> 478
+	479 [label="Call (479)(op=reshape)" color=greenyellow shape=ellipse style=filled]
+	109 -> 479
+	480 [label="Call (480)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	466 -> 480
+	479 -> 480
+	481 [label="Call (481)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	480 -> 481
+	110 -> 481
+	482 [label="Call (482)(op=reshape)" color=greenyellow shape=ellipse style=filled]
+	111 -> 482
+	483 [label="Call (483)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	466 -> 483
+	482 -> 483
+	484 [label="Call (484)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	483 -> 484
+	112 -> 484
+	485 [label="Call (485)(op=add)" color=greenyellow shape=ellipse style=filled]
+	481 -> 485
+	484 -> 485
+	486 [label="Tuple (486)(fileds=none)" color=greenyellow shape=ellipse style=filled]
+	463 -> 486
+	473 -> 486
+	475 -> 486
+	478 -> 486
+	485 -> 486
+	487 [label="Call (487)(op=concatenate)" color=greenyellow shape=ellipse style=filled]
+	486 -> 487
+	488 [label="Call (488)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	487 -> 488
+	113 -> 488
+	489 [label="Call (489)(op=nn.bias_add)" color=greenyellow shape=ellipse style=filled]
+	488 -> 489
+	114 -> 489
+	490 [label="Call (490)(op=nn.relu)" color=greenyellow shape=ellipse style=filled]
+	489 -> 490
+	491 [label="Call (491)(op=reshape)" color=greenyellow shape=ellipse style=filled]
+	115 -> 491
+	492 [label="Call (492)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	490 -> 492
+	491 -> 492
+	493 [label="Call (493)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	492 -> 493
+	116 -> 493
+	494 [label="Call (494)(op=add)" color=greenyellow shape=ellipse style=filled]
+	493 -> 494
+	490 -> 494
+	495 [label="Call (495)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	456 -> 495
+	117 -> 495
+	496 [label="Call (496)(op=nn.bias_add)" color=greenyellow shape=ellipse style=filled]
+	495 -> 496
+	118 -> 496
+	497 [label="Call (497)(op=nn.relu)" color=greenyellow shape=ellipse style=filled]
+	496 -> 497
+	498 [label="Call (498)(op=reshape)" color=greenyellow shape=ellipse style=filled]
+	119 -> 498
+	499 [label="Call (499)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	497 -> 499
+	498 -> 499
+	500 [label="Call (500)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	499 -> 500
+	120 -> 500
+	501 [label="Call (501)(op=reshape)" color=greenyellow shape=ellipse style=filled]
+	121 -> 501
+	502 [label="Call (502)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	490 -> 502
+	501 -> 502
+	503 [label="Call (503)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	502 -> 503
+	122 -> 503
+	504 [label="Call (504)(op=add)" color=greenyellow shape=ellipse style=filled]
+	500 -> 504
+	503 -> 504
+	505 [label="Call (505)(op=nn.avg_pool2d)" color=greenyellow shape=ellipse style=filled]
+	490 -> 505
+	506 [label="Call (506)(op=add)" color=greenyellow shape=ellipse style=filled]
+	505 -> 506
+	497 -> 506
+	507 [label="Call (507)(op=nn.avg_pool2d)" color=greenyellow shape=ellipse style=filled]
+	497 -> 507
+	508 [label="Call (508)(op=nn.avg_pool2d)" color=greenyellow shape=ellipse style=filled]
+	497 -> 508
+	509 [label="Call (509)(op=add)" color=greenyellow shape=ellipse style=filled]
+	507 -> 509
+	508 -> 509
+	510 [label="Call (510)(op=reshape)" color=greenyellow shape=ellipse style=filled]
+	123 -> 510
+	511 [label="Call (511)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	497 -> 511
+	510 -> 511
+	512 [label="Call (512)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	511 -> 512
+	124 -> 512
+	513 [label="Call (513)(op=reshape)" color=greenyellow shape=ellipse style=filled]
+	125 -> 513
+	514 [label="Call (514)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	497 -> 514
+	513 -> 514
+	515 [label="Call (515)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	514 -> 515
+	126 -> 515
+	516 [label="Call (516)(op=add)" color=greenyellow shape=ellipse style=filled]
+	512 -> 516
+	515 -> 516
+	517 [label="Tuple (517)(fileds=none)" color=greenyellow shape=ellipse style=filled]
+	494 -> 517
+	504 -> 517
+	506 -> 517
+	509 -> 517
+	516 -> 517
+	518 [label="Call (518)(op=concatenate)" color=greenyellow shape=ellipse style=filled]
+	517 -> 518
+	519 [label="Call (519)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	518 -> 519
+	127 -> 519
+	520 [label="Call (520)(op=nn.bias_add)" color=greenyellow shape=ellipse style=filled]
+	519 -> 520
+	128 -> 520
+	521 [label="Call (521)(op=nn.relu)" color=greenyellow shape=ellipse style=filled]
+	520 -> 521
+	522 [label="Call (522)(op=reshape)" color=greenyellow shape=ellipse style=filled]
+	129 -> 522
+	523 [label="Call (523)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	521 -> 523
+	522 -> 523
+	524 [label="Call (524)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	523 -> 524
+	130 -> 524
+	525 [label="Call (525)(op=add)" color=greenyellow shape=ellipse style=filled]
+	524 -> 525
+	521 -> 525
+	526 [label="Call (526)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	487 -> 526
+	131 -> 526
+	527 [label="Call (527)(op=nn.bias_add)" color=greenyellow shape=ellipse style=filled]
+	526 -> 527
+	132 -> 527
+	528 [label="Call (528)(op=nn.relu)" color=greenyellow shape=ellipse style=filled]
+	527 -> 528
+	529 [label="Call (529)(op=reshape)" color=greenyellow shape=ellipse style=filled]
+	133 -> 529
+	530 [label="Call (530)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	528 -> 530
+	529 -> 530
+	531 [label="Call (531)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	530 -> 531
+	134 -> 531
+	532 [label="Call (532)(op=reshape)" color=greenyellow shape=ellipse style=filled]
+	135 -> 532
+	533 [label="Call (533)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	521 -> 533
+	532 -> 533
+	534 [label="Call (534)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	533 -> 534
+	136 -> 534
+	535 [label="Call (535)(op=add)" color=greenyellow shape=ellipse style=filled]
+	531 -> 535
+	534 -> 535
+	536 [label="Call (536)(op=nn.avg_pool2d)" color=greenyellow shape=ellipse style=filled]
+	521 -> 536
+	537 [label="Call (537)(op=add)" color=greenyellow shape=ellipse style=filled]
+	536 -> 537
+	528 -> 537
+	538 [label="Call (538)(op=nn.avg_pool2d)" color=greenyellow shape=ellipse style=filled]
+	528 -> 538
+	539 [label="Call (539)(op=nn.avg_pool2d)" color=greenyellow shape=ellipse style=filled]
+	528 -> 539
+	540 [label="Call (540)(op=add)" color=greenyellow shape=ellipse style=filled]
+	538 -> 540
+	539 -> 540
+	541 [label="Call (541)(op=reshape)" color=greenyellow shape=ellipse style=filled]
+	137 -> 541
+	542 [label="Call (542)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	528 -> 542
+	541 -> 542
+	543 [label="Call (543)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	542 -> 543
+	138 -> 543
+	544 [label="Call (544)(op=reshape)" color=greenyellow shape=ellipse style=filled]
+	139 -> 544
+	545 [label="Call (545)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	528 -> 545
+	544 -> 545
+	546 [label="Call (546)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	545 -> 546
+	140 -> 546
+	547 [label="Call (547)(op=add)" color=greenyellow shape=ellipse style=filled]
+	543 -> 547
+	546 -> 547
+	548 [label="Tuple (548)(fileds=none)" color=greenyellow shape=ellipse style=filled]
+	525 -> 548
+	535 -> 548
+	537 -> 548
+	540 -> 548
+	547 -> 548
+	549 [label="Call (549)(op=concatenate)" color=greenyellow shape=ellipse style=filled]
+	548 -> 549
+	550 [label="Call (550)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	549 -> 550
+	141 -> 550
+	551 [label="Call (551)(op=nn.bias_add)" color=greenyellow shape=ellipse style=filled]
+	550 -> 551
+	142 -> 551
+	552 [label="Call (552)(op=nn.relu)" color=greenyellow shape=ellipse style=filled]
+	551 -> 552
+	553 [label="Call (553)(op=reshape)" color=greenyellow shape=ellipse style=filled]
+	143 -> 553
+	554 [label="Call (554)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	552 -> 554
+	553 -> 554
+	555 [label="Call (555)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	554 -> 555
+	144 -> 555
+	556 [label="Call (556)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	549 -> 556
+	145 -> 556
+	557 [label="Call (557)(op=nn.bias_add)" color=greenyellow shape=ellipse style=filled]
+	556 -> 557
+	146 -> 557
+	558 [label="Call (558)(op=nn.relu)" color=greenyellow shape=ellipse style=filled]
+	557 -> 558
+	559 [label="Call (559)(op=reshape)" color=greenyellow shape=ellipse style=filled]
+	147 -> 559
+	560 [label="Call (560)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	558 -> 560
+	559 -> 560
+	561 [label="Call (561)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	560 -> 561
+	148 -> 561
+	562 [label="Call (562)(op=add)" color=greenyellow shape=ellipse style=filled]
+	561 -> 562
+	558 -> 562
+	563 [label="Call (563)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	518 -> 563
+	149 -> 563
+	564 [label="Call (564)(op=nn.bias_add)" color=greenyellow shape=ellipse style=filled]
+	563 -> 564
+	150 -> 564
+	565 [label="Call (565)(op=nn.relu)" color=greenyellow shape=ellipse style=filled]
+	564 -> 565
+	566 [label="Call (566)(op=reshape)" color=greenyellow shape=ellipse style=filled]
+	151 -> 566
+	567 [label="Call (567)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	565 -> 567
+	566 -> 567
+	568 [label="Call (568)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	567 -> 568
+	152 -> 568
+	569 [label="Call (569)(op=reshape)" color=greenyellow shape=ellipse style=filled]
+	153 -> 569
+	570 [label="Call (570)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	558 -> 570
+	569 -> 570
+	571 [label="Call (571)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	570 -> 571
+	154 -> 571
+	572 [label="Call (572)(op=add)" color=greenyellow shape=ellipse style=filled]
+	568 -> 572
+	571 -> 572
+	573 [label="Call (573)(op=nn.avg_pool2d)" color=greenyellow shape=ellipse style=filled]
+	558 -> 573
+	574 [label="Call (574)(op=add)" color=greenyellow shape=ellipse style=filled]
+	573 -> 574
+	565 -> 574
+	575 [label="Call (575)(op=nn.avg_pool2d)" color=greenyellow shape=ellipse style=filled]
+	565 -> 575
+	576 [label="Call (576)(op=nn.avg_pool2d)" color=greenyellow shape=ellipse style=filled]
+	565 -> 576
+	577 [label="Call (577)(op=add)" color=greenyellow shape=ellipse style=filled]
+	575 -> 577
+	576 -> 577
+	578 [label="Call (578)(op=reshape)" color=greenyellow shape=ellipse style=filled]
+	155 -> 578
+	579 [label="Call (579)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	565 -> 579
+	578 -> 579
+	580 [label="Call (580)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	579 -> 580
+	156 -> 580
+	581 [label="Call (581)(op=reshape)" color=greenyellow shape=ellipse style=filled]
+	157 -> 581
+	582 [label="Call (582)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	565 -> 582
+	581 -> 582
+	583 [label="Call (583)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	582 -> 583
+	158 -> 583
+	584 [label="Call (584)(op=add)" color=greenyellow shape=ellipse style=filled]
+	580 -> 584
+	583 -> 584
+	585 [label="Tuple (585)(fileds=none)" color=greenyellow shape=ellipse style=filled]
+	562 -> 585
+	572 -> 585
+	574 -> 585
+	577 -> 585
+	584 -> 585
+	586 [label="Call (586)(op=concatenate)" color=greenyellow shape=ellipse style=filled]
+	585 -> 586
+	587 [label="Call (587)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	586 -> 587
+	159 -> 587
+	588 [label="Call (588)(op=nn.bias_add)" color=greenyellow shape=ellipse style=filled]
+	587 -> 588
+	160 -> 588
+	589 [label="Call (589)(op=nn.relu)" color=greenyellow shape=ellipse style=filled]
+	588 -> 589
+	590 [label="Call (590)(op=reshape)" color=greenyellow shape=ellipse style=filled]
+	161 -> 590
+	591 [label="Call (591)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	589 -> 591
+	590 -> 591
+	592 [label="Call (592)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	591 -> 592
+	162 -> 592
+	593 [label="Call (593)(op=add)" color=greenyellow shape=ellipse style=filled]
+	555 -> 593
+	592 -> 593
+	594 [label="Call (594)(op=nn.max_pool2d)" color=greenyellow shape=ellipse style=filled]
+	589 -> 594
+	595 [label="Call (595)(op=reshape)" color=greenyellow shape=ellipse style=filled]
+	163 -> 595
+	596 [label="Call (596)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	552 -> 596
+	595 -> 596
+	597 [label="Call (597)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	596 -> 597
+	164 -> 597
+	598 [label="Call (598)(op=add)" color=greenyellow shape=ellipse style=filled]
+	594 -> 598
+	597 -> 598
+	599 [label="Call (599)(op=nn.avg_pool2d)" color=greenyellow shape=ellipse style=filled]
+	589 -> 599
+	600 [label="Call (600)(op=reshape)" color=greenyellow shape=ellipse style=filled]
+	165 -> 600
+	601 [label="Call (601)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	552 -> 601
+	600 -> 601
+	602 [label="Call (602)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	601 -> 602
+	166 -> 602
+	603 [label="Call (603)(op=add)" color=greenyellow shape=ellipse style=filled]
+	599 -> 603
+	602 -> 603
+	604 [label="Call (604)(op=nn.max_pool2d)" color=greenyellow shape=ellipse style=filled]
+	589 -> 604
+	605 [label="Call (605)(op=reshape)" color=greenyellow shape=ellipse style=filled]
+	167 -> 605
+	606 [label="Call (606)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	593 -> 606
+	605 -> 606
+	607 [label="Call (607)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	606 -> 607
+	168 -> 607
+	608 [label="Call (608)(op=add)" color=greenyellow shape=ellipse style=filled]
+	604 -> 608
+	607 -> 608
+	609 [label="Call (609)(op=nn.avg_pool2d)" color=greenyellow shape=ellipse style=filled]
+	593 -> 609
+	610 [label="Call (610)(op=add)" color=greenyellow shape=ellipse style=filled]
+	609 -> 610
+	598 -> 610
+	611 [label="Tuple (611)(fileds=none)" color=greenyellow shape=ellipse style=filled]
+	593 -> 611
+	598 -> 611
+	603 -> 611
+	608 -> 611
+	610 -> 611
+	612 [label="Call (612)(op=concatenate)" color=greenyellow shape=ellipse style=filled]
+	611 -> 612
+	613 [label="Call (613)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	612 -> 613
+	169 -> 613
+	614 [label="Call (614)(op=nn.bias_add)" color=greenyellow shape=ellipse style=filled]
+	613 -> 614
+	170 -> 614
+	615 [label="Call (615)(op=nn.relu)" color=greenyellow shape=ellipse style=filled]
+	614 -> 615
+	616 [label="Call (616)(op=reshape)" color=greenyellow shape=ellipse style=filled]
+	171 -> 616
+	617 [label="Call (617)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	615 -> 617
+	616 -> 617
+	618 [label="Call (618)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	617 -> 618
+	172 -> 618
+	619 [label="Call (619)(op=add)" color=greenyellow shape=ellipse style=filled]
+	618 -> 619
+	615 -> 619
+	620 [label="Call (620)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	612 -> 620
+	173 -> 620
+	621 [label="Call (621)(op=nn.bias_add)" color=greenyellow shape=ellipse style=filled]
+	620 -> 621
+	174 -> 621
+	622 [label="Call (622)(op=nn.relu)" color=greenyellow shape=ellipse style=filled]
+	621 -> 622
+	623 [label="Call (623)(op=reshape)" color=greenyellow shape=ellipse style=filled]
+	175 -> 623
+	624 [label="Call (624)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	622 -> 624
+	623 -> 624
+	625 [label="Call (625)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	624 -> 625
+	176 -> 625
+	626 [label="Call (626)(op=reshape)" color=greenyellow shape=ellipse style=filled]
+	177 -> 626
+	627 [label="Call (627)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	615 -> 627
+	626 -> 627
+	628 [label="Call (628)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	627 -> 628
+	178 -> 628
+	629 [label="Call (629)(op=add)" color=greenyellow shape=ellipse style=filled]
+	625 -> 629
+	628 -> 629
+	630 [label="Call (630)(op=nn.avg_pool2d)" color=greenyellow shape=ellipse style=filled]
+	615 -> 630
+	631 [label="Call (631)(op=add)" color=greenyellow shape=ellipse style=filled]
+	630 -> 631
+	622 -> 631
+	632 [label="Call (632)(op=nn.avg_pool2d)" color=greenyellow shape=ellipse style=filled]
+	622 -> 632
+	633 [label="Call (633)(op=nn.avg_pool2d)" color=greenyellow shape=ellipse style=filled]
+	622 -> 633
+	634 [label="Call (634)(op=add)" color=greenyellow shape=ellipse style=filled]
+	632 -> 634
+	633 -> 634
+	635 [label="Call (635)(op=reshape)" color=greenyellow shape=ellipse style=filled]
+	179 -> 635
+	636 [label="Call (636)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	622 -> 636
+	635 -> 636
+	637 [label="Call (637)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	636 -> 637
+	180 -> 637
+	638 [label="Call (638)(op=reshape)" color=greenyellow shape=ellipse style=filled]
+	181 -> 638
+	639 [label="Call (639)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	622 -> 639
+	638 -> 639
+	640 [label="Call (640)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	639 -> 640
+	182 -> 640
+	641 [label="Call (641)(op=add)" color=greenyellow shape=ellipse style=filled]
+	637 -> 641
+	640 -> 641
+	642 [label="Tuple (642)(fileds=none)" color=greenyellow shape=ellipse style=filled]
+	619 -> 642
+	629 -> 642
+	631 -> 642
+	634 -> 642
+	641 -> 642
+	643 [label="Call (643)(op=concatenate)" color=greenyellow shape=ellipse style=filled]
+	642 -> 643
+	644 [label="Call (644)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	643 -> 644
+	183 -> 644
+	645 [label="Call (645)(op=nn.bias_add)" color=greenyellow shape=ellipse style=filled]
+	644 -> 645
+	184 -> 645
+	646 [label="Call (646)(op=nn.relu)" color=greenyellow shape=ellipse style=filled]
+	645 -> 646
+	647 [label="Call (647)(op=reshape)" color=greenyellow shape=ellipse style=filled]
+	185 -> 647
+	648 [label="Call (648)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	646 -> 648
+	647 -> 648
+	649 [label="Call (649)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	648 -> 649
+	186 -> 649
+	650 [label="Call (650)(op=add)" color=greenyellow shape=ellipse style=filled]
+	649 -> 650
+	646 -> 650
+	651 [label="Call (651)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	612 -> 651
+	187 -> 651
+	652 [label="Call (652)(op=nn.bias_add)" color=greenyellow shape=ellipse style=filled]
+	651 -> 652
+	188 -> 652
+	653 [label="Call (653)(op=nn.relu)" color=greenyellow shape=ellipse style=filled]
+	652 -> 653
+	654 [label="Call (654)(op=reshape)" color=greenyellow shape=ellipse style=filled]
+	189 -> 654
+	655 [label="Call (655)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	653 -> 655
+	654 -> 655
+	656 [label="Call (656)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	655 -> 656
+	190 -> 656
+	657 [label="Call (657)(op=reshape)" color=greenyellow shape=ellipse style=filled]
+	191 -> 657
+	658 [label="Call (658)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	646 -> 658
+	657 -> 658
+	659 [label="Call (659)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	658 -> 659
+	192 -> 659
+	660 [label="Call (660)(op=add)" color=greenyellow shape=ellipse style=filled]
+	656 -> 660
+	659 -> 660
+	661 [label="Call (661)(op=nn.avg_pool2d)" color=greenyellow shape=ellipse style=filled]
+	646 -> 661
+	662 [label="Call (662)(op=add)" color=greenyellow shape=ellipse style=filled]
+	661 -> 662
+	653 -> 662
+	663 [label="Call (663)(op=nn.avg_pool2d)" color=greenyellow shape=ellipse style=filled]
+	653 -> 663
+	664 [label="Call (664)(op=nn.avg_pool2d)" color=greenyellow shape=ellipse style=filled]
+	653 -> 664
+	665 [label="Call (665)(op=add)" color=greenyellow shape=ellipse style=filled]
+	663 -> 665
+	664 -> 665
+	666 [label="Call (666)(op=reshape)" color=greenyellow shape=ellipse style=filled]
+	193 -> 666
+	667 [label="Call (667)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	653 -> 667
+	666 -> 667
+	668 [label="Call (668)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	667 -> 668
+	194 -> 668
+	669 [label="Call (669)(op=reshape)" color=greenyellow shape=ellipse style=filled]
+	195 -> 669
+	670 [label="Call (670)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	653 -> 670
+	669 -> 670
+	671 [label="Call (671)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	670 -> 671
+	196 -> 671
+	672 [label="Call (672)(op=add)" color=greenyellow shape=ellipse style=filled]
+	668 -> 672
+	671 -> 672
+	673 [label="Tuple (673)(fileds=none)" color=greenyellow shape=ellipse style=filled]
+	650 -> 673
+	660 -> 673
+	662 -> 673
+	665 -> 673
+	672 -> 673
+	674 [label="Call (674)(op=concatenate)" color=greenyellow shape=ellipse style=filled]
+	673 -> 674
+	675 [label="Call (675)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	674 -> 675
+	197 -> 675
+	676 [label="Call (676)(op=nn.bias_add)" color=greenyellow shape=ellipse style=filled]
+	675 -> 676
+	198 -> 676
+	677 [label="Call (677)(op=nn.relu)" color=greenyellow shape=ellipse style=filled]
+	676 -> 677
+	678 [label="Call (678)(op=reshape)" color=greenyellow shape=ellipse style=filled]
+	199 -> 678
+	679 [label="Call (679)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	677 -> 679
+	678 -> 679
+	680 [label="Call (680)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	679 -> 680
+	200 -> 680
+	681 [label="Call (681)(op=add)" color=greenyellow shape=ellipse style=filled]
+	680 -> 681
+	677 -> 681
+	682 [label="Call (682)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	643 -> 682
+	201 -> 682
+	683 [label="Call (683)(op=nn.bias_add)" color=greenyellow shape=ellipse style=filled]
+	682 -> 683
+	202 -> 683
+	684 [label="Call (684)(op=nn.relu)" color=greenyellow shape=ellipse style=filled]
+	683 -> 684
+	685 [label="Call (685)(op=reshape)" color=greenyellow shape=ellipse style=filled]
+	203 -> 685
+	686 [label="Call (686)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	684 -> 686
+	685 -> 686
+	687 [label="Call (687)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	686 -> 687
+	204 -> 687
+	688 [label="Call (688)(op=reshape)" color=greenyellow shape=ellipse style=filled]
+	205 -> 688
+	689 [label="Call (689)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	677 -> 689
+	688 -> 689
+	690 [label="Call (690)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	689 -> 690
+	206 -> 690
+	691 [label="Call (691)(op=add)" color=greenyellow shape=ellipse style=filled]
+	687 -> 691
+	690 -> 691
+	692 [label="Call (692)(op=nn.avg_pool2d)" color=greenyellow shape=ellipse style=filled]
+	677 -> 692
+	693 [label="Call (693)(op=add)" color=greenyellow shape=ellipse style=filled]
+	692 -> 693
+	684 -> 693
+	694 [label="Call (694)(op=nn.avg_pool2d)" color=greenyellow shape=ellipse style=filled]
+	684 -> 694
+	695 [label="Call (695)(op=nn.avg_pool2d)" color=greenyellow shape=ellipse style=filled]
+	684 -> 695
+	696 [label="Call (696)(op=add)" color=greenyellow shape=ellipse style=filled]
+	694 -> 696
+	695 -> 696
+	697 [label="Call (697)(op=reshape)" color=greenyellow shape=ellipse style=filled]
+	207 -> 697
+	698 [label="Call (698)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	684 -> 698
+	697 -> 698
+	699 [label="Call (699)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	698 -> 699
+	208 -> 699
+	700 [label="Call (700)(op=reshape)" color=greenyellow shape=ellipse style=filled]
+	209 -> 700
+	701 [label="Call (701)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	684 -> 701
+	700 -> 701
+	702 [label="Call (702)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	701 -> 702
+	210 -> 702
+	703 [label="Call (703)(op=add)" color=greenyellow shape=ellipse style=filled]
+	699 -> 703
+	702 -> 703
+	704 [label="Tuple (704)(fileds=none)" color=greenyellow shape=ellipse style=filled]
+	681 -> 704
+	691 -> 704
+	693 -> 704
+	696 -> 704
+	703 -> 704
+	705 [label="Call (705)(op=concatenate)" color=greenyellow shape=ellipse style=filled]
+	704 -> 705
+	706 [label="Call (706)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	705 -> 706
+	211 -> 706
+	707 [label="Call (707)(op=nn.bias_add)" color=greenyellow shape=ellipse style=filled]
+	706 -> 707
+	212 -> 707
+	708 [label="Call (708)(op=nn.relu)" color=greenyellow shape=ellipse style=filled]
+	707 -> 708
+	709 [label="Call (709)(op=reshape)" color=greenyellow shape=ellipse style=filled]
+	213 -> 709
+	710 [label="Call (710)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	708 -> 710
+	709 -> 710
+	711 [label="Call (711)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	710 -> 711
+	214 -> 711
+	712 [label="Call (712)(op=add)" color=greenyellow shape=ellipse style=filled]
+	711 -> 712
+	708 -> 712
+	713 [label="Call (713)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	674 -> 713
+	215 -> 713
+	714 [label="Call (714)(op=nn.bias_add)" color=greenyellow shape=ellipse style=filled]
+	713 -> 714
+	216 -> 714
+	715 [label="Call (715)(op=nn.relu)" color=greenyellow shape=ellipse style=filled]
+	714 -> 715
+	716 [label="Call (716)(op=reshape)" color=greenyellow shape=ellipse style=filled]
+	217 -> 716
+	717 [label="Call (717)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	715 -> 717
+	716 -> 717
+	718 [label="Call (718)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	717 -> 718
+	218 -> 718
+	719 [label="Call (719)(op=reshape)" color=greenyellow shape=ellipse style=filled]
+	219 -> 719
+	720 [label="Call (720)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	708 -> 720
+	719 -> 720
+	721 [label="Call (721)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	720 -> 721
+	220 -> 721
+	722 [label="Call (722)(op=add)" color=greenyellow shape=ellipse style=filled]
+	718 -> 722
+	721 -> 722
+	723 [label="Call (723)(op=nn.avg_pool2d)" color=greenyellow shape=ellipse style=filled]
+	708 -> 723
+	724 [label="Call (724)(op=add)" color=greenyellow shape=ellipse style=filled]
+	723 -> 724
+	715 -> 724
+	725 [label="Call (725)(op=nn.avg_pool2d)" color=greenyellow shape=ellipse style=filled]
+	715 -> 725
+	726 [label="Call (726)(op=nn.avg_pool2d)" color=greenyellow shape=ellipse style=filled]
+	715 -> 726
+	727 [label="Call (727)(op=add)" color=greenyellow shape=ellipse style=filled]
+	725 -> 727
+	726 -> 727
+	728 [label="Call (728)(op=reshape)" color=greenyellow shape=ellipse style=filled]
+	221 -> 728
+	729 [label="Call (729)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	715 -> 729
+	728 -> 729
+	730 [label="Call (730)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	729 -> 730
+	222 -> 730
+	731 [label="Call (731)(op=reshape)" color=greenyellow shape=ellipse style=filled]
+	223 -> 731
+	732 [label="Call (732)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	715 -> 732
+	731 -> 732
+	733 [label="Call (733)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	732 -> 733
+	224 -> 733
+	734 [label="Call (734)(op=add)" color=greenyellow shape=ellipse style=filled]
+	730 -> 734
+	733 -> 734
+	735 [label="Tuple (735)(fileds=none)" color=greenyellow shape=ellipse style=filled]
+	712 -> 735
+	722 -> 735
+	724 -> 735
+	727 -> 735
+	734 -> 735
+	736 [label="Call (736)(op=concatenate)" color=greenyellow shape=ellipse style=filled]
+	735 -> 736
+	737 [label="Call (737)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	736 -> 737
+	225 -> 737
+	738 [label="Call (738)(op=nn.bias_add)" color=greenyellow shape=ellipse style=filled]
+	737 -> 738
+	226 -> 738
+	739 [label="Call (739)(op=nn.relu)" color=greenyellow shape=ellipse style=filled]
+	738 -> 739
+	740 [label="Call (740)(op=reshape)" color=greenyellow shape=ellipse style=filled]
+	227 -> 740
+	741 [label="Call (741)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	739 -> 741
+	740 -> 741
+	742 [label="Call (742)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	741 -> 742
+	228 -> 742
+	743 [label="Call (743)(op=add)" color=greenyellow shape=ellipse style=filled]
+	742 -> 743
+	739 -> 743
+	744 [label="Call (744)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	705 -> 744
+	229 -> 744
+	745 [label="Call (745)(op=nn.bias_add)" color=greenyellow shape=ellipse style=filled]
+	744 -> 745
+	230 -> 745
+	746 [label="Call (746)(op=nn.relu)" color=greenyellow shape=ellipse style=filled]
+	745 -> 746
+	747 [label="Call (747)(op=reshape)" color=greenyellow shape=ellipse style=filled]
+	231 -> 747
+	748 [label="Call (748)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	746 -> 748
+	747 -> 748
+	749 [label="Call (749)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	748 -> 749
+	232 -> 749
+	750 [label="Call (750)(op=reshape)" color=greenyellow shape=ellipse style=filled]
+	233 -> 750
+	751 [label="Call (751)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	739 -> 751
+	750 -> 751
+	752 [label="Call (752)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	751 -> 752
+	234 -> 752
+	753 [label="Call (753)(op=add)" color=greenyellow shape=ellipse style=filled]
+	749 -> 753
+	752 -> 753
+	754 [label="Call (754)(op=nn.avg_pool2d)" color=greenyellow shape=ellipse style=filled]
+	739 -> 754
+	755 [label="Call (755)(op=add)" color=greenyellow shape=ellipse style=filled]
+	754 -> 755
+	746 -> 755
+	756 [label="Call (756)(op=nn.avg_pool2d)" color=greenyellow shape=ellipse style=filled]
+	746 -> 756
+	757 [label="Call (757)(op=nn.avg_pool2d)" color=greenyellow shape=ellipse style=filled]
+	746 -> 757
+	758 [label="Call (758)(op=add)" color=greenyellow shape=ellipse style=filled]
+	756 -> 758
+	757 -> 758
+	759 [label="Call (759)(op=reshape)" color=greenyellow shape=ellipse style=filled]
+	235 -> 759
+	760 [label="Call (760)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	746 -> 760
+	759 -> 760
+	761 [label="Call (761)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	760 -> 761
+	236 -> 761
+	762 [label="Call (762)(op=reshape)" color=greenyellow shape=ellipse style=filled]
+	237 -> 762
+	763 [label="Call (763)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	746 -> 763
+	762 -> 763
+	764 [label="Call (764)(op=nn.conv2d)" color=greenyellow shape=ellipse style=filled]
+	763 -> 764
+	238 -> 764
+	765 [label="Call (765)(op=add)" color=greenyellow shape=ellipse style=filled]
+	761 -> 765
+	764 -> 765
+	766 [label="Tuple (766)(fileds=none)" color=greenyellow shape=ellipse style=filled]
+	743 -> 766
+	753 -> 766
+	755 -> 766
+	758 -> 766
+	765 -> 766
+	767 [label="Call (767)(op=concatenate)" color=greenyellow shape=ellipse style=filled]
+	766 -> 767
+	768 [label="Function (768)" shape=doubleoctagon]
+	767 -> 768
+}

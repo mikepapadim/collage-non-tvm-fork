@@ -1,0 +1,27 @@
+ResNet-8 / TVM
+
+Graph : bn-conv-bn-relu-conv-bn-relu-conv-add-bn-relu-conv-bn-relu-conv-add-bn-relu-conv-bn-relu-conv-add-bn-relu-global_avg_pool-flatten-dense-bias_add-softmax- (hash: 94385116648032)
+Total Cost:0.24
+
+Matched backend ops (op, cost)
+(tvmgpu_bn, 0.0025)
+(tvmgpu_conv2d+bn+relu, 0.0068)
+(tvmgpu_conv2d+bn+relu, 0.023)
+(tvmgpu_conv2d, 0.023)
+(tvmgpu_add, 0.0024)
+(tvmgpu_bn+relu, 0.0025)
+(tvmgpu_conv2d+bn+relu, 0.014)
+(tvmgpu_conv2d, 0.024)
+(tvmgpu_add, 0.0024)
+(tvmgpu_bn+relu, 0.0025)
+(tvmgpu_conv2d+bn+relu, 0.018)
+(tvmgpu_conv2d, 0.091)
+(tvmgpu_add, 0.0024)
+(tvmgpu_bn+relu, 0.0025)
+(tvmgpu_globalavgpool2d, 0.0025)
+(tvmgpu_batchflatten, 0.0024)
+(tvmgpu_dense, 0.0041)
+(tvmgpu_biasadd, 0.0024)
+(tvmgpu_softmax, 0.016)
+CPU times: user 11.2 s, sys: 27.7 s, total: 38.9 s
+Wall time: 10.7 s
