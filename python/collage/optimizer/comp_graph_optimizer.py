@@ -10,8 +10,8 @@ from .dp_table import *
 import logging
 
 class CompGraphOptimizer:
-    def __init__(self, backendop_lib, target_backend=None):
-        self._backendop_lib = backendop_lib
+    def __init__(self, pattern_registry, target_backend=None):
+        self._pattern_registry = pattern_registry
         self._target_backend = target_backend
         self._ordered_pattern_matcher = OrderedPatternMatcher()
         # Attribute key to pass to N-to-1 lowering pass
@@ -21,17 +21,6 @@ class CompGraphOptimizer:
         # Thus, we need to use TVM fallback ops (without auto-tuninng)
         # Even if it is named as AutoTVM, we will build without tuning logs. So, effectively, it is TVM with no tuning.
         self._need_tvm_fallback_ops = False#Target.AUTOTVM not in target_backend
-
-        # For printing matched backend ops in ResNet graph
-        #patterns = self._backendop_lib.get_all_patterns()
-        #self._pattern_to_name = {}
-        #for pat in patterns:
-        #    backend_ops = self._backendop_lib.pattern_to_backendops[pat]
-
-       #     assert len(backend_ops) > 0
-            #name = backend_ops[0]._op_name
-            #TODO: Check with Soo
-       #     self._pattern_to_name[pat] = pat.get_name()
 
         self.loc2match = None
         self._memo = None
@@ -52,7 +41,7 @@ class CompGraphOptimizer:
         frontier_queue.put(comp_graph.get_root())
 
         extractor = MatchInfoExtractor(comp_graph)
-        dp_table = DPTable(self._backendop_lib, self._target_backend, hw_name, comp_graph)
+        dp_table = DPTable(self._pattern_registry, self._target_backend, hw_name, comp_graph)
 
         root_expr = comp_graph.get_root().get_relay_expr()
         dom_tree = relay.analysis.construct_dom_tree(root_expr, post_dom = False)
@@ -73,15 +62,15 @@ class CompGraphOptimizer:
         relay.analysis.post_order_visit(root_expr, lambda expr: _traverse_expr(expr, all_exprs))
 
         for expr in all_exprs:
-            for generator in self._backendop_lib.get_all_pattern_generators():
+            for generator in self._pattern_registry.get_all_pattern_generators():
                  generator.run(post_dom_tree, expr)
 
-        for pat in self._backendop_lib.get_all_patterns():
+        for pat in self._pattern_registry.get_all_patterns():
             logging.info(f"Checking... {repr(pat)}")
 
             #Debug
-            #backendops = self._backendop_lib.get_backendops(pat)
-            #for op in backendops:
+            #backend_patterns = self._pattern_registry.get_backend_patterns(pat)
+            #for op in backend_patterns:
             #    print(repr(op))
 
         # For backend ablation study where we are given a list of backends,
@@ -91,7 +80,7 @@ class CompGraphOptimizer:
         # backend in a list. It is currently dealt by the following codes.
         fallback_backend_pats = None
         if self._need_tvm_fallback_ops:
-            fallback_backend_pat_ops = self._backendop_lib.get_all_patterns_and_backend_ops_from_single_backend(
+            fallback_backend_pat_ops = self._pattern_registry.get_all_patterns_and_backend_patterns_from_single_backend(
                 Target.AUTOTVM, self._target_backend)
 
             # Create a pattern set
@@ -119,7 +108,7 @@ class CompGraphOptimizer:
         #         hash_to_op[hash(node)] = "var"
         while not frontier_queue.empty():
             # Facilitate the debugging process
-            self._backendop_lib.save_to_log(hw_name)
+            self._pattern_registry.save_to_log(hw_name)
             f = frontier_queue.get()
             f_expr = f.get_relay_expr()
 
@@ -130,7 +119,7 @@ class CompGraphOptimizer:
                 logging.info(f"(topo_order, pattern) : {f._topological_order}, {type(f_expr)}, Non-call node")
 
             n_match_frontier = 0
-            for pat in self._backendop_lib.get_all_patterns():
+            for pat in self._pattern_registry.get_all_patterns():
                 # print("Checking... ", pat)
 
                 # ordered_pattern_matcher consider the order of arguments when matching
@@ -142,19 +131,19 @@ class CompGraphOptimizer:
                     logging.info(f"The following pattern is matched: {pat.get_relay_pattern()}")
 
                     # Get best backend op and its cost for matched nodes
-                    best_backend_op_name, min_cost = get_optimal_backendop(self._backendop_lib, f_expr,
+                    best_backend_pattern_name, min_cost = get_optimal_backend_pattern(self._pattern_registry, f_expr,
                                                                            pat, self._target_backend, hw_name,
                                                                            self._need_tvm_fallback_ops,
                                                                            fallback_backend_pats)
 
                     # Skip update if there is no backend op available for matched pattern
-                    if best_backend_op_name is None:
+                    if best_backend_pattern_name is None:
                         continue
 
                     # Extract match information; refer to detailed explanation in the MatchInfoExtractor
-                    matched_nodes, match_dic, new_frontiers = extractor.extract(f_expr, pat.get_relay_pattern(), best_backend_op_name)
+                    matched_nodes, match_dic, new_frontiers = extractor.extract(f_expr, pat.get_relay_pattern(), best_backend_pattern_name)
 
-                    dp_table.update(matched_nodes, match_dic, best_backend_op_name, min_cost, new_frontiers)
+                    dp_table.update(matched_nodes, match_dic, best_backend_pattern_name, min_cost, new_frontiers)
                     # print(dp_table._dp_table)
 
                     # Add new frontiers to the queue
@@ -167,8 +156,8 @@ class CompGraphOptimizer:
             # else:
             #     printe(f"n_match_froniter : {n_match_frontier}")
 
-        # Assign backend operator annotation (group_id + backend_op_name) to Relay expr (backend attribute)
-        optimized_match = dp_table.assign_backend_op_to_expr()
+        # Assign backend operator annotation (group_id + backend_pattern_name) to Relay expr (backend attribute)
+        optimized_match = dp_table.assign_backend_pattern_to_expr()
 
         return optimized_match
 
@@ -196,7 +185,7 @@ class CompGraphOptimizer:
 
                 # Update backend in the Relay expression directly
                 for expr, op_name in match_dic.items():
-                    backend_annotation = create_backend_op_annotation(group_id, op_name)
+                    backend_annotation = create_backend_pattern_annotation(group_id, op_name)
                     # printe(f"Pair of type and annotation: {backend_annotation}")
                     # printe(repr(expr), backend_annotation)
                     relay.analysis.update_backend(expr, backend_annotation)
@@ -235,11 +224,11 @@ class CompGraphOptimizer:
         relay.analysis.post_order_visit(root_expr, lambda expr: _traverse_expr(expr, all_exprs))
 
         for expr in all_exprs:
-            for generator in self._backendop_lib.get_all_pattern_generators():
+            for generator in self._pattern_registry.get_all_pattern_generators():
                  generator.run(post_dom_tree, expr)
 
 
-        # for pat in self._backendop_lib.get_all_patterns():
+        # for pat in self._pattern_registry.get_all_patterns():
         #     print("Checking... ", pat)
 
         """
@@ -255,9 +244,9 @@ class CompGraphOptimizer:
         # Output
         # - patterns from the given backend
         # - patterns of AutoTVM ops that do not include patterns of the given backend
-        single_backend_pats_ops = self._backendop_lib.get_all_patterns_and_backend_ops_from_single_backend([single_backend])
+        single_backend_pats_ops = self._pattern_registry.get_all_patterns_and_backend_patterns_from_single_backend([single_backend])
         fallback_backend = Target.AUTOTVM
-        fallback_backend_pats_ops = self._backendop_lib.get_all_patterns_and_backend_ops_from_single_backend(fallback_backend, [single_backend])
+        fallback_backend_pats_ops = self._pattern_registry.get_all_patterns_and_backend_patterns_from_single_backend(fallback_backend, [single_backend])
 
         # Debug
         # single_op = [tup[0] for tup in single_backend_pats_ops]
@@ -271,7 +260,7 @@ class CompGraphOptimizer:
         matched_b_op_name = []
         while not frontier_queue.empty():
             # Facilitate the debugging process
-            self._backendop_lib.save_to_log(hw_name)
+            self._pattern_registry.save_to_log(hw_name)
             f = frontier_queue.get()
             f_expr = f.get_relay_expr()
 
@@ -300,16 +289,16 @@ class CompGraphOptimizer:
         # Get max_group_id
         max_group_id = 0
         for anno in matched_b_op_name:
-            group_id = int(get_group_id_from_backend_op_annotation(anno))
+            group_id = int(get_group_id_from_backend_pattern_annotation(anno))
             if max_group_id < group_id:
                 max_group_id = group_id
 
         # Get new annotation
         for idx, anno in enumerate(matched_b_op_name):
-            group_id = int(get_group_id_from_backend_op_annotation(anno))
+            group_id = int(get_group_id_from_backend_pattern_annotation(anno))
             new_group_id = max_group_id - group_id
-            backend_op_name = get_backendop_name_from_backend_op_annotation(anno)
-            new_anno = create_backend_op_annotation(new_group_id, backend_op_name)
+            backend_pattern_name = get_backend_pattern_name_from_backend_pattern_annotation(anno)
+            new_anno = create_backend_pattern_annotation(new_group_id, backend_pattern_name)
             matched_b_op_name[idx] = new_anno
         matched_b_op_name = matched_b_op_name[::-1]
 
@@ -387,11 +376,11 @@ class AssignBackendExprVisitor:
 # Given the maximum width of graph, DFS is more memory-efficient than BFS.
 # """
 # class FrontierNode:
-#     def __init__(self, expr, backend_ops):
+#     def __init__(self, expr, backend_patterns):
 #         self.children = []
-#         # Relay_expr is before matched backend_ops
+#         # Relay_expr is before matched backend_patterns
 #         self.relay_expr = expr
-#         self.backend_ops = backend_ops
+#         self.backend_patterns = backend_patterns
 #
 #     def add_child(self, child):
 #         self.children.append(child)
@@ -411,27 +400,27 @@ We call this tree as FrontierGraph and it allows exhaustive search over all poss
 entire graph rather than compiling multiple subgraphs to evaluate entire graph in DP.
 """
 # class ExhaustiveSearcher:
-#     def __init__(self, backendop_lib, target_backend=None):
-#         self._backendop_lib = backendop_lib
+#     def __init__(self, pattern_registry, target_backend=None):
+#         self._pattern_registry = pattern_registry
 #         self._target_backend = target_backend
 #
 #         # Attribute key to pass to N-to-1 lowering pass
 #         self._bop_attr_key = "backend-op"
 #
 #         # For printing matched backend ops in ResNet graph
-#         patterns = self._backendop_lib.get_all_patterns()
+#         patterns = self._pattern_registry.get_all_patterns()
 #         self._pattern_to_name = {}
 #         for pat in patterns:
-#             backend_ops = self._backendop_lib.pattern_to_backendops[pat]
+#             backend_patterns = self._pattern_registry.pattern_to_backend_patterns[pat]
 #
-#             assert len(backend_ops) > 0
-#             name = backend_ops[0]._pattern.name()
+#             assert len(backend_patterns) > 0
+#             name = backend_patterns[0]._pattern.name()
 #             self._pattern_to_name[pat] = name
 #
 #         self.memo_map = {}
 #
 #         # Key: Expr / Value: backend op id + name
-#         self._backend_op_id = 0
+#         self._backend_pattern_id = 0
 #         self.frontier_graph = None
 #
 #     def debug_print(self, f, f_expr):
@@ -441,17 +430,17 @@ entire graph rather than compiling multiple subgraphs to evaluate entire graph i
 #         else:
 #             print(f"(topo_order, pattern) : {f._topological_order}, {type(f_expr)}, Non-call node")
 #
-#     def create_backend_op_annotation(self, backend_op):
-#         return f"{self._backend_op_id}-{backend_op}"
+#     def create_backend_pattern_annotation(self, backend_pattern):
+#         return f"{self._backend_pattern_id}-{backend_pattern}"
 #
-#     def get_backend_ops(self, pattern):
-#         backend_ops = self._backendop_lib.get_backendops(pattern)
-#         backend_op_annotations = []
-#         for op in backend_ops:
+#     def get_backend_patterns(self, pattern):
+#         backend_patterns = self._pattern_registry.get_backend_patterns(pattern)
+#         backend_pattern_annotations = []
+#         for op in backend_patterns:
 #             if op.get_target() in self._target_backend:
-#                 backend_op_annotations.append(self.create_backend_op_annotation(op))
+#                 backend_pattern_annotations.append(self.create_backend_pattern_annotation(op))
 #
-#         return backend_op_annotations
+#         return backend_pattern_annotations
 #
 #     def optimize(self, comp_graph):
 #         # HACKY: Reset matched_expr
@@ -465,7 +454,7 @@ entire graph rather than compiling multiple subgraphs to evaluate entire graph i
 #
 #         while not frontiers.empty():
 #             # Facilitate the debugging process
-#             self._backendop_lib.save_to_log(hw_name)
+#             self._pattern_registry.save_to_log(hw_name)
 #
 #             f = frontiers.get()
 #             f_expr = f.get_relay_expr()
@@ -474,8 +463,8 @@ entire graph rather than compiling multiple subgraphs to evaluate entire graph i
 #             # Debug printing
 #             self.debug_print(f, f_expr)
 #
-#             # print(self._backendop_lib.get_all_patterns())
-#             for pat in self._backendop_lib.get_all_patterns():
+#             # print(self._pattern_registry.get_all_patterns())
+#             for pat in self._pattern_registry.get_all_patterns():
 #                 # print(pat)
 #                 if pat.get_relay_pattern().match(f_expr):
 #                     # Check if there is an existing frontier with the same goal idx
@@ -492,10 +481,10 @@ entire graph rather than compiling multiple subgraphs to evaluate entire graph i
 #                     for t_idx, (expr_after_match, prev_expr_after_match) in enumerate(tuple_after_matches):
 #                         # Get new frontier, matched backend ops, and their costs
 #                         new_loc = comp_graph.expr2node[hash(expr_after_match)]
-#                         backend_ops = self.get_backend_ops(pat)
+#                         backend_patterns = self.get_backend_patterns(pat)
 #
 #                         # Skip update if there is no backend op available for matched pattern
-#                         if len(backend_ops) == 0:
+#                         if len(backend_patterns) == 0:
 #                             continue
 #
 #                         # Flush matchings from second branch if there are more than one branches
@@ -535,7 +524,7 @@ entire graph rather than compiling multiple subgraphs to evaluate entire graph i
 #     def get_optimized_match(self, comp_graph):
 #         assert self.loc2match is not None
 #
-#         # Get final match (expr, backend_op_name)
+#         # Get final match (expr, backend_pattern_name)
 #         result_idx = -1
 #         final_match = {}
 #         fused_group_id = 0

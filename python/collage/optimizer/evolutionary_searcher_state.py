@@ -50,8 +50,8 @@ class MatchToOpGroupTranslator(ExprVisitor):
 
                 anno = self._optimized_match[expr]
                 # Note that group id is passed as a string
-                group_id = int(get_group_id_from_backend_op_annotation(anno))
-                # backend_op_name = get_backendop_name_from_backend_op_annotation(anno)
+                group_id = int(get_group_id_from_backend_pattern_annotation(anno))
+                # backend_pattern_name = get_backend_pattern_name_from_backend_pattern_annotation(anno)
 
                 # Group id is same as state id
                 self.group_id_to_exprs_anno[group_id].append((expr, anno))
@@ -130,12 +130,12 @@ class OpStateToMatchTranslator():
 
         # To check if ops in each group have same backend
         expr, anno = expr_anno_pairs[0]
-        first_backend = get_backend_from_backend_op_annotation(anno)
+        first_backend = get_backend_from_backend_pattern_annotation(anno)
         is_valid_op_state = True
 
         for expr, anno in expr_anno_pairs:
             # To check if ops in each group have same backend
-            backend_name = get_backend_from_backend_op_annotation(anno)
+            backend_name = get_backend_from_backend_pattern_annotation(anno)
             assert backend_name == first_backend
 
             # If one of ops is tuple or tuple_get_item, then prevent it from being ext compiler ops
@@ -174,8 +174,8 @@ class OpStateToMatchTranslator():
         return state_id_to_group_id
 
     def gen_ext_compiler_op_annotation(self, anno):
-        group_id = int(get_group_id_from_backend_op_annotation(anno))
-        op_name = get_op_name_from_backend_op_annotation(anno)
+        group_id = int(get_group_id_from_backend_pattern_annotation(anno))
+        op_name = get_op_name_from_backend_pattern_annotation(anno)
         backend_name = self.graph_opt_backend_name
 
         return f"{group_id}-{backend_name}_{op_name}"

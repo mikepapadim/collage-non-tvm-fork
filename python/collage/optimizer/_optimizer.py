@@ -3,10 +3,9 @@ import tvm.driver
 # import tvm.relay.testing as testing
 # from tvm import relay
 
-# from ..pattern_manager.record import backendop_lib
 from ..pattern_manager.op_config import MeasuredConfigs
 from ..pattern_manager.cost_func import *
-from ..pattern_manager.pattern_registry import BackendOpLib
+from ..pattern_manager.pattern_registry import PatternRegistry
 from ..pattern_manager.utils import *
 
 #from ..utility.visualize import visualize_network
@@ -27,11 +26,11 @@ from .custom_fusion_pass import *
 
 import logging
 
-def setup_backend_op_lib(hw_name):
-    backendop_lib = BackendOpLib.get(hw_name)
-    # backendop_lib.measure_backend_ops(network_expr, targets, batch_size)
+def setup_pattern_registry(hw_name):
+    pattern_registry = PatternRegistry.get(hw_name)
+    # pattern_registry.measure_backend_patterns(network_expr, targets, batch_size)
 
-    return backendop_lib
+    return pattern_registry
 
 @tvm._ffi.register_func("relay.transform.optimizer.print_attr_args")
 def print_attr_args(expr):
@@ -165,16 +164,6 @@ def apply_external_compiler_op(mod):
     return mod
     # return mod, config
 
-# For annotate_test
-# def get_temp_opt_match(relay_expr):
-#     printe("update backend from Python side")
-#     relay.analysis.update_backend(relay_expr, "0-autotvm_add")
-#     relay.analysis.update_backend(relay_expr.args[0], "1-autotvm_relu")
-#     relay.analysis.update_backend(relay_expr.args[1], "2-tensorrt_tanh")
-#     relay.analysis.update_backend(relay_expr.args[0].args[0],"3-autotvm_relu")
-#     relay.analysis.update_backend(relay_expr.args[0].args[0].args[0], "3-autotvm_relu")
-#     return relay_expr
-
 @tvm._ffi.register_func("relay.transform.optimizer.get_user_fusion")
 def get_user_fusion(relay_expr):
     printe("User-defined fusion")
@@ -182,25 +171,14 @@ def get_user_fusion(relay_expr):
     relay_expr = get_function_body(relay_expr)
 
     match_path = get_user_defined_match_path(net_name, hw_name, batch_size)
-    # match_path = f"{LOG_PATH}/best_match_{net_name}.log"
     opt_match = OpMatchReader().read(relay_expr, match_path)
 
-    # # printe(repr(relay_expr))
-    # if relay_expr.backend == 'default':
-    #     opt_match = get_temp_opt_match(relay_expr)
-
-    # visualize backend placement
-    # opt_info_tag = get_opt_info_tag(net_name, hw_name, batch_size)
-    # visualize_network(relay_expr, opt_info_tag)
 
 def get_backends(func_expr, hw_name):
     if BACKEND_LIST_ATTR in func_expr.attrs:
         backend_list_str = func_expr.attrs[BACKEND_LIST_ATTR]
         backend_str_list = backend_list_str.split(",")
         backends = [target_id_to_target[int(b)] for b in backend_str_list]
-        # print(backend_list_str)
-        # print(backends)
-        # sys.exit(0)
     else:
         backends = get_backends_from_hw(hw_name)
 
@@ -208,9 +186,6 @@ def get_backends(func_expr, hw_name):
 
 def run_op_level_opt(func_expr):
     hw_name = func_expr.attrs[HW_FUNC_ATTR]
-
-    # Sanity check: Only AutoTVM
-    # targets = [Target.AUTOTVM]
     targets = get_backends(func_expr, hw_name)
 
     relay_expr = get_function_body(func_expr)
@@ -220,10 +195,10 @@ def run_op_level_opt(func_expr):
     n_relay_nodes = comp_graph.n_relay_nodes
     logging.info(f"# of relay nodes in comp graph: {n_relay_nodes}")
 
-    backendop_lib = setup_backend_op_lib(hw_name)
+    pattern_registry = setup_pattern_registry(hw_name)
 
     # Optimizing graph
-    optimizer = CompGraphOptimizer(backendop_lib, targets)
+    optimizer = CompGraphOptimizer(pattern_registry, targets)
 
     # visualize_network(relay_expr, "o3_bert_full_without_layernorm", comp_graph.expr2node)
     """
@@ -241,25 +216,12 @@ def run_op_level_opt(func_expr):
     optimized_match = optimizer.optimize(comp_graph, hw_name)
 
     logging.info("[Op-Level: DP] It finished optimizing comp graph and assigning backend ops to Relay Expr (backend attr)")
-
-    # visualize_network(relay_expr, "o3_bert_full_without_layernorm_optimized", comp_graph.expr2node)
-    # optimized_match, post_order_match_result = optimizer.get_optimized_match(comp_graph)
-
-    # print("Match result: ", optimized_match)
-    # post_order_match_result is for debugging to check if it matches the final result from the TVM DP fusion pass
-    # print("Match result")
-    # for idx, pair in enumerate(post_order_match_result):
-    #     print(idx, pair)
-    # # Debug (@soo)
-    # print_matching_final(comp_graph, optimizer.loc2match)
-    # print("-"*40)
-
-    backendop_lib.save_to_log(hw_name)
+    pattern_registry.save_to_log(hw_name)
 
     # For DP tuning time measurement, we have to reset backend op library to measure DP with op measurement every time
-    BackendOpLib.destroy()
+    PatternRegistry.destroy()
 
-    return optimized_match, relay_expr, backendop_lib, n_relay_nodes
+    return optimized_match, relay_expr, pattern_registry, n_relay_nodes
 
 
 @tvm._ffi.register_func("relay.transform.optimizer.run_two_level_opt")
@@ -290,7 +252,7 @@ def run_two_level_opt(relay_expr):
     # visualize_network(relay_expr, "o3_mobilenet_v2")
     # op-level optimization: DP with all backends but external compilers, e.g., TensorRT
     func_expr = relay_expr
-    optimized_match, relay_expr, backendop_lib, n_relay_nodes = run_op_level_opt(relay_expr)
+    optimized_match, relay_expr, pattern_registry, n_relay_nodes = run_op_level_opt(relay_expr)
     print("[Python side] Op-level optimization is done")
 
     net_name, hw_name, batch_size = get_opt_info_from_func(func_expr)
@@ -381,11 +343,11 @@ def run_dp(relay_expr):
 
 @tvm._ffi.register_func("relay.transform.optimizer.assign_backend_for_op_measurement")
 def assign_backend_for_op_measurement(relay_expr):
-    backend_op_name = relay_expr.attrs[BACKEND_OP_ATTR]
-    assert isinstance(backend_op_name, str)
+    backend_pattern_name = relay_expr.attrs[BACKEND_OP_ATTR]
+    assert isinstance(backend_pattern_name, str)
 
     relay_expr = get_function_body(relay_expr)
-    AssignBackendExprVisitor().assign(relay_expr, backend_op_name)
+    AssignBackendExprVisitor().assign(relay_expr, backend_pattern_name)
 
     # printe(repr(relay_expr))
     # sys.exit(0)
@@ -415,13 +377,13 @@ def run_single_backend_baseline(func_expr):
     n_relay_nodes = comp_graph.n_relay_nodes
     logging.info(f"# of relay nodes in comp graph: {n_relay_nodes}")
 
-    backendop_lib = setup_backend_op_lib(hw_name)
+    pattern_registry = setup_pattern_registry(hw_name)
 
     # Optimizing graph; note that we don't need to specify target backend for single backend baseline matching
-    optimizer = CompGraphOptimizer(backendop_lib, target_backend=[])
+    optimizer = CompGraphOptimizer(pattern_registry, target_backend=[])
     optimized_match = optimizer.optimize_single_backend(comp_graph, hw_name, single_backend_target)
     logging.info("[Single backend baseline] It finished optimizing comp graph and assigning backend ops to Relay Expr (backend attr)")
-    backendop_lib.save_to_log(hw_name)
+    pattern_registry.save_to_log(hw_name)
 
     # printe(repr(relay_expr))
     # sys.exit(0)
@@ -461,11 +423,11 @@ def run_single_backend_baseline(func_expr):
 #     # Enable all backends
 #     targets = [Target.AUTOTVM, Target.CUBLAS, Target.CUDNN, Target.TENSORRT]
 #     batch_size = 1
-#     backendop_lib = setup_backend_op_lib(hw_name)
+#     pattern_registry = setup_pattern_registry(hw_name)
 #
 #     # Optimizing graph
 #     print("Computation graph created")
-#     optimizer = ExhaustiveSearcher(backendop_lib, targets)
+#     optimizer = ExhaustiveSearcher(pattern_registry, targets)
 #     print("Optimizer created")
 #     optimizer.optimize(comp_graph, hw_name)
 #     print("It's optimized")
@@ -486,7 +448,7 @@ def run_single_backend_baseline(func_expr):
 #     # optimized_match = ExtCompilerOpMerger(optimized_match).merge(relay_expr)
 #     # print(f"fusion dic (after  merge): {optimized_match}")
 #
-#     backendop_lib.save_to_log(hw_name)
+#     pattern_registry.save_to_log(hw_name)
 #
 #     return optimized_match
 

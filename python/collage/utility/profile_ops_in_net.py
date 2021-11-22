@@ -3,9 +3,9 @@ from collections import defaultdict
 import pandas as pd
 
 from ..pattern_manager.utils import *
-from ..pattern_manager.pattern_registry import BackendOpLib
+from ..pattern_manager.pattern_registry import PatternRegistry
 from ..pattern_manager.cost_func import Target
-from ..pattern_manager.matched_operators import get_optimal_backendop
+from ..pattern_manager.matched_operators import get_optimal_backend_pattern
 from .plot_utils import set_plt_font_size
 import os
 import matplotlib.pyplot as plt
@@ -47,11 +47,11 @@ def _measure_single_op(expr, op_perf_dic, target, hw_name):
         return
 
     is_matched_once = False
-    backendop_lib = BackendOpLib.get(hw_name)
-    for pat in backendop_lib.get_all_patterns():
+    pattern_registry = PatternRegistry.get(hw_name)
+    for pat in pattern_registry.get_all_patterns():
         if pat.get_pattern().depth() == 1 and pat.match(expr):
             # Measure an op perf for a given backend
-            _, op_cost = get_optimal_backendop(backendop_lib, expr, pat, [target], hw_name)
+            _, op_cost = get_optimal_backend_pattern(pattern_registry, expr, pat, [target], hw_name)
             op_perf_dic[_get_op_name(expr)] += op_cost
 
             if is_matched_once:

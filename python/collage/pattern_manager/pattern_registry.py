@@ -1,7 +1,7 @@
 from tvm import relay
 from collections import defaultdict
 
-from .matched_operators import BackendOp, get_optimal_backendop
+from .matched_operators import MatchedOp, get_optimal_backend_pattern
 from .op_config import Config, MeasuredConfigs
 
 #from ..workloads.onnx_workloads import get_network_from_onnx
@@ -13,53 +13,53 @@ from .pattern_language import Pattern, name_relay_pattern
 from tvm.relay.dataflow_pattern import *
 from .utils import *
 
-def add_all_backend_ops_to_lib(b_op_lib, target, exclued_ops=["DIAMOND"]):
+def add_all_backend_patterns_to_lib(b_op_lib, target, exclued_ops=["DIAMOND"]):
   t_name = target.name()
 
   for pattern, pattern in optype_to_pattern.items():
     # Skip diamond pattern for now
     if pattern in exclued_ops:
       continue
-    b_op_lib._add_backendop(target, pattern)
+    b_op_lib._add_backend_pattern(target, pattern)
 
 
-class BackendOpCostEvaluator:
+class MatchedOpCostEvaluator:
   __instance = None
 
   @staticmethod
   def get():
     """ Static access method. """
-    if BackendOpCostEvaluator.__instance == None:
-      BackendOpCostEvaluator()
-    return BackendOpCostEvaluator.__instance
+    if MatchedOpCostEvaluator.__instance == None:
+      MatchedOpCostEvaluator()
+    return MatchedOpCostEvaluator.__instance
 
   def __init__(self):
     """ Virtually private constructor. """
-    if BackendOpCostEvaluator.__instance != None:
+    if MatchedOpCostEvaluator.__instance != None:
       raise Exception("This class is a singleton!")
 
-    BackendOpCostEvaluator.__instance = self
+    MatchedOpCostEvaluator.__instance = self
 
-  def log_backend_op_perf(self, b_op_lib, expr, target, hw_name):
+  def log_backend_pattern_perf(self, b_op_lib, expr, target, hw_name):
     assert type(target) != list
 
     for pattern in b_op_lib.get_all_patterns():
       if pattern.get_pattern().match(expr):
         print("PATTERN:\n", pattern.get_pattern())
-        res = get_optimal_backendop(b_op_lib, expr, pattern, [target], hw_name)
+        res = get_optimal_backend_pattern(b_op_lib, expr, pattern, [target], hw_name)
         if res == None:
           print("No satisfying backend operators")
         else:
           op, cost = res
-          print("best backendop: %s, cost: %.5f ms" % (op, cost))
+          print("best backend_pattern: %s, cost: %.5f ms" % (op, cost))
 
 
   # traverse all subgraphs of a computation graph and evaluate all matchings between backend operators and subgraphs
-  def log_network_backend_ops_perf_on_target(self, b_op_lib, target, network_expr, batch_size=1):
+  def log_network_backend_patterns_perf_on_target(self, b_op_lib, target, network_expr, batch_size=1):
     # Read from ONNX is deprecated because type information is not available.
     # mod, _, _, _ = get_network_from_onnx(network_name, batch_size=batch_size)
-    # relay.analysis.post_order_visit(mod['main'], lambda expr: self.log_backend_op_perf(b_op_lib, expr, target))
-    relay.analysis.post_order_visit(network_expr, lambda expr: self.log_backend_op_perf(b_op_lib, expr, target))
+    # relay.analysis.post_order_visit(mod['main'], lambda expr: self.log_backend_pattern_perf(b_op_lib, expr, target))
+    relay.analysis.post_order_visit(network_expr, lambda expr: self.log_backend_pattern_perf(b_op_lib, expr, target))
 
 
 
@@ -235,24 +235,24 @@ class BasePatternGenerator:
 
 
 # library class (singleton) representing all backend operators
-class BackendOpLib(object):
+class PatternRegistry(object):
   __instance = None
 
   @staticmethod
   def get(hw_name):
     """ Static access method. """
-    if BackendOpLib.__instance == None:
-      BackendOpLib(hw_name)
-    return BackendOpLib.__instance
+    if PatternRegistry.__instance == None:
+      PatternRegistry(hw_name)
+    return PatternRegistry.__instance
 
   @staticmethod
   def destroy():
       """ Static access method. """
-      BackendOpLib.__instance = None
+      PatternRegistry.__instance = None
 
   def __init__(self, hw_name):
     """ Virtually private constructor. """
-    if BackendOpLib.__instance != None:
+    if PatternRegistry.__instance != None:
       raise Exception("This class is a singleton!")
 
     # list of all backend operators
@@ -260,13 +260,13 @@ class BackendOpLib(object):
     self._measured_configs.load_from_log(hw_name)
     # print("BACKEND OP LIG GET")
 
-    self.all_backendops = set()
+    self.all_backend_patterns = set()
     self.all_pattern_generators = []
-    # dictionary that maps each pattern to list of backend ops represented by the pattern
-    self.pattern_to_backendops = defaultdict(set)
-    self._add_all_backendops()
+    # dictionary that maps each pattern to list of backend patterns represented by the pattern
+    self.pattern_to_backend_patterns = defaultdict(set)
+    self._add_default_backend_patterns()
 
-    BackendOpLib.__instance = self
+    PatternRegistry.__instance = self
 
 
   #@Sung: Naming is a bit confusing
@@ -276,7 +276,7 @@ class BackendOpLib(object):
 
 
   # Note that we only support ResNet50 for now
-  def _add_all_backendops(self):
+  def _add_default_backend_patterns(self):
     # CUDNN
 
     # TODO(@Sung)
@@ -284,34 +284,34 @@ class BackendOpLib(object):
     # 2. conv3d, ADD, CONV2D_RELU, CONV2D_BIAS_ADD_RELU
 
     # FIXME(@Soo): For ResNext, some of CUDNN convolution doesn't work.
-    self._add_backendop_with_key(Target.CUDNN, "CONV2D")
-    self._add_backendop_with_key(Target.CUDNN, "CONV3D")
+    self._add_backend_pattern_with_key(Target.CUDNN, "CONV2D")
+    self._add_backend_pattern_with_key(Target.CUDNN, "CONV3D")
 
     def check_activation_constraints(config):
         dim = len(config._data_shape)
         return dim == 4 or dim == 5
 
-    #self._add_backendop_with_key(Target.CUDNN, "SIGMOID", check_activation_constraints)
-    #self._add_backendop_with_key(Target.CUDNN, "TANH", check_activation_constraints)
-    self._add_backendop_with_key(Target.CUDNN, "SOFTMAX")
-    self._add_backendop_with_key(Target.CUDNN, "MAX_POOL2D")
-    self._add_backendop_with_key(Target.CUDNN, "AVG_POOL2D")
+    #self._add_backend_pattern_with_key(Target.CUDNN, "SIGMOID", check_activation_constraints)
+    #self._add_backend_pattern_with_key(Target.CUDNN, "TANH", check_activation_constraints)
+    self._add_backend_pattern_with_key(Target.CUDNN, "SOFTMAX")
+    self._add_backend_pattern_with_key(Target.CUDNN, "MAX_POOL2D")
+    self._add_backend_pattern_with_key(Target.CUDNN, "AVG_POOL2D")
     # TODO:
-    # self._add_backendop_with_key(Target.CUDNN, "CONV2D_ADD_RELU") # Bug at NasnetA
-    #self._add_backendop_with_key(Target.CUDNN, "CONV2D_BIAS_RELU")
-    #self._add_backendop_with_key(Target.CUDNN, "CONV3D_ADD_RELU")
-    self._add_backendop_with_key(Target.CUDNN, "CONV3D_BIAS_RELU")
-    #self._add_backendop_with_key(Target.CUDNN, "CONV2D_RELU")
-    #self._add_backendop_with_key(Target.CUDNN, "RELU", check_activation_constraints) # RELU has correctness issue on ResNext
+    # self._add_backend_pattern_with_key(Target.CUDNN, "CONV2D_ADD_RELU") # Bug at NasnetA
+    #self._add_backend_pattern_with_key(Target.CUDNN, "CONV2D_BIAS_RELU")
+    #self._add_backend_pattern_with_key(Target.CUDNN, "CONV3D_ADD_RELU")
+    self._add_backend_pattern_with_key(Target.CUDNN, "CONV3D_BIAS_RELU")
+    #self._add_backend_pattern_with_key(Target.CUDNN, "CONV2D_RELU")
+    #self._add_backend_pattern_with_key(Target.CUDNN, "RELU", check_activation_constraints) # RELU has correctness issue on ResNext
 
 
     # NOTE: cudnn ADD, BIAS_ADD cannot be supported due to the current limitation of packed function interface.
     # cudnnAddTensor() uses the last argument as both input/output.
-    # self._add_backendop_with_key(Target.CUDNN, "ADD")
-    # self._add_backendop_with_key(Target.CUDNN, "BIAS_ADD")
+    # self._add_backend_pattern_with_key(Target.CUDNN, "ADD")
+    # self._add_backend_pattern_with_key(Target.CUDNN, "BIAS_ADD")
 
     # NOTE: BatchNorm is currently not supported. If you need it, please contact @Sung
-    self._add_backendop_with_key(Target.CUDNN, "BATCHNORM")
+    self._add_backend_pattern_with_key(Target.CUDNN, "BATCHNORM")
 
     # DNNL, MKL, MKLDNN
     # TODO: Add patterns. matmul, batch matmul
@@ -321,9 +321,9 @@ class BackendOpLib(object):
         print(f"{dim1}, {dim2}, {config._data_shape}", file=sys.stderr)
         return dim1 == 2 and dim2 == 2
 
-    self._add_backendop_with_key(Target.MKL, "DENSE", check_tensor_constraints)
-    self._add_backendop_with_key(Target.MKL, "BATCH_MATMUL")
-    #self._add_backendop_with_key(Target.MKLDNN, "DENSE")
+    self._add_backend_pattern_with_key(Target.MKL, "DENSE", check_tensor_constraints)
+    self._add_backend_pattern_with_key(Target.MKL, "BATCH_MATMUL")
+    #self._add_backend_pattern_with_key(Target.MKLDNN, "DENSE")
 
 
     def check_constraints_dnnl_add(config):
@@ -348,22 +348,22 @@ class BackendOpLib(object):
 
 
 
-    self._add_backendop_with_key(Target.DNNL, "CONV2D")
-    self._add_backendop_with_key(Target.DNNL, "CONV3D")
-    self._add_backendop_with_key(Target.DNNL, "BATCHNORM")
-    self._add_backendop_with_key(Target.DNNL, "DENSE")
+    self._add_backend_pattern_with_key(Target.DNNL, "CONV2D")
+    self._add_backend_pattern_with_key(Target.DNNL, "CONV3D")
+    self._add_backend_pattern_with_key(Target.DNNL, "BATCHNORM")
+    self._add_backend_pattern_with_key(Target.DNNL, "DENSE")
     # Disabled cuz it still errors out for DCGAN / NasNet-A
-    #self._add_backendop_with_key(Target.DNNL, "ADD", check_constraints_dnnl_add)
-    self._add_backendop_with_key(Target.DNNL, "RELU", check_constraints_dnnl_relu)
+    #self._add_backend_pattern_with_key(Target.DNNL, "ADD", check_constraints_dnnl_add)
+    self._add_backend_pattern_with_key(Target.DNNL, "RELU", check_constraints_dnnl_relu)
 
     # Unsupported error by DNNL
-    #self._add_backendop_with_key(Target.DNNL, "SUBTRACT")
-    #self._add_backendop_with_key(Target.DNNL, "MULTIPLY")
+    #self._add_backend_pattern_with_key(Target.DNNL, "SUBTRACT")
+    #self._add_backend_pattern_with_key(Target.DNNL, "MULTIPLY")
 
     # CUBLAS
     # TODO: Add patterns. matmul, batch matmul
-    self._add_backendop_with_key(Target.CUBLAS, "DENSE")
-    self._add_backendop_with_key(Target.CUBLAS, "BATCH_MATMUL")
+    self._add_backend_pattern_with_key(Target.CUBLAS, "DENSE")
+    self._add_backend_pattern_with_key(Target.CUBLAS, "BATCH_MATMUL")
 
     # @Sung: add TVM pattern rule
     def tvm_pattern_rule(expr, dom_tree, verify, target=Target.AUTOTVM, optype2enum = None, enum2optype = None):
@@ -429,7 +429,7 @@ class BackendOpLib(object):
                 # Register
                 #print(f"\t----- Register {cur_relay_pattern}")
 
-                self._add_backendop(target, Pattern(cur_relay_pattern))
+                self._add_backend_pattern(target, Pattern(cur_relay_pattern))
 
                 # [Deprecated - this wasn't an issue] Do not register if it is errorneous patterns
                 # e.g., for bert_full, these are errorneous patterns
@@ -441,7 +441,7 @@ class BackendOpLib(object):
                 #                        "0-Op(reshape)[1-Op(add)[*, *]]"]
                 #
                 # if not name_relay_pattern(cur_relay_pattern)[0] in errorneous_patterns:
-                #     self._add_backendop(target, Pattern(cur_relay_pattern))
+                #     self._add_backend_pattern(target, Pattern(cur_relay_pattern))
                 # else:
                 #     logging.info(f"The following pattern is excluded: {name_relay_pattern(cur_relay_pattern)[0]}")
 
@@ -470,19 +470,19 @@ class BackendOpLib(object):
     self._add_backend_pattern_rule(tvm_pattern_generator)
 
     # TVM_GPU
-    # add_all_backend_ops_to_lib(self, Target.AUTOSCH)
-    add_all_backend_ops_to_lib(self, Target.AUTOTVM)
-    add_all_backend_ops_to_lib(self, Target.TVM_DEFAULT)
+    # add_all_backend_patterns_to_lib(self, Target.AUTOSCH)
+    add_all_backend_patterns_to_lib(self, Target.AUTOTVM)
+    add_all_backend_patterns_to_lib(self, Target.TVM_DEFAULT)
 
-    # add_all_backend_ops_to_lib_except_fused(backendop_lib, Target.TVM_GPU)
+    # add_all_backend_patterns_to_lib_except_fused(pattern_registry, Target.TVM_GPU)
 
     # TVM_GPU_NO_TUNING
-    #add_all_backend_ops_to_lib(self, Target.TVM_GPU_NO_TUNING)
-    # add_all_backend_ops_to_lib_except_fused(backendop_lib, Target.TVM_GPU_NO_TUNING)
+    #add_all_backend_patterns_to_lib(self, Target.TVM_GPU_NO_TUNING)
+    # add_all_backend_patterns_to_lib_except_fused(pattern_registry, Target.TVM_GPU_NO_TUNING)
 
     # TVM_CPU; Exclude it for GPU testing
     # Fix: Extend this to automatically select backend library based on HW info
-    # add_all_backend_ops_to_lib(backendop_lib, Target.TVM_CPU)
+    # add_all_backend_patterns_to_lib(pattern_registry, Target.TVM_CPU)
 
 
     # TENSORRT
@@ -528,9 +528,9 @@ class BackendOpLib(object):
     #    if not (len(t1)==3 and len(t2)==3 and t1[-1] == t2[-2]):
     #        return False
     #    return True
-    #self._add_backendop_with_key(Target.TENSORRT, "BATCH_MATMUL", check_constraints_batch_matmul)
+    #self._add_backend_pattern_with_key(Target.TENSORRT, "BATCH_MATMUL", check_constraints_batch_matmul)
 
-    #add_all_backend_ops_to_lib(self, Target.TENSORRT, ["DIAMOND", "TRANSPOSE",
+    #add_all_backend_patterns_to_lib(self, Target.TENSORRT, ["DIAMOND", "TRANSPOSE",
                                                        # "TUPLE_TWO_IDX", "TUPLE_FIVE_IDX",
                                                        # "TUPLE_FIVE_IDX_CONCAT",
                                                        # "TUPLE_GET_ITEM_0",
@@ -542,24 +542,24 @@ class BackendOpLib(object):
 
 
   # add a backend operator to the library
-  def _add_backendop_with_key(self, target, pattern_key, constraint_func = no_constraints_func):
-      self._add_backendop(target, optype_to_pattern[pattern_key], constraint_func)
+  def _add_backend_pattern_with_key(self, target, pattern_key, constraint_func = no_constraints_func):
+      self._add_backend_pattern(target, optype_to_pattern[pattern_key], constraint_func)
 
-  def _add_backendop(self, target, pattern, constraint_func = no_constraints_func):
-    backendop = BackendOp(target, pattern, self._measured_configs, constraint_func)
-    self.all_backendops.add(backendop)
-    self.pattern_to_backendops[backendop.get_pattern()].add(backendop)
+  def _add_backend_pattern(self, target, pattern, constraint_func = no_constraints_func):
+    backend_pattern = MatchedOp(target, pattern, self._measured_configs, constraint_func)
+    self.all_backend_patterns.add(backend_pattern)
+    self.pattern_to_backend_patterns[backend_pattern.get_pattern()].add(backend_pattern)
 
-  def measure_backend_ops(self, network_expr, targets, batch_size):
+  def measure_backend_patterns(self, network_expr, targets, batch_size):
     assert type(targets) == list
 
     for target in targets:
-      BackendOpCostEvaluator.get().log_network_backend_ops_perf_on_target(self, target, network_expr, batch_size)
+      MatchedOpCostEvaluator.get().log_network_backend_patterns_perf_on_target(self, target, network_expr, batch_size)
 
   # return list of backend operators matching a pattern
-  def get_backendops(self, pattern):
-    return self.pattern_to_backendops[pattern]
-    #return list(self.pattern_to_backendops[pattern])
+  def get_backend_patterns(self, pattern):
+    return self.pattern_to_backend_patterns[pattern]
+    #return list(self.pattern_to_backend_patterns[pattern])
 
   """
   Input: Target backend, backend to exclude
@@ -567,12 +567,12 @@ class BackendOpLib(object):
 
   This is used to find a backend op assignment for a single backend baseline
   """
-  def get_all_patterns_and_backend_ops_from_single_backend(self, target_backend, backend_to_exclude=None):
+  def get_all_patterns_and_backend_patterns_from_single_backend(self, target_backend, backend_to_exclude=None):
       # Generate op names to exclude
       op_names_to_exclude = set()
       # print(f"\n\n\nbackend OPs from {backend_to_exclude}")
       if backend_to_exclude is not None:
-          for pat, b_ops in self.pattern_to_backendops.items():
+          for pat, b_ops in self.pattern_to_backend_patterns.items():
               # Consider only the pattern with the depth of 1
               # We assume that fused op always include at least one of single ops supported by target single backend.
               if pat.get_depth() > 1:
@@ -587,7 +587,7 @@ class BackendOpLib(object):
       # Generate all patterns and backends ops from single backend while excluding ops any part of which can be matched
       # with backend_to_exclude
       pat_and_b_op = []
-      for pat, b_ops in self.pattern_to_backendops.items():
+      for pat, b_ops in self.pattern_to_backend_patterns.items():
           for b_op in b_ops:
               if b_op.get_target() == target_backend and op_names_to_exclude.isdisjoint(pat.get_op_name_set()):
                   pat_and_b_op.append((pat, b_op))
@@ -599,7 +599,7 @@ class BackendOpLib(object):
 
   # return list of all patterns for backend operators
   def get_all_patterns(self):
-    return list(self.pattern_to_backendops.keys())
+    return list(self.pattern_to_backend_patterns.keys())
 
   # @Sung
   # return list of all pattern rules for backend library

@@ -102,25 +102,25 @@ def get_input_shape(expr):
 Helper functions for parsing backend op name annotation
 e.g., 0-tensorrt_conv2d+relu -> 1, 0-tvm_conv2d_+relu -> 0
 """
-def create_backend_op_annotation(group_id, annotation):
+def create_backend_pattern_annotation(group_id, annotation):
   return f"{group_id}-{annotation}"
 
-def get_group_id_from_backend_op_annotation(annotation):
+def get_group_id_from_backend_pattern_annotation(annotation):
   return annotation.split("-")[0]
 
-def get_backendop_name_from_backend_op_annotation(annotation):
-  backend_op_name_pos = annotation.find("-")+1
-  return annotation[backend_op_name_pos:]
+def get_backend_pattern_name_from_backend_pattern_annotation(annotation):
+  backend_pattern_name_pos = annotation.find("-")+1
+  return annotation[backend_pattern_name_pos:]
 
-def get_backend_from_backend_op_annotation(annotation):
-  return get_backendop_name_from_backend_op_annotation(annotation).split("_")[0]
+def get_backend_from_backend_pattern_annotation(annotation):
+  return get_backend_pattern_name_from_backend_pattern_annotation(annotation).split("_")[0]
 
-def get_op_name_from_backend_op_annotation(annotation):
+def get_op_name_from_backend_pattern_annotation(annotation):
   op_name_pos = annotation.find("_") + 1
   return annotation[op_name_pos:]
 
-def get_group_id_and_backend_op_name(annotation):
-  return get_group_id_from_backend_op_annotation(annotation), get_backendop_name_from_backend_op_annotation(annotation)
+def get_group_id_and_backend_pattern_name(annotation):
+  return get_group_id_from_backend_pattern_annotation(annotation), get_backend_pattern_name_from_backend_pattern_annotation(annotation)
 
 
 

@@ -19,7 +19,7 @@ def _traverse_expr(node, node_dict):
     node_dict[node] = len(node_dict)
 
 def get_node_color(node):
-    backend_name = get_backend_from_backend_op_annotation(node.backend)
+    backend_name = get_backend_from_backend_pattern_annotation(node.backend)
 
     # If this is default (no backend op assignment)
     # color = "ivory"

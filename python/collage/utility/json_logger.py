@@ -22,7 +22,7 @@ def dump_autotvm_tuning_info(log_dir, tuning_option, search_time, hw_name, batch
     this_code_path = os.path.dirname(os.path.abspath(__file__))
     net_name = tuning_option["network"]
     date_now = date_now.strftime("%m-%d:%H")
-    file_path = f"{this_code_path}/../logs/{log_dir}/autotvm_tuning_config_{hw_name}_{net_name}_bs{batch_size}_{date_now}.log"
+    file_path = f"./logs/{log_dir}/autotvm_tuning_config_{hw_name}_{net_name}_bs{batch_size}_{date_now}.log"
     JSONLogger().dump(tuning_option, file_path)
 
 

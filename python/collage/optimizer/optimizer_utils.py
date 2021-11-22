@@ -14,8 +14,8 @@ def log_matched_ops_by_method(method, hw_name, matches):
     date_now = date_now.strftime("%m-%d-%H:%M")
 
     # New logging for aligning with DP logs
-    this_code_path = os.path.dirname(os.path.abspath(__file__))
-    log_path = f'{this_code_path}/../logs/e2e_measure_logs/matched_{method}_result_{hw_name}_{date_now}.log'
+    #this_code_path = os.path.dirname(os.path.abspath(__file__))
+    log_path = f'./logs/e2e_measure_logs/matched_{method}_result_{hw_name}_{date_now}.log'
     with open(log_path, 'w') as f:
         f.write("Matched operators (in post-dfs-order, from the root of comp graph to the last node)\n")
         for anno in matches:

@@ -39,8 +39,9 @@ XEON_BUILD_TARGET = 'llvm -mcpu=skylake-avx512'
 NVIDIA_GPUS = ['rtx2070', 'rtx3070', 'jetson', 'v100']
 INTEL_CPUS = ['xeon']
 
-cur_dir_path = Path(__file__).parent.absolute()
-LOG_PATH = f"{cur_dir_path}/../logs"
+
+#cur_dir_path = Path(__file__).parent.absolute()
+LOG_PATH = f"./logs"
 EVAL_RESULT_LOG_PATH = f"{LOG_PATH}/eval_results"
 BEST_MATCH_LOG = f"{EVAL_RESULT_LOG_PATH}/best_match"
 USER_DEFINED_MATCH_LOG = f"{LOG_PATH}/user_defined_match.log"
@@ -83,7 +84,6 @@ def get_backends_from_hw(hw_name):
         backends = [Target.AUTOTVM, Target.CUDNN, Target.TENSORRT, Target.CUBLAS]
     elif hw_name in INTEL_CPUS:
         backends = [Target.AUTOTVM, Target.MKL, Target.DNNL]
-        #backends = [Target.AUTOTVM, Target.MKL, Target.MKLDNN, Target.DNNL]
     else:
         raise Exception(f"{hw_name} is unexpected hw, we need to set default backends for this hw.")
 
@@ -312,7 +312,7 @@ class TVMSubGraphCostFunc_OpMeasurement(TargetCostFunc):
         from ..optimizer.custom_fusion_pass import CustomFusionPass
         expr_func = expr_func.with_attr("CustomFusionPass", CustomFusionPass.OP_MEASUREMENT)
         default_op_group_id = 0
-        annotation = create_backend_op_annotation(default_op_group_id, name)
+        annotation = create_backend_pattern_annotation(default_op_group_id, name)
         expr_func = expr_func.with_attr(BACKEND_OP_ATTR, annotation)
         expr_func = expr_func.with_attr(HW_FUNC_ATTR, hw_name)
 
@@ -321,7 +321,7 @@ class TVMSubGraphCostFunc_OpMeasurement(TargetCostFunc):
         # Build the subgraph
         target_str = get_build_target(hw_name)
 
-        if get_backend_from_backend_op_annotation(annotation) == 'mkl':
+        if get_backend_from_backend_pattern_annotation(annotation) == 'mkl':
             with tvm.transform.PassContext(opt_level=OPT_LEVEL.get(), disabled_pass=["AlterOpLayout"]):
                 lib = relay.build_module.build(net, target=target_str, params=params)
         else:

@@ -24,7 +24,7 @@ class ExtCompilerOpAnnotator(ExprMutator):
 
         is_target_op = False
         annotation = self.opt_match[expr]
-        if get_backend_from_backend_op_annotation(annotation) == self.target_str:
+        if get_backend_from_backend_pattern_annotation(annotation) == self.target_str:
             is_target_op = True
 
         return is_target_op

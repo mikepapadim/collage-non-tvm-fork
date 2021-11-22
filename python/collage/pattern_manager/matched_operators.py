@@ -22,7 +22,7 @@ from .default_pattern import optype_to_pattern, relayop_to_varnames
 from ..utility.debug_helper import printe
 import logging
 
-# It gives the path of backend_op.py no matter where you import this file
+# It gives the path of backend_pattern.py no matter where you import this file
 # cur_dir_path = Path(__file__).parent.absolute()
 # RES_LOG = f"{cur_dir_path}/../logs/runtime_results.log"
 
@@ -32,7 +32,7 @@ import logging
 # TODO: here we are delegating TVM to choose the appropriate backend operator given the target and an expr,
 # maybe we want more fine-grained control
 
-class BackendOp(object):
+class MatchedOp(object):
   def __init__(self, target, pattern, measured_configs_lib, constraint_func):
   #def __init__(self, name, target, op_name, depth, measured_configs_lib, constraint_func):
     self._target = target
@@ -222,14 +222,14 @@ def extract_subgraph(expr, pattern):
 
 # given a pattern and a relay expr matching that pattern, return the cheapest backend operator
 # satisfying the constraints and its cost. Return None if no backend operators satisfy constraints.
-def get_optimal_backendop(b_op_lib, expr, pattern, target = None, hw_name = "INVALID",
+def get_optimal_backend_pattern(b_op_lib, expr, pattern, target = None, hw_name = "INVALID",
                           need_tvm_fallback_ops=False, fallback_backend_pats=None):
   assert type(target) == list
 
-  backendops = b_op_lib.get_backendops(pattern)
+  backend_patterns = b_op_lib.get_backend_patterns(pattern)
   cheapest_op, min_cost = None, float('inf')
 
-  for op in backendops:
+  for op in backend_patterns:
     # if target is not None, only consider backend operators for that target
     if target != None and op.get_target() not in target:
       continue

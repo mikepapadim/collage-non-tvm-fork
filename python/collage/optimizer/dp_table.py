@@ -1,6 +1,6 @@
 # Immutable and efficient implementation for an array of bits
 from bitarray import frozenbitarray
-from ..pattern_manager.matched_operators import get_optimal_backendop
+from ..pattern_manager.matched_operators import get_optimal_backend_pattern
 from .comp_graph import *
 from collections import defaultdict
 import logging
@@ -209,8 +209,8 @@ and value is a tuple of min cost and last matched_pattern.
 key is a relay Expression (pointer) and value is a matched backend operator annotation.
 """
 class DPTable:
-    def __init__(self, backendop_lib, target_backend, hw_name, comp_graph):
-        self._backendop_lib = backendop_lib
+    def __init__(self, pattern_registry, target_backend, hw_name, comp_graph):
+        self._pattern_registry = pattern_registry
         self._target_backend = target_backend
         self._hw_name = hw_name
         self._comp_graph = comp_graph
@@ -368,7 +368,7 @@ class DPTable:
 
         return candidates
 
-    def update(self, matched_nodes, match_dic, best_backend_op_name, min_cost, frontiers):
+    def update(self, matched_nodes, match_dic, best_backend_pattern_name, min_cost, frontiers):
         # Generate candidate DPTableCells that need to be updated with new match
         root_matched_node = self.get_root_matched_nodes(matched_nodes)
         match_post_dfs_order = root_matched_node._topological_order
@@ -379,10 +379,10 @@ class DPTable:
         # Update DPTableCells with new match
         for (new_key, prev_cell) in candidate_cells:
             if new_key not in self._dp_table:
-                self._dp_table[new_key] = DPTableCell(min_cost, best_backend_op_name, prev_cell, match_dic,
+                self._dp_table[new_key] = DPTableCell(min_cost, best_backend_pattern_name, prev_cell, match_dic,
                                                       new_key, self._post_order_bits, min_order)
             else:
-                self._dp_table[new_key].update(min_cost, best_backend_op_name, prev_cell, match_dic)
+                self._dp_table[new_key].update(min_cost, best_backend_pattern_name, prev_cell, match_dic)
 
             cell = self._dp_table[new_key]
             cell_order = cell.match_post_dfs_order
@@ -398,7 +398,7 @@ class DPTable:
                 # if self.are_parents_included(root_matched_node, new_key):
                 #     self._node_to_key[node].add(new_key)
 
-    def assign_backend_op_to_expr(self):
+    def assign_backend_pattern_to_expr(self):
         all_matched_key = frozenbitarray('1'*self._n_nodes)
         #print(self._node_to_key)
         # This is a cell representing the first match;
@@ -418,7 +418,7 @@ class DPTable:
             # For now, it can be assigned to any parallel ops randomly.
             # Let's keep that in mind
             for expr, op_name in opt_match_cell.match_dic.items():
-                backend_annotation = create_backend_op_annotation(group_id, op_name)
+                backend_annotation = create_backend_pattern_annotation(group_id, op_name)
                 # logging.warning(f"Pair of type and annotation: {backend_annotation}")
                 # logging.warning(f"Expr: {repr(expr)}")
                 relay.analysis.update_backend(expr, backend_annotation)
