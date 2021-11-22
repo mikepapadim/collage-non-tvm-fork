@@ -239,4 +239,4 @@ cmake-build-debug-fleet
 .clion.source.upload.marker
 
 # Exception for backend-aware-graph-opt project
-!python/tvm/relay/transform/logs/*.json
+!tvm/3rdparty
