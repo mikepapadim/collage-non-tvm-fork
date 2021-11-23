@@ -8,9 +8,8 @@ from ..pattern_manager.cost_func import *
 from ..pattern_manager.pattern_registry import PatternRegistry
 from ..pattern_manager.utils import *
 
-#from ..utility.visualize import visualize_network
 from ..utility.profile_ops_in_net import profile_ops_in_net
-# from .optimizer_utils import *
+
 
 from .comp_graph import ComputationGraph
 from .comp_graph_optimizer import *
@@ -18,7 +17,6 @@ from .evolutionary_searcher_state import *
 from .evolutionary_searcher import EvolutionarySearcher
 from .op_match_logger import *
 from ..utility.debug_helper import printe
-# from .ext_compiler_op_merger import *
 from .ext_compiler_op_annotator import ExtCompilerOpAnnotator
 from tvm.relay.op.contrib.tensorrt import prune_tensorrt_subgraphs
 from tvm.relay import transform
@@ -28,8 +26,6 @@ import logging
 
 def setup_pattern_registry(hw_name):
     pattern_registry = PatternRegistry.get(hw_name)
-    # pattern_registry.measure_backend_patterns(network_expr, targets, batch_size)
-
     return pattern_registry
 
 @tvm._ffi.register_func("collage.optimizer.print_attr_args")
@@ -51,16 +47,6 @@ def apply_tensorrt_op(mod):
     fn_body = mod["main"].body
     # Annotating expression
     target_str = "tensorrt"
-
-    # Debug
-    # print(f"backend body (before): {fn_body.backend}")
-    # opt_match = OpMatchReader().read(fn_body)
-    # print(f"backend body (after): {fn_body.backend}")
-    # visualize_network(mod["main"], "notepad")
-
-    # visualize_network(mod["main"], "AnnotateTargetFunc_before")
-    # mod["main"] = ExtCompilerOpAnnotator(opt_match).annotate(mod["main"], target_str)
-    # visualize_network(mod["main"], "AnnotateTargetFunc_after")
 
     # Do merge and partition pass
     use_implicit_batch = True
@@ -88,47 +74,18 @@ def apply_tensorrt_op(mod):
         config["tensorrt_version"] = linked_version
 
     # Warning(@Soo): I assume this is only useful when folding constant
-    # if params:
-    #     mod["main"] = bind_params_by_name(mod["main"], params)
-    # printe("*" * 30)
-    # printe("*" * 30)
-    # printe("*" * 30)
-    #
-    # # backend exists
-    # printe(f"Rerp(Python): {repr(fn_body)}")
-
     seq = tvm.transform.Sequential(
         [
-            # transform.InferType(),
-            # RemoveDropoutPass(),
-            # transform.RemoveUnusedFunctions(),
-            # transform.ConvertLayout(
-            #     {
-            #         "nn.conv2d": ["NCHW", "default"],
-            #         "nn.conv3d": ["NCDHW", "default"],
-            #         "nn.conv2d_transpose": ["NCHW", "default"],
-            #     }
-            # ),
-            # transform.FoldConstant(),
             transform.AnnotateTarget("tensorrt"),
             transform.MergeCompilerRegions(),
-            # tvm.ir.transform.PrintIR("After merging graph"),
             transform.PartitionGraph(),
-            # tvm.ir.transform.PrintIR("After partitioning graph"),
             transform.InferType(),
         ]
     )
 
     # Do prune_tensorrt_subgraphs
-    # with tvm.transform.PassContext(opt_level=OPT_LEVEL.get(), config={"relay.ext.tensorrt.options": config},trace=print_ir):
     with tvm.transform.PassContext(opt_level=OPT_LEVEL.get(), config={"relay.ext.tensorrt.options": config}):
-        # printe("Before sequential")
-        # printe(repr(mod["main"]))
         mod = seq(mod)
-        # printe("After sequential")
-        # Warning(@Soo): Would it be problematic?
-        # mod = prune_tensorrt_subgraphs(mod)
-
     return mod
 
 def apply_dnnl_op(mod):
@@ -200,7 +157,6 @@ def run_op_level_opt(func_expr):
     # Optimizing graph
     optimizer = CompGraphOptimizer(pattern_registry, targets)
 
-    # visualize_network(relay_expr, "o3_bert_full_without_layernorm", comp_graph.expr2node)
     """
     Warning(@Soo): Note that current DP optimizer does not work for patterns with more than one root.
     For example, Conv     Conv (Two parallel convolution) case can't be handled
@@ -249,7 +205,7 @@ def run_two_level_opt(relay_expr):
 
     # It is a function if you get it from last pass of Relay build
     print("[Python side] Run two-level optimization")
-    # visualize_network(relay_expr, "o3_mobilenet_v2")
+   
     # op-level optimization: DP with all backends but external compilers, e.g., TensorRT
     func_expr = relay_expr
     optimized_match, relay_expr, pattern_registry, n_relay_nodes = run_op_level_opt(relay_expr)
@@ -257,10 +213,6 @@ def run_two_level_opt(relay_expr):
 
     net_name, hw_name, batch_size = get_opt_info_from_func(func_expr)
     printe(f"Hw name, Network name, batch_size: {hw_name}, {net_name}, {batch_size}")
-
-    # Debug
-    # OpMatchLogger().save(relay_expr, optimized_match)
-    # print(OpMatchReader().read(relay_expr))
 
     # subgraph-level optimization for external compilers
     # Translate optimized_match into OpState class that can be used for evolutionary search
@@ -281,9 +233,6 @@ def run_two_level_opt(relay_expr):
 
     # On the second level, Consider only ops that are not assigned to TensorRT
     # Extract ops that are not assigned to TensorRT
-
-    # if net_name == "nasneta":
-    #     OPT_LEVEL.set(2)
 
     # Save fisrt layer best results
     best_match_file_name = get_best_match_file_name(net_name, hw_name, batch_size)
@@ -324,12 +273,6 @@ def run_two_level_opt(relay_expr):
         second_opt_match = optimized_match
         printe("No need for subgraph optimization because either 1) op optimization pass only chose Ext compiler ops"
                + " or 2) External compiler can't support ops that are not assigned to external compilers")
-    # OpMatchLogger().save(relay_expr, second_opt_match, log_path=USER_DEFINED_MATCH_LOG)
-    #second_opt_match = ev_searcher.search_test(rnd_seed=64)
-
-    # print(f"fusion dic (before merge): {optimized_match}")
-    # optimized_match = ExtCompilerOpMerger(optimized_match).merge(relay_expr)
-    # print(f"fusion dic (after  merge): {optimized_match}")
 
     # Update backend information to corresponding best match
     second_layer_best_match_log_path = f"{best_match_file_name}.log"

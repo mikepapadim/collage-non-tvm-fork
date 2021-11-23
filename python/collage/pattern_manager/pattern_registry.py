@@ -234,7 +234,7 @@ class BasePatternGenerator:
       self.fgen(expr, dom_tree, self.verify, self.target, self.optype2enum, self.enum2optype)
 
 
-# library class (singleton) representing all backend operators
+# library class (singleton) representing all backend patterns
 class PatternRegistry(object):
   __instance = None
 
@@ -255,10 +255,10 @@ class PatternRegistry(object):
     if PatternRegistry.__instance != None:
       raise Exception("This class is a singleton!")
 
+    # [TODO] Move this out of here. 
     # list of all backend operators
     self._measured_configs = MeasuredConfigs()
     self._measured_configs.load_from_log(hw_name)
-    # print("BACKEND OP LIG GET")
 
     self.all_backend_patterns = set()
     self.all_pattern_generators = []

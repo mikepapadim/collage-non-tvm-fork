@@ -4,16 +4,16 @@ import torch
 import os
 import copy
 
-from .utils import WORKLOADS_DIC
-from .baselines.pytorch.resnets import resnet50, resnext50_32x4d, resnet_block
-from .baselines.pytorch.nasnet_a import NASNetA
-from .baselines.pytorch.nasrnn import NASRNN
-from .baselines.pytorch.bert import BERT
-from .baselines.pytorch.bert_full import BERTFULL
-from .baselines.pytorch.resnets_3d import resnet50_3d
-from .baselines.pytorch.mobilenetv2 import mobilenet_v2
-from .baselines.pytorch.dcgan import DCGAN
-from .baselines.pytorch.yolov3 import YoloV3
+#from .utils import *
+from workloads.baselines.pytorch.resnets import resnet50, resnext50_32x4d, resnet_block
+from baselines.pytorch.nasnet_a import NASNetA
+from baselines.pytorch.nasrnn import NASRNN
+from baselines.pytorch.bert import BERT
+from baselines.pytorch.bert_full import BERTFULL
+from baselines.pytorch.resnets_3d import resnet50_3d
+from baselines.pytorch.mobilenetv2 import mobilenet_v2
+from baselines.pytorch.dcgan import DCGAN
+from baselines.pytorch.yolov3 import YoloV3
 
 import logging
 from collage.utility.debug_helper import printe

@@ -23,8 +23,6 @@ class Config(object):
     self._pattern = pattern
 
     if expr != None:
-      # self._data_shape = tuple(get_data_shape(expr))
-      # _data_shape should be shape of all the inputs not only including data variable, but also parameters (constant)
       self._data_shape = get_input_shape(expr)
       self._attrs = extract_attrs(expr)
 
