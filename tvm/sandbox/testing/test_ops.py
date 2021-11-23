@@ -5,7 +5,7 @@ import tvm.contrib.graph_executor as runtime
 from tvm import relay
 from tvm.relay import testing
 import pytest as pyt
-from tvm.relay.transform.optimizer.custom_fusion_pass import *
+from tvm.collage.optimizer.custom_fusion_pass import *
 
 
 gt_target = "cuda"

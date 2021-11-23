@@ -3,7 +3,7 @@ import tvm
 from tvm.relay.transform.pattern_manager.utils import is_function_node
 from tvm.relay.transform.pattern_manager.target import measure, NUM_MEASUREMENTS_PER_REPEAT, NUM_REPEATS, AUTOSCH_LOG
 from tvm.relay.transform.pattern_manager.target import OPT_LEVEL
-from tvm.relay.transform.optimizer.custom_fusion_pass import CustomFusionPass
+from tvm.collage.optimizer.custom_fusion_pass import CustomFusionPass
 from workloads.torch_workloads import get_network_from_torch
 from tvm.contrib import graph_executor as runtime
 import numpy as np

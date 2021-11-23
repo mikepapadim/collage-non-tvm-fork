@@ -21,7 +21,7 @@ def log_matched_ops_by_method(method, hw_name, matches):
         for anno in matches:
             f.write(anno+"\n")
 
-@tvm._ffi.register_func("relay.transform.optimizer.visualize_expr")
+@tvm._ffi.register_func("collage.optimizer.visualize_expr")
 def visualize_expr(expr, file_name):
     visualize_network(expr, file_name)
 

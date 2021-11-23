@@ -1,4 +1,4 @@
-from tvm.relay.transform.optimizer.custom_fusion_pass import measure_end_to_end_user_defined
+from tvm.collage.optimizer.custom_fusion_pass import measure_end_to_end_user_defined
 from workloads.torch_workloads import *
 
 import sys

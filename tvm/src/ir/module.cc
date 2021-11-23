@@ -184,7 +184,7 @@ void WarnIfMalformed(const IRModule& mod, relay::Function func) {
   auto ftv = relay::FreeTypeVars(func, mod);
 
   if (fv.size() > 0) {
-    auto vis_call = tvm::runtime::Registry::Get("relay.transform.optimizer.visualize_network_debug");
+    auto vis_call = tvm::runtime::Registry::Get("collage.optimizer.visualize_network_debug");
     (*vis_call)(func, "debug_add");
     std::cerr << "[Done] Debug_add visualization" << std::endl;
     std::cerr << "It errors out because our fusion decision was wrong" << std::endl;

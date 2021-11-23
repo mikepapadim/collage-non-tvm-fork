@@ -16,7 +16,7 @@ from e2e_perf_logger import *
 import time
 import os
 
-from collage.pattern_manager.pattern_registry import BackendOpLib
+from collage.pattern_manager.pattern_registry import PatternRegistry
 from collage.utility.visualize import visualize_network
 from collage.optimizer.custom_fusion_pass import get_opt_info_tag
 

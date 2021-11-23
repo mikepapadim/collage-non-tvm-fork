@@ -1,5 +1,5 @@
 from tvm.relay.transform.pattern_manager.target import *
-from tvm.relay.transform.optimizer.custom_fusion_pass import CustomFusionPass
+from tvm.collage.optimizer.custom_fusion_pass import CustomFusionPass
 from tvm.contrib import graph_executor as runtime
 import argparse
 from tvm import autotvm

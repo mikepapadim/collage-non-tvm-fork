@@ -1,6 +1,6 @@
 from tvm import relay
 import tvm
-from tvm.relay.transform.optimizer.custom_fusion_pass import *
+from tvm.collage.optimizer.custom_fusion_pass import *
 from workloads.torch_workloads import get_network_from_torch
 from tvm import autotvm
 from tvm.relay.transform.utility.debug_helper import *

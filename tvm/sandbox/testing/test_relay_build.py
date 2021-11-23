@@ -5,8 +5,8 @@ from tvm.contrib import graph_executor as runtime
 from tvm.relay.transform.pattern_manager.utils import is_function_node
 from tvm.relay.transform.pattern_manager.target import measure, NUM_MEASUREMENTS_PER_REPEAT, NUM_REPEATS, AUTOSCH_LOG
 from tvm.relay.transform.pattern_manager.target import OPT_LEVEL
-from tvm.relay.transform.optimizer.custom_fusion_pass import *
-from tvm.relay.transform.optimizer.optimizer_utils import *
+from tvm.collage.optimizer.custom_fusion_pass import *
+from tvm.collage.optimizer.optimizer_utils import *
 from tvm import autotvm, auto_scheduler
 
 from measure_end_to_end import verify_network_output

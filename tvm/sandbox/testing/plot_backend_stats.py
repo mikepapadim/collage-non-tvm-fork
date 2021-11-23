@@ -5,7 +5,7 @@ from plot_e2e_perf import NET_NAME_TO_OFFICIAL
 import numpy as np
 
 from tvm.relay.transform.pattern_manager.target import *
-from tvm.relay.transform.optimizer.custom_fusion_pass import *
+from tvm.collage.optimizer.custom_fusion_pass import *
 from collections import Counter
 
 def draw_e2e_perf_plot(df):

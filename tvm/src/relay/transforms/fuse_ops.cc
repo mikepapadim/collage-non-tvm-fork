@@ -1402,7 +1402,7 @@ namespace tvm {
     // from PlanFusionWithExtCompiler
     Expr FuseOps(const Expr& expr, int fuse_opt_level, size_t max_fuse_depth, const IRModule& module) {
       // Debug: visualization
-      // auto vis_call = tvm::runtime::Registry::Get("relay.transform.optimizer.visualize_expr");
+      // auto vis_call = tvm::runtime::Registry::Get("collage.optimizer.visualize_expr");
       // (*vis_call)(expr, "before_fusion");
 
         
@@ -1418,7 +1418,7 @@ namespace tvm {
     
       // Debug: visualization
       // std::string network_name = std::string(fn_node->GetAttr<String>("Network").value());
-      // auto vis_call2 = tvm::runtime::Registry::Get("relay.transform.optimizer.visualize_expr");
+      // auto vis_call2 = tvm::runtime::Registry::Get("collage.optimizer.visualize_expr");
       // (*vis_call2)(fused_expr, network_name+"_after_fusion");
       // (*vis_call2)(fused_expr, "after_fusion");
 
@@ -1525,7 +1525,7 @@ namespace tvm {
 
     IRModule VisualizeIRFunc(IRModule module, String filename="default") {
       Expr expr = module->Lookup("main");
-      auto vis_call = tvm::runtime::Registry::Get("relay.transform.optimizer.visualize_network_debug");
+      auto vis_call = tvm::runtime::Registry::Get("collage.optimizer.visualize_network_debug");
       (*vis_call)(expr, filename);
       return module;
     }
@@ -1554,19 +1554,19 @@ namespace tvm {
         std::string custom_fusion_pass_str;
         // PATCH(@Soo): Custom (DP) fusion pass for user defined fusion
         if (custom_fusion_pass_type == kUserDefinedFusion) {
-          custom_fusion_pass_str = "relay.transform.optimizer.get_user_fusion";
+          custom_fusion_pass_str = "collage.optimizer.get_user_fusion";
           // PATCH(@Soo): Custom (DP) fusion pass for subprocess call during the end-to-end measurements
           // Note that if fuse_opt_level == 0, no fusion applied no matter whether it's original or DP.
         } else if (custom_fusion_pass_type == kDP) {
-          custom_fusion_pass_str = "relay.transform.optimizer.run_dp";
+          custom_fusion_pass_str = "collage.optimizer.run_dp";
         } else if (custom_fusion_pass_type == kTwoLevelOpt) {
-          custom_fusion_pass_str = "relay.transform.optimizer.run_two_level_opt";
+          custom_fusion_pass_str = "collage.optimizer.run_two_level_opt";
         } else if (custom_fusion_pass_type == kExhaustiveSearch) {
-          custom_fusion_pass_str = "relay.transform.optimizer.run_exhaustive_search";
+          custom_fusion_pass_str = "collage.optimizer.run_exhaustive_search";
         } else if (custom_fusion_pass_type == kOpMeasurement) {
-          custom_fusion_pass_str = "relay.transform.optimizer.assign_backend_for_op_measurement";
+          custom_fusion_pass_str = "collage.optimizer.assign_backend_for_op_measurement";
         } else if (custom_fusion_pass_type == kSingleBackendBaseline) {
-          custom_fusion_pass_str = "relay.transform.optimizer.run_single_backend_baseline";
+          custom_fusion_pass_str = "collage.optimizer.run_single_backend_baseline";
         } else {
           ICHECK(false) << "Fusion pass type " << fn_node->GetAttr<IntImm>(attr::kCustomFusionPass)
                         << "is not expected\n\n";
@@ -1584,14 +1584,14 @@ namespace tvm {
 //        std::cerr << "Before extenral pass: " << expr << std::endl;
 
         // Visualization of the network for sanity check
-//        auto vis_call = tvm::runtime::Registry::Get("relay.transform.optimizer.visualize_network_debug");
+//        auto vis_call = tvm::runtime::Registry::Get("collage.optimizer.visualize_network_debug");
 //        Expr expr = module->Lookup("main");
 //        (*vis_call)(expr, "before_AssignTensorRT");
 //        std::cerr << "[Done] Debug visualization" << std::endl;
 
         // Apply external compiler ops first before we fuse operators
         // just like what original TensorRT pipeline does.
-        auto ex_op_call = tvm::runtime::Registry::Get("relay.transform.optimizer.apply_external_compiler_op");
+        auto ex_op_call = tvm::runtime::Registry::Get("collage.optimizer.apply_external_compiler_op");
         // Warning(@Soo): Doublecheck if module is updated.
         module = (*ex_op_call)(module);
 //        std::cerr << "[Done] PlanFusionWithExtCompiler" << std::endl;

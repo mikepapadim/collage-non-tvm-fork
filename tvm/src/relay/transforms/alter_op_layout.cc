@@ -113,7 +113,7 @@ class AlterTransformMemorizer : public TransformMemorizer {
 //      for (auto & elem : new_args) std::cerr << elem << ", ";
 //      std::cerr << std::endl;
 
-//      auto print_call = tvm::runtime::Registry::Get("relay.transform.optimizer.print_attr_args");
+//      auto print_call = tvm::runtime::Registry::Get("collage.optimizer.print_attr_args");
 //      (*print_call)(ref_call);
 //      std::cerr << "OP, tinfos, checked_type : " << op << " , " << ref_call->attrs <<
 //                " , " << tinfos << " , " << ref_call->checked_type() << std::endl;

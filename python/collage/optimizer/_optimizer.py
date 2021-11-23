@@ -32,11 +32,11 @@ def setup_pattern_registry(hw_name):
 
     return pattern_registry
 
-@tvm._ffi.register_func("relay.transform.optimizer.print_attr_args")
+@tvm._ffi.register_func("collage.optimizer.print_attr_args")
 def print_attr_args(expr):
     printe(f"attr: {get_attr_vals(expr)}")
 
-@tvm._ffi.register_func("relay.transform.optimizer.visualize_network_debug")
+@tvm._ffi.register_func("collage.optimizer.visualize_network_debug")
 def visualize_network_debug(relay_expr, name):
     net_name = 'default'
     if relay_expr.attrs is not None and NETWORK_FUNC_ATTR in dict(relay_expr.attrs):
@@ -150,7 +150,7 @@ def apply_dnnl_op(mod):
 
     return mod
 
-@tvm._ffi.register_func("relay.transform.optimizer.apply_external_compiler_op")
+@tvm._ffi.register_func("collage.optimizer.apply_external_compiler_op")
 def apply_external_compiler_op(mod):
     # Skip this pass if the hw is not NVIDIA GPU
     hw_name = mod["main"].attrs[HW_FUNC_ATTR]
@@ -164,7 +164,7 @@ def apply_external_compiler_op(mod):
     return mod
     # return mod, config
 
-@tvm._ffi.register_func("relay.transform.optimizer.get_user_fusion")
+@tvm._ffi.register_func("collage.optimizer.get_user_fusion")
 def get_user_fusion(relay_expr):
     printe("User-defined fusion")
     net_name, hw_name, batch_size = get_opt_info_from_func(relay_expr)
@@ -224,7 +224,7 @@ def run_op_level_opt(func_expr):
     return optimized_match, relay_expr, pattern_registry, n_relay_nodes
 
 
-@tvm._ffi.register_func("relay.transform.optimizer.run_two_level_opt")
+@tvm._ffi.register_func("collage.optimizer.run_two_level_opt")
 def run_two_level_opt(relay_expr):
     """
     Two-level optimization pass
@@ -337,11 +337,11 @@ def run_two_level_opt(relay_expr):
 
     return second_opt_match
 
-@tvm._ffi.register_func("relay.transform.optimizer.run_dp")
+@tvm._ffi.register_func("collage.optimizer.run_dp")
 def run_dp(relay_expr):
     run_op_level_opt(relay_expr)
 
-@tvm._ffi.register_func("relay.transform.optimizer.assign_backend_for_op_measurement")
+@tvm._ffi.register_func("collage.optimizer.assign_backend_for_op_measurement")
 def assign_backend_for_op_measurement(relay_expr):
     backend_pattern_name = relay_expr.attrs[BACKEND_OP_ATTR]
     assert isinstance(backend_pattern_name, str)
@@ -360,7 +360,7 @@ Run single backend baseline fusion strategy (e.g., CuDNN, OneDNN)
 - If there is no existing backend operator of the given backend, it alternatively uses AutoTVM ops;
   Still, it only allows matching with AutoTVM ops including only ops that can't be matched with ops from the given backend
 """
-@tvm._ffi.register_func("relay.transform.optimizer.run_single_backend_baseline")
+@tvm._ffi.register_func("collage.optimizer.run_single_backend_baseline")
 def run_single_backend_baseline(func_expr):
     single_backend_id = int(func_expr.attrs[SINGLE_BACKEND_ATTR])
     assert isinstance(single_backend_id, int)
@@ -396,7 +396,7 @@ def run_single_backend_baseline(func_expr):
 # Cons: How do you consider all possible TensorRT operators? I don't have good answers to that yet.
 #
 # """
-# @tvm._ffi.register_func("relay.transform.optimizer.run_exhaustive_search")
+# @tvm._ffi.register_func("collage.optimizer.run_exhaustive_search")
 # def run_exhaustive_search(relay_expr):
 #     # It is a function if you get it from last pass of Relay build
 #     hw_name = relay_expr.attrs[HW_FUNC_ATTR]
