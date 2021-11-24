@@ -48,6 +48,7 @@ class Config(object):
       self._pattern, self._data_shape, self._attrs, self._op_name)
 
 
+# @Sung: Do we need this per backend?
 
 # class to save costs of already evaluated configurations so we do not need to reevaluate them
 class MeasuredConfigs(object):
@@ -64,10 +65,11 @@ class MeasuredConfigs(object):
   def save_cost(self, config, cost):
     self.measured_configs[config] = cost
 
-  def save_to_log(self, hw_name):
-    cost_log = get_opcost_log_path(hw_name, False)
-    cost_log_readable = get_opcost_log_path(hw_name, True)
-    # print(f"[Save] Cost log : {cost_log}")
+  def save_to_log(self):
+    # @Sung: Fix it for now
+    cost_log = "operator_cost.log"
+    cost_log_readable = "operator_cost.json"
+    
     with open(cost_log, 'wb+') as log:
       pickle.dump(self.measured_configs, log)
 
@@ -79,9 +81,10 @@ class MeasuredConfigs(object):
       json.dump(str_configs, log, sort_keys=True, indent=4)
 
   # If log doesn't exist, it uses default empty dictionary.
-  def load_from_log(self, hw_name):
-    cost_log = get_opcost_log_path(hw_name, False)
-    # print(f"[Load] Cost log : {cost_log}")
+  def load_from_log(self):
+    # @Sung: Fix it for now
+    cost_log = "operator_cost.log"
+    
     try:
       if path.exists(cost_log):
         with open(cost_log, 'rb') as log:

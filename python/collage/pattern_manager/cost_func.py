@@ -3,7 +3,6 @@ from tvm import relay
 import tvm.relay.testing as testing
 import tvm
 import numpy as np
-# import tvm.contrib.graph_executor as runtime
 from tvm import autotvm, auto_scheduler
 
 import os
@@ -13,34 +12,25 @@ from .utils import *
 
 from tvm.contrib import graph_executor as runtime
 import logging
-# from tvm.contrib import graph_executor
 from ..utility.debug_helper import printe
 
 # only collect results whose standard deviation is below this
 MAX_STD_MEASURE_RTX = 5E-04
-MAX_STD_MEASURE_XEON = 0.1 # 0.01 #stil small# 0.005 # Too small
-# MAX_STD_MEASURE_GPU = 5E-03
+MAX_STD_MEASURE_XEON = 0.1 
 
 # This is for operator measurement
-# NUM_REPEATS = 1 # Debug / This lead to the best end-to-end perf of DP on ResNet-50
-NUM_REPEATS = 3 # Finalized one by Sung
-# NUM_MEASUREMENTS_PER_REPEAT = 1 # Debug
-# NUM_MEASUREMENTS_PER_REPEAT = 10 # Finalized one by Sung
+NUM_REPEATS = 3 
 NUM_MEASUREMENTS_PER_REPEAT = 20
-# NUM_MEASUREMENTS_PER_REPEAT = 100
 
 # This is for network measurement
 NUM_REPEATS_E2E = 3
 NUM_MEASUREMENTS_PER_REPEAT_E2E = 20
 OPT_LEVEL = OptLevel(3)
 EXTERNAL_COMPILERS = ['tensorrt']
-# XEON_BUILD_TARGET = 'llvm'
 XEON_BUILD_TARGET = 'llvm -mcpu=skylake-avx512'
 NVIDIA_GPUS = ['rtx2070', 'rtx3070', 'jetson', 'v100']
 INTEL_CPUS = ['xeon']
 
-
-#cur_dir_path = Path(__file__).parent.absolute()
 LOG_PATH = f"./logs"
 EVAL_RESULT_LOG_PATH = f"{LOG_PATH}/eval_results"
 BEST_MATCH_LOG = f"{EVAL_RESULT_LOG_PATH}/best_match"
@@ -57,6 +47,7 @@ BACKEND_LIST_ATTR = "BackendList"
 # FIXME(@Soo): Accumulate autoscheduler logs to the same file
 # AUTOSCH_LOG = "/home/byungsoj/backend-aware-graph-opt/package/autotune/tmp/autosch_ops.json.resnet50.tmp"
 AUTOSCH_LOG = f"{LOG_PATH}/autosch_ops.json"
+AUTOTVM_LOG = f"autotvm_tuning_log.json"
 
 """
 measure
@@ -219,9 +210,6 @@ class TVMSubGraphCostFunc_AutoSch(TargetCostFunc):
 
         # Setup execution
         setup_mod_inputs(module)
-        # data_shape = get_data_shape(expr)
-        # data = np.random.uniform(-1, 1, size=data_shape).astype("float32")
-        # module.set_input("data", data)
         ftimer = module.module.time_evaluator("run", dev, number=NUM_MEASUREMENTS_PER_REPEAT, repeat=NUM_REPEATS)
 
         return measure(ftimer, False, hw_name)
@@ -239,12 +227,11 @@ class TVMSubGraphCostFunc_AutoTVM(TargetCostFunc):
         expr_func = relay.Function(inputs, expr)
         net, params = testing.create_workload(expr_func)
 
-        assert(os.path.exists(get_autotvm_log_path(hw_name)))
+        assert(os.path.exists(AUTOTVM_LOG))
 
-        # print(f"Measure autotvm log: {get_autotvm_log_path(hw_name)}")
         # AutoTVM codes
         # Compile kernels with history best records
-        with autotvm.apply_history_best(get_autotvm_log_path(hw_name)):
+        with autotvm.apply_history_best(AUTOTVM_LOG):
             target_str = get_build_target(hw_name)
             with tvm.transform.PassContext(opt_level=OPT_LEVEL.get()):
                 lib = relay.build_module.build(net, target=target_str, params=params)
@@ -254,9 +241,6 @@ class TVMSubGraphCostFunc_AutoTVM(TargetCostFunc):
 
             # Setup execution
             setup_mod_inputs(module)
-            # data_shape = get_data_shape(expr)
-            # data = np.random.uniform(-1, 1, size=data_shape).astype("float32")
-            # module.set_input("data", data)
             ftimer = module.module.time_evaluator("run", dev, number=NUM_MEASUREMENTS_PER_REPEAT, repeat=NUM_REPEATS)
 
         return measure(ftimer, False, hw_name)
@@ -274,12 +258,6 @@ class TVMSubGraphCostFunc_DefaultTVM(TargetCostFunc):
         expr_func = relay.Function(inputs, expr)
         net, params = testing.create_workload(expr_func)
 
-        assert(os.path.exists(get_autotvm_log_path(hw_name)))
-
-        # print(f"Measure autotvm log: {get_autotvm_log_path(hw_name)}")
-        # AutoTVM codes
-        # Compile kernels with history best records
-
         target_str = get_build_target(hw_name)
         with tvm.transform.PassContext(opt_level=OPT_LEVEL.get()):
             lib = relay.build_module.build(net, target=target_str, params=params)
@@ -289,9 +267,6 @@ class TVMSubGraphCostFunc_DefaultTVM(TargetCostFunc):
 
         # Setup execution
         setup_mod_inputs(module)
-        # data_shape = get_data_shape(expr)
-        # data = np.random.uniform(-1, 1, size=data_shape).astype("float32")
-        # module.set_input("data", data)
         ftimer = module.module.time_evaluator("run", dev, number=NUM_MEASUREMENTS_PER_REPEAT, repeat=NUM_REPEATS)
 
         return measure(ftimer, False, hw_name)
@@ -333,27 +308,10 @@ class TVMSubGraphCostFunc_OpMeasurement(TargetCostFunc):
 
         # Setup execution
         setup_mod_inputs(module)
-        # data_shape = get_data_shape(expr)
-        # data = np.random.uniform(-1, 1, size=data_shape).astype("float32")
-        # module.set_input("data", data)
         ftimer = module.module.time_evaluator("run", dev, number=NUM_MEASUREMENTS_PER_REPEAT, repeat=NUM_REPEATS)
 
         return measure(ftimer, False, hw_name)
 
-# def get_conv_attr(expr):
-#     assert (is_call_node(expr))
-#     # note that only call node has "op" attribute corresponding to a single backend operator
-#     op, args, attrs, type_args, span = expr.op, expr.args, expr.attrs, expr.type_args, expr.span
-#
-#     # extract conv attributes
-#     strides, padding, out_channels, dilation = \
-#         list(attrs.strides), list(attrs.padding), int(attrs.channels), list(attrs.dilation)
-#
-#     #kernel_size = args[1].type_annotation.shape
-#     kernel_size = list(map(lambda x: x.value, args[1].type_annotation.shape))
-#     dtype = args[0].type_annotation.dtype
-#
-#     return strides, padding, out_channels, dilation, kernel_size, dtype, attrs.groups, attrs.data_layout, attrs.kernel_layout
 
 class DNNLCostFunc(TargetCostFunc):
     def __init__(self):
@@ -386,10 +344,6 @@ class DNNLCostFunc(TargetCostFunc):
         with tvm.transform.PassContext(opt_level=OPT_LEVEL.get(), disabled_pass=["AlterOpLayout"]):
             mod = opt_pass(mod)
 
-        # Debug: visualize IR
-        # opt_info_tag = get_opt_info_tag(args.network, hw_name, args.batch_size)
-        # visualize_network(mod["main"], f"{opt_info_tag}_dnnl")
-
         target_str = get_build_target(hw_name)
         # It's ok not to do AlterOpLayout because DNNL ops are gonna be changed to GlobalVar,
         # which won't be touched by AlterOpLayout
@@ -402,14 +356,10 @@ class DNNLCostFunc(TargetCostFunc):
         lib.export_library('compiled_dnnl.so', fcompile=False, **kwargs)
         loaded_lib = tvm.runtime.load_module('compiled_dnnl.so')
         module = tvm.contrib.graph_executor.GraphModule(loaded_lib['default'](dev))
-        # module = tvm.contrib.graph_executor.create(json, lib, dev)
 
         assert (module is not None)
 
         setup_mod_inputs(module)
-        # input_shape = get_data_shape(expr)
-        # input_data = np.random.uniform(0, 1, input_shape).astype("float32")
-        # module.set_input("data", input_data)
         ftimer = module.module.time_evaluator("run", dev, number=NUM_MEASUREMENTS_PER_REPEAT, repeat=NUM_REPEATS)
 
         measure_info = measure(ftimer, False, hw_name)
@@ -421,9 +371,6 @@ class TensorRTCostFunc(TargetCostFunc):
 
     @staticmethod
     def measure_cost(name, expr, target, hw_name):
-        #if expr.op.name == "reshape":
-        #    assert(0)
-
         # Create workload
         inputs = relay.analysis.free_vars(expr)
         expr_func = relay.Function(inputs, expr)
@@ -433,9 +380,6 @@ class TensorRTCostFunc(TargetCostFunc):
         mod, config = partition_for_tensorrt(net, params)
 
         # We confirm that TVM can't pass conv2d to TensorRT if it's winograd without wt
-        # if name == "tensorrt_conv2d_winograd_without_weight_transform":
-        #     print(name, mod["main"])
-        #     sys.exit(0)
 
         target_str = get_build_target(hw_name)
         with tvm.transform.PassContext(opt_level=OPT_LEVEL.get(), config={'relay.ext.tensorrt.options': config}):
@@ -448,9 +392,6 @@ class TensorRTCostFunc(TargetCostFunc):
         module = tvm.contrib.graph_executor.GraphModule(loaded_lib['default'](dev))
 
         setup_mod_inputs(module)
-        # input_shape = get_data_shape(expr)
-        # input_data = np.random.uniform(0, 1, input_shape).astype("float32")
-        # module.set_input("data", input_data)
         ftimer = module.module.time_evaluator("run", dev, number=NUM_MEASUREMENTS_PER_REPEAT, repeat=NUM_REPEATS)
 
         measure_info = measure(ftimer, False, hw_name)

@@ -211,7 +211,7 @@ key is a relay Expression (pointer) and value is a matched backend operator anno
 class DPTable:
     def __init__(self, pattern_registry, target_backend, hw_name, comp_graph):
         self._pattern_registry = pattern_registry
-        self._target_backend = target_backend
+        #self._target_backend = target_backend
         self._hw_name = hw_name
         self._comp_graph = comp_graph
 

@@ -108,7 +108,7 @@ class CompGraphOptimizer:
         #         hash_to_op[hash(node)] = "var"
         while not frontier_queue.empty():
             # Facilitate the debugging process
-            self._pattern_registry.save_to_log(hw_name)
+            self._pattern_registry.save_to_log()
             f = frontier_queue.get()
             f_expr = f.get_relay_expr()
 

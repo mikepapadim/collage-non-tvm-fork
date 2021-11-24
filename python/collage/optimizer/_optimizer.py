@@ -24,6 +24,10 @@ from .custom_fusion_pass import *
 
 import logging
 
+# NOTE: Hacky solution to avoid deep engineering effort. 
+# Need to be fixed in the future. 
+from collage.interface import pattern_registry
+
 def setup_pattern_registry(hw_name):
     pattern_registry = PatternRegistry.get(hw_name)
     return pattern_registry
@@ -141,10 +145,11 @@ def get_backends(func_expr, hw_name):
 
     return backends
 
+
 def run_op_level_opt(func_expr):
     hw_name = func_expr.attrs[HW_FUNC_ATTR]
     targets = get_backends(func_expr, hw_name)
-
+    #targets = [Target.AUTOTVM, Target.CUDNN, Target.TENSORRT, Target.CUBLAS]
     relay_expr = get_function_body(func_expr)
 
     logging.info(f"[Op-Level: DP] Computation graph generation...")
@@ -152,9 +157,9 @@ def run_op_level_opt(func_expr):
     n_relay_nodes = comp_graph.n_relay_nodes
     logging.info(f"# of relay nodes in comp graph: {n_relay_nodes}")
 
-    pattern_registry = setup_pattern_registry(hw_name)
-
     # Optimizing graph
+
+    assert(pattern_registry is not None)
     optimizer = CompGraphOptimizer(pattern_registry, targets)
 
     """
@@ -172,10 +177,6 @@ def run_op_level_opt(func_expr):
     optimized_match = optimizer.optimize(comp_graph, hw_name)
 
     logging.info("[Op-Level: DP] It finished optimizing comp graph and assigning backend ops to Relay Expr (backend attr)")
-    pattern_registry.save_to_log(hw_name)
-
-    # For DP tuning time measurement, we have to reset backend op library to measure DP with op measurement every time
-    PatternRegistry.destroy()
 
     return optimized_match, relay_expr, pattern_registry, n_relay_nodes
 

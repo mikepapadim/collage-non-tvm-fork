@@ -5,25 +5,31 @@ import tvm
 import logging
 from tvm.contrib import graph_executor as runtime
 
-# measurement configs
-# backend configs
-# logs
+# [NOTE]
+# * Operator cost will be logged at "operator_cost.log". 
+#   Since it is unreadable, Collage also dump human-readable form at "operator_cost.json"
+# * Available networks: bert_full, dcgan, nasneta, resnet50_3d, resnext50_32x4d
+# * Collage supports following backends by default:
+#      NVIDIDIA GPUs - TVM, TensorRT, cuBLAS, cuDNN
+#      Intel CPUs    - TVM, MKL, DNNL
+# * For the best performance, TVM operators should be tuned with AutoTVM beforehand. 
+#   Collage assuems its log is prepared at "autotvm_tuning_log.json"
+#   This demo provides tuning logs for RTX2070.
+# * Collage offers two optimizers: "op-level", "two-level"
 
-# [TODO] Check with soo
-# 1. attrbutes
-# 2. how to pass backend 
-# 3. Ev search customization
-    
+
+# Define Collage workload
 workload = {
-        "optimizer": "two-level",
-        "backends": [],
-        "network_name": "bert",
-        "device": "rtx2070",
-        "target": "cuda",
-        "batch_size": 1,
-        "autotvm_tuning_log": "./logs/autotvm_ops_rtx2070.json",
+    "optimizer": "op-level",
+    "backends": ["AutoTVM", "cuDNN", "TensorRT", "cuBLAS"],
+    "network_name": "dcgan",
+    "device": "rtx2070",
+    "target": "cuda",
+    "batch_size": 1,
 }
 
+# Enable logging to skip messages during optimization. Comment this out to disable logging. 
+logging.basicConfig(level=logging.INFO)
 
 if __name__ == "__main__":
     collage_mod = collage.Module()
@@ -31,10 +37,11 @@ if __name__ == "__main__":
           workload["network_name"], workload["batch_size"], workload["target"], workload["device"]
 
     mod, params, shape_dict, _ = get_network_from_torch(network_name, batch_size)
+    # Since Collage utilizes tvm as its codegen, we need to pass the following info for tvm codegen. 
     workload["mod"] = mod
     workload["params"] = params
     
-    logging.basicConfig(level=logging.INFO)
+    # Invoke collage optimizer
     lib = collage_mod.optimize_backend_placement(**workload)
 
     # Create workload
@@ -46,6 +53,7 @@ if __name__ == "__main__":
         input_data = np.random.uniform(-1, 1, size=input_shape).astype("float32")
         module.set_input(input_name, input_data)
 
+    # Measure performance
     ftimer = module.module.time_evaluator("run", dev, number=20, repeat=20)
     perfs = np.array(ftimer().results) * 1000
     mean_perf, std_perf = np.mean(perfs), np.std(perfs)

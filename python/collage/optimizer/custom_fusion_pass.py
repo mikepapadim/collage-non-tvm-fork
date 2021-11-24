@@ -56,7 +56,7 @@ def measure_end_to_end_user_defined(net, params, shape_dict, target_str, net_nam
     # if net_name == 'nasneta':
     #     opt_level = 2
 
-    with autotvm.apply_history_best(get_autotvm_log_path(hw_name)):
+    with autotvm.apply_history_best(AUTOTVM_LOG):
         with tvm.transform.PassContext(opt_level=opt_level):
         # with tvm.transform.PassContext(opt_level=OPT_LEVEL.get(), trace=print_ir):
             lib = relay.build(net, target_str, params=params)

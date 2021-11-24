@@ -34,21 +34,20 @@ import logging
 
 class MatchedOp(object):
   def __init__(self, target, pattern, measured_configs_lib, constraint_func):
-  #def __init__(self, name, target, op_name, depth, measured_configs_lib, constraint_func):
     self._target = target
     self._op_name = pattern.get_name()
     self._name = target.name() + "_" + self._op_name
 
     self._depth = pattern.get_depth()
-    self._pattern = pattern #optype_to_pattern[pattern]
-    self._measured_configs = measured_configs_lib
+    self._pattern = pattern 
+    self._measured_configs = measured_configs_lib  # @Sung: Why do we need this?
     self._constraint_func = constraint_func
 
   def __hash__(self):
-      return hash((self._name, self._measured_configs, self._constraint_func))
+      return hash((self._name, self._constraint_func))
 
   def __eq__(self, other):
-      return self._name == other._name and self._measured_configs == other._measured_configs and self._constraint_func == other._constraint_func
+      return self._name == other._name and self._constraint_func == other._constraint_func
 
   def __repr__(self):
     return self._name
@@ -131,14 +130,6 @@ def extract_subgraph(expr, pattern):
     expr = get_expr(expr)
 
     if isinstance(relay_pattern, WildcardPattern):
-      # try:
-      #   ret = relay.var("data", expr.checked_type)
-      # except ValueError:
-      #   # Warning(@Soo): Hacky exception handling for NasNet-A (same avgpool2d for two inputs of add)
-      #   # The issue is that avgpool2d somehow is missing type information even after type inference      #
-      #   printe("Checked type is not available for following expr")
-      #   printe(repr(expr))
-
       # The above issue with avgpool2d is resolved!
       # The problem is because checked_type is updated when generating new expr.
       # We resolved it by saving checked_type from old expression
@@ -170,12 +161,8 @@ def extract_subgraph(expr, pattern):
             # Tuple should be treated separately
             if (type(type_arg) is tvm.ir.type.TupleType):
                 input_data = expr.args[i]
-                #print(type_arg.fields)
                 new_args.append(relay.Tuple([relay.var(var_name, d) for i, d in enumerate(type_arg.fields)] ))
-            # Note(@Soo): we get same perf no matter whether we use Var or Constant
-            # elif var_name == 'weight':
-            #   input_data = expr.args[i].data
-            #   new_args.append(relay.Constant(input_data))
+          
             # Bias should be constant
             elif var_name == 'bias':
               input_data = expr.args[i].data
@@ -235,9 +222,6 @@ def get_optimal_backend_pattern(b_op_lib, expr, pattern, target = None, hw_name 
       continue
 
     subgraph = extract_subgraph(expr, pattern)
-
-    # if is_op("nn.conv2d")(wildcard(), wildcard()).match(expr):
-    #   eprint(f"subgraph expr: {repr(subgraph)}")
 
     # Print the useful logs
     logging.info("-" * 45)

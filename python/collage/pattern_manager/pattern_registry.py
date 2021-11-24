@@ -3,8 +3,6 @@ from collections import defaultdict
 
 from .matched_operators import MatchedOp, get_optimal_backend_pattern
 from .op_config import Config, MeasuredConfigs
-
-#from ..workloads.onnx_workloads import get_network_from_onnx
 from .utils import no_constraints_func, get_op_pattern, get_args
 from .cost_func import Target
 from .default_pattern import optype_to_pattern
@@ -208,12 +206,10 @@ class BasePatternGenerator:
   # NOTE: Ideall, OpKind should be defined by user depending on their pattern strategy.
   # However, as we will only support TVM pattern rules and use the relay attribute of OpKind, we are not going to define it for now.
 
-  def __init__(self, _target,  _pattern_rules=None, _verify=None, _optype2enum=None, _enum2optype=None):
+  def __init__(self, _target,  _pattern_rules=None, _verify=None):
       self.target = _target
       self.fgen = _pattern_rules
       self.id = 0 # pattern id
-      self.optype2enum = _optype2enum
-      self.enum2optype = _enum2optype
 
       # check whether pattern satisfies the constraints
       if _verify is None:
@@ -231,7 +227,7 @@ class BasePatternGenerator:
 
   def run(self, dom_tree, expr):
       # def tvm_pattern_rule(dom_tree, op_dict, expr):
-      self.fgen(expr, dom_tree, self.verify, self.target, self.optype2enum, self.enum2optype)
+      self.fgen(expr, dom_tree, self.verify, self.target)
 
 
 # library class (singleton) representing all backend patterns
@@ -239,10 +235,10 @@ class PatternRegistry(object):
   __instance = None
 
   @staticmethod
-  def get(hw_name):
+  def get():
     """ Static access method. """
     if PatternRegistry.__instance == None:
-      PatternRegistry(hw_name)
+      PatternRegistry()
     return PatternRegistry.__instance
 
   @staticmethod
@@ -250,7 +246,7 @@ class PatternRegistry(object):
       """ Static access method. """
       PatternRegistry.__instance = None
 
-  def __init__(self, hw_name):
+  def __init__(self):
     """ Virtually private constructor. """
     if PatternRegistry.__instance != None:
       raise Exception("This class is a singleton!")
@@ -258,7 +254,7 @@ class PatternRegistry(object):
     # [TODO] Move this out of here. 
     # list of all backend operators
     self._measured_configs = MeasuredConfigs()
-    self._measured_configs.load_from_log(hw_name)
+    self._measured_configs.load_from_log()
 
     self.all_backend_patterns = set()
     self.all_pattern_generators = []
@@ -296,7 +292,7 @@ class PatternRegistry(object):
     self._add_backend_pattern_with_key(Target.CUDNN, "SOFTMAX")
     self._add_backend_pattern_with_key(Target.CUDNN, "MAX_POOL2D")
     self._add_backend_pattern_with_key(Target.CUDNN, "AVG_POOL2D")
-    # TODO:
+    
     # self._add_backend_pattern_with_key(Target.CUDNN, "CONV2D_ADD_RELU") # Bug at NasnetA
     #self._add_backend_pattern_with_key(Target.CUDNN, "CONV2D_BIAS_RELU")
     #self._add_backend_pattern_with_key(Target.CUDNN, "CONV3D_ADD_RELU")
@@ -346,8 +342,6 @@ class PatternRegistry(object):
                 return False
         return True
 
-
-
     self._add_backend_pattern_with_key(Target.DNNL, "CONV2D")
     self._add_backend_pattern_with_key(Target.DNNL, "CONV3D")
     self._add_backend_pattern_with_key(Target.DNNL, "BATCHNORM")
@@ -366,7 +360,11 @@ class PatternRegistry(object):
     self._add_backend_pattern_with_key(Target.CUBLAS, "BATCH_MATMUL")
 
     # @Sung: add TVM pattern rule
-    def tvm_pattern_rule(expr, dom_tree, verify, target=Target.AUTOTVM, optype2enum = None, enum2optype = None):
+    def tvm_pattern_rule(expr, dom_tree, verify, target=Target.AUTOTVM):
+        enum2optype = {0:"kElemWise", 1:"kBroadcast", 2:"kInjective", 3:"kCommReduce", 4:"kOutEWiseFusable", 7:"kTuple", 8:"kOpaque"}
+        optype2enum = {"kElemWise":0, "kBroadcast":1, "kInjective":2, "kCommReduce":3, "kOutEWiseFusable":4, "kTuple":7, "kOpaque":8}
+
+
         def run_fuse(src, sink, cur_pattern_type = None, cur_num_op = 0, nodeToPatternMap = dict()):
             assert(src is not None)
             if cur_pattern_type == optype2enum["kOpaque"] or cur_num_op > NUM_MAX_OP:
@@ -380,7 +378,6 @@ class PatternRegistry(object):
 
             sink_type = get_op_pattern(sink)
             # NOTE: This is current assumption. May not be true all the time.
-            # assert(sink_type != optype2enum["kOpaque"])
             num_nodes = 0
             cur_relay_pattern = None
 
@@ -388,8 +385,6 @@ class PatternRegistry(object):
                 # Handle single op
                 cur_relay_pattern, cur_pattern_type, num_nodes = generate_relay_pattern(src, sink)
             else:
-                #print(f"num: {cur_num_op}, cur_pattern: {enum2optype[cur_pattern_type]}, sink_type: {enum2optype[sink_type]}\nsrc: {src}\nsink: {sink}")
-
                 if cur_pattern_type == optype2enum["kOutEWiseFusable"]:
                     def fcheck(node, is_sink):
                         return get_op_pattern(node) <= optype2enum["kBroadcast"]
@@ -426,24 +421,7 @@ class PatternRegistry(object):
             cur_num_op += num_nodes
 
             if verify(cur_relay_pattern):
-                # Register
-                #print(f"\t----- Register {cur_relay_pattern}")
-
                 self._add_backend_pattern(target, Pattern(cur_relay_pattern))
-
-                # [Deprecated - this wasn't an issue] Do not register if it is errorneous patterns
-                # e.g., for bert_full, these are errorneous patterns
-                # errorneous_patterns = ['0-Op(reshape)[1-Op(transpose)[2-Op(reshape)[3-Op(add)[*, *]]]]',
-                #                        "0-Op(add)[1-Var/Const, 2-Op(add)[*, *]]",
-                #                        "0-Op(add)[1-Op(add)[*, *], *]",
-                #                        "0-Op(add)[*, 1-Op(add)[*, *]]",
-                #                        "0-Op(transpose)[1-Op(reshape)[2-Op(add)[*, *]]]",
-                #                        "0-Op(reshape)[1-Op(add)[*, *]]"]
-                #
-                # if not name_relay_pattern(cur_relay_pattern)[0] in errorneous_patterns:
-                #     self._add_backend_pattern(target, Pattern(cur_relay_pattern))
-                # else:
-                #     logging.info(f"The following pattern is excluded: {name_relay_pattern(cur_relay_pattern)[0]}")
 
             # We may be able to expand
             #if sink in dom_tree and src_type != optype2enum["kTuple"]:
@@ -451,22 +429,16 @@ class PatternRegistry(object):
                 run_fuse(src, dom_tree[sink], cur_pattern_type, cur_num_op, nodeToPatternMap)
 
         NUM_MAX_OP = 256
-        # Assume op == callnode
         if not (is_constant_node(expr) or is_var_node(expr)):
             run_fuse(expr, expr)
 
 
-
-
     # defined at include/tvm/relay/op_attr_types.h
-    tvm_enum2optype = {0:"kElemWise", 1:"kBroadcast", 2:"kInjective", 3:"kCommReduce", 4:"kOutEWiseFusable", 7:"kTuple", 8:"kOpaque"}
-    tvm_optype2enum = {"kElemWise":0, "kBroadcast":1, "kInjective":2, "kCommReduce":3, "kOutEWiseFusable":4, "kTuple":7, "kOpaque":8}
-    tvm_pattern_generator = BasePatternGenerator(Target.AUTOTVM, tvm_pattern_rule, None, tvm_optype2enum, tvm_enum2optype)
+    tvm_pattern_generator = BasePatternGenerator(Target.AUTOTVM, tvm_pattern_rule, None)
     self._add_backend_pattern_rule(tvm_pattern_generator)
 
     # Add TVM Default patterns
-    tvm_pattern_generator = BasePatternGenerator(Target.TVM_DEFAULT, tvm_pattern_rule, None, tvm_optype2enum,
-                                                 tvm_enum2optype)
+    tvm_pattern_generator = BasePatternGenerator(Target.TVM_DEFAULT, tvm_pattern_rule, None)
     self._add_backend_pattern_rule(tvm_pattern_generator)
 
     # TVM_GPU
@@ -477,7 +449,7 @@ class PatternRegistry(object):
     # add_all_backend_patterns_to_lib_except_fused(pattern_registry, Target.TVM_GPU)
 
     # TVM_GPU_NO_TUNING
-    #add_all_backend_patterns_to_lib(self, Target.TVM_GPU_NO_TUNING)
+    # add_all_backend_patterns_to_lib(self, Target.TVM_GPU_NO_TUNING)
     # add_all_backend_patterns_to_lib_except_fused(pattern_registry, Target.TVM_GPU_NO_TUNING)
 
     # TVM_CPU; Exclude it for GPU testing
@@ -488,10 +460,7 @@ class PatternRegistry(object):
     # TENSORRT
     # NOTE: Current TensorRT pattern follows TVM fusion rule for simplicity.
     # But, since BATCH_MATMUL and TRANSPOSE are not supported, we are going to exclude the patterns if they contain those illegal operators by passing verify function.
-    # ops_to_exclude_trt = ["image.resize", "divide", "multiply"]
     ops_to_exclude_trt = ["image.resize"]
-    # ops_to_exclude_trt = ["transpose", "image.resize", "variance", "divide", "reshape", "nn.batch_matmul", "multiply"]
-    # ops_to_exclude_trt = ["transpose", "image.resize", "variance", "divide", "reshape", "nn.batch_matmul"]
 
     def trt_verify(pattern):
         q = [ pattern ]
@@ -519,26 +488,8 @@ class PatternRegistry(object):
 
         return True
 
-    trt_pattern_generator = BasePatternGenerator(Target.TENSORRT, tvm_pattern_rule, trt_verify, tvm_optype2enum, tvm_enum2optype)
+    trt_pattern_generator = BasePatternGenerator(Target.TENSORRT, tvm_pattern_rule, trt_verify)
     self._add_backend_pattern_rule(trt_pattern_generator)
-
-    #def check_constraints_batch_matmul(config):
-    #    assert(len(config._data_shape) == 2)
-    #    t1, t2 = config._data_shape[0], config._data_shape[1]
-    #    if not (len(t1)==3 and len(t2)==3 and t1[-1] == t2[-2]):
-    #        return False
-    #    return True
-    #self._add_backend_pattern_with_key(Target.TENSORRT, "BATCH_MATMUL", check_constraints_batch_matmul)
-
-    #add_all_backend_patterns_to_lib(self, Target.TENSORRT, ["DIAMOND", "TRANSPOSE",
-                                                       # "TUPLE_TWO_IDX", "TUPLE_FIVE_IDX",
-                                                       # "TUPLE_FIVE_IDX_CONCAT",
-                                                       # "TUPLE_GET_ITEM_0",
-                                                       # "TUPLE_GET_ITEM_1",
-   #                                                   "BATCH_MATMUL",
-   #                                                   "RESHAPE_TRANSPOSE",
-   #                                                   "TRANSPOSE_RESHAPE"])
-
 
 
   # add a backend operator to the library
@@ -607,5 +558,5 @@ class PatternRegistry(object):
       return self.all_pattern_generators
 
   # save newly measured op perfs to the log
-  def save_to_log(self, hw_name):
-    return self._measured_configs.save_to_log(hw_name)
+  def save_to_log(self):
+    return self._measured_configs.save_to_log()
