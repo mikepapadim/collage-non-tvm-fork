@@ -244,13 +244,14 @@ class CompGraphOptimizer:
 
         relay.analysis.post_order_visit(root_expr, lambda expr: _traverse_expr(expr, all_exprs))
 
+        
         for expr in all_exprs:
             for backend in self._given_backends:
                 if backend in self._pattern_registry.backends_with_pattern_generators:
                     generated_patterns = backend.pattern_generator.generate(post_dom_tree, expr)
                     for pattern in generated_patterns:
                         self._pattern_registry.add_backend_pattern(backend, pattern, None)
-       
+        
         for pat in self._pattern_registry.all_backend_patterns:
             logging.info(f"Checking... {repr(pat)}")
 

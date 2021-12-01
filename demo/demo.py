@@ -19,22 +19,16 @@ from tvm.contrib import graph_executor as runtime
 
 
 # [TODO] 
-# "resnext50_32x4d", "resnet50_3d", "bert_full"
-#     falls into infinite loop (e.g.,  build_with_pattern_with_map )
-# "dcgan": performance bug. 2.2ms vs 2.0 ms
-# "nasneta":   File "/home/sunggg/collage/python/collage/pattern_manager/default_pattern_rules.py", line 57, in generate_relay_pattern_node
-#      return is_tuple(), len(node.fields)
-#      TypeError: is_tuple() missing 1 required positional argument: 'fields'
+# "resnext50_32x4d", "resnet50_3d", "bert_full", "dcgan": performance bug
+# "nasneta": non-call node is somehow inserted to frontier q.
+#     -- collage/optimizer/comp_graph_optimizer.py
 # "bert_full"
 
-# Try trt pass
-# try cpu
-# try w/o pattern gen
 # Define Collage workload
 workload = {
-    "optimizer": "op-level",
-    "backends": ["autotvm", "cudnn", "tensorrt", "cublas"],
-    "network_name": "dcgan", 
+    "optimizer": "two-level", #"op-level",
+    "backends": ["autotvm", "cudnn", "cublas", "tensorrt"],
+    "network_name": "bert_full", #"dcgan", #"resnext50_32x4d", "resnet50_3d", 
     "target": "cuda",
     "batch_size": 1,
 }
@@ -42,13 +36,13 @@ workload = {
 # Enable logging to skip messages during optimization. Comment this out to disable logging. 
 logging.basicConfig(level=logging.INFO)
 
-def measure_perf(lib, target):
+def measure_perf(lib, workload):
     # Create workload
-    dev = tvm.device(target, 0)
+    dev = tvm.device(workload["target"], 0)
     module = runtime.GraphModule(lib["default"](dev))
 
     # Setup execution
-    for input_name, input_shape in shape_dict.items():
+    for input_name, input_shape in workload["shape_dict"].items():
         input_data = np.random.uniform(-1, 1, size=input_shape).astype("float32")
         module.set_input(input_name, input_data)
 
@@ -57,11 +51,26 @@ def measure_perf(lib, target):
     perfs = np.array(ftimer().results) * 1000
     return np.mean(perfs), np.std(perfs)
 
-def build_with_tensorrt():
-    assert 0, "Need to implement"
+def run_with_tensorrt(workload):
+    from collage.backend.default_backends import cg_TensorRT
+    lib = cg_TensorRT(workload["mod"], workload["target"], workload["params"])
+    return measure_perf(lib, workload)
+
+
+def setup_workload(workload):
+    network_name, batch_size, target = \
+          workload["network_name"], workload["batch_size"], workload["target"]
+
+    mod, params, shape_dict, _ = get_network_from_torch(network_name, batch_size)
+    # Since Collage utilizes tvm as its codegen, we need to pass the following info for tvm codegen. 
+    workload["mod"] = mod
+    workload["params"] = params
+    workload["shape_dict"] = shape_dict
 
 
 if __name__ == "__main__":
+    setup_workload(workload)
+
     collage_mod = collage.Module()
     print(f"Default backends: {collage_mod.get_registered_backends()}")
 
@@ -75,16 +84,13 @@ if __name__ == "__main__":
     # this works
     #collage_mod.backend_registry["TVM"].kwargs["tuning_log"] = "test.txt" 
 
-    network_name, batch_size, target = \
-          workload["network_name"], workload["batch_size"], workload["target"]
-
-    mod, params, shape_dict, _ = get_network_from_torch(network_name, batch_size)
-    # Since Collage utilizes tvm as its codegen, we need to pass the following info for tvm codegen. 
-    workload["mod"] = mod
-    workload["params"] = params
-
     # Invoke collage optimizer
-    lib = collage_mod.optimize_backend_placement(**workload)
+    lib = collage_mod.optimize_backend_placement(**workload)    
+    collage_mean_perf, collage_std_perf = measure_perf(lib, workload)
+    trt_mean_perf, trt_std_perf = run_with_tensorrt(workload)
 
-    mean_perf, std_perf = measure_perf(lib, target)
-    print(f"[{network_name}] Performance of DP (mean, std) = ({mean_perf:.4f}+-{std_perf:.4f})")
+    print(f"Network: {workload['network_name']}")
+    print(f"  Run with TensorRT (mean, std) = ({trt_mean_perf:.4f}+-{trt_std_perf:.4f})")
+    print(f"  Run with Collage  (mean, std) = ({collage_mean_perf:.4f}+-{collage_std_perf:.4f})")
+    print(f"  -> Speedup: {trt_mean_perf/collage_mean_perf:.4f}x")
+

@@ -148,7 +148,17 @@ class Module:
     def add_pattern_generator(self):
         assert 0, "Need to implement"
 
-    def optimize_backend_placement(self, optimizer, backends, network_name, mod, params, target, batch_size):
+    def optimize_backend_placement(
+                                    self, 
+                                    optimizer, 
+                                    backends, 
+                                    network_name, 
+                                    mod, 
+                                    params, 
+                                    target,
+                                    batch_size, 
+                                    **kwargs
+                                ):
         net = mod["main"]
         from collage.optimizer.custom_fusion_pass import CustomFusionPass
         assert(optimizer == "op-level" or optimizer == "two-level")

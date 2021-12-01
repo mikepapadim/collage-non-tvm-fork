@@ -326,7 +326,7 @@ def schedule_dense_mkl(_, outs):
     """Create schedule for dense_mkl"""
     return generic.schedule_extern(outs)
 
-    # @Sung: Seems like an optimization. Disabled them for now due to the issue w/ schedule_injective_from_existing
+    # @sunggg: Seems like an optimization. Disabled them for now due to the issue w/ schedule_injective_from_existing
     s = te.create_schedule([x.op for x in outs])
     te.schedule.AutoInlineInjective(s)
 

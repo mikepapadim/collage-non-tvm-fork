@@ -11,11 +11,9 @@ from .comp_graph_optimizer import (
                 )
 #from .evolutionary_searcher_state import *
 from .evolutionary_searcher import EvolutionarySearcher
-#from .op_match_logger import *
 from .ext_compiler_op_annotator import ExtCompilerOpAnnotator
 from tvm.relay.op.contrib.tensorrt import prune_tensorrt_subgraphs
 from tvm.relay import transform
-#from .custom_fusion_pass import *
 
 import logging
 from collage.interface import CollageContext

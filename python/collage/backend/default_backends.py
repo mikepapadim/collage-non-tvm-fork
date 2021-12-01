@@ -74,6 +74,7 @@ def cg_TensorRT(mod, target, params, **kwargs):
     #loaded_lib = tvm.runtime.load_module('compiled_tensorrt.so')
     return lib
 
+
 def cg_DNNL(net, target, params, **kwargs):
     if not tvm.get_global_func("runtime.DNNLJSONRuntimeCreate", True):
         raise Exception("skip because DNNL codegen is not available")
@@ -114,11 +115,14 @@ def cg_op_level_backends(net, target, params, **kwargs):
             lib = relay.build_module.build(net, target=target, params=params)
     return lib
 
+
 def cg_cuDNN(net, target, params, **kwargs):
     return cg_op_level_backends(net, target, params, **kwargs)
 
+
 def cg_cuBLAS(net, target, params, **kwargs):
     return cg_op_level_backends(net, target, params, **kwargs)
+
 
 def cg_MKL(net, target, params, **kwargs):
     return cg_op_level_backends(net, target, params, **kwargs)

@@ -48,8 +48,7 @@ def check_path(src, node, fcheck, path = [], paths = []):
 
     out = path.pop()
     assert(node == out)
-    return len(paths)>0
-
+    
 
 
 def generate_relay_pattern_node(node):
@@ -150,7 +149,7 @@ def generate_relay_pattern(src, sink, paths = None, cur_pattern_type = None, nod
 
 def check_and_generate_pattern(src, sink, fcheck, cur_pattern_type, nodeToPatternMap):
     path, paths = [], []
-    #print(">> check and gen")
+    
     check_path(src, sink, fcheck, path, paths)
     if len(paths):
         return generate_relay_pattern(src, sink, paths, cur_pattern_type, nodeToPatternMap)
@@ -164,16 +163,21 @@ class DefaultPatternGenerator(BasePatternGenerator):
     def generate(self, post_dom_tree, expr):
         generated_patterns = list()
         if is_constant_node(expr) or is_var_node(expr):
-            return generated_patterns
+            return generated_patterns # returns empty node
 
+        # Chekc anchor node
         if self.pattern_rule.check(expr):
             if not is_tuple_node(expr):
                 anchor_pattern, anchor_type, num_ops = generate_relay_pattern(expr, expr)
+                # Verify if it is legitimate
                 if self.pattern_rule.verify(anchor_pattern):
                     generated_patterns.append(Pattern(anchor_pattern))
-            
+        
             def simulate_fusion(src, sink, cur_type, num_ops, nodeToPatternMap = dict()):
                 assert(src is not None)
+                if is_tuple_node(sink) and (sink in post_dom_tree):
+                    simulate_fusion(src, post_dom_tree[sink], cur_type, num_ops, nodeToPatternMap)
+
                 if self.pattern_rule.check(
                         src = src, 
                         sink = sink, 
@@ -185,15 +189,17 @@ class DefaultPatternGenerator(BasePatternGenerator):
                     # TODO: Separate check/generation
                     def fcheck(*args):
                         return True
-                    fusion_pattern, cur_type, cur_num_ops= check_and_generate_pattern(src, sink, fcheck, cur_type, nodeToPatternMap)
-                   
+                    
+                    fusion_pattern, cur_type, num_ops= check_and_generate_pattern(src, sink, fcheck, cur_type, nodeToPatternMap)
+                    #num_ops += cur_num_ops
+
                     # Append identified pattern
                     if self.pattern_rule.verify(fusion_pattern):
                         generated_patterns.append(Pattern(fusion_pattern))
 
                     # Go deeper
                     if sink in post_dom_tree:
-                        simulate_fusion(src, post_dom_tree[sink], cur_type, cur_num_ops, nodeToPatternMap)
+                        simulate_fusion(src, post_dom_tree[sink], cur_type, num_ops, nodeToPatternMap)
             
             # Run fusion simulation
             if expr in post_dom_tree:
@@ -229,6 +235,29 @@ class TVM_PatternRule(BasePatternRule):
         optype2enum = TVM_PatternRule.optype2enum
         MAX_NUM_OPS  = TVM_PatternRule.MAX_NUM_OPS
 
+        def _check_path(src, node, fcheck):
+            if src == node:
+                return True
+            elif is_var_node(node) or is_constant_node(node):
+                return True
+            elif fcheck(node, node==src):
+                children = []
+                if is_tuple_node(node):
+                    children = node.fields
+                elif is_tuplegetitem_node(node):
+                    children = [ node.tuple ]
+                elif is_call_node(node):
+                    children = node.args
+                else:
+                    raise Exception(f"Unsupported type ({type(node)})")
+                
+                chk = True
+                for child in children:
+                    chk = chk and _check_path(src, child, fcheck)
+                return chk
+
+            return False
+
         if num_ops > MAX_NUM_OPS:
             return False
 
@@ -238,7 +267,7 @@ class TVM_PatternRule(BasePatternRule):
                 return get_op_pattern(node) <= optype2enum["kBroadcast"]
 
             if sink_type <= optype2enum["kInjective"]:
-                return check_path(src, sink, fcheck)
+                return _check_path(src, sink, fcheck)
 
         elif cur_type <= optype2enum["kBroadcast"]:
             def fcheck(node, is_sink):
@@ -249,14 +278,16 @@ class TVM_PatternRule(BasePatternRule):
                     return kind <= optype2enum["kOutEWiseFusable"]
 
             if sink_type <= optype2enum["kCommReduce"]:
-                return check_path(src, sink, fcheck)
+                return _check_path(src, sink, fcheck)
 
         elif cur_type == optype2enum["kInjective"] or cur_type == optype2enum["kTuple"]:
             def fcheck(node, is_sink):
                 return get_op_pattern(node) <= optype2enum["kInjective"]
-            return check_path(src, sink, fcheck)
+            return _check_path(src, sink, fcheck)
+
         elif cur_type == optype2enum["kCommReduce"] or cur_type == optype2enum["kOpaque"]:
             return False
+
         else:
             raise Exception(f"Unsupported type ({type(sink)}, {enum2optype[cur_type]}, {src})")
         
@@ -265,7 +296,6 @@ class TVM_PatternRule(BasePatternRule):
         
 tvm_pattern_rule = TVM_PatternRule()
 tvm_pattern_generator = DefaultPatternGenerator(tvm_pattern_rule)
-
 
 class TRT_PatternRule(BasePatternRule):
     enum2optype = {0:"kElemWise", 1:"kBroadcast", 2:"kInjective", 3:"kCommReduce", 4:"kOutEWiseFusable", 7:"kTuple", 8:"kOpaque"}
@@ -300,6 +330,29 @@ class TRT_PatternRule(BasePatternRule):
         optype2enum = TRT_PatternRule.optype2enum
         MAX_NUM_OPS  = TRT_PatternRule.MAX_NUM_OPS
 
+        def _check_path(src, node, fcheck):
+            if src == node:
+                return True
+            elif is_var_node(node) or is_constant_node(node):
+                return True
+            elif fcheck(node, node==src):
+                children = []
+                if is_tuple_node(node):
+                    children = node.fields
+                elif is_tuplegetitem_node(node):
+                    children = [ node.tuple ]
+                elif is_call_node(node):
+                    children = node.args
+                else:
+                    raise Exception(f"Unsupported type ({type(node)})")
+                
+                chk = True
+                for child in children:
+                    chk = chk and _check_path(src, child, fcheck)
+                return chk
+
+            return False
+
         if num_ops > MAX_NUM_OPS:
             return False
         
@@ -309,7 +362,7 @@ class TRT_PatternRule(BasePatternRule):
                 return get_op_pattern(node) <= optype2enum["kBroadcast"]
 
             if sink_type <= optype2enum["kInjective"]:
-                return check_path(src, sink, fcheck)
+                return _check_path(src, sink, fcheck)
 
         elif cur_type <= optype2enum["kBroadcast"]:
             def fcheck(node, is_sink):
@@ -320,12 +373,13 @@ class TRT_PatternRule(BasePatternRule):
                     return kind <= optype2enum["kOutEWiseFusable"]
 
             if sink_type <= optype2enum["kCommReduce"]:
-                return check_path(src, sink, fcheck)
+                return _check_path(src, sink, fcheck)
 
         elif cur_type == optype2enum["kInjective"] or cur_type == optype2enum["kTuple"]:
             def fcheck(node, is_sink):
                 return get_op_pattern(node) <= optype2enum["kInjective"]
-            return check_path(src, sink, fcheck)
+            return _check_path(src, sink, fcheck)
+            
         elif cur_type == optype2enum["kCommReduce"] or cur_type == optype2enum["kOpaque"]:
             return False
         else:

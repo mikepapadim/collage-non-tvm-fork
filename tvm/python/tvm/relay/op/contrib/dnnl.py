@@ -128,7 +128,7 @@ def dim_check_fn(attrs, args, op_name):
             if len(shape) < 2:
                 return False
 
-            # @Sung: Temp solution. Selectively disable adds in NasNetA
+            # @sunggg: Temp solution. Selectively disable adds in NasNetA
             if shape == [1, 64, 56, 56] or shape == [1,128,28,28] or shape == [1, 256, 14, 14]:
                 return False
 
