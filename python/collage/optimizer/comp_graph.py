@@ -1,7 +1,13 @@
 import tvm
 from tvm import relay
-from ..pattern_manager.utils import *
-from .optimizer_utils import *
+from collage.utils import (
+        is_constant_node, 
+        is_var_node,
+        is_tuplegetitem_node,
+        is_tuple_node,
+        is_call_node,
+    )
+from .optimizer_utils import is_data_var_node, is_data_node
 
 class CGNode:
     def __init__(self, relay_expr, topological_order):

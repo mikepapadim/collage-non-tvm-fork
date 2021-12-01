@@ -1,9 +1,13 @@
 from tvm.relay.expr_functor import ExprVisitor
-from ..pattern_manager.cost_func import USER_DEFINED_MATCH_LOG
-from ..pattern_manager.utils import *
+#from ..pattern_manager.utils import *
 import pandas as pd
 from tvm.ir import Op
-from ..utility.debug_helper import printe
+import logging
+
+LOG_PATH = f"./logs"
+EVAL_RESULT_LOG_PATH = f"{LOG_PATH}/eval_results"
+BEST_MATCH_LOG = f"{EVAL_RESULT_LOG_PATH}/best_match"
+USER_DEFINED_MATCH_LOG = f"{LOG_PATH}/user_defined_match.log"
 
 DUMMY_VAL = 0
 COL_NAME = 'annotation'
@@ -47,8 +51,7 @@ class OpMatchLogger(ExprVisitor):
         df.columns = [COL_NAME]
         df.index.name = "post_dfs_order"
         df.to_csv(log_path)
-        printe(f"Log is saved to {log_path}")
-        # printe(df)
+        logger.info(f"Log is saved to {log_path}")
 
     # Visit Relay expressions in post-order
     def visit(self, expr):

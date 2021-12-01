@@ -1,8 +1,7 @@
 from tvm.relay.expr_functor import ExprVisitor
 from collections import defaultdict
-from ..pattern_manager.utils import *
-from ..pattern_manager.default_pattern import *
-from ..pattern_manager.cost_func import *
+#from ..pattern_manager.utils import *
+#from ..pattern_manager.default_patterns import *
 from tvm.ir import Op
 import copy
 from enum import IntEnum
@@ -89,14 +88,14 @@ def is_invalid_ext_compiler_op_dnnl(expr):
     is_valid = False
 
     # Patterns that DNNL can afford
-    is_valid |= optype_to_pattern["CONV2D"].match(expr)
-    is_valid |= optype_to_pattern["CONV3D"].match(expr)
-    is_valid |= optype_to_pattern["BATCHNORM"].match(expr)
-    is_valid |= optype_to_pattern["DENSE"].match(expr)
-    is_valid |= optype_to_pattern["RELU"].match(expr)
+    is_valid |= str_to_pattern["CONV2D"].match(expr)
+    is_valid |= str_to_pattern["CONV3D"].match(expr)
+    is_valid |= str_to_pattern["BATCHNORM"].match(expr)
+    is_valid |= str_to_pattern["DENSE"].match(expr)
+    is_valid |= str_to_pattern["RELU"].match(expr)
     is_valid |= is_constant_or_var_node(expr)
 
-    if optype_to_pattern["RELU"].match(expr):
+    if str_to_pattern["RELU"].match(expr):
         shape = expr.checked_type.shape
         if len(shape)!=4:
             is_valid = False

@@ -16,7 +16,6 @@ from .baselines.pytorch.dcgan import DCGAN
 from .baselines.pytorch.yolov3 import YoloV3
 
 import logging
-from collage.utility.debug_helper import printe
 import numpy as np
 
 NETWORK_TO_TORCH_MODEL = {

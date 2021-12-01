@@ -1,8 +1,7 @@
 import tvm
 import tvm.relay as relay
 import tvm.relay.testing as testing
-from .debug_helper import printe
-from ..pattern_manager.utils import *
+#from collage.utils import *
 
 from graphviz import Digraph
 import os

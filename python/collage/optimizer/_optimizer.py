@@ -1,32 +1,24 @@
 import tvm._ffi
 import tvm.driver
-# import tvm.relay.testing as testing
-# from tvm import relay
-
-from ..pattern_manager.op_config import MeasuredConfigs
-from ..pattern_manager.cost_func import *
-from ..pattern_manager.pattern_registry import PatternRegistry
-from ..pattern_manager.utils import *
-
-from ..utility.profile_ops_in_net import profile_ops_in_net
+from collage.pattern_manager.pattern_registry import PatternRegistry
+from collage.utils import get_function_body, is_constant_node
 
 
 from .comp_graph import ComputationGraph
-from .comp_graph_optimizer import *
-from .evolutionary_searcher_state import *
+from .comp_graph_optimizer import (
+                    CompGraphOptimizer,
+                    AssignBackendExprVisitor,
+                )
+#from .evolutionary_searcher_state import *
 from .evolutionary_searcher import EvolutionarySearcher
-from .op_match_logger import *
-from ..utility.debug_helper import printe
+#from .op_match_logger import *
 from .ext_compiler_op_annotator import ExtCompilerOpAnnotator
 from tvm.relay.op.contrib.tensorrt import prune_tensorrt_subgraphs
 from tvm.relay import transform
-from .custom_fusion_pass import *
+#from .custom_fusion_pass import *
 
 import logging
-
-# NOTE: Hacky solution to avoid deep engineering effort. 
-# Need to be fixed in the future. 
-from collage.interface import pattern_registry
+from collage.interface import CollageContext
 
 def setup_pattern_registry(hw_name):
     pattern_registry = PatternRegistry.get(hw_name)
@@ -34,15 +26,15 @@ def setup_pattern_registry(hw_name):
 
 @tvm._ffi.register_func("collage.optimizer.print_attr_args")
 def print_attr_args(expr):
-    printe(f"attr: {get_attr_vals(expr)}")
+    logger.info(f"attr: {get_attr_vals(expr)}")
 
 @tvm._ffi.register_func("collage.optimizer.visualize_network_debug")
 def visualize_network_debug(relay_expr, name):
     net_name = 'default'
-    if relay_expr.attrs is not None and NETWORK_FUNC_ATTR in dict(relay_expr.attrs):
-        net_name = dict(relay_expr.attrs)[NETWORK_FUNC_ATTR]
+    if relay_expr.attrs is not None and "Network" in dict(relay_expr.attrs):
+        net_name = dict(relay_expr.attrs)["Network"]
         visualize_network(relay_expr, f"{net_name}_{name}")
-        printe("[Done] Debug visualization")
+        logger.info("[Done] Debug visualization")
 
 def apply_tensorrt_op(mod):
     logging.info("Applying TensorRT op pass")
@@ -82,13 +74,13 @@ def apply_tensorrt_op(mod):
         [
             transform.AnnotateTarget("tensorrt"),
             transform.MergeCompilerRegions(),
-            transform.PartitionGraph(),
+            transform.PartitionGraph(),         
             transform.InferType(),
         ]
     )
 
     # Do prune_tensorrt_subgraphs
-    with tvm.transform.PassContext(opt_level=OPT_LEVEL.get(), config={"relay.ext.tensorrt.options": config}):
+    with tvm.transform.PassContext(opt_level=3, config={"relay.ext.tensorrt.options": config}):
         mod = seq(mod)
     return mod
 
@@ -106,18 +98,17 @@ def apply_dnnl_op(mod):
         ]
     )
 
-    with tvm.transform.PassContext(opt_level=OPT_LEVEL.get(), disabled_pass=["AlterOpLayout"]):
+    with tvm.transform.PassContext(opt_level=3, disabled_pass=["AlterOpLayout"]):
         mod = opt_pass(mod)
 
     return mod
 
 @tvm._ffi.register_func("collage.optimizer.apply_external_compiler_op")
 def apply_external_compiler_op(mod):
-    # Skip this pass if the hw is not NVIDIA GPU
-    hw_name = mod["main"].attrs[HW_FUNC_ATTR]
-    if hw_name in NVIDIA_GPUS:
+    target = mod["main"].attrs["BuildTarget"]
+    if "cuda" in target:
         mod = apply_tensorrt_op(mod)
-    elif hw_name in INTEL_CPUS:
+    elif "llvm" in target:
         mod = apply_dnnl_op(mod)
     else:
         Exception(f"Unexpected HW for external compiler op pass: {hw_name}")
@@ -127,7 +118,7 @@ def apply_external_compiler_op(mod):
 
 @tvm._ffi.register_func("collage.optimizer.get_user_fusion")
 def get_user_fusion(relay_expr):
-    printe("User-defined fusion")
+    logger.info("User-defined fusion")
     net_name, hw_name, batch_size = get_opt_info_from_func(relay_expr)
     relay_expr = get_function_body(relay_expr)
 
@@ -135,21 +126,22 @@ def get_user_fusion(relay_expr):
     opt_match = OpMatchReader().read(relay_expr, match_path)
 
 
-def get_backends(func_expr, hw_name):
-    if BACKEND_LIST_ATTR in func_expr.attrs:
-        backend_list_str = func_expr.attrs[BACKEND_LIST_ATTR]
-        backend_str_list = backend_list_str.split(",")
-        backends = [target_id_to_target[int(b)] for b in backend_str_list]
-    else:
-        backends = get_backends_from_hw(hw_name)
-
+def get_backends(func_expr, backend_registry):
+    assert("BackendList" in func_expr.attrs)
+    backend_list_str = func_expr.attrs["BackendList"]
+    backend_str_list = backend_list_str.split(",")
+    backends = [backend_registry[b] for b in backend_str_list]
+    
     return backends
-
+    
+def get_backend_names(backends):
+    return [ b.name for b in backends ]
 
 def run_op_level_opt(func_expr):
-    hw_name = func_expr.attrs[HW_FUNC_ATTR]
-    targets = get_backends(func_expr, hw_name)
-    #targets = [Target.AUTOTVM, Target.CUDNN, Target.TENSORRT, Target.CUBLAS]
+    target = func_expr.attrs["BuildTarget"]
+    pattern_registry = CollageContext.pattern_registry
+    backend_registry = pattern_registry.backend_registry
+    given_backends = get_backends(func_expr, backend_registry)
     relay_expr = get_function_body(func_expr)
 
     logging.info(f"[Op-Level: DP] Computation graph generation...")
@@ -160,7 +152,7 @@ def run_op_level_opt(func_expr):
     # Optimizing graph
 
     assert(pattern_registry is not None)
-    optimizer = CompGraphOptimizer(pattern_registry, targets)
+    optimizer = CompGraphOptimizer(pattern_registry, given_backends)
 
     """
     Warning(@Soo): Note that current DP optimizer does not work for patterns with more than one root.
@@ -174,7 +166,7 @@ def run_op_level_opt(func_expr):
     the discrepancy between what Relay pattern supports and how TVM fusion strategy works.
     We can come back to this later if this is critical to performance, which is unlikely for now given networks we have.
     """
-    optimized_match = optimizer.optimize(comp_graph, hw_name)
+    optimized_match = optimizer.optimize(comp_graph, target)
 
     logging.info("[Op-Level: DP] It finished optimizing comp graph and assigning backend ops to Relay Expr (backend attr)")
 
@@ -213,7 +205,7 @@ def run_two_level_opt(relay_expr):
     print("[Python side] Op-level optimization is done")
 
     net_name, hw_name, batch_size = get_opt_info_from_func(func_expr)
-    printe(f"Hw name, Network name, batch_size: {hw_name}, {net_name}, {batch_size}")
+    logger.info(f"Hw name, Network name, batch_size: {hw_name}, {net_name}, {batch_size}")
 
     # subgraph-level optimization for external compilers
     # Translate optimized_match into OpState class that can be used for evolutionary search
@@ -272,7 +264,7 @@ def run_two_level_opt(relay_expr):
         second_opt_match = ev_searcher.search(rnd_seed=64)
     else:
         second_opt_match = optimized_match
-        printe("No need for subgraph optimization because either 1) op optimization pass only chose Ext compiler ops"
+        logger.info("No need for subgraph optimization because either 1) op optimization pass only chose Ext compiler ops"
                + " or 2) External compiler can't support ops that are not assigned to external compilers")
 
     # Update backend information to corresponding best match
@@ -287,165 +279,11 @@ def run_dp(relay_expr):
 
 @tvm._ffi.register_func("collage.optimizer.assign_backend_for_op_measurement")
 def assign_backend_for_op_measurement(relay_expr):
-    backend_pattern_name = relay_expr.attrs[BACKEND_OP_ATTR]
+    backend_pattern_name = relay_expr.attrs["BackendOP"]
     assert isinstance(backend_pattern_name, str)
 
     relay_expr = get_function_body(relay_expr)
     AssignBackendExprVisitor().assign(relay_expr, backend_pattern_name)
 
-    # printe(repr(relay_expr))
+    # logger.info(repr(relay_expr))
     # sys.exit(0)
-
-"""
-Run single backend baseline fusion strategy (e.g., CuDNN, OneDNN)
-- It greedily matches backend operators from the given backend.
-- If there are multiple matchings of ops from the given backend, it prioritize backend op with more ops.
-  e.g., matching fused operator (relu+conv) instead of a single op (conv)
-- If there is no existing backend operator of the given backend, it alternatively uses AutoTVM ops;
-  Still, it only allows matching with AutoTVM ops including only ops that can't be matched with ops from the given backend
-"""
-@tvm._ffi.register_func("collage.optimizer.run_single_backend_baseline")
-def run_single_backend_baseline(func_expr):
-    single_backend_id = int(func_expr.attrs[SINGLE_BACKEND_ATTR])
-    assert isinstance(single_backend_id, int)
-
-    # printe(f"single backend id: {single_backend_id, type(single_backend_id)}")
-    # printe(f"single backend: {target_id_to_target[single_backend_id]}")
-    single_backend_target = target_id_to_target[single_backend_id]
-
-    hw_name = func_expr.attrs[HW_FUNC_ATTR]
-    relay_expr = get_function_body(func_expr)
-
-    logging.info(f"[Single backend baseline] Computation graph generation...")
-    comp_graph = ComputationGraph(relay_expr)
-    n_relay_nodes = comp_graph.n_relay_nodes
-    logging.info(f"# of relay nodes in comp graph: {n_relay_nodes}")
-
-    pattern_registry = setup_pattern_registry(hw_name)
-
-    # Optimizing graph; note that we don't need to specify target backend for single backend baseline matching
-    optimizer = CompGraphOptimizer(pattern_registry, target_backend=[])
-    optimized_match = optimizer.optimize_single_backend(comp_graph, hw_name, single_backend_target)
-    logging.info("[Single backend baseline] It finished optimizing comp graph and assigning backend ops to Relay Expr (backend attr)")
-    pattern_registry.save_to_log(hw_name)
-
-    # printe(repr(relay_expr))
-    # sys.exit(0)
-
-
-# """
-# This is still work in progress.
-#
-# Pros: it gives us upper bound
-# Cons: How do you consider all possible TensorRT operators? I don't have good answers to that yet.
-#
-# """
-# @tvm._ffi.register_func("collage.optimizer.run_exhaustive_search")
-# def run_exhaustive_search(relay_expr):
-#     # It is a function if you get it from last pass of Relay build
-#     hw_name = relay_expr.attrs[HW_FUNC_ATTR]
-#     print("Optimizing on the Python side")
-#     # print("Relay expression")
-#     # print(relay_expr)
-#     # profile_ops_in_net(relay_expr, "bert", "tensorrt", "rtx2070")
-#     # import sys
-#     # sys.exit(0)
-#     # visualize_network(relay_expr, "o3_bert")
-#     relay_expr = get_function_body(relay_expr)
-#
-#     comp_graph = ComputationGraph(relay_expr)
-#
-#     # Warning: ResNet-8 doesn't have tuned operators / CuDNN doesn't work for ResNet-8
-#     # target_backend = None # Consider all targets
-#
-#     # Sanity check: AutoTVM
-#     # targets = [Target.AUTOTVM]
-#
-#     # Sanity check: Only CuDNN
-#     # targets = [Target.AUTOTVM, Target.CUDNN]
-#
-#     # Enable all backends
-#     targets = [Target.AUTOTVM, Target.CUBLAS, Target.CUDNN, Target.TENSORRT]
-#     batch_size = 1
-#     pattern_registry = setup_pattern_registry(hw_name)
-#
-#     # Optimizing graph
-#     print("Computation graph created")
-#     optimizer = ExhaustiveSearcher(pattern_registry, targets)
-#     print("Optimizer created")
-#     optimizer.optimize(comp_graph, hw_name)
-#     print("It's optimized")
-#     optimized_match, post_order_match_result = optimizer.get_optimized_match(comp_graph)
-#
-#     # print("Match result: ", optimized_match)
-#     # post_order_match_result is for debugging to check if it matches the final result from the TVM DP fusion pass
-#     print("Match result")
-#     for idx, pair in enumerate(post_order_match_result):
-#         print(idx, pair)
-#     # Debug (@soo)
-#     print_matching_final(comp_graph, optimizer.loc2match)
-#     print("-" * 40)
-#     # print("Optimized match")
-#     # print(optimized_match)
-#
-#     # print(f"fusion dic (before merge): {optimized_match}")
-#     # optimized_match = ExtCompilerOpMerger(optimized_match).merge(relay_expr)
-#     # print(f"fusion dic (after  merge): {optimized_match}")
-#
-#     pattern_registry.save_to_log(hw_name)
-#
-#     return optimized_match
-
-# # Test script with ResNet-8
-# if __name__ == "__main__":
-#     batch_size = 1
-#     num_class = 1000
-
-#     # Resnet-8
-# #     image_shape = (3, 28, 28)
-# #     mod, params = testing.resnet.get_workload(num_layers=8, batch_size=batch_size, image_shape=image_shape)
-# #     relay_expr = mod["main"].body
-
-#     # Chain graph
-#     out_channels = 16
-#     batch_size = 1
-
-#     data = relay.var("data", relay.TensorType((batch_size, 3, 224, 224), "float32"))
-#     conv_weight = relay.var("weight")
-#     dense_weight = relay.var("weight")
-#     bn_gamma = relay.var("bn_gamma")
-#     bn_beta = relay.var("bn_beta")
-#     bn_mmean = relay.var("bn_mean")
-#     bn_mvar = relay.var("bn_var")
-
-#     simple_net = relay.nn.conv2d(
-#         data=data, weight=conv_weight, kernel_size=(3, 3), channels=out_channels, padding=(1, 1)
-#     )
-# #     simple_net = relay.nn.batch_norm(simple_net, bn_gamma, bn_beta, bn_mmean, bn_mvar)[0]
-# #     simple_net = relay.nn.relu(simple_net)
-# #     simple_net = relay.nn.relu(simple_net)
-#     relay_expr = simple_net
-
-#     optimize_comp_graph(relay_expr)
-
-# Deprecated get_user_fusion
-# fusion_dic[relay_expr] = "0-autotvm_relu"  # Relu
-# fusion_dic[relay_expr.args[0]] = "1-autotvm_conv2d"  # Conv
-# fusion_dic[relay_expr.args[0].args[0]] = "1-autotvm_conv2d"  # Relu
-# fusion_dic[relay_expr.args[0].args[1]] = "1-autotvm_conv2d"  # Param
-# fusion_dic[relay_expr.args[0].args[0].args[0]] = "3-cudnn_conv2d"  #
-# fusion_dic[relay_expr.args[0].args[0].args[0].args[1]] = "3-cudnn_conv2d"  # Param
-# fusion_dic[relay_expr.args[0].args[0].args[0].args[0]] = "3-cudnn_conv2d"  # Data
-
-# fusion_dic[relay_expr] = "0-tvm-default_relu" # Relu
-# fusion_dic[relay_expr.args[0]] = "1-tvm-default_conv2d" # Conv
-# fusion_dic[relay_expr.args[0].args[0]] = "2-tvm-default_relu"  # Relu
-# fusion_dic[relay_expr.args[0].args[1]] = "1-tvm-default_conv2d" # Param
-# fusion_dic[relay_expr.args[0].args[0].args[0]] = "3-tvm-default_conv2d"  #
-# fusion_dic[relay_expr.args[0].args[0].args[0].args[1]] = "3-tvm-default_conv2d" # Param
-# fusion_dic[relay_expr.args[0].args[0].args[0].args[0]]= "3-tvm-default_conv2d" # Data
-
-# Enable External compiler merging or not
-# print(f"fusion dic (before merge): {fusion_dic}")
-# fusion_dic = ExtCompilerOpMerger(fusion_dic).merge(relay_expr)
-# print(f"fusion dic (after  merge): {fusion_dic}")

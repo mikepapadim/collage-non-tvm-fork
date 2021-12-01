@@ -1,5 +1,5 @@
 from tvm.relay.expr_functor import ExprMutator
-from ..pattern_manager.utils import *
+#from collage.utils import *
 import tvm.relay as relay
 
 """

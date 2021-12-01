@@ -4,10 +4,57 @@ from collections import namedtuple
 import numpy as np
 import tvm
 
-from .pattern_language import Pattern
+from .pattern_manager.pattern_language import Pattern
 import logging
+import datetime
 import sys
+import os
+import logging
 
+
+# With more argumentsc
+def printe(*args, **kwargs):
+    print(*args, file=sys.stderr, **kwargs)
+
+class StreamToLogger(object):
+    """
+    Fake file-like stream object that redirects writes to a logger instance.
+    """
+    def __init__(self, logger, level):
+       self.logger = logger
+       self.level = level
+       self.linebuf = ''
+
+    def write(self, buf):
+        for line in buf.rstrip().splitlines():
+            self.logger.log(self.level, line.rstrip())
+        # sys.stdout.flush()
+        # sys.stderr.flush()
+
+    def flush(self):
+        pass
+
+# Add new logging level
+MYINFO = 35
+logging.addLevelName(MYINFO, 'MYINFO')
+def myinfo(self, message, *args, **kws):
+    self.log(MYINFO, message, *args, **kws)
+logging.Logger.myinfo = myinfo
+
+def setup_logging(log_dir, task_name, net_name, hw_name, logging_level=logging.WARNING, batch_size=1):
+    date_now = datetime.datetime.now()
+    this_code_path = os.path.dirname(os.path.abspath(__file__))
+    date_now = date_now.strftime("%m-%d-%H:%M")
+    file_path = f"./logs/{log_dir}/{task_name}_{hw_name}_{net_name}_bs{batch_size}_{date_now}.log"
+
+    logging.basicConfig(filename=file_path, level=logging_level,
+                        format='%(asctime)s:[%(levelname)s] %(message)s')
+
+    log = logging.getLogger('logger')
+
+
+    sys.stdout = StreamToLogger(log, MYINFO)
+    sys.stderr = StreamToLogger(log, logging.ERROR)
 
 # an example of a diamond pattern that occurs in resnet-18
 def get_diamond():
@@ -24,13 +71,6 @@ def is_data_tensor(ndarr):
   assert isinstance(ndarr, tvm.runtime.NDArray)
   return np.sum(ndarr.asnumpy()) == 0
 
-def setup_mod_inputs(mod):
-  for i in range(mod.get_num_inputs()):
-    input = mod.get_input(i)
-    if is_data_tensor(input):
-      input_shape = input.asnumpy().shape
-      logging.info(f"Data shape: {i}, {input_shape}")
-      mod.set_input(i, np.random.uniform(-1, 1, size=input_shape).astype("float32"))
 
 def convert_shape_imm_to_tuple(shape_imm):
   return tuple(map(lambda x: x.value, shape_imm))

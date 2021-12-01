@@ -1,14 +1,20 @@
 from enum import Enum, auto
-from tvm.relay.dataflow_pattern import *
+from tvm.relay.dataflow_pattern import (
+                        is_op, 
+                        wildcard, 
+                        is_tuple_get_item, 
+                        is_tuple, 
+                        is_constant
+                    )
 
 from .pattern_language import Pattern
-from .utils import get_diamond
+from collage.utils import get_diamond
 
 # Warning(@Soo): note that we ignore tuplegetitem nodes in TVM Relay,
 # because they are only used to extract result of Relay's batch_norm operator
 
 # maps op type to pattern representing it
-optype_to_pattern = {
+str_to_pattern = {
   # RESNE(X)T
   "ADD" : Pattern(is_op('add')(wildcard(), wildcard())),
   "CONV2D" : Pattern(is_op("nn.conv2d")(wildcard(), wildcard())),
@@ -125,3 +131,75 @@ relayop_to_varnames = {
   "mean": ["data"],
 }
 
+
+def convert_str_to_pattern(lst):
+    from collage.pattern_manager.default_patterns import str_to_pattern
+    return [  
+             tuple([str_to_pattern[name], constraint_func]) 
+             for name, constraint_func in lst 
+           ]
+
+# cuDNN
+cudnn_default_patterns_str = [ 
+    ["CONV2D", None], 
+    ["CONV3D", None],
+    ["SOFTMAX", None],
+    ["MAX_POOL2D", None],
+    ["AVG_POOL2D", None],
+    #["CONV2D_ADD_RELU", None],
+    #["RELU", None],
+    ["CONV3D_BIAS_RELU", None],
+    ["BATCHNORM", None],
+]
+cudnn_default_patterns = convert_str_to_pattern(cudnn_default_patterns_str)
+
+# cuBLAS
+cublas_default_patterns_str = [ 
+    ["DENSE", None], 
+    ["BATCH_MATMUL", None],
+]
+cublas_default_patterns = convert_str_to_pattern(cublas_default_patterns_str)
+
+# DNNL
+def dnnl_check_add(config):
+  for idx_shape, shape in enumerate(config._data_shape):
+    if len(shape) < 2:
+        return False
+
+    # Check if all inputs have same dimensionality
+    if idx_shape > 0 and len(shape) != prev_shape:
+        return False
+    prev_shape = len(shape)
+
+    if shape == [1, 64, 56, 56] or shape == [1,128,28,28] or shape == [1, 256, 14, 14]:
+        return False
+  return True
+
+def dnnl_check_relu(config):
+  for shape in config._data_shape:
+      if len(shape) != 4:
+          return False
+  return True
+
+dnnl_default_patterns_str = [
+  ["CONV2D", None], 
+  ["CONV3D", None], 
+  ["BATCHNORM", None], 
+  ["DENSE", None], 
+  #["ADD", dnnl_check_add]
+  ["RELU", dnnl_check_relu], 
+]
+dnnl_default_patterns = convert_str_to_pattern(dnnl_default_patterns_str)
+
+
+# MKL
+def mkl_check_dense(config):
+    dim1 = len(config._data_shape[0])
+    dim2 = len(config._data_shape[1])
+    return dim1 == 2 and dim2 == 2
+
+mkl_default_patterns_str = [ 
+    ["DENSE", mkl_check_dense], 
+    ["BATCH_MATMUL", None],
+]
+mkl_default_patterns = convert_str_to_pattern(mkl_default_patterns_str)

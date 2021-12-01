@@ -1,10 +1,29 @@
 from tvm import relay
-from ..pattern_manager.utils import *
+from collage.utils import (
+                        is_var_node, 
+                        is_constant_node, 
+                        is_tuple_node, 
+                        is_tuplegetitem_node,
+                        get_op_pattern,
+                        is_call_node,
+                        get_args,
+                        is_var,
+                    )
+from tvm.relay.dataflow_pattern import (
+                        is_op, 
+                        wildcard, 
+                        is_tuple_get_item, 
+                        is_tuple, is_constant, 
+                        WildcardPattern,
+                        CallPattern,
+                        ConstantPattern,
+                        VarPattern,
+                    )
 
 class OrderedPatternMatcher:
     def __init__(self):
         self.matched_exprs = set()
-        # @Sung
+        # @sunggg
         # TODO: This is not the best form since these two are like global variable within the object.
         # It's better to use local variable but leave them for now for the sake of time.
         self.doms_of_matched_exprs = set()

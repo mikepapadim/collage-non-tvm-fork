@@ -1,19 +1,10 @@
 from pathlib import Path
-from .utils import extract_attrs, get_input_shape
+from collage.utils import extract_attrs, get_input_shape
 import json
 import pickle
 from os import path
 
-#cur_dir_path = Path(__file__).parent.absolute()
-
-def get_opcost_log_path(hw_name, is_readable):
-  extension = "log"
-  if is_readable:
-    extension = "json"
-
-  return f"operator_cost_{hw_name}.{extension}"
-
-# @Sung: [TODO] Need to check hash conflict
+# @sunggg: [TODO] Need to check hash conflict
 # configuration includes operator name, operator type (backend operators from different targets might have the same type),
 # data shape of all free variables, and node attributes
 class Config(object):
@@ -48,13 +39,15 @@ class Config(object):
       self._pattern, self._data_shape, self._attrs, self._op_name)
 
 
-# @Sung: Do we need this per backend?
+# @sunggg: Do we need this per backend?
 
 # class to save costs of already evaluated configurations so we do not need to reevaluate them
-class MeasuredConfigs(object):
-  def __init__(self):
+class OpCostLogger(object):
+  def __init__(self, log_path = None):
     # maps configurations already measured to the measured cost (in ms)
     self.measured_configs = dict()
+    self.log_path = "operator_cost.log" if log_path is None else log_path
+    self.log_path_readable = "readable_" + self.log_path + ".json"
 
   def get_cost(self, config):
     if config in self.measured_configs:
@@ -65,31 +58,23 @@ class MeasuredConfigs(object):
   def save_cost(self, config, cost):
     self.measured_configs[config] = cost
 
-  def save_to_log(self):
-    # @Sung: Fix it for now
-    cost_log = "operator_cost.log"
-    cost_log_readable = "operator_cost.json"
-    
-    with open(cost_log, 'wb+') as log:
+  def save_to_log(self, dump_readable = False):
+    with open(self.log_path, 'wb+') as log:
       pickle.dump(self.measured_configs, log)
 
-    str_configs = dict()
-    for key, perf in self.measured_configs.items():
+    if dump_readable:
+      str_configs = dict()
+      for key, perf in self.measured_configs.items():
         str_configs[str(key)] = perf
 
-    with open(cost_log_readable, 'w+') as log:
-      json.dump(str_configs, log, sort_keys=True, indent=4)
+      with open(self.log_path_readable, 'w+') as log:
+        json.dump(str_configs, log, sort_keys=True, indent=4)
 
   # If log doesn't exist, it uses default empty dictionary.
   def load_from_log(self):
-    # @Sung: Fix it for now
-    cost_log = "operator_cost.log"
-    
-    try:
-      if path.exists(cost_log):
-        with open(cost_log, 'rb') as log:
-          print("Cost configurations loaded")
-          self.measured_configs = pickle.load(log)
-    except:
-#       pass
-      raise Exception(f'{cost_log} is not valid')
+    if path.exists(self.log_path):
+      with open(self.log_path, 'rb') as log:
+        print(">> Start with previous op cost log")
+        self.measured_configs = pickle.load(log)
+    else:
+       print(">> Start from scratch")

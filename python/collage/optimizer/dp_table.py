@@ -1,9 +1,37 @@
 # Immutable and efficient implementation for an array of bits
 from bitarray import frozenbitarray
-from ..pattern_manager.matched_operators import get_optimal_backend_pattern
-from .comp_graph import *
+from .comp_graph import (
+            CGNode,
+        )
+from collage.utils import (
+            is_constant_or_var_node,
+            is_var_node, 
+            is_constant_node, 
+            is_tuple_node, 
+            is_tuplegetitem_node,
+            get_op_pattern,
+            is_call_node,
+            get_args,
+            is_var,
+        )
+from collage.optimizer.optimizer_utils import log_matched_ops_by_method
+from tvm.relay.dataflow_pattern import (
+                        is_op, 
+                        wildcard, 
+                        is_tuple_get_item, 
+                        is_tuple, is_constant, 
+                        WildcardPattern,
+                        CallPattern,
+                        ConstantPattern,
+                        VarPattern,
+                    )
 from collections import defaultdict
 import logging
+from collage.utils import (
+            create_backend_pattern_annotation,
+            get_backend_from_backend_pattern_annotation
+        )
+from tvm import relay
 
 try:
     import Queue as Q  # ver. < 3.0
@@ -144,7 +172,7 @@ class DPTableCell:
         # It is used to get all patterns included in the optimal match
         self.prev_cell = prev_cell
 
-        # @Sung: This is a driver cost to get correct cost estimate when operators are not fused
+        # @sunggg: This is a driver cost to get correct cost estimate when operators are not fused
         # Guideline(@Soo): it should be hardware-dependent ideally.
         # For now, we use 0.01 for everything else than bert-full (0.5)
         # Bert-full has the issue of picking up inefficeint TensorRT ops for lightweighted kernel
@@ -209,10 +237,8 @@ and value is a tuple of min cost and last matched_pattern.
 key is a relay Expression (pointer) and value is a matched backend operator annotation.
 """
 class DPTable:
-    def __init__(self, pattern_registry, target_backend, hw_name, comp_graph):
+    def __init__(self, pattern_registry, comp_graph):
         self._pattern_registry = pattern_registry
-        #self._target_backend = target_backend
-        self._hw_name = hw_name
         self._comp_graph = comp_graph
 
         self._n_nodes = comp_graph.get_n_nodes() - 1
@@ -433,6 +459,6 @@ class DPTable:
             group_id += 1
 
         logging.info("=" * 50)
-        log_matched_ops_by_method("dp", self._hw_name, matched_b_op_name)
+        log_matched_ops_by_method("dp", matched_b_op_name)
 
         return optimized_match

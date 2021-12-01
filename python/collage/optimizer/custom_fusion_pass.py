@@ -1,5 +1,5 @@
 from enum import IntEnum
-from ..pattern_manager.cost_func import *
+#from ..pattern_manager.cost_func import *
 from ..optimizer.optimizer_utils import *
 
 #import gc
@@ -20,9 +20,9 @@ class CustomFusionPass(IntEnum):
         return value in cls._value2member_map_
 
 def get_opt_info_from_func(func):
-    net_name = func.attrs[NETWORK_FUNC_ATTR]
-    hw_name = func.attrs[HW_FUNC_ATTR]
-    batch_size = int(func.attrs[BATCH_SIZE_ATTR])
+    net_name = func.attrs["Network"]
+    hw_name = func.attrs["TargetHW"]
+    batch_size = int(func.attrs["BatchSize"])
 
     return net_name, hw_name, batch_size
 
@@ -38,13 +38,16 @@ def get_user_defined_match_path(net_name, hw_name, batch_size):
     return f"{LOG_PATH}/user_defined_match_{opt_info_tag}.log"
 
 def measure_end_to_end_user_defined(net, params, shape_dict, target_str, net_name, hw_name, batch_size):
+    assert 0, "Disabled for demo"
+
+    """
     assert is_function_node(net)
 
     # print(f"[measure_end_to_end_user_defined] User-defined fusion (ID: {CustomFusionPass.USER_DEFINED_FUSION})")
     net = net.with_attr("CustomFusionPass", CustomFusionPass.USER_DEFINED_FUSION)
-    net = net.with_attr(NETWORK_FUNC_ATTR, net_name)
-    net = net.with_attr(HW_FUNC_ATTR, hw_name)
-    net = net.with_attr(BATCH_SIZE_ATTR, batch_size)
+    net = net.with_attr("Network", net_name)
+    net = net.with_attr("TargetHW", hw_name)
+    net = net.with_attr("BatchSize", batch_size)
 
     # printe(f"End-To-End measure")
     # printe(f"OPT LEVEL : {OPT_LEVEL.get()}")
@@ -75,12 +78,5 @@ def measure_end_to_end_user_defined(net, params, shape_dict, target_str, net_nam
 
     perf, std = measure(ftimer, True, hw_name)
 
-    #del dev
-    #del lib
-    #del module
-    #del ftimer
-    #del input_name
-    #del input_shape
-    #gc.collect()
-
     return perf, std
+    """
