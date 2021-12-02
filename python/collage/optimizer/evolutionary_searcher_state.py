@@ -1,10 +1,24 @@
 from tvm.relay.expr_functor import ExprVisitor
 from collections import defaultdict
-#from ..pattern_manager.utils import *
-#from ..pattern_manager.default_patterns import *
 from tvm.ir import Op
 import copy
 from enum import IntEnum
+from tvm.relay.dataflow_pattern import (
+                        is_op, 
+                        wildcard, 
+                        is_tuple_get_item, 
+                        is_tuple, is_constant, 
+                        WildcardPattern,
+                        CallPattern,
+                        ConstantPattern,
+                        VarPattern,
+                    )
+from collage.utils import (
+                        is_function_node,
+                        get_group_id_from_backend_pattern_annotation,
+                        get_backend_from_backend_pattern_annotation,
+                        get_op_name_from_backend_pattern_annotation,
+                    )  
 
 EXT_COMPILERS = ["tensorrt", "dnnl"]
 
@@ -115,11 +129,11 @@ backend_to_invalid_op_checker = {
 }
 
 class OpStateToMatchTranslator():
-    def __init__(self, optimized_match, group_id_to_exprs_anno, hw_name):
+    def __init__(self, optimized_match, group_id_to_exprs_anno, backend_name = "tensorrt"):
         self.optimized_match = optimized_match
         self.group_id_to_exprs_anno = group_id_to_exprs_anno
 
-        self.graph_opt_backend_name = get_graph_level_opt_backend_name(hw_name)
+        self.graph_opt_backend_name = backend_name
         self.is_invalid_ext_compiler_op = backend_to_invalid_op_checker[self.graph_opt_backend_name]
 
         self.state_id_to_group_id = self.get_valid_op_state_by_filtering()

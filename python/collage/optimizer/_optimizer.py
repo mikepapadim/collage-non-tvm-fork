@@ -2,14 +2,11 @@ import tvm._ffi
 import tvm.driver
 from collage.pattern_manager.pattern_registry import PatternRegistry
 from collage.utils import get_function_body, is_constant_node
-
-
 from .comp_graph import ComputationGraph
 from .comp_graph_optimizer import (
                     CompGraphOptimizer,
                     AssignBackendExprVisitor,
                 )
-#from .evolutionary_searcher_state import *
 from .evolutionary_searcher import EvolutionarySearcher
 from .ext_compiler_op_annotator import ExtCompilerOpAnnotator
 from tvm.relay.op.contrib.tensorrt import prune_tensorrt_subgraphs
@@ -17,6 +14,9 @@ from tvm.relay import transform
 
 import logging
 from collage.interface import CollageContext
+from .evolutionary_searcher_state import (MatchToOpGroupTranslator, OpStateToMatchTranslator)
+from .op_match_logger import OpMatchLogger, OpMatchReader
+from collage.backend import BackendKind
 
 def setup_pattern_registry(hw_name):
     pattern_registry = PatternRegistry.get(hw_name)
@@ -116,11 +116,9 @@ def apply_external_compiler_op(mod):
 
 @tvm._ffi.register_func("collage.optimizer.get_user_fusion")
 def get_user_fusion(relay_expr):
-    logger.info("User-defined fusion")
-    net_name, hw_name, batch_size = get_opt_info_from_func(relay_expr)
+    logging.info("User-defined fusion")
     relay_expr = get_function_body(relay_expr)
-
-    match_path = get_user_defined_match_path(net_name, hw_name, batch_size)
+    match_path = CollageContext.graph_level_tmp_file
     opt_match = OpMatchReader().read(relay_expr, match_path)
 
 
@@ -202,16 +200,24 @@ def run_two_level_opt(relay_expr):
     optimized_match, relay_expr, pattern_registry, n_relay_nodes = run_op_level_opt(relay_expr)
     print("[Python side] Op-level optimization is done")
 
-    net_name, hw_name, batch_size = get_opt_info_from_func(func_expr)
-    logger.info(f"Hw name, Network name, batch_size: {hw_name}, {net_name}, {batch_size}")
+    net_name, batch_size = func_expr.attrs["Network"], int(func_expr.attrs["BatchSize"])
+    build_target = func_expr.attrs["BuildTarget"]
+    logging.info(f"Network name, batch_size: {net_name}, {batch_size}")
 
     # subgraph-level optimization for external compilers
     # Translate optimized_match into OpState class that can be used for evolutionary search
     group_id_to_exprs_anno = MatchToOpGroupTranslator().translate(relay_expr, optimized_match)
 
+    given_backends = get_backends(func_expr, CollageContext.pattern_registry.backend_registry)
+    graph_backend = None
+    for backend in given_backends:
+        if backend.kind == BackendKind.GRAPH_LEVEL:
+            assert(graph_backend is None, "Current tvm build only supports TensorRT and DNNL")
+            graph_backend = backend.name
+
     # Prepare OpStateToMatchTranslator
     # This translates Op State to optimized_match with the following two dictionaries
-    op_state_to_match_translator = OpStateToMatchTranslator(optimized_match, group_id_to_exprs_anno, hw_name)
+    op_state_to_match_translator = OpStateToMatchTranslator(optimized_match, group_id_to_exprs_anno, backend_name = graph_backend)
 
     # Run evolutionary search
     n_ops_after_first_level = len(group_id_to_exprs_anno.keys())
@@ -226,13 +232,10 @@ def run_two_level_opt(relay_expr):
     # Extract ops that are not assigned to TensorRT
 
     # Save fisrt layer best results
-    best_match_file_name = get_best_match_file_name(net_name, hw_name, batch_size)
-    first_layer_best_match_log_path = f"{best_match_file_name}_op_level.log"
-    OpMatchLogger().save(relay_expr, optimized_match, log_path=first_layer_best_match_log_path)
+    OpMatchLogger().save(relay_expr, optimized_match, log_path=CollageContext.op_level_placement_log)
 
     # Save it for user-defined fusion pass to measure end-to-end perf
-    match_path = get_user_defined_match_path(net_name, hw_name, batch_size)
-    OpMatchLogger().save(relay_expr, optimized_match, log_path=match_path)
+    OpMatchLogger().save(relay_expr, optimized_match, log_path=CollageContext.graph_level_tmp_file)
 
     # n_ops for each network (it may vary depending on trials)
     # Search space size: 2^n_ops
@@ -247,18 +250,26 @@ def run_two_level_opt(relay_expr):
     # References: ResNet50, 10 * 56 (560) takes 1559.51 s (2.78 secs per pop size per iteration)
     # References: ResNext50, 20 * 100 (2000) takes 4474 s (2.27 secs per pop size per iteration)
 
-
     # 100 * 200 (20000) leads to out of memory issues. We attribute this to large population issue of deap lib
     # Note that some of individuals may not be measured in each generation if they are measured anytime earlier
     # visualize_network(relay_expr, "o3_mobilenet_v2_after_match")
     # cx_prob = 0.8, mut_prob = 0.5, resnet50: 2.512
+    
+    # pop_size=30,   max_iter=100000) # when n_hours == 3
+    # pop_size=50,   max_iter=100000) # when n_hours == 6
+
     if n_ops > 0:
-        ev_searcher = EvolutionarySearcher(op_state_to_match_translator, relay_expr, net_name, hw_name,
-                                           batch_size=batch_size, n_ops=n_ops,
-                                           # pop_size=4, max_iter=2)  # For simpler debugging
-                                           # pop_size=10, max_iter=5) # For debugging
-                                           # pop_size=30,   max_iter=100000) # when n_hours == 3
-                                           pop_size=50,   max_iter=100000) # when n_hours == 6
+        ev_searcher = EvolutionarySearcher(
+                                            op_state_to_match_translator, 
+                                            relay_expr, 
+                                            net_name, 
+                                            build_target,
+                                            batch_size=batch_size, 
+                                            n_ops=n_ops,
+                                            match_path=CollageContext.graph_level_tmp_file,
+                                            pop_size=CollageContext.evolutionary_search_pop_size,   
+                                            max_iter=CollageContext.evolutionary_search_max_iter
+                                          ) 
         second_opt_match = ev_searcher.search(rnd_seed=64)
     else:
         second_opt_match = optimized_match
@@ -266,8 +277,7 @@ def run_two_level_opt(relay_expr):
                + " or 2) External compiler can't support ops that are not assigned to external compilers")
 
     # Update backend information to corresponding best match
-    second_layer_best_match_log_path = f"{best_match_file_name}.log"
-    second_opt_match = OpMatchReader().read(relay_expr, second_layer_best_match_log_path)
+    second_opt_match = OpMatchReader().read(relay_expr, CollageContext.graph_level_placement_log)
 
     return second_opt_match
 

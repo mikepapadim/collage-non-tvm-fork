@@ -10,7 +10,10 @@ from collage.pattern_manager.default_patterns import (
                     mkl_default_patterns, 
                     dnnl_default_patterns, 
                 )
-from collage.pattern_manager.default_pattern_rules import tvm_pattern_generator, trt_pattern_generator
+from collage.pattern_manager.default_pattern_rules import (
+                    tvm_pattern_generator, 
+                    trt_pattern_generator
+                )   
 from collage.backend.base import op_backend_cost_func 
 from collage.backend.default_backends import (
                     cg_AutoTVM, 
@@ -99,11 +102,30 @@ class CollageContext:
     backends = None
     pattern_registry = None
     op_cost_logger = None 
+    op_level_placement_log = None
+    graph_level_placement_log = None
+    graph_level_tmp_file = None
+    evolutionary_search_pop_size = 0
+    evolutionary_search_max_iter = 0
 
-    def __init__(self, mod, backends):
+    def __init__(
+                self, 
+                mod, 
+                backends, 
+                op_level_placement_log = "op_level_placement.log", 
+                graph_level_placement_log = "graph_level_placement.log",
+                graph_level_tmp_file = "graph_lv.tmp",
+                ev_pop_size = 50, 
+                ev_max_iter = 100000
+            ):
         CollageContext.pattern_registry = mod.pattern_registry
         CollageContext.op_cost_logger = mod.op_cost_logger
         CollageContext.backends = backends
+        CollageContext.op_level_placement_log = op_level_placement_log
+        CollageContext.graph_level_placement_log = graph_level_placement_log
+        CollageContext.graph_level_tmp_file = graph_level_tmp_file 
+        CollageContext.evolutionary_search_pop_size = ev_pop_size
+        CollageContext.evolutionary_search_max_iter = ev_max_iter
 
     def __enter__(self):
         print("Entering Collage")
@@ -114,7 +136,12 @@ class CollageContext:
 
 
 class Module:
-    def __init__(self, op_cost_log_path = None):
+    def __init__(
+                  self, 
+                  op_cost_log_path = None, 
+                  op_level_log_path = None, 
+                  graph_level_log_path = None,
+                ):
         backend_registry = dict()
         _register_default_backends(backend_registry)
         self.op_cost_logger = OpCostLogger(op_cost_log_path)

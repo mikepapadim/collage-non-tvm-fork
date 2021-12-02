@@ -1,8 +1,15 @@
+from tvm import relay
 from tvm.relay.expr_functor import ExprVisitor
-#from ..pattern_manager.utils import *
 import pandas as pd
 from tvm.ir import Op
 import logging
+from collage.utils import (
+                        is_function_node,
+                        get_group_id_from_backend_pattern_annotation,
+                        get_backend_from_backend_pattern_annotation,
+                    )  
+    
+
 
 LOG_PATH = f"./logs"
 EVAL_RESULT_LOG_PATH = f"{LOG_PATH}/eval_results"
@@ -51,7 +58,7 @@ class OpMatchLogger(ExprVisitor):
         df.columns = [COL_NAME]
         df.index.name = "post_dfs_order"
         df.to_csv(log_path)
-        logger.info(f"Log is saved to {log_path}")
+        logging.info(f"Log is saved to {log_path}")
 
     # Visit Relay expressions in post-order
     def visit(self, expr):

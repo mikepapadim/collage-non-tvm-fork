@@ -32,6 +32,8 @@ from collage.utils import (
             get_backend_from_backend_pattern_annotation
         )
 from tvm import relay
+from collage.interface import CollageContext
+
 
 try:
     import Queue as Q  # ver. < 3.0
@@ -445,8 +447,6 @@ class DPTable:
             # Let's keep that in mind
             for expr, op_name in opt_match_cell.match_dic.items():
                 backend_annotation = create_backend_pattern_annotation(group_id, op_name)
-                # logging.warning(f"Pair of type and annotation: {backend_annotation}")
-                # logging.warning(f"Expr: {repr(expr)}")
                 relay.analysis.update_backend(expr, backend_annotation)
                 optimized_match[expr] = backend_annotation
 
@@ -454,11 +454,9 @@ class DPTable:
             matched_b_op_name.append(backend_annotation)
 
             opt_match_cell = opt_match_cell.prev_cell
-            # if opt_match_cell is not None:
-            #     printe(opt_match_cell.best_b_op_name)
             group_id += 1
 
         logging.info("=" * 50)
-        log_matched_ops_by_method("dp", matched_b_op_name)
+        #log_matched_ops_by_method(CollageContext.op_level_placement, matched_b_op_name)
 
         return optimized_match

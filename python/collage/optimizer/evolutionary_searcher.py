@@ -23,28 +23,24 @@ from deap import base
 from deap import creator
 from deap import tools
 import pandas as pd
-#from .custom_fusion_pass import *
-#from ..pattern_manager.utils import *
-from workloads.relay_workloads import get_network_from_relay
-#from workloads.torch_workloads import *
-
+from collage.workloads.torch_workloads import get_network_from_torch
 from .op_match_logger import OpMatchLogger
-#from ..pattern_manager.cost_func import BEST_MATCH_LOG, EVAL_RESULT_LOG_PATH
 import time
 from functools import lru_cache
-
+import os
 import logging
 
 import gc
 
 # the goal ('fitness') function to be maximized
 class EvolutionarySearcher:
-    def __init__(self, op_state_to_match_translator, expr, net_name, hw_name, batch_size,
-                 n_ops, pop_size=100, cx_prob=0.5, mut_prob=0.2, max_iter=100):
+    def __init__(self, op_state_to_match_translator, expr, net_name, build_target, batch_size,
+                 n_ops, match_path, pop_size=100, cx_prob=0.5, mut_prob=0.2, max_iter=100):
 
         self.op_state_to_match_translator = op_state_to_match_translator
         self.op_match_logger = OpMatchLogger()
         self.n_ops = n_ops
+        self.match_path = match_path
 
         # Debug usage to limit # of measurements
         self.n_test = 0
@@ -56,9 +52,8 @@ class EvolutionarySearcher:
 
         # Load network to measure
         self.net_name = net_name
-        self.hw_name = hw_name
         self.batch_size = batch_size
-        self.target_str = get_build_target(hw_name)
+        self.target_str = build_target
 
         self.mod, self.params, self.shape_dict, _ = get_network_from_torch(net_name, batch_size)
         # self.mod, self.params = get_network_from_relay(net_name, 1)
@@ -142,20 +137,26 @@ class EvolutionarySearcher:
     # There is no more oom with this!
     def measure_subprocess(self):
         from subprocess import Popen, PIPE, STDOUT, DEVNULL
-        cmd = ['python3',  'testing/tmp_measure_network.py', self.net_name, self.target_str, self.hw_name, str(self.batch_size)]
+        from collage.interface import CollageContext
+
+        env = dict(os.environ)
+        assert("COLLAGE_HOME" in env)
+        script_path = f"{env['COLLAGE_HOME']}/python/collage/testing/tmp_measure_network.py"
+        autotvm_tuning_log = CollageContext.pattern_registry.backend_registry["autotvm"].kwargs["tuning_log"]
+        cmd = ['python3', script_path, self.net_name, self.target_str, str(self.batch_size), autotvm_tuning_log]
+
         p = Popen(cmd, stdout=DEVNULL, stderr=PIPE)
-        # p = Popen(cmd)
+        
         p.wait()
         out, err = p.communicate()
 
         try:
             res = err.decode("utf-8").partition("##result:")
-            # assert(len(res)==3)
             numbers = res[2].split()
             mean_perf, std_perf = float(numbers[0]), float(numbers[1])
         except:
-            logger.info("Error message from subprocess")
-            logger.info(err)
+            logging.info("Error message from subprocess")
+            logging.info(err)
             raise
 
         return mean_perf, std_perf
@@ -168,8 +169,7 @@ class EvolutionarySearcher:
 
         # Dump this opt_match in to files so that build pipeline can read it
         # USER_DEFINED_MATCH_LOG
-        match_path = get_user_defined_match_path(self.net_name, self.hw_name, self.batch_size)
-        self.op_match_logger.save(self.expr, opt_match, log_path=match_path)
+        self.op_match_logger.save(self.expr, opt_match, log_path=self.match_path)
 
         # Measure entire computation graph with opt_match
         if individual_hash in self.visited:
@@ -184,13 +184,13 @@ class EvolutionarySearcher:
 
         # Deallocate opt_match
         del opt_match
-        logger.info(f"Measurement time : {time.time()-measure_start_time:.2f}s")
+        logging.info(f"Measurement time : {time.time()-measure_start_time:.2f}s")
         return -mean_perf,
         # return sum(individual),
 
     def measure_comp_graph(self, individual):
         # Translate individual into match
-        logger.info(f"[Evaluation] Individual: {individual}")
+        logging.info(f"[Evaluation] Individual: {individual}")
 
         return self.measure_with_lru_cache(self.get_hash_of_individual(individual))
 
@@ -224,7 +224,7 @@ class EvolutionarySearcher:
         while g < self.max_iter:
             start_time = time.time()
             g += 1
-            logger.info(f"\nGeneration {g} "+ "-" * 30)
+            logging.info(f"\nGeneration {g} "+ "-" * 30)
             pop = [np.random.randint(2, size=self.n_ops).tolist() for i in range(self.pop_size)]
             if g == 1:
                 pop[0] = [0 for i in range(self.n_ops)]
@@ -233,14 +233,14 @@ class EvolutionarySearcher:
             pop_hash = list(map(self.get_hash_of_individual, pop))
             pop_eval = list(map(self.measure_with_lru_cache, pop_hash))
 
-            logger.info(f"Pop Eval: {pop_eval}")
+            logging.info(f"Pop Eval: {pop_eval}")
             max_idx = np.argmax(pop_eval, axis=0)[0]
             cur_pop_best_ind = (pop[max_idx], pop_eval[max_idx])
             best_ind, best_opt_match, best_perf = self.log_best_match_and_perf(best_ind, cur_pop_best_ind)
     
 
 
-        logger.info(f"Total search time: {time.time() - search_start_time:.2f}s")
+        logging.info(f"Total search time: {time.time() - search_start_time:.2f}s")
        
         return best_opt_match
 
@@ -261,7 +261,7 @@ class EvolutionarySearcher:
 
         cur_pop_best_ind = (cur_pop_best_ind, cur_pop_best_ind.fitness.values)
         best_ind, best_opt_match, best_perf = self.log_best_match_and_perf(best_ind, cur_pop_best_ind)
-        logger.info(f"Best individual up to this generation is {best_ind}")
+        logging.info(f"Best individual up to this generation is {best_ind}")
 
         # Logging search time and best perf so far
         total_search_time = time.time() - search_start_time
@@ -296,7 +296,7 @@ class EvolutionarySearcher:
         # MUTPB is the probability for mutating an individual
         # CXPB, MUTPB = 0.5, 0.2
 
-        logger.info("Starting evolutionary search")
+        logging.info("Starting evolutionary search")
 
         # Evaluate the entire population
         fitnesses = list(map(self.toolbox.evaluate, pop))
@@ -308,7 +308,7 @@ class EvolutionarySearcher:
                 self.save_time_perf_log(time_perf_dic, 0, -fit[0])
                 is_first = False
 
-        logger.info("  Evaluated %i individuals" % len(pop))
+        logging.info("  Evaluated %i individuals" % len(pop))
 
         # Extracting all the fitnesses of
         fits = [ind.fitness.values[0] for ind in pop]
@@ -320,7 +320,7 @@ class EvolutionarySearcher:
         while g < self.max_iter:
             # A new generation
             g = g + 1
-            logger.info("\n-- Generation %i --" % g)
+            logging.info("\n-- Generation %i --" % g)
             self.numDup = 0
 
             if g > 1:
@@ -357,13 +357,13 @@ class EvolutionarySearcher:
                 for ind, fit in zip(invalid_ind, fitnesses):
                     ind.fitness.values = fit
                 eval_end_time = time.time()
-                logger.info(f" Evaluation Elapsed time: {eval_end_time - eval_start_time:.2f}s")
-                logger.info("  Evaluated %i individuals" % len(invalid_ind))
+                logging.info(f" Evaluation Elapsed time: {eval_end_time - eval_start_time:.2f}s")
+                logging.info("  Evaluated %i individuals" % len(invalid_ind))
 
                 # The population is entirely replaced by the offspring
                 pop[:] = offspring
 
-            # Gather all the fitnesses in one list and logger.info the stats
+            # Gather all the fitnesses in one list and logging.info the stats
             fits = [ind.fitness.values[0] for ind in pop]
 
             length = len(pop)
@@ -371,13 +371,13 @@ class EvolutionarySearcher:
             sum2 = sum(x * x for x in fits)
             std = abs(sum2 / length - mean ** 2) ** 0.5
 
-            logger.info("### Current generation statistics")
-            logger.info("  Duplication Rate: %.2f" % (self.numDup/self.pop_size))
-            logger.info("  Min: %s" % min(fits))
-            logger.info("  Max: %s" % max(fits))
-            logger.info("  Avg: %s" % mean)
-            logger.info("  Std: %s" % std)
-            logger.info("")
+            logging.info("### Current generation statistics")
+            logging.info("  Duplication Rate: %.2f" % (self.numDup/self.pop_size))
+            logging.info("  Min: %s" % min(fits))
+            logging.info("  Max: %s" % max(fits))
+            logging.info("  Avg: %s" % mean)
+            logging.info("  Std: %s" % std)
+            logging.info("")
 
             # Best will choose individual with the biggest negative inference time
             # Warning(@Soo): Note that best_ind is a pair of individual and its perf (negative inference time)
@@ -386,13 +386,13 @@ class EvolutionarySearcher:
             # End the program if the time passes;
             n_hours = 3 # It was 6 before; however, 3 is enough.
             if total_search_time > n_hours * 3600:
-                logger.info(f"It exceeds search time limit ({n_hours} hrs), so it stops.")
+                logging.info(f"It exceeds search time limit ({n_hours} hrs), so it stops.")
                 break
 
-        logger.info("-- End of (successful) evolution --")
+        logging.info("-- End of (successful) evolution --")
 
-        logger.info(f"Final best individual is {best_ind}")
+        logging.info(f"Final best individual is {best_ind}")
         # Note that this search time includes time elapsed in the subprocess
-        logger.info(f"Total search time: {total_search_time:.2f}s")
+        logging.info(f"Total search time: {total_search_time:.2f}s")
 
         return best_opt_match

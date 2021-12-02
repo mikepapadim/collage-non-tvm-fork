@@ -4,7 +4,7 @@ from tvm import relay, autotvm
 from tvm.relay import transform
 
 
-EXTERNAL_COMPILERS = ['tensorrt']
+EXTERNAL_COMPILERS = ['tensorrt', 'dnnl']
 XEON_BUILD_TARGET = 'llvm -mcpu=skylake-avx512'
 NVIDIA_GPUS = ['rtx2070', 'rtx3070', 'jetson', 'v100']
 INTEL_CPUS = ['xeon']

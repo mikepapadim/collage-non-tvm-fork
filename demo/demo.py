@@ -19,16 +19,23 @@ from tvm.contrib import graph_executor as runtime
 
 
 # [TODO] 
-# "resnext50_32x4d", "resnet50_3d", "bert_full", "dcgan": performance bug
-# "nasneta": non-call node is somehow inserted to frontier q.
+# DP
+#    "resnext50_32x4d", "resnet50_3d", "bert_full", "dcgan": performance bug
+#    "nasneta": non-call node is somehow inserted to frontier q.
 #     -- collage/optimizer/comp_graph_optimizer.py
-# "bert_full"
-
+#     -- certain ops are not saved in cost logger. e.g., TRT dense in DCGAN
+# EV
+#    tmp_measure_network crashes
+#
+# Demo
+#   - Test autoscheduler
+#   - Dump and Visualize final placement 
+ 
 # Define Collage workload
 workload = {
-    "optimizer": "two-level", #"op-level",
+    "optimizer": "op-level", #"two-level", 
     "backends": ["autotvm", "cudnn", "cublas", "tensorrt"],
-    "network_name": "bert_full", #"dcgan", #"resnext50_32x4d", "resnet50_3d", 
+    "network_name": "dcgan", #"nasneta", #"bert_full", #"dcgan", #"resnext50_32x4d", "resnet50_3d", 
     "target": "cuda",
     "batch_size": 1,
 }
