@@ -33,7 +33,7 @@ from tvm.contrib import graph_executor as runtime
  
 # Define Collage workload
 workload = {
-    "optimizer": "op-level", #"two-level", 
+    "optimizer": "two-level", #"two-level", 
     "backends": ["autotvm", "cudnn", "cublas", "tensorrt"],
     "network_name": "dcgan", #"nasneta", #"bert_full", #"dcgan", #"resnext50_32x4d", "resnet50_3d", 
     "target": "cuda",
@@ -88,8 +88,8 @@ if __name__ == "__main__":
     #collage_mod.register_new_backend("TestBackend", collage.BackendKind.OP_LEVEL, cg_empty, cost_func=custom_cost_func, log="test.log")
     #print(f"Default backends: {collage_mod.get_registered_backends()}")
 
-    # this works
-    #collage_mod.backend_registry["TVM"].kwargs["tuning_log"] = "test.txt" 
+    # Override the default tuning log
+    collage_mod.update_autotvm_tuning_log("autotvm_tuning_log_rtx2070.json")
 
     # Invoke collage optimizer
     lib = collage_mod.optimize_backend_placement(**workload)    

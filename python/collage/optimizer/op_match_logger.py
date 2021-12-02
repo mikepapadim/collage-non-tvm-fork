@@ -8,13 +8,13 @@ from collage.utils import (
                         get_group_id_from_backend_pattern_annotation,
                         get_backend_from_backend_pattern_annotation,
                     )  
-    
+from collage.interface import CollageContext
 
 
-LOG_PATH = f"./logs"
-EVAL_RESULT_LOG_PATH = f"{LOG_PATH}/eval_results"
-BEST_MATCH_LOG = f"{EVAL_RESULT_LOG_PATH}/best_match"
-USER_DEFINED_MATCH_LOG = f"{LOG_PATH}/user_defined_match.log"
+#LOG_PATH = f"./logs"
+#EVAL_RESULT_LOG_PATH = f"{LOG_PATH}/eval_results"
+#BEST_MATCH_LOG = f"{EVAL_RESULT_LOG_PATH}/best_match"
+#USER_DEFINED_MATCH_LOG = f"{LOG_PATH}/user_defined_match.log"
 
 DUMMY_VAL = 0
 COL_NAME = 'annotation'
@@ -39,7 +39,7 @@ class OpMatchLogger(ExprVisitor):
         super().__init__()
 
     # Dump optimized_match into a log file in csv format using dataframe
-    def save(self, expr, optimized_match, log_path = USER_DEFINED_MATCH_LOG):
+    def save(self, expr, optimized_match, log_path = CollageContext.graph_level_tmp_file):
         assert not is_function_node(expr)
 
         self.memo_map = {}
@@ -103,7 +103,7 @@ class OpMatchReader(ExprVisitor):
 
     # read csv file and translate it into opt_match dictionary
     # (Key: expression / Value: annotation (group_id + op_name))
-    def read(self, expr, log_path = USER_DEFINED_MATCH_LOG):
+    def read(self, expr, log_path = CollageContext.graph_level_tmp_file):
         assert not is_function_node(expr)
         df = pd.read_csv(log_path, index_col=0)
         # print(list(df.index))

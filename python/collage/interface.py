@@ -175,6 +175,9 @@ class Module:
     def add_pattern_generator(self):
         assert 0, "Need to implement"
 
+    def update_autotvm_tuning_log(self, log_path):
+        self.pattern_registry.backend_registry["autotvm"].kwargs["tuning_log"] = log_path
+
     def optimize_backend_placement(
                                     self, 
                                     optimizer, 
