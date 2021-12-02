@@ -24,6 +24,7 @@ export PYTHONPATH=${COLLAGE_TVM_HOME}/python:${COLLAGE_HOME}/python:${PYTHONPATH
   * MKL
   * DNNL
 * Since Collage is essentially a profile-guided search, variance in the measurement may affect the final backend placement. For the best result, multiple runs are highly recommended. 
+* Due to some issues in the implementation, current evolutionary search only supports network implemented in `get_network_from_torch()`. If an user want to try new network, the network must be implemented with this function.
 
 
 # Cite
