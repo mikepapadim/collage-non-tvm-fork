@@ -3,7 +3,7 @@ System for automated integration of deep learning backends. Our implementation u
 
 # Installation
 1. Go to `tvm/` and install tvm. Make sure backend libaries of interest are built together. [TVM installation guide](https://tvm.apache.org/docs/install/index.html)
-2. Add following environment variables
+2. Declare following environment variables
 ```
 export COLLAGE_HOME=/path/to/collage/repo
 export COLLAGE_TVM_HOME=${COLLAGE_HOME}/tvm
@@ -14,7 +14,7 @@ export PYTHONPATH=${COLLAGE_TVM_HOME}/python:${COLLAGE_HOME}/python:${PYTHONPATH
 1. `cd demo/`
 2. `python3 demo.py`
 
-# Known issues
+# Known Issues
 * As Collage uses TVM as its code generator, it cannot support backends that TVM is unable to build. Tested backends are
   * TVM w/o tuning
   * TVM w/ AutoTVM
