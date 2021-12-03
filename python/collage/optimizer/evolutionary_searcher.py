@@ -146,7 +146,22 @@ class EvolutionarySearcher:
         script_path = f"{env['COLLAGE_HOME']}/python/collage/testing/tmp_measure_network.py"
         autotvm_tuning_log = CollageContext.pattern_registry.backend_registry["autotvm"].kwargs["tuning_log"]
         backend_list_str = ",".join(CollageContext.backends)
-        cmd = ['python3', script_path, self.net_name, self.target_str, str(self.batch_size), autotvm_tuning_log, backend_list_str]
+        cmd = [
+                'python3', 
+                script_path, 
+                self.net_name, 
+                self.target_str, 
+                str(self.batch_size), 
+                autotvm_tuning_log, 
+                backend_list_str,
+                CollageContext.op_cost_logger.log_path,
+                CollageContext.op_level_placement_log,
+                CollageContext.graph_level_placement_log,
+                CollageContext.graph_level_tmp_file,
+                str(CollageContext.evolutionary_search_pop_size),
+                str(CollageContext.evolutionary_search_max_iter),
+                str(CollageContext.evolutionary_search_budget)
+            ]
 
         p = Popen(cmd, stdout=DEVNULL, stderr=PIPE)
 
@@ -202,20 +217,15 @@ class EvolutionarySearcher:
 
         # Dump the best match
         best_opt_match = self.op_state_to_match_translator.translate(best_ind[0])
+        self.op_match_logger.save(self.expr, best_opt_match, log_path=CollageContext.graph_level_placement_log)
 
-        best_match_file_name = get_best_match_file_name(self.net_name, self.hw_name, self.batch_size)
-        best_match_log_path = f"{best_match_file_name}.log"
-        self.op_match_logger.save(self.expr, best_opt_match, log_path=best_match_log_path)
-
-        # Dump the best performance with best match
-        best_perf_log_path = f"{best_match_file_name}_perf.log"
-
+    
         # This is inference time in ms
         best_perf = -self.get_ind_perf_from_pair(best_ind)
-        with open(best_perf_log_path, "w") as best_output:
-            best_output.write(f"Best perf: {best_perf}\n")
-            best_output.write(f"Best match: {best_ind[0]}\n")
-            best_output.write(f"-> 0 means optimal from first pass and 1 means TensorRT")
+        #with open(best_perf_log_path, "w") as best_output:
+        #    best_output.write(f"Best perf: {best_perf}\n")
+        #    best_output.write(f"Best match: {best_ind[0]}\n")
+        #     best_output.write(f"-> 0 means optimal from first pass and 1 means TensorRT")
 
         return best_ind, best_opt_match, best_perf
 
@@ -252,7 +262,6 @@ class EvolutionarySearcher:
         df = pd.DataFrame.from_dict(time_perf_dic, orient="index")
 
         # For better printing
-        opt_info_tag = get_opt_info_tag(self.net_name, self.hw_name, self.batch_size)
         time_perf_log_path = f"{EVAL_RESULT_LOG_PATH}/time_perf_{opt_info_tag}.log"
         df.columns = ["best performance (ms)"]
         df.index.name = "search time (secs)"
@@ -267,12 +276,12 @@ class EvolutionarySearcher:
         logging.info(f"Best individual up to this generation is {best_ind}")
 
         # Logging search time and best perf so far
-        total_search_time = time.time() - search_start_time
-        self.save_time_perf_log(time_perf_dic, total_search_time, best_perf)
+        
+        #self.save_time_perf_log(time_perf_dic, total_search_time, best_perf)
+        
+        return best_ind, best_opt_match, time_perf_dic
 
-        return best_ind, best_opt_match, time_perf_dic, total_search_time
-
-    def search(self, rnd_seed = 64):
+    def search(self, rnd_seed = 64, n_hours = 0.5):
         # Initialize
         search_start_time = time.time()
         random.seed(rnd_seed)
@@ -308,7 +317,7 @@ class EvolutionarySearcher:
             ind.fitness.values = fit
             if is_first:
                 # Log best op-level performance to show the trend
-                self.save_time_perf_log(time_perf_dic, 0, -fit[0])
+                #self.save_time_perf_log(time_perf_dic, 0, -fit[0])
                 is_first = False
 
         logging.info("  Evaluated %i individuals" % len(pop))
@@ -384,10 +393,11 @@ class EvolutionarySearcher:
 
             # Best will choose individual with the biggest negative inference time
             # Warning(@Soo): Note that best_ind is a pair of individual and its perf (negative inference time)
-            best_ind, best_opt_match, time_perf_dic, total_search_time = self.update_best_ind_and_time_perf(best_ind, pop, search_start_time, time_perf_dic)
-
+            best_ind, best_opt_match, time_perf_dic = self.update_best_ind_and_time_perf(best_ind, pop, search_start_time, time_perf_dic)
+            
+            total_search_time = time.time() - search_start_time
             # End the program if the time passes;
-            n_hours = 3 # It was 6 before; however, 3 is enough.
+            # It was 6 before; however, 3 is enough.
             if total_search_time > n_hours * 3600:
                 logging.info(f"It exceeds search time limit ({n_hours} hrs), so it stops.")
                 break

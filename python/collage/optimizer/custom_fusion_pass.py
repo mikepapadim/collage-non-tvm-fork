@@ -42,7 +42,23 @@ def get_opt_info_tag(net_name, hw_name, batch_size):
 #    return f"{LOG_PATH}/user_defined_match_{opt_info_tag}.log"
 
 
-def measure_end_to_end_user_defined(net, params, shape_dict, build_target, net_name, batch_size, autotvm_tuning_log, backends):
+def measure_end_to_end_user_defined(
+            net, 
+            params, 
+            shape_dict, 
+            build_target, 
+            net_name, 
+            batch_size, 
+            autotvm_tuning_log, 
+            backends,
+            op_cost_log_path,
+            op_level_placement_log,
+            graph_level_placement_log, 
+            graph_level_tmp_file,
+            evolutionary_search_pop_size,
+            evolutionary_search_max_iter,
+            evolutionary_search_budget
+        ):
     assert is_function_node(net)
 
     net = net.with_attr("CustomFusionPass", CustomFusionPass.USER_DEFINED_FUSION)
@@ -50,7 +66,16 @@ def measure_end_to_end_user_defined(net, params, shape_dict, build_target, net_n
     net = net.with_attr("BuildTarget", build_target)
     net = net.with_attr("BatchSize", batch_size)
 
-    with CollageContext(collage.Module(), backends):
+    with CollageContext(
+                collage.Module(op_cost_log_path), 
+                backends,
+                op_level_placement_log,
+                graph_level_placement_log, 
+                graph_level_tmp_file,
+                evolutionary_search_pop_size,
+                evolutionary_search_max_iter,
+                evolutionary_search_budget
+            ):
         with autotvm.apply_history_best(autotvm_tuning_log):
             with tvm.transform.PassContext(opt_level=3):
                 lib = relay.build(net, build_target, params=params)

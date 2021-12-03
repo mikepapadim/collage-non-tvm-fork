@@ -4,6 +4,7 @@ import tvm.relay.testing as testing
 
 from graphviz import Digraph
 import os
+from collage.utils import get_backend_from_backend_pattern_annotation
 
 def _traverse_expr(node, node_dict):
     if node in node_dict:
@@ -52,7 +53,6 @@ def visualize_network(expr, file_name, expr2node=None):
         node_color = get_node_color(node)
 
         if isinstance(node, relay.Function):
-            # elif isinstance(node, relay.expr.Function):
             dot.node(str(node_idx), f'Function ({node_idx})', shape='doubleoctagon')
             dot.edge(str(node_dict[node.body]), str(node_idx))
 

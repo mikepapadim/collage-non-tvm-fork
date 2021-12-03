@@ -117,9 +117,10 @@ class CollageContext:
                 backends,
                 op_level_placement_log = "op_level_placement.log",
                 graph_level_placement_log = "graph_level_placement.log",
-                graph_level_tmp_file = f"{this_code_path}/testing/graph_lv.tmp",
+                graph_level_tmp_file = "graph_lv.tmp",
                 ev_pop_size = 50,
-                ev_max_iter = 100000
+                ev_max_iter = 100000,
+                search_budget = 0.5
             ):
         CollageContext.pattern_registry = mod.pattern_registry
         CollageContext.op_cost_logger = mod.op_cost_logger
@@ -129,6 +130,7 @@ class CollageContext:
         CollageContext.graph_level_tmp_file = graph_level_tmp_file
         CollageContext.evolutionary_search_pop_size = ev_pop_size
         CollageContext.evolutionary_search_max_iter = ev_max_iter
+        CollageContext.evolutionary_search_budget = search_budget
 
     def __enter__(self):
         print("Entering Collage")
@@ -136,14 +138,20 @@ class CollageContext:
     def __exit__(self, exc_type, exc_value, tb):
         print("Exiting Collage")
 
+def get_absolute_path(path):
+    if not os.path.isabs(path):
+        path = os.path.abspath(os.getcwd()) + "/" + path
+    return path
+        
 
 
 class Module:
     def __init__(
                   self,
                   op_cost_log_path = None,
-                  op_level_log_path = None,
-                  graph_level_log_path = None,
+                  op_level_placement_log_path= None,
+                  graph_level_placement_log_path = None,
+                  graph_level_tmp_file_path = None
                 ):
         backend_registry = dict()
         _register_default_backends(backend_registry)
@@ -154,6 +162,13 @@ class Module:
                         backend_registry,
                         self.op_cost_logger,
                     )
+        op_level_placement_log_path = "op_level_placement.log" if op_level_placement_log_path is None else op_level_placement_log_path
+        graph_level_placement_log_path = "graph_level_placement.log" if graph_level_placement_log_path is None else graph_level_placement_log_path
+        graph_level_tmp_file_path = "/tmp/graph_lv.tmp" if graph_level_tmp_file_path is None else graph_level_tmp_file_path
+        
+        self.op_level_placement_log = get_absolute_path(op_level_placement_log_path)
+        self.graph_level_placement_log = get_absolute_path(graph_level_placement_log_path)
+        self.graph_level_tmp_file = get_absolute_path(graph_level_tmp_file_path)
 
 
     def register_new_backend(self, name, kind, codegen, **kwargs):
@@ -207,8 +222,21 @@ class Module:
 
         autotvm_tuning_log = self.pattern_registry.backend_registry["autotvm"].kwargs["tuning_log"]
 
+        ev_pop_size = kwargs["ev_pop_size"] if "ev_pop_size" in kwargs else 50
+        ev_max_iter = kwargs["ev_max_iter"] if "ev_pop_size" in kwargs else 100000
+        ev_budget = kwargs["ev_budget"] if "ev_budget" in kwargs else 0.3
+
         # Optimize
-        with CollageContext(self, backends):
+        with CollageContext(
+                    self, 
+                    backends, 
+                    self.op_level_placement_log, 
+                    self.graph_level_placement_log, 
+                    self.graph_level_tmp_file, 
+                    ev_pop_size, 
+                    ev_max_iter,
+                    ev_budget
+                ):
             with autotvm.apply_history_best(autotvm_tuning_log):
                 with tvm.transform.PassContext(opt_level=3):
                     lib = relay.build(net, target, params=params)

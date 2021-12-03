@@ -166,6 +166,8 @@ def run_op_level_opt(func_expr):
 
     logging.info("[Op-Level: DP] It finished optimizing comp graph and assigning backend ops to Relay Expr (backend attr)")
 
+    # Save fisrt layer best results
+    OpMatchLogger().save(relay_expr, optimized_match, log_path=CollageContext.op_level_placement_log)
     return optimized_match, relay_expr, pattern_registry, n_relay_nodes
 
 
@@ -231,9 +233,6 @@ def run_two_level_opt(relay_expr):
     # On the second level, Consider only ops that are not assigned to TensorRT
     # Extract ops that are not assigned to TensorRT
 
-    # Save fisrt layer best results
-    OpMatchLogger().save(relay_expr, optimized_match, log_path=CollageContext.op_level_placement_log)
-
     # Save it for user-defined fusion pass to measure end-to-end perf
     OpMatchLogger().save(relay_expr, optimized_match, log_path=CollageContext.graph_level_tmp_file)
 
@@ -270,7 +269,7 @@ def run_two_level_opt(relay_expr):
                                             pop_size=CollageContext.evolutionary_search_pop_size,   
                                             max_iter=CollageContext.evolutionary_search_max_iter
                                           ) 
-        second_opt_match = ev_searcher.search(rnd_seed=64)
+        second_opt_match = ev_searcher.search(rnd_seed=64, n_hours = CollageContext.evolutionary_search_budget)
     else:
         second_opt_match = optimized_match
         logger.info("No need for subgraph optimization because either 1) op optimization pass only chose Ext compiler ops"

@@ -234,14 +234,9 @@ class CompGraphOptimizer:
         # @sunggg: run all pattern generators
         all_exprs = []
         def _traverse_expr(node, node_list):
-            if not is_call_node(node):
-                return
             if node in node_list:
                 return
-            if isinstance(node, tvm.ir.op.Op):
-                return
-            node_list.append(node)
-
+            node_list.append(node)        
         relay.analysis.post_order_visit(root_expr, lambda expr: _traverse_expr(expr, all_exprs))
 
         
@@ -252,8 +247,9 @@ class CompGraphOptimizer:
                     for pattern in generated_patterns:
                         self._pattern_registry.add_backend_pattern(backend, pattern, None)
         
+        logging.info(f"# Registered patterns")
         for pat in self._pattern_registry.all_backend_patterns:
-            logging.info(f"Checking... {repr(pat)}")
+            logging.info(f"  - {repr(pat)}")
 
         # For backend ablation study where we are given a list of backends,
         # We need TVM (no-tuning) fall back operator patterns to have full op coverage

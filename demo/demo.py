@@ -4,7 +4,8 @@ import collage
 import tvm
 import logging
 from tvm.contrib import graph_executor as runtime
-#from collage.analysis.visualize import visualize_network
+from collage.analysis.visualize import visualize_network
+
 
 # [NOTE]
 # * Operator cost will be logged at "operator_cost.log". 
@@ -26,17 +27,18 @@ from tvm.contrib import graph_executor as runtime
 #     -- collage/optimizer/comp_graph_optimizer.py
 #     -- certain ops are not saved in cost logger. e.g., TRT dense in DCGAN
 # EV
-#    tmp_measure_network crashes
+#    Pass Collage context info to subprocess
+#    Best placement dump
+#    Reload best placement
 #
 # Demo
 #   - Test autoscheduler
-#   - Dump and Visualize final placement 
  
 # Define Collage workload
 workload = {
     "optimizer": "op-level", #"two-level", 
     "backends": ["autotvm", "cudnn", "cublas", "tensorrt"],
-    "network_name": "dcgan", #"nasneta", #"bert_full", #"dcgan", #"resnext50_32x4d", "resnet50_3d", 
+    "network_name": "resnet50_3d", #"nasneta", #"bert_full", #"dcgan", #"resnext50_32x4d", "resnet50_3d", 
     "target": "cuda",
     "batch_size": 1,
 }
@@ -79,6 +81,8 @@ def setup_workload(workload):
 if __name__ == "__main__":
     setup_workload(workload)
 
+    trt_mean_perf, trt_std_perf = run_with_tensorrt(workload)
+
     collage_mod = collage.Module()
     print(f"Default backends: {collage_mod.get_registered_backends()}")
 
@@ -94,9 +98,9 @@ if __name__ == "__main__":
 
     # Invoke collage optimizer
     lib = collage_mod.optimize_backend_placement(**workload)    
-    
+    visualize_network(lib.ir_mod["main"], "collage_final_placement")  # This does not reflect our placement
     collage_mean_perf, collage_std_perf = measure_perf(lib, workload)
-    trt_mean_perf, trt_std_perf = run_with_tensorrt(workload)
+   
 
     print(f"Network: {workload['network_name']}")
     print(f"  Run with TensorRT (mean, std) = ({trt_mean_perf:.4f}+-{trt_std_perf:.4f})")

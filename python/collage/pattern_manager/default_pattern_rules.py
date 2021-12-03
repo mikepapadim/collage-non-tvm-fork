@@ -17,9 +17,13 @@ from tvm.relay.dataflow_pattern import (
                         CallPattern,
                         ConstantPattern,
                         VarPattern,
+                        TuplePattern,
+                        TupleGetItemPattern,
                     )
 from .base_pattern_rule import BasePatternRule, BasePatternGenerator
 from collage.pattern_manager.pattern_language import Pattern
+import tvm
+
 
 # @ Sung: Check all nodes between src and sink by using fcheck (checks fusion conditions)
 # Start from sink
@@ -52,16 +56,22 @@ def check_path(src, node, fcheck, path = [], paths = []):
 
 
 def generate_relay_pattern_node(node):
+    # @sunggg: hacky solution to deal with tuple
+    # Unlike is_op(), is_tuple() expects to accept operands at its initialization
     if is_tuple_node(node):
-        return is_tuple(), len(node.fields)
-    #elif is_tuplegetitem_node(node):
-    #    return is_tuple_get_item, 2
+        return "tuple", len(node.fields)
+    elif is_tuplegetitem_node(node):
+        print(node, dir(node))
+        assert 0
+        return is_tuple_get_item, 2
     elif is_call_node(node):
         return is_op(node.op.name), len(node.args)
     elif is_constant_node(node):
         return is_constant(), 0
     elif is_var_node(node):
         return is_var(), 0
+    elif isinstance(node, tvm.ir.op.Op):
+        return is_op(node.name), node.num_inputs
     else:
         raise Exception(f"Unsupported type ({type(node)})")
 
@@ -119,7 +129,11 @@ def generate_relay_pattern(src, sink, paths = None, cur_pattern_type = None, nod
         assert(cur_pattern_type is None)
         rpattern, num_operands = generate_relay_pattern_node(sink)
         operands = [wildcard() for __ in range(num_operands)]
-        return rpattern(*operands), get_op_pattern(sink), 1
+        # @sunggg: hacky solution to deal with tuple
+        if rpattern == "tuple":
+            return is_tuple(operands), get_op_pattern(sink), 1
+        else: 
+            return rpattern(*operands), get_op_pattern(sink), 1
 
     else:
         # Handle multiple nodes
@@ -141,7 +155,12 @@ def generate_relay_pattern(src, sink, paths = None, cur_pattern_type = None, nod
         assert(src in nodeToPatternMap)
         pnode, num_operands = nodeToPatternMap[src]
         operands = [wildcard() for __ in range(num_operands)]
-        nodeToPatternMap[src] = (pnode(*operands), 0) # it's zero cause we already handled.
+
+        # @sunggg: hacky solution to deal with tuple
+        if pnode == "tuple":
+            nodeToPatternMap[src] = (is_tuple(operands), 0) # it's zero cause we already handled.    
+        else:
+            nodeToPatternMap[src] = (pnode(*operands), 0) # it's zero cause we already handled.
         rpattern = build_pattern_with_map(src, sink, nodeToPatternMap)
 
         return rpattern, cur_pattern_type, cnt
@@ -166,12 +185,13 @@ class DefaultPatternGenerator(BasePatternGenerator):
             return generated_patterns # returns empty node
 
         # Chekc anchor node
-        if self.pattern_rule.check(expr):
-            if not is_tuple_node(expr):
-                anchor_pattern, anchor_type, num_ops = generate_relay_pattern(expr, expr)
-                # Verify if it is legitimate
-                if self.pattern_rule.verify(anchor_pattern):
-                    generated_patterns.append(Pattern(anchor_pattern))
+        if is_tuple_node(expr) or self.pattern_rule.check(expr):
+            anchor_pattern, anchor_type, num_ops = generate_relay_pattern(expr, expr)
+            
+            # Verify if it is legitimate
+            if self.pattern_rule.verify(anchor_pattern):
+                generated_patterns.append(Pattern(anchor_pattern))
+           
         
             def simulate_fusion(src, sink, cur_type, num_ops, nodeToPatternMap = dict()):
                 assert(src is not None)
@@ -319,7 +339,13 @@ class TRT_PatternRule(BasePatternRule):
         optype2enum = TRT_PatternRule.optype2enum
         ops_to_exclude = TRT_PatternRule.ops_to_exclude
 
-        return (get_op_pattern(expr) != optype2enum["kOpaque"]) and (expr.op.name not in ops_to_exclude)
+        if is_call_node(expr):
+            return (expr.op.name not in ops_to_exclude)
+
+        if isinstance(expr, tvm.ir.op.Op):
+            return (expr.name in ops_to_exclude)
+
+        return (get_op_pattern(expr) != optype2enum["kOpaque"]) 
     
     # TensorRT seems to follow similar algorithm with TVM.
     # For simplicity, we use the same fusion rule for now.

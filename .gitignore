@@ -240,3 +240,7 @@ cmake-build-debug-fleet
 
 # Exception for backend-aware-graph-opt project
 !tvm/3rdparty
+
+# backend placement
+*.pdf
+*.gv
