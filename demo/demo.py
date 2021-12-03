@@ -4,6 +4,7 @@ import collage
 import tvm
 import logging
 from tvm.contrib import graph_executor as runtime
+#from collage.analysis.visualize import visualize_network
 
 # [NOTE]
 # * Operator cost will be logged at "operator_cost.log". 
@@ -33,7 +34,7 @@ from tvm.contrib import graph_executor as runtime
  
 # Define Collage workload
 workload = {
-    "optimizer": "two-level", #"two-level", 
+    "optimizer": "op-level", #"two-level", 
     "backends": ["autotvm", "cudnn", "cublas", "tensorrt"],
     "network_name": "dcgan", #"nasneta", #"bert_full", #"dcgan", #"resnext50_32x4d", "resnet50_3d", 
     "target": "cuda",
@@ -93,6 +94,7 @@ if __name__ == "__main__":
 
     # Invoke collage optimizer
     lib = collage_mod.optimize_backend_placement(**workload)    
+    
     collage_mean_perf, collage_std_perf = measure_perf(lib, workload)
     trt_mean_perf, trt_std_perf = run_with_tensorrt(workload)
 
