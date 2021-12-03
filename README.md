@@ -1,3 +1,5 @@
+# CAUTION: Currently, this repo is under refactoring. Please checkout around Dec 15th. 
+
 # Collage
 System for automated integration of deep learning backends. Our implementation uses TVM as its code generator. 
 
