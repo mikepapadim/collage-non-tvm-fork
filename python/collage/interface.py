@@ -1,46 +1,47 @@
 import tvm
+import os
 from tvm import relay, autotvm
 from collage.pattern_manager.pattern_registry import PatternRegistry
 from collage.measurer.op_cost_logger import OpCostLogger
 from collage.backend import (Backend, BackendKind)
 
 from collage.pattern_manager.default_patterns import (
-                    cudnn_default_patterns, 
-                    cublas_default_patterns, 
-                    mkl_default_patterns, 
-                    dnnl_default_patterns, 
+                    cudnn_default_patterns,
+                    cublas_default_patterns,
+                    mkl_default_patterns,
+                    dnnl_default_patterns,
                 )
 from collage.pattern_manager.default_pattern_rules import (
-                    tvm_pattern_generator, 
+                    tvm_pattern_generator,
                     trt_pattern_generator
-                )   
-from collage.backend.base import op_backend_cost_func 
+                )
+from collage.backend.base import op_backend_cost_func
 from collage.backend.default_backends import (
-                    cg_AutoTVM, 
-                    cg_TensorRT, 
-                    cg_cuDNN, 
-                    cg_cuBLAS, 
-                    cg_MKL, 
-                    cg_DNNL, 
+                    cg_AutoTVM,
+                    cg_TensorRT,
+                    cg_cuDNN,
+                    cg_cuBLAS,
+                    cg_MKL,
+                    cg_DNNL,
                 )
 
 
 def _register_new_backend(
-            registry, 
-            name, 
-            kind, 
-            codegen, 
-            patterns = None, 
+            registry,
+            name,
+            kind,
+            codegen,
+            patterns = None,
             pattern_generator = None,
-            cost_func = None, 
+            cost_func = None,
             **kwargs
         ):
 
     assert(name not in registry)
     registry[name] = Backend(
-            name = name, 
-            kind = kind, 
-            codegen = codegen, 
+            name = name,
+            kind = kind,
+            codegen = codegen,
             patterns = patterns,
             pattern_generator = pattern_generator,
             cost_func = cost_func,
@@ -49,59 +50,61 @@ def _register_new_backend(
 
 
 def _register_default_backends(registry):
-    _register_new_backend(registry, 
-                name = "autotvm", 
-                kind = BackendKind.OP_LEVEL, 
-                codegen = cg_AutoTVM, 
-                patterns = None, 
+    _register_new_backend(registry,
+                name = "autotvm",
+                kind = BackendKind.OP_LEVEL,
+                codegen = cg_AutoTVM,
+                patterns = None,
                 pattern_generator = tvm_pattern_generator, # valid_op + fusion_rule
-                cost_func = None, 
+                cost_func = None,
                 tuning_log=f"autotvm_tuning_log.json"
             )
 
-    _register_new_backend(registry, 
-                name = "cudnn", 
-                kind = BackendKind.OP_LEVEL, 
+    _register_new_backend(registry,
+                name = "cudnn",
+                kind = BackendKind.OP_LEVEL,
                 codegen = cg_cuDNN,
                 patterns = cudnn_default_patterns,
                 cost_func = op_backend_cost_func,
             )
 
-    _register_new_backend(registry, 
-                name = "cublas", 
-                kind = BackendKind.OP_LEVEL, 
+    _register_new_backend(registry,
+                name = "cublas",
+                kind = BackendKind.OP_LEVEL,
                 codegen = cg_cuBLAS,
                 patterns = cublas_default_patterns,
                 cost_func = op_backend_cost_func,
             )
 
-    _register_new_backend(registry, 
-                name = "tensorrt", 
-                kind = BackendKind.GRAPH_LEVEL, 
+    _register_new_backend(registry,
+                name = "tensorrt",
+                kind = BackendKind.GRAPH_LEVEL,
                 codegen = cg_TensorRT,
                 pattern_generator = trt_pattern_generator,
             )
 
-    _register_new_backend(registry, 
-                name = "mkl", 
-                kind = BackendKind.OP_LEVEL, 
+    _register_new_backend(registry,
+                name = "mkl",
+                kind = BackendKind.OP_LEVEL,
                 codegen = cg_MKL,
                 patterns = mkl_default_patterns,
                 cost_func = op_backend_cost_func,
             )
 
-    _register_new_backend(registry, 
-                name = "dnnl", 
-                kind = BackendKind.GRAPH_LEVEL, 
+    _register_new_backend(registry,
+                name = "dnnl",
+                kind = BackendKind.GRAPH_LEVEL,
                 codegen = cg_DNNL,
                 patterns = dnnl_default_patterns,
             )
 
 
+this_code_path = os.path.dirname(os.path.abspath(__file__))
+
 class CollageContext:
     backends = None
     pattern_registry = None
-    op_cost_logger = None 
+    op_cost_logger = None
     op_level_placement_log = None
     graph_level_placement_log = None
     graph_level_tmp_file = None
@@ -109,13 +112,13 @@ class CollageContext:
     evolutionary_search_max_iter = 0
 
     def __init__(
-                self, 
-                mod, 
-                backends, 
-                op_level_placement_log = "op_level_placement.log", 
+                self,
+                mod,
+                backends,
+                op_level_placement_log = "op_level_placement.log",
                 graph_level_placement_log = "graph_level_placement.log",
-                graph_level_tmp_file = "graph_lv.tmp",
-                ev_pop_size = 50, 
+                graph_level_tmp_file = f"{this_code_path}/testing/graph_lv.tmp",
+                ev_pop_size = 50,
                 ev_max_iter = 100000
             ):
         CollageContext.pattern_registry = mod.pattern_registry
@@ -123,7 +126,7 @@ class CollageContext:
         CollageContext.backends = backends
         CollageContext.op_level_placement_log = op_level_placement_log
         CollageContext.graph_level_placement_log = graph_level_placement_log
-        CollageContext.graph_level_tmp_file = graph_level_tmp_file 
+        CollageContext.graph_level_tmp_file = graph_level_tmp_file
         CollageContext.evolutionary_search_pop_size = ev_pop_size
         CollageContext.evolutionary_search_max_iter = ev_max_iter
 
@@ -137,9 +140,9 @@ class CollageContext:
 
 class Module:
     def __init__(
-                  self, 
-                  op_cost_log_path = None, 
-                  op_level_log_path = None, 
+                  self,
+                  op_cost_log_path = None,
+                  op_level_log_path = None,
                   graph_level_log_path = None,
                 ):
         backend_registry = dict()
@@ -148,19 +151,19 @@ class Module:
         self.op_cost_logger.load_from_log()
 
         self.pattern_registry = PatternRegistry(
-                        backend_registry, 
+                        backend_registry,
                         self.op_cost_logger,
                     )
-        
-    
+
+
     def register_new_backend(self, name, kind, codegen, **kwargs):
         _register_new_backend(self.pattern_registry.backend_registry, name, kind, codegen, **kwargs)
-    
+
     def update_existing_backend(self, name, kind, codegen, **kwargs):
         assert(name in registry)
         registry[name] = registry[name].kind = kind
         registry[name] = registry[name].codegen = codegen
-        registry[name] = registry[name].kwargs = kwargs 
+        registry[name] = registry[name].kwargs = kwargs
 
     def get_registered_backends(self):
         return self.pattern_registry.get_registered_backends()
@@ -179,14 +182,14 @@ class Module:
         self.pattern_registry.backend_registry["autotvm"].kwargs["tuning_log"] = log_path
 
     def optimize_backend_placement(
-                                    self, 
-                                    optimizer, 
-                                    backends, 
-                                    network_name, 
-                                    mod, 
-                                    params, 
+                                    self,
+                                    optimizer,
+                                    backends,
+                                    network_name,
+                                    mod,
+                                    params,
                                     target,
-                                    batch_size, 
+                                    batch_size,
                                     **kwargs
                                 ):
         net = mod["main"]
@@ -197,7 +200,7 @@ class Module:
         net = net.with_attr("CustomFusionPass", optimizer)
         net = net.with_attr("BuildTarget", target)
 
-        # We need to pass these for now. 
+        # We need to pass these for now.
         net = net.with_attr("Network", network_name)
         net = net.with_attr("BatchSize", batch_size)
         net = net.with_attr("BackendList", ",".join(backends))
@@ -211,4 +214,4 @@ class Module:
                     lib = relay.build(net, target, params=params)
 
         return lib
-    
+

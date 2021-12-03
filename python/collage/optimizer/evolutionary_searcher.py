@@ -32,6 +32,8 @@ import logging
 
 import gc
 
+from collage.interface import CollageContext
+
 # the goal ('fitness') function to be maximized
 class EvolutionarySearcher:
     def __init__(self, op_state_to_match_translator, expr, net_name, build_target, batch_size,
@@ -143,10 +145,11 @@ class EvolutionarySearcher:
         assert("COLLAGE_HOME" in env)
         script_path = f"{env['COLLAGE_HOME']}/python/collage/testing/tmp_measure_network.py"
         autotvm_tuning_log = CollageContext.pattern_registry.backend_registry["autotvm"].kwargs["tuning_log"]
-        cmd = ['python3', script_path, self.net_name, self.target_str, str(self.batch_size), autotvm_tuning_log]
+        backend_list_str = ",".join(CollageContext.backends)
+        cmd = ['python3', script_path, self.net_name, self.target_str, str(self.batch_size), autotvm_tuning_log, backend_list_str]
 
         p = Popen(cmd, stdout=DEVNULL, stderr=PIPE)
-        
+
         p.wait()
         out, err = p.communicate()
 
@@ -237,11 +240,11 @@ class EvolutionarySearcher:
             max_idx = np.argmax(pop_eval, axis=0)[0]
             cur_pop_best_ind = (pop[max_idx], pop_eval[max_idx])
             best_ind, best_opt_match, best_perf = self.log_best_match_and_perf(best_ind, cur_pop_best_ind)
-    
+
 
 
         logging.info(f"Total search time: {time.time() - search_start_time:.2f}s")
-       
+
         return best_opt_match
 
     def save_time_perf_log(self, time_perf_dic, total_search_time, best_perf):

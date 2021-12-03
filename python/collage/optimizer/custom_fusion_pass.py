@@ -1,12 +1,17 @@
 from enum import IntEnum
 from collage.utils import is_function_node
 from collage.measurer.base import (
-            NUM_MEASUREMENTS_PER_REPEAT, 
+            NUM_MEASUREMENTS_PER_REPEAT,
             NUM_REPEATS,
             measure,
         )
 import tvm
 from tvm import relay, autotvm
+
+from collage.interface import CollageContext
+import collage
+import tvm.contrib.graph_executor as runtime
+import numpy as np
 
 CONFIG_VAR_USER_DEFINED_FUSION_PASS = "relay.FuseOps.UserDefinedFusion"
 
@@ -37,7 +42,7 @@ def get_opt_info_tag(net_name, hw_name, batch_size):
 #    return f"{LOG_PATH}/user_defined_match_{opt_info_tag}.log"
 
 
-def measure_end_to_end_user_defined(net, params, shape_dict, build_target, net_name, batch_size, autotvm_tuning_log):
+def measure_end_to_end_user_defined(net, params, shape_dict, build_target, net_name, batch_size, autotvm_tuning_log, backends):
     assert is_function_node(net)
 
     net = net.with_attr("CustomFusionPass", CustomFusionPass.USER_DEFINED_FUSION)
@@ -45,20 +50,21 @@ def measure_end_to_end_user_defined(net, params, shape_dict, build_target, net_n
     net = net.with_attr("BuildTarget", build_target)
     net = net.with_attr("BatchSize", batch_size)
 
-    with autotvm.apply_history_best(autotvm_tuning_log):
-        with tvm.transform.PassContext(opt_level=3):
-            lib = relay.build(net, build_target, params=params)
-        # Create workload
-        dev = tvm.device(build_target, 0)
-        module = runtime.GraphModule(lib["default"](dev))
+    with CollageContext(collage.Module(), backends):
+        with autotvm.apply_history_best(autotvm_tuning_log):
+            with tvm.transform.PassContext(opt_level=3):
+                lib = relay.build(net, build_target, params=params)
+            # Create workload
+            dev = tvm.device(build_target, 0)
+            module = runtime.GraphModule(lib["default"](dev))
 
-        # Setup execution
-        for input_name, input_shape in shape_dict.items():
-            input_data = np.random.uniform(-1, 1, size=input_shape).astype("float32")
-            module.set_input(input_name, input_data)
+            # Setup execution
+            for input_name, input_shape in shape_dict.items():
+                input_data = np.random.uniform(-1, 1, size=input_shape).astype("float32")
+                module.set_input(input_name, input_data)
 
-        ftimer = module.module.time_evaluator("run", dev, number=NUM_MEASUREMENTS_PER_REPEAT, repeat=NUM_REPEATS)
+            ftimer = module.module.time_evaluator("run", dev, number=NUM_MEASUREMENTS_PER_REPEAT, repeat=NUM_REPEATS)
 
-    return measure(ftimer, build_target) 
-    
-    
+    return measure(ftimer, build_target)
+
+
