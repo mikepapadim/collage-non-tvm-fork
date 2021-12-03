@@ -1,7 +1,6 @@
 import tvm
 import tvm.relay as relay
 import tvm.relay.testing as testing
-#from collage.utils import *
 
 from graphviz import Digraph
 import os
@@ -9,19 +8,15 @@ import os
 def _traverse_expr(node, node_dict):
     if node in node_dict:
         return
-    # if isinstance(node, relay.op.op.Op):
-    #    return
     if isinstance(node, tvm.ir.op.Op):
         return
 
-    # print("{} : {}".format(node, type(node)))
     node_dict[node] = len(node_dict)
 
 def get_node_color(node):
     backend_name = get_backend_from_backend_pattern_annotation(node.backend)
 
     # If this is default (no backend op assignment)
-    # color = "ivory"
     color = "greenyellow"
 
     if backend_name == "tensorrt":
@@ -39,7 +34,6 @@ def visualize_network(expr, file_name, expr2node=None):
 
     dot = Digraph(format='pdf')
     dot.attr(rankdir='BT')
-    # dot.attr('node', shape='box')
 
     node_dict = {}
     relay.analysis.post_order_visit(expr, lambda node: _traverse_expr(node, node_dict))
@@ -90,7 +84,6 @@ def visualize_network(expr, file_name, expr2node=None):
 
         elif isinstance(node, relay.expr.Call):
             args = [node_dict[arg] for arg in node.args]
-            # dot.node(str(node_idx), f'Call(op={node.op.name})')
             if isinstance(node.op, tvm.relay.Function):
                 dot.node(str(node_idx), f'Call {node_idx_backend_str}(Function({node_dict[node.op.body]}))', shape='ellipse',
                          style='filled', color=node_color)
@@ -116,6 +109,6 @@ def visualize_network(expr, file_name, expr2node=None):
         else:
             raise RuntimeError(f'Unknown node type. node_idx: {node_idx}, node: {type(node)}')
 
-    # this_code_path = os.path.dirname(os.path.abspath(__file__))
-    dot.render(f'analysis/results/backend_placement/{file_name}.gv')
+    
+    dot.render(f'{file_name}.gv')
 
