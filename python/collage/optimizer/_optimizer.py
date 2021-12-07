@@ -17,6 +17,7 @@ from collage.interface import CollageContext
 from .evolutionary_searcher_state import (MatchToOpGroupTranslator, OpStateToMatchTranslator)
 from .op_match_logger import OpMatchLogger, OpMatchReader
 from collage.backend import BackendKind
+from collage.analysis import visualize_backend_placement
 
 def setup_pattern_registry(hw_name):
     pattern_registry = PatternRegistry.get(hw_name)
@@ -121,6 +122,13 @@ def get_user_fusion(relay_expr):
     match_path = CollageContext.graph_level_tmp_file
     opt_match = OpMatchReader().read(relay_expr, match_path)
 
+@tvm._ffi.register_func("collage.optimizer.visualize_backend_placement")
+def visualize_backend_placement(relay_expr):
+    logging.info("Visualize backend placement")
+    relay_expr = get_function_body(relay_expr)
+    match_path = CollageContext.input_placement_log_file
+    opt_match = OpMatchReader().read(relay_expr, match_path)
+    visualize_backend_placement(relay_expr, CollageContext.placement_vis_file)
 
 def get_backends(func_expr, backend_registry):
     assert("BackendList" in func_expr.attrs)

@@ -98,7 +98,7 @@ if __name__ == "__main__":
 
     # Invoke collage optimizer
     lib = collage_mod.optimize_backend_placement(**workload)    
-    visualize_network(lib.ir_mod["main"], "collage_final_placement")  # This does not reflect our placement
+    # visualize_network(lib.ir_mod["main"], "collage_final_placement")  # This does not reflect our placement
     collage_mean_perf, collage_std_perf = measure_perf(lib, workload)
    
 
@@ -107,3 +107,9 @@ if __name__ == "__main__":
     print(f"  Run with Collage  (mean, std) = ({collage_mean_perf:.4f}+-{collage_std_perf:.4f})")
     print(f"  -> Speedup: {trt_mean_perf/collage_mean_perf:.4f}x")
 
+    # Visualize backend placement optimized by Collage
+    workload["input_placement_log_file"] = workload["op_level_placement_log"]
+    # workload["input_placement_log_file"] = workload["graph_level_placement_log"]
+    workload["placement_vis_file"] = "op_level_placement_vis"
+    # workload["placement_vis_file"] = "graph_level_placement_vis"
+    collage_mod.visualize_backend_placement(**workload)

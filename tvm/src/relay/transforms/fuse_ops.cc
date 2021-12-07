@@ -1546,6 +1546,7 @@ namespace tvm {
       constexpr int kTwoLevelOpt = 3;
       constexpr int kOpMeasurement = 4;
       constexpr int kSingleBackendBaseline = 5;
+      constexpr int kVisualizeBackendPlacement = 6;
 
       // Do nothing when it's not custom fusion pass
       if (fn_node->GetAttr<IntImm>(attr::kCustomFusionPass).defined()) {
@@ -1567,6 +1568,8 @@ namespace tvm {
           custom_fusion_pass_str = "collage.optimizer.assign_backend_for_op_measurement";
         } else if (custom_fusion_pass_type == kSingleBackendBaseline) {
           custom_fusion_pass_str = "collage.optimizer.run_single_backend_baseline";
+        } else if (custom_fusion_pass_type == kVisualizeBackendPlacement) {
+          custom_fusion_pass_str = "collage.optimizer.visualize_backend_placement";
         } else {
           ICHECK(false) << "Fusion pass type " << fn_node->GetAttr<IntImm>(attr::kCustomFusionPass)
                         << "is not expected\n\n";

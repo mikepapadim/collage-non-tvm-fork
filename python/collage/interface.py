@@ -120,7 +120,9 @@ class CollageContext:
                 graph_level_tmp_file = "graph_lv.tmp",
                 ev_pop_size = 50,
                 ev_max_iter = 100000,
-                search_budget = 0.5
+                search_budget = 0.5,
+                input_placement_log_file = None,
+                placement_vis_file = None
             ):
         CollageContext.pattern_registry = mod.pattern_registry
         CollageContext.op_cost_logger = mod.op_cost_logger
@@ -131,6 +133,10 @@ class CollageContext:
         CollageContext.evolutionary_search_pop_size = ev_pop_size
         CollageContext.evolutionary_search_max_iter = ev_max_iter
         CollageContext.evolutionary_search_budget = search_budget
+
+        # Arguments for backend placement visualization
+        CollageContext.input_placement_log_file = input_placement_log_file
+        CollageContext.placement_vis_file = placement_vis_file
 
     def __enter__(self):
         print("Entering Collage")
@@ -230,7 +236,7 @@ class Module:
         with CollageContext(
                     self, 
                     backends, 
-                    self.op_level_placement_log, 
+                    self.op_level_placement_log,
                     self.graph_level_placement_log, 
                     self.graph_level_tmp_file, 
                     ev_pop_size, 
@@ -242,4 +248,49 @@ class Module:
                     lib = relay.build(net, target, params=params)
 
         return lib
+
+    def visualize_backend_placement(
+                                    self,
+                                    backends,
+                                    network_name,
+                                    mod,
+                                    params,
+                                    target,
+                                    batch_size,
+                                    input_placement_log_file,
+                                    placement_vis_file,
+                                    **kwargs
+                                ):
+        net = mod["main"]
+        from collage.optimizer.custom_fusion_pass import CustomFusionPass
+        net = net.with_attr("CustomFusionPass", CustomFusionPass.VISUALIZE_BACKEND_PLACEMENT)
+        net = net.with_attr("BuildTarget", target)
+
+        # We need to pass these for now.
+        net = net.with_attr("Network", network_name)
+        net = net.with_attr("BatchSize", batch_size)
+        net = net.with_attr("BackendList", ",".join(backends))
+
+        autotvm_tuning_log = self.pattern_registry.backend_registry["autotvm"].kwargs["tuning_log"]
+
+        ev_pop_size = kwargs["ev_pop_size"] if "ev_pop_size" in kwargs else 50
+        ev_max_iter = kwargs["ev_max_iter"] if "ev_pop_size" in kwargs else 100000
+        ev_budget = kwargs["ev_budget"] if "ev_budget" in kwargs else 0.3
+
+        # Optimize
+        with CollageContext(
+                    self,
+                    backends,
+                    self.op_level_placement_log,
+                    self.graph_level_placement_log,
+                    self.graph_level_tmp_file,
+                    ev_pop_size,
+                    ev_max_iter,
+                    ev_budget,
+                    get_absolute_path(input_placement_log_file),
+                    get_absolute_path(placement_vis_file)
+                ):
+            with autotvm.apply_history_best(autotvm_tuning_log):
+                with tvm.transform.PassContext(opt_level=3):
+                    lib = relay.build(net, target, params=params)
 

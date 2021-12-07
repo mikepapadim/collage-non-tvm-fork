@@ -31,7 +31,7 @@ def get_node_color(node):
 
     return color
 
-def visualize_network(expr, file_name, expr2node=None):
+def visualize_backend_placement(expr, file_name, expr2node=None):
 
     dot = Digraph(format='pdf')
     dot.attr(rankdir='BT')

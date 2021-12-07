@@ -23,6 +23,7 @@ class CustomFusionPass(IntEnum):
     TWO_LEVEL_OPT = 3
     OP_MEASUREMENT = 4
     SINGLE_BACKEND_BASELINE = 5
+    VISUALIZE_BACKEND_PLACEMENT = 6
 
     @classmethod
     def has_value(cls, value):
