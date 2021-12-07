@@ -109,6 +109,6 @@ def visualize_backend_placement(expr, file_name, expr2node=None):
         else:
             raise RuntimeError(f'Unknown node type. node_idx: {node_idx}, node: {type(node)}')
 
-    
-    dot.render(f'{file_name}.gv')
 
+    dot.render(f'{file_name}.gv')
+    os.remove(f'{file_name}.gv')

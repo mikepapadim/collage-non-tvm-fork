@@ -73,7 +73,7 @@ def apply_tensorrt_op(mod):
         [
             transform.AnnotateTarget("tensorrt"),
             transform.MergeCompilerRegions(),
-            transform.PartitionGraph(),         
+            transform.PartitionGraph(),
             transform.InferType(),
         ]
     )
@@ -123,7 +123,7 @@ def get_user_fusion(relay_expr):
     opt_match = OpMatchReader().read(relay_expr, match_path)
 
 @tvm._ffi.register_func("collage.optimizer.visualize_backend_placement")
-def visualize_backend_placement(relay_expr):
+def run_backend_placement_visualization(relay_expr):
     logging.info("Visualize backend placement")
     relay_expr = get_function_body(relay_expr)
     match_path = CollageContext.input_placement_log_file
@@ -135,9 +135,9 @@ def get_backends(func_expr, backend_registry):
     backend_list_str = func_expr.attrs["BackendList"]
     backend_str_list = backend_list_str.split(",")
     backends = [backend_registry[b] for b in backend_str_list]
-    
+
     return backends
-    
+
 def get_backend_names(backends):
     return [ b.name for b in backends ]
 
@@ -204,7 +204,7 @@ def run_two_level_opt(relay_expr):
 
     # It is a function if you get it from last pass of Relay build
     print("[Python side] Run two-level optimization")
-   
+
     # op-level optimization: DP with all backends but external compilers, e.g., TensorRT
     func_expr = relay_expr
     optimized_match, relay_expr, pattern_registry, n_relay_nodes = run_op_level_opt(relay_expr)
@@ -261,22 +261,22 @@ def run_two_level_opt(relay_expr):
     # Note that some of individuals may not be measured in each generation if they are measured anytime earlier
     # visualize_network(relay_expr, "o3_mobilenet_v2_after_match")
     # cx_prob = 0.8, mut_prob = 0.5, resnet50: 2.512
-    
+
     # pop_size=30,   max_iter=100000) # when n_hours == 3
     # pop_size=50,   max_iter=100000) # when n_hours == 6
 
     if n_ops > 0:
         ev_searcher = EvolutionarySearcher(
-                                            op_state_to_match_translator, 
-                                            relay_expr, 
-                                            net_name, 
+                                            op_state_to_match_translator,
+                                            relay_expr,
+                                            net_name,
                                             build_target,
-                                            batch_size=batch_size, 
+                                            batch_size=batch_size,
                                             n_ops=n_ops,
                                             match_path=CollageContext.graph_level_tmp_file,
-                                            pop_size=CollageContext.evolutionary_search_pop_size,   
+                                            pop_size=CollageContext.evolutionary_search_pop_size,
                                             max_iter=CollageContext.evolutionary_search_max_iter
-                                          ) 
+                                          )
         second_opt_match = ev_searcher.search(rnd_seed=64, n_hours = CollageContext.evolutionary_search_budget)
     else:
         second_opt_match = optimized_match

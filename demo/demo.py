@@ -4,23 +4,22 @@ import collage
 import tvm
 import logging
 from tvm.contrib import graph_executor as runtime
-from collage.analysis.visualize import visualize_network
 
 
 # [NOTE]
-# * Operator cost will be logged at "operator_cost.log". 
+# * Operator cost will be logged at "operator_cost.log".
 #   Since it is unreadable, Collage also dump human-readable form at "operator_cost.json"
 # * Available networks: bert_full, dcgan, nasneta, resnet50_3d, resnext50_32x4d
 # * Collage supports following backends by default:
 #      NVIDIDIA GPUs - TVM, TensorRT, cuBLAS, cuDNN
 #      Intel CPUs    - TVM, MKL, DNNL
-# * For the best performance, TVM operators should be tuned with AutoTVM beforehand. 
+# * For the best performance, TVM operators should be tuned with AutoTVM beforehand.
 #   Collage assuems its log is prepared at "autotvm_tuning_log.json"
 #   This demo provides tuning logs for RTX2070.
 # * Collage offers two optimizers: "op-level", "two-level"
 
 
-# [TODO] 
+# [TODO]
 # DP
 #    "resnext50_32x4d", "resnet50_3d", "bert_full", "dcgan": performance bug
 #    "nasneta": non-call node is somehow inserted to frontier q.
@@ -33,17 +32,17 @@ from collage.analysis.visualize import visualize_network
 #
 # Demo
 #   - Test autoscheduler
- 
+
 # Define Collage workload
 workload = {
-    "optimizer": "op-level", #"two-level", 
+    "optimizer": "op-level", #"two-level",
     "backends": ["autotvm", "cudnn", "cublas", "tensorrt"],
-    "network_name": "resnet50_3d", #"nasneta", #"bert_full", #"dcgan", #"resnext50_32x4d", "resnet50_3d", 
+    "network_name": "resnet50_3d", #"nasneta", #"bert_full", #"dcgan", #"resnext50_32x4d", "resnet50_3d",
     "target": "cuda",
     "batch_size": 1,
 }
 
-# Enable logging to skip messages during optimization. Comment this out to disable logging. 
+# Enable logging to skip messages during optimization. Comment this out to disable logging.
 logging.basicConfig(level=logging.INFO)
 
 def measure_perf(lib, workload):
@@ -72,7 +71,7 @@ def setup_workload(workload):
           workload["network_name"], workload["batch_size"], workload["target"]
 
     mod, params, shape_dict, _ = get_network_from_torch(network_name, batch_size)
-    # Since Collage utilizes tvm as its codegen, we need to pass the following info for tvm codegen. 
+    # Since Collage utilizes tvm as its codegen, we need to pass the following info for tvm codegen.
     workload["mod"] = mod
     workload["params"] = params
     workload["shape_dict"] = shape_dict
@@ -97,10 +96,9 @@ if __name__ == "__main__":
     collage_mod.update_autotvm_tuning_log("autotvm_tuning_log_rtx2070.json")
 
     # Invoke collage optimizer
-    lib = collage_mod.optimize_backend_placement(**workload)    
-    # visualize_network(lib.ir_mod["main"], "collage_final_placement")  # This does not reflect our placement
+    lib = collage_mod.optimize_backend_placement(**workload)
     collage_mean_perf, collage_std_perf = measure_perf(lib, workload)
-   
+
 
     print(f"Network: {workload['network_name']}")
     print(f"  Run with TensorRT (mean, std) = ({trt_mean_perf:.4f}+-{trt_std_perf:.4f})")
@@ -108,8 +106,8 @@ if __name__ == "__main__":
     print(f"  -> Speedup: {trt_mean_perf/collage_mean_perf:.4f}x")
 
     # Visualize backend placement optimized by Collage
-    workload["input_placement_log_file"] = workload["op_level_placement_log"]
-    # workload["input_placement_log_file"] = workload["graph_level_placement_log"]
+    workload["input_placement_log_file"] = collage_mod.op_level_placement_log
+    # workload["input_placement_log_file"] = collage_mod.graph_level_placement_log
     workload["placement_vis_file"] = "op_level_placement_vis"
     # workload["placement_vis_file"] = "graph_level_placement_vis"
     collage_mod.visualize_backend_placement(**workload)

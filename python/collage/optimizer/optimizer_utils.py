@@ -1,7 +1,7 @@
 import tvm
 from collage.utils import (is_var_node)
 from collage.utils import printe
-from collage.analysis.visualize import visualize_network
+from collage.analysis.visualize import visualize_backend_placement
 import os
 import datetime
 
@@ -15,7 +15,7 @@ def log_matched_ops_by_method(log_path, matches):
 
 @tvm._ffi.register_func("collage.optimizer.visualize_expr")
 def visualize_expr(expr, file_name):
-    visualize_network(expr, file_name)
+    visualize_backend_placement(expr, file_name)
 
 def print_ir(mod, info, is_before):
     """Print the name of the pass, the IR, only before passes execute."""
@@ -27,13 +27,13 @@ def print_ir(mod, info, is_before):
     if is_before:
         printe("Running pass: {}", info.name)
         # printe(repr(mod["main"]))
-        visualize_network(mod["main"], info.name+"_before")
+        visualize_backend_placement(mod["main"], info.name+"_before")
     #print(mod)
     else:
         printe("Done pass: {}", info.name)
         # If this is FuseOps, the module doesn't have "main" somehow.
         # if info.name != "FuseOps":
-        visualize_network(mod["main"], info.name + "_after")
+        visualize_backend_placement(mod["main"], info.name + "_after")
 
 def is_data_node(expr):
     is_data_var = False
@@ -123,10 +123,10 @@ def print_matching_final(comp_graph, loc2match):
         for node_str in graph_str[1:].split('-'):
             reverse_graph_str = node_str + "-" + reverse_graph_str
         print(f"Graph : {reverse_graph_str} (hash: {hash(comp_graph._nodes[idx])})")
-        
+
         tot_cost = loc2match[hash(comp_graph._nodes[idx])]["cost"]
         print(f"Total Cost:{tot_cost}")
-        
+
         print("Matched backend ops (op, cost)")
         for item in loc2match[hash(comp_graph._nodes[idx])]["match"][::-1]:
             op_name, op_cost, _ = item
@@ -142,7 +142,7 @@ def print_matching_debug(comp_graph, loc2match):
             for node_str in graph_str[1:].split('-'):
                 reverse_graph_str = node_str + "-" + reverse_graph_str
             print(f"Graph : {reverse_graph_str} (hash: {hash(comp_graph._nodes[idx])})")
-            
+
             tot_cost = loc2match[hash(comp_graph._nodes[idx])]["cost"]
             print(f"Total Cost:{tot_cost:.2g}")
 
