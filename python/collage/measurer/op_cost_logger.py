@@ -3,6 +3,7 @@ from collage.utils import extract_attrs, get_input_shape
 import json
 import pickle
 from os import path
+import logging
 
 # @sunggg: [TODO] Need to check hash conflict
 # configuration includes operator name, operator type (backend operators from different targets might have the same type),
@@ -43,11 +44,12 @@ class Config(object):
 
 # class to save costs of already evaluated configurations so we do not need to reevaluate them
 class OpCostLogger(object):
-  def __init__(self, log_path = None):
+  def __init__(self, log_path = None, dump_readable = False):
     # maps configurations already measured to the measured cost (in ms)
     self.measured_configs = dict()
     self.log_path = "operator_cost.log" if log_path is None else log_path
     self.log_path_readable = "readable_" + self.log_path + ".json"
+    self.dump_readable = dump_readable
 
   def get_cost(self, config):
     if config in self.measured_configs:
@@ -58,11 +60,11 @@ class OpCostLogger(object):
   def save_cost(self, config, cost):
     self.measured_configs[config] = cost
 
-  def save_to_log(self, dump_readable = False):
+  def save_to_log(self):
     with open(self.log_path, 'wb+') as log:
       pickle.dump(self.measured_configs, log)
 
-    if dump_readable:
+    if self.dump_readable:
       str_configs = dict()
       for key, perf in self.measured_configs.items():
         str_configs[str(key)] = perf
@@ -74,7 +76,7 @@ class OpCostLogger(object):
   def load_from_log(self):
     if path.exists(self.log_path):
       with open(self.log_path, 'rb') as log:
-        print(">> Start with previous op cost log")
+        logging.info(">> Start with previous op cost log")
         self.measured_configs = pickle.load(log)
     else:
-       print(">> Start from scratch")
+       logging.info(">> Start from scratch")

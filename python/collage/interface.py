@@ -24,7 +24,7 @@ from collage.backend.default_backends import (
                     cg_MKL,
                     cg_DNNL,
                 )
-
+import logging
 
 def _register_new_backend(
             registry,
@@ -138,10 +138,12 @@ class CollageContext:
         CollageContext.placement_vis_file = placement_vis_file
 
     def __enter__(self):
-        print("Entering Collage")
+        logging.info("Entering Collage")
+        pass
 
     def __exit__(self, exc_type, exc_value, tb):
-        print("Exiting Collage")
+        logging.info("Exiting Collage")
+        pass
 
 def get_absolute_path(path):
     if not os.path.isabs(path):
@@ -154,13 +156,14 @@ class Module:
     def __init__(
                   self,
                   op_cost_log_path = None,
+                  dump_readable_cost_log  = False,
                   op_level_placement_log_path= None,
                   graph_level_placement_log_path = None,
                   graph_level_tmp_file_path = None
                 ):
         backend_registry = dict()
         _register_default_backends(backend_registry)
-        self.op_cost_logger = OpCostLogger(op_cost_log_path)
+        self.op_cost_logger = OpCostLogger(op_cost_log_path, dump_readable_cost_log)
         self.op_cost_logger.load_from_log()
 
         self.pattern_registry = PatternRegistry(

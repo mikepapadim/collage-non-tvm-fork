@@ -240,10 +240,10 @@ std::pair<IRModule, IRModule> SplitDevHostFuncs(IRModule mod_mixed, const Target
   // some final misc checks.
   auto keys = target->GetKeys();
   bool target_is_gpu = std::find(keys.begin(), keys.end(), "gpu") != keys.end();
-  if (target_is_gpu && mdevice->functions.size() == 0) {
-    LOG(WARNING) << "Specified target " << target->str()
-                 << " but cannot find device code. Did you forget to bind?";
-  }
+  //if (target_is_gpu && mdevice->functions.size() == 0) {
+  //  LOG(WARNING) << "Specified target " << target->str()
+  //               << " but cannot find device code. Did you forget to bind?";
+  //}
 
   if (target->kind->device_type == kDLCPU && target_host == target) {
     ICHECK(mdevice->functions.empty()) << "No device code should be generated when target "

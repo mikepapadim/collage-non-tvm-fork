@@ -450,7 +450,7 @@ class DPTable:
                 relay.analysis.update_backend(expr, backend_annotation)
                 optimized_match[expr] = backend_annotation
 
-            logging.warning(f"{backend_annotation}")
+            logging.info(f"{backend_annotation}")
             matched_b_op_name.append(backend_annotation)
 
             opt_match_cell = opt_match_cell.prev_cell
