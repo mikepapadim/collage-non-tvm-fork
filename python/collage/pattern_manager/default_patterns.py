@@ -12,7 +12,6 @@ from collage.utils import get_diamond
 
 # Warning(@Soo): note that we ignore tuplegetitem nodes in TVM Relay,
 # because they are only used to extract result of Relay's batch_norm operator
-
 # maps op type to pattern representing it
 str_to_pattern = {
   # RESNE(X)T
@@ -139,7 +138,9 @@ def convert_str_to_pattern(lst):
              for name, constraint_func in lst 
            ]
 
+
 # cuDNN
+# Set of pattern and its constraints
 cudnn_default_patterns_str = [ 
     ["CONV2D", None], 
     ["CONV3D", None],

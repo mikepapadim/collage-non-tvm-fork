@@ -248,9 +248,21 @@ class CompGraphOptimizer:
                         self._pattern_registry.add_backend_pattern(backend, pattern, None)
         
         logging.info(f"# Registered patterns")
+        backend_pattern_map = dict()
         for pat in self._pattern_registry.all_backend_patterns:
-            logging.info(f"  - {repr(pat)}")
+          backend_name = pat.get_backend().name
+          if backend_name not in backend_pattern_map:
+            backend_pattern_map[backend_name] = set()
+          backend_pattern_map[backend_name].add(pat.get_pattern())
+        
+        for backend, patterns in backend_pattern_map.items():
+          logging.info(f"  >> backend name: {backend} ({len(patterns)})")
+          for pat in patterns:
+            logging.info(f"     - {pat}")
+            #logging.info(f"     - {pat}, {pat.get_relay_pattern()}")
+          logging.info(f"\n")
 
+        
         # For backend ablation study where we are given a list of backends,
         # We need TVM (no-tuning) fall back operator patterns to have full op coverage
         # if AutoTVM is not inlcuded as a backend

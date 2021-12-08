@@ -54,7 +54,6 @@ def _register_default_backends(registry):
                 name = "autotvm",
                 kind = BackendKind.OP_LEVEL,
                 codegen = cg_AutoTVM,
-                patterns = None,
                 pattern_generator = tvm_pattern_generator, # valid_op + fusion_rule
                 cost_func = None,
                 tuning_log=f"autotvm_tuning_log.json"

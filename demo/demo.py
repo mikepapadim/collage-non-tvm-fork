@@ -19,25 +19,11 @@ from tvm.contrib import graph_executor as runtime
 # * Collage offers two optimizers: "op-level", "two-level"
 
 
-# [TODO]
-# DP
-#    "resnext50_32x4d", "resnet50_3d", "bert_full", "dcgan": performance bug
-#    "nasneta": non-call node is somehow inserted to frontier q.
-#     -- collage/optimizer/comp_graph_optimizer.py
-#     -- certain ops are not saved in cost logger. e.g., TRT dense in DCGAN
-# EV
-#    Pass Collage context info to subprocess
-#    Best placement dump
-#    Reload best placement
-#
-# Demo
-#   - Test autoscheduler
-
 # Define Collage workload
 workload = {
     "optimizer": "op-level", #"two-level",
-    "backends": ["autotvm", "cudnn", "cublas", "tensorrt"],
-    "network_name": "resnet50_3d", #"nasneta", #"bert_full", #"dcgan", #"resnext50_32x4d", "resnet50_3d",
+    "backends": ["autotvm", "cudnn", "cublas", "tensorrt"], 
+    "network_name": "mobilenet_v2", #"nasneta", #"bert_full", #"dcgan", #"resnext50_32x4d", "resnet50_3d",
     "target": "cuda",
     "batch_size": 1,
 }
@@ -106,8 +92,9 @@ if __name__ == "__main__":
     print(f"  -> Speedup: {trt_mean_perf/collage_mean_perf:.4f}x")
 
     # Visualize backend placement optimized by Collage
-    workload["input_placement_log_file"] = collage_mod.op_level_placement_log
+    #workload["input_placement_log_file"] = collage_mod.op_level_placement_log
+    #workload["placement_vis_file"] = "op_level_placement_vis"
+    #collage_mod.visualize_backend_placement(**workload)
+
     # workload["input_placement_log_file"] = collage_mod.graph_level_placement_log
-    workload["placement_vis_file"] = "op_level_placement_vis"
     # workload["placement_vis_file"] = "graph_level_placement_vis"
-    collage_mod.visualize_backend_placement(**workload)
