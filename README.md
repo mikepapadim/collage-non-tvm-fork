@@ -1,10 +1,10 @@
-# CAUTION: Currently, this repo is under refactoring. Please checkout around Dec 15th. 
-
 # Collage
 System for automated integration of deep learning backends. Our implementation uses TVM as its code generator. 
 
 # Installation
 1. Go to `tvm/` and install tvm. Make sure backend libaries of interest are built together. [TVM installation guide](https://tvm.apache.org/docs/install/index.html)
+   We provide cmake config that we used for our GPU/CPU experiments (`config.cmake.gpu`, `config.cmake.cpu`) in `tvm/cmake/`.
+   Users may copy it to their build directory and rename it to `config.cmake` before running `cmake` command. 
 2. Declare following environment variables
 ```
 export COLLAGE_HOME=/path/to/collage/repo
@@ -13,8 +13,11 @@ export PYTHONPATH=${COLLAGE_TVM_HOME}/python:${COLLAGE_HOME}/python:${PYTHONPATH
 ```
 
 # Demo
-1. `cd demo/`
-2. `python3 demo.py`
+We provide two demos (`demo_performance.py`, `demo_customization.py`) under `demo/`. 
+`demo_performance.py` shows how collage optimizes given workloads with popular backends that Collage provides by default.
+`demo_customization.py` shows how users can register new backend with their custom codegen, pattern, pattern rule.
+For the best result, it is highly recommend to create the tuning log by using `autotune_tvm_ops.py` before running those demos.
+
 
 # Note
 * As Collage uses TVM as its code generator, it cannot support backends that TVM is unable to build. Tested backends are
