@@ -14,8 +14,9 @@ export PYTHONPATH=${COLLAGE_TVM_HOME}/python:${COLLAGE_HOME}/python:${PYTHONPATH
 
 # Demo
 We provide two demos (`demo_performance.py`, `demo_customization.py`) under `demo/`. 
-`demo_performance.py` shows how collage optimizes given workloads with popular backends that Collage provides by default.
-`demo_customization.py` shows how users can register new backend with their custom codegen, pattern, pattern rule.
+* `demo_performance.py` shows how collage optimizes given workloads with popular backends that Collage provides by default.
+* `demo_customization.py` shows how users can register new backend with their custom codegen, pattern, pattern rule.
+
 For the best result, it is highly recommend to create the tuning log by using `autotune_tvm_ops.py` before running those demos.
 
 
