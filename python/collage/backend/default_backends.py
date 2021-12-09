@@ -24,7 +24,7 @@ def cg_AutoTVM(net, target, params, **kwargs):
 
 
 def cg_VanillaTVM(net, target, params, **kwargs):
-    # Compile kernels with history best records
+    # TVM without auto-tuning
     with tvm.transform.PassContext(opt_level=3):
         lib = relay.build_module.build(net, target=target, params=params)
     return lib

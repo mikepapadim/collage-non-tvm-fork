@@ -1,4 +1,3 @@
-
 class BasePatternRule:
     # Specify supported operators with its constraints
     @staticmethod

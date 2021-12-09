@@ -145,8 +145,10 @@ class ScheduleGetter : public backend::MemoizedExprTranslator<Array<te::Tensor>>
 //    std::cerr << "DP_TARGET: " << dp_target << "\n";
     bool doCustomLowering = dp_target.size()>0
                             && ((int)dp_target.find("INVALID_BACKEND_OP")==-1)
-                            && ((int)dp_target.find("autotvm")==-1)
-                            && ((int)dp_target.find("tvm")==-1);
+                            && ((int)dp_target.find("cudnn")!=-1)
+                            && ((int)dp_target.find("cublas")!=-1)
+                            && ((int)dp_target.find("mkl")!=-1)
+                            ;
 
     if (dp_target.find("tensorrt") != -1) {
       if (dp_target.find("reshape") != -1) {

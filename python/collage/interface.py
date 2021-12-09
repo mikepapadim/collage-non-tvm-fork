@@ -12,6 +12,7 @@ from collage.pattern_manager.default_patterns import (
                     dnnl_default_patterns,
                 )
 from collage.pattern_manager.default_pattern_rules import (
+                    DefaultPatternGenerator,
                     tvm_pattern_generator,
                     trt_pattern_generator
                 )
@@ -55,7 +56,6 @@ def _register_default_backends(registry):
                 kind = BackendKind.OP_LEVEL,
                 codegen = cg_AutoTVM,
                 pattern_generator = tvm_pattern_generator, # valid_op + fusion_rule
-                cost_func = None,
                 tuning_log=f"autotvm_tuning_log.json"
             )
 
@@ -179,8 +179,26 @@ class Module:
         self.graph_level_tmp_file = get_absolute_path(graph_level_tmp_file_path)
 
 
-    def register_new_backend(self, name, kind, codegen, **kwargs):
-        _register_new_backend(self.pattern_registry.backend_registry, name, kind, codegen, **kwargs)
+    def register_new_backend(
+                                self, 
+                                name, 
+                                kind, 
+                                codegen, 
+                                patterns = None,
+                                pattern_generator = None,
+                                cost_func = None,
+                                **kwargs
+                            ):
+        _register_new_backend(
+                                self.pattern_registry.backend_registry, 
+                                name, 
+                                kind, 
+                                codegen, 
+                                patterns,
+                                pattern_generator,
+                                cost_func,
+                                **kwargs
+                            )
 
     def update_existing_backend(self, name, kind, codegen, **kwargs):
         assert(name in registry)
@@ -191,18 +209,39 @@ class Module:
     def get_registered_backends(self):
         return self.pattern_registry.get_registered_backends()
 
-    # [TODO] Provide user-level access for backend registration.
-    def add_backend_pattern(self):
-        assert 0, "Need to implement"
+    def add_backend_patterns(self, backend_name, patterns):
+        backend_registry = self.pattern_registry.backend_registry
+        assert(backend_name in backend_registry)
+        backend_registry[backend_name].add_patterns(patterns)
 
-    def add_backend_pattern_rule(self):
-        assert 0, "Need to implement"
+    # This will use base pattern generator
+    def add_backend_pattern_rule(self, backend_name, pattern_rule):
+        backend_registry = self.pattern_registry.backend_registry
+        assert(backend_name in backend_registry)
+        backend_registry[backend_name].pattern_generator = DefaultPatternGenerator(pattern_rule)
 
-    def add_pattern_generator(self):
-        assert 0, "Need to implement"
+    def add_backend_pattern_generator(self, backend_name, pattern_generator):
+        backend_registry = self.pattern_registry.backend_registry
+        assert(backend_name in backend_registry)
+        backend_registry[backend_name].pattern_generator = pattern_generator
 
-    def update_autotvm_tuning_log(self, log_path):
-        self.pattern_registry.backend_registry["autotvm"].kwargs["tuning_log"] = log_path
+    def add_backend_pattern_generator(self, backend_name, cost_func):
+        backend_registry = self.pattern_registry.backend_registry
+        assert(backend_name in backend_registry)
+        backend_registry[backend_name].cost_func = cost_func
+
+    def get_backend_patterns(self, backend_name):
+        backend_registry = self.pattern_registry.backend_registry
+        assert(backend_name in backend_registry)
+        return list(backend_registry[backend_name].patterns)
+
+    def get_backend_pattern_generator(self, backend_name):
+        backend_registry = self.pattern_registry.backend_registry
+        assert(backend_name in backend_registry)
+        return backend_registry[backend_name].pattern_generator
+
+    def update_backend_tuning_log(self, backend_name, log_path):
+        self.pattern_registry.backend_registry[backend_name].kwargs["tuning_log"] = log_path
 
     def optimize_backend_placement(
                                     self,
@@ -215,6 +254,8 @@ class Module:
                                     batch_size,
                                     **kwargs
                                 ):
+
+        self.pattern_registry.update_backend_registry_info()
         net = mod["main"]
         from collage.optimizer.custom_fusion_pass import CustomFusionPass
         assert(optimizer == "op-level" or optimizer == "two-level")
@@ -228,12 +269,13 @@ class Module:
         net = net.with_attr("BatchSize", batch_size)
         net = net.with_attr("BackendList", ",".join(backends))
 
-        autotvm_tuning_log = self.pattern_registry.backend_registry["autotvm"].kwargs["tuning_log"]
+        
 
         ev_pop_size = kwargs["ev_pop_size"] if "ev_pop_size" in kwargs else 50
         ev_max_iter = kwargs["ev_max_iter"] if "ev_pop_size" in kwargs else 100000
         ev_budget = kwargs["ev_budget"] if "ev_budget" in kwargs else 0.3
 
+        autotvm_tuning_log = self.pattern_registry.backend_registry["autotvm"].kwargs["tuning_log"]
         # Optimize
         with CollageContext(
                     self, 

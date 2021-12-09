@@ -77,42 +77,6 @@ def get_name_set_relay_pattern(pattern):
 
     return name_set
 
-# [Deprecated] Note that pat is Relay pattern (not Pattern object)
-# def is_subset_of(sub_set_pat, super_set_pat):
-#     is_subset = True
-#
-#     sub_set_pat_node_name = ""
-#     sub_set_pat_node_name, sub_children, sub_goDeeper = get_name_and_children_relay_pattern(sub_set_pat,
-#                                                                                             sub_set_pat_node_name)
-#
-#     super_set_pat_node_name = ""
-#     super_set_pat_node_name, super_children, super_goDeeper = get_name_and_children_relay_pattern(super_set_pat,
-#                                                                                                   super_set_pat_node_name)
-#     if sub_set_pat_node_name == super_set_pat_node_name or sub_set_pat_node_name == WILDCARD_STR:
-#         assert len(sub_children) == len(super_children)
-#         if not sub_goDeeper:
-#             return True
-#         else:
-#             if not super_goDeeper:
-#                 return False
-#             else: # Both can go deeper
-#                 for i in range(len(sub_children)):
-#                     is_subset &= is_subset_of(sub_children[i], super_children[i])
-#     else:
-#         if not sub_goDeeper:
-#             return False
-#         else:
-#             if not super_goDeeper:
-#                 return False
-#             else:  # Both can go deeper
-#                 for i, super_child in enumerate(super_children):
-#                     is_subset &= is_subset_of(sub_set_pat, super_child)
-#
-#     return is_subset
-
-
-
-
 
 def name_relay_pattern(pattern, idMap = None, cnt = 0):
     if idMap is None:
@@ -150,7 +114,6 @@ def name_relay_pattern(pattern, idMap = None, cnt = 0):
 class Pattern(object):
     def __init__(self, relay_pattern, name = None):
         self._relay_pattern = relay_pattern
-        #self._name = str(relay_pattern)
         self._name = name_relay_pattern(relay_pattern)[0]
         self._depth = find_depth(relay_pattern)
 
@@ -166,9 +129,6 @@ class Pattern(object):
     def match(self, expr):
         return self._relay_pattern.match(expr)
 
-    #def set_name(self, op_type):
-    #    self._name = op_type
-
     def get_name(self):
         return self._name
 
@@ -178,8 +138,6 @@ class Pattern(object):
     def get_depth(self):
         return self._depth
 
-    # Deprecated
-    # def is_subset_of(self, super_set_pat): # super_set_pat has larger depth
 
     """
     Get name of ops included in this pattern
@@ -191,6 +149,3 @@ class Pattern(object):
     """
     def get_op_name_set(self):
         return get_name_set_relay_pattern(self._relay_pattern)
-
-#     def get_relay_pattern_tree(self):
-#         return self._relay_pattern_tree

@@ -98,6 +98,12 @@ class PatternRegistry(object):
 
     self.backend_registry = backend_registry
     self.op_cost_logger = op_cost_logger
+    self.update_backend_registry_info()
+   
+    # Manage its instance
+    PatternRegistry.__instance = self
+
+  def update_backend_registry_info(self):
     # Graph-level backends will be fine-tuned with graph-level optimizer
     self.graph_level_backends = set()
     # Pattern generate will automatically add legal patterns right before optimizers
@@ -106,8 +112,7 @@ class PatternRegistry(object):
     self.all_backend_patterns = set()
     # Manages a pattern <-> bakcend patterns relations
     self.pattern_to_backend_patterns = defaultdict(set)
-    
-    
+
     for name, backend_obj in self.backend_registry.items():
         # Add enumerated patterns to pattern registry
         for pattern, constraint_func in backend_obj.patterns:
@@ -120,8 +125,7 @@ class PatternRegistry(object):
         # Add graph-level backends
         if backend_obj.kind == BackendKind.GRAPH_LEVEL:
           self.graph_level_backends.add(backend_obj)
-    # Manage its instance
-    PatternRegistry.__instance = self
+
 
   def get_registered_backends(self):
     return list(self.backend_registry.keys())

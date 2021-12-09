@@ -147,7 +147,7 @@ def run_op_level_opt(func_expr):
     backend_registry = pattern_registry.backend_registry
     given_backends = get_backends(func_expr, backend_registry)
     relay_expr = get_function_body(func_expr)
-
+    
     logging.info(f"[Op-Level: DP] Computation graph generation...")
     comp_graph = ComputationGraph(relay_expr)
     n_relay_nodes = comp_graph.n_relay_nodes

@@ -96,8 +96,7 @@ class Backend:
         assert(isinstance(kind, BackendKind))
         self.kind = kind
         self.codegen = codegen
-        assert ((patterns is not None) or (pattern_generator is not None))
-        self.patterns = list() if patterns is None else patterns
+        self.patterns = set() if patterns is None else set(patterns)
         self.pattern_generator = pattern_generator
         self.cost_func = default_cost_func if cost_func is None else cost_func
         self.kwargs = kwargs
@@ -105,5 +104,17 @@ class Backend:
     def measure_cost(self, expr, target, **kwargs):
         kwargs.update(self.kwargs)
         return self.cost_func(expr, self.codegen, target, **kwargs)
+
+    def add_patterns(self, patterns):
+        assert patterns is not None
+        self.patterns.update(patterns)
+
+    def add_pattern_generator(self, pattern_generator):
+        assert pattern_generator is not None
+        self.pattern_generator = pattern_generator
+
+    def add_cost_func(self, cost_func):
+        assert cost_func is not None
+        self.cost_func = cost_func
 
        

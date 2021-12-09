@@ -74,12 +74,16 @@ if __name__ == "__main__":
 
     # Override the default tuning log
     # If you don't have tuning log, generate one by running 'autotune_tvm_ops.py'
-    collage_mod.update_autotvm_tuning_log("autotvm_tuning_log_rtx2070.json")
+    collage_mod.update_backend_tuning_log("autotvm", "autotvm_tuning_log_rtx2070.json")
 
     # Invoke collage optimizer
     lib = collage_mod.optimize_backend_placement(**workload)
     collage_mean_perf, collage_std_perf = measure_perf(lib, workload)
 
+    print(f"[ End-to-End Performance Evaluation ]")
+    print(f"# Performance of Collage is compared against TensorRT")
+    print(f"  speedup = (performance of TensorRT)/(performance of Collage)")
+    print(f"\n")
     print(f"# Network: {workload['network_name']}, Collage optimizer: {workload['optimizer']}")
     print(f"  * End-to-end performance")
     print(f"    - Run with TensorRT (mean, std) = ({trt_mean_perf:.4f}+-{trt_std_perf:.4f})")
@@ -88,7 +92,7 @@ if __name__ == "__main__":
     # Visualize backend placement optimized by op-level optimizer
     # If two-level optimization is enabled, users can also pass 'workload["input_placement_log_file"] = collage_mod.graph_level_placement_log'
     workload["input_placement_log_file"] = collage_mod.op_level_placement_log
-    workload["placement_vis_file"] = "op_level_placement_vis"
+    workload["placement_vis_file"] = "demo_performance"
     collage_mod.visualize_backend_placement(**workload)
 
     print(f"\n  * Ablation study")
@@ -111,11 +115,3 @@ if __name__ == "__main__":
     lib = collage_mod.optimize_backend_placement(**workload)
     collage_mean_perf, collage_std_perf = measure_perf(lib, workload)
     print(f"    - Run with Collage  w/ 4 backends (mean, std) = ({collage_mean_perf:.4f}+-{collage_std_perf:.4f}), Speedup: {trt_mean_perf/collage_mean_perf:.4f}x")
-
-
-    def cg_empty():
-        pass
-    def custom_cost_func():
-        pass
-    #collage_mod.register_new_backend("TestBackend", collage.BackendKind.OP_LEVEL, cg_empty, cost_func=custom_cost_func, log="test.log")
-    #print(f"Default backends: {collage_mod.get_registered_backends()}")
