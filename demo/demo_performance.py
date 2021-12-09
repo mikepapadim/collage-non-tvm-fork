@@ -23,7 +23,7 @@ workload = {
     "batch_size": 1,
 }
 
-# Default logging level
+# Default logging level. Skip messages during optimization
 logging.basicConfig(level=logging.ERROR)
 
 # Enable logging to monitor optimization progress e.g., operator matching, profiling...

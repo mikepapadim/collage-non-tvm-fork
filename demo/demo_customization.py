@@ -47,16 +47,16 @@ from collage.utils import (
 workload = {
     "optimizer": "op-level", 
     "backends": ["autotvm", "cudnn", "cublas", "tensorrt"], 
-    "network_name": "dcgan", #"resnext50_32x4d", 
+    "network_name": "dcgan", 
     "target": "cuda",
     "batch_size": 1,
 }
 
-# Default logging level
-#logging.basicConfig(level=logging.ERROR)
+# Default logging level. Skip messages during optimization
+logging.basicConfig(level=logging.ERROR)
 
 # Enable logging to monitor optimization progress e.g., operator matching, profiling...
-logging.basicConfig(level=logging.INFO)
+#logging.basicConfig(level=logging.INFO)
 
 def measure_perf(lib, workload):
     # Create workload
@@ -103,8 +103,8 @@ if __name__ == "__main__":
         return dim1 == 2 and dim2 == 2
 
     patterns = [
-        tuple([Pattern(is_op("nn.conv2d")(wildcard(), wildcard())), None]),
-        tuple([Pattern(is_op("nn.dense")(wildcard(), wildcard())), check_dimension])
+        tuple([Pattern(is_op("nn.conv2d")(wildcard(), wildcard())), check_dimension]),
+        tuple([Pattern(is_op("nn.dense")(wildcard(), wildcard())), None])
     ]
 
     collage_mod.register_new_backend(
@@ -141,11 +141,11 @@ if __name__ == "__main__":
 
     # Run backend placement optimization with two custom backends
     workload["backends"] = ["VanillaTVM", "SimpleBackend"]
-    #lib = collage_mod.optimize_backend_placement(**workload)
-    #collage_mean_perf, collage_std_perf = measure_perf(lib, workload)
-    #print(f"# Network: {workload['network_name']}, Collage optimizer: {workload['optimizer']}")
-    #print(f"    - Provided backends: {workload['backends']}")
-    #print(f"    - Run with Collage  (mean, std) = ({collage_mean_perf:.4f}+-{collage_std_perf:.4f})")
+    lib = collage_mod.optimize_backend_placement(**workload)
+    collage_mean_perf, collage_std_perf = measure_perf(lib, workload)
+    print(f"# Network: {workload['network_name']}, Collage optimizer: {workload['optimizer']}")
+    print(f"    - Provided backends: {workload['backends']}")
+    print(f"    - Run with Collage  (mean, std) = ({collage_mean_perf:.4f}+-{collage_std_perf:.4f})")
     
 
     # 3. Register new backend with a pattern rule
