@@ -1,8 +1,8 @@
 # Collage
-System for automated integration of deep learning backends. Our implementation uses TVM as its code generator. 
+System for automated integration of deep learning backends. 
 
 # Installation
-1. Go to `tvm/` and install tvm. [TVM installation guide](https://tvm.apache.org/docs/install/index.html)
+1. Since our implementation uses TVM as the main code generator, install tvm under `tvm/`. [TVM installation guide](https://tvm.apache.org/docs/install/index.html)
    
    Make sure backend libaries of interest are built together. We provide cmake config that we used for our GPU/CPU experiments (`config.cmake.gpu`, `config.cmake.cpu`) in `tvm/cmake/`.
    Users may copy it to their build directory and rename it to `config.cmake` before running `cmake`. 
