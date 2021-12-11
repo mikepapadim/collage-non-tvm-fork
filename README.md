@@ -2,11 +2,28 @@
 System for automated integration of deep learning backends. 
 
 # Installation
-1. Since our implementation uses TVM as the main code generator, install tvm under `tvm/`. [TVM installation guide](https://tvm.apache.org/docs/install/index.html)
-   
-   Make sure backend libaries of interest are built together. We provide cmake config that we used for our GPU/CPU experiments (`config.cmake.gpu`, `config.cmake.cpu`) in `tvm/cmake/`.
-   Users may copy it to their build directory and rename it to `config.cmake` before running `cmake`. 
-2. Declare following environment variables
+Since our implementation uses TVM as the main code generator, install tvm under `tvm/`. [TVM installation guide](https://tvm.apache.org/docs/install/index.html)
+1. Install dependencies
+```
+sudo apt-get update
+sudo apt-get install -y python3 python3-dev python3-setuptools gcc libtinfo-dev zlib1g-dev build-essential cmake libedit-dev libxml2-dev
+```
+```
+pip3 install --user numpy decorator attrs tornado psutil xgboost cloudpickle
+```
+2. Create build directory and go to build directory
+```
+mkdir tvm/build && cd tvm/build
+```
+3. Prepare `cmake` configuration file. Make sure backend libaries of interest are built together. We provide cmake config that we used for our GPU/CPU experiments (`config.cmake.gpu`, `config.cmake.cpu`) in `tvm/cmake/`. Users may copy it to their build directory and rename it to `config.cmake`
+ ```
+ cp ../cmake/config.cmake.gpu config.cmake
+ ```
+4. Run `cmake` and `make`
+```
+cmake .. && make -j$(nproc)
+```
+5. Declare following environment variables
 ```
 export COLLAGE_HOME=/path/to/collage/repo
 export COLLAGE_TVM_HOME=${COLLAGE_HOME}/tvm
