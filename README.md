@@ -34,7 +34,7 @@ export PYTHONPATH=${COLLAGE_TVM_HOME}/python:${COLLAGE_HOME}/python:${PYTHONPATH
 # Demo
 Install the following dependencies for deep learning models used for demo.
 ```
-pip3 install --user torch torchvision tqdm
+pip3 install --user torch torchvision tqdm onnx onnxruntime
 ```
 
 We provide two demos (`demo_performance.py`, `demo_customization.py`) under `demo/`. 
