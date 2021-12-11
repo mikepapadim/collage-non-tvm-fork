@@ -9,8 +9,9 @@ sudo apt-get update
 sudo apt-get install -y python3 python3-dev python3-setuptools gcc libtinfo-dev zlib1g-dev build-essential cmake libedit-dev libxml2-dev
 ```
 ```
-pip3 install --user numpy decorator attrs tornado psutil xgboost cloudpickle
+pip3 install --user numpy decorator attrs tornado psutil xgboost cloudpickle pytest
 ```
+
 2. Create build directory and go to build directory
 ```
 mkdir tvm/build && cd tvm/build
@@ -31,6 +32,11 @@ export PYTHONPATH=${COLLAGE_TVM_HOME}/python:${COLLAGE_HOME}/python:${PYTHONPATH
 ```
 
 # Demo
+Install the following dependencies for deep learning models used for demo.
+```
+pip3 install --user torch torchvision tqdm
+```
+
 We provide two demos (`demo_performance.py`, `demo_customization.py`) under `demo/`. 
 * `demo_performance.py` shows how collage optimizes given workloads with popular backends that Collage provides by default.
 * `demo_customization.py` shows how users can register new backend with their custom codegen, pattern, pattern rule.
