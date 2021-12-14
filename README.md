@@ -1,4 +1,4 @@
-# Collage
+# <img src=https://github.com/cmu-catalyst/collage/blob/main/Collage%20logo.png width="100" height="100"> Collage
 System for automated integration of deep learning backends. 
 
 # Installation
