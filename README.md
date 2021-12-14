@@ -2,7 +2,7 @@
 System for automated integration of deep learning backends. 
 
 # Installation
-Since our implementation uses TVM as the main code generator, install tvm under `tvm/`. [TVM installation guide](https://tvm.apache.org/docs/install/index.html)
+Since our implementation uses TVM as the main code generator, install tvm under `tvm/`.
 1. Install dependencies
 ```
 sudo apt-get update
@@ -30,6 +30,8 @@ export COLLAGE_HOME=/path/to/collage/repo
 export COLLAGE_TVM_HOME=${COLLAGE_HOME}/tvm
 export PYTHONPATH=${COLLAGE_TVM_HOME}/python:${COLLAGE_HOME}/python:${PYTHONPATH}
 ```
+
+For more details, please reference [TVM installation guide](https://tvm.apache.org/docs/install/index.html)
 
 # Demo
 Install the following dependencies for deep learning models used for demo.
